@@ -1,23 +1,29 @@
 import { Hono, type Context } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import { secureHeaders } from 'hono/secure-headers';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
 import { featureInfo } from './featureinfo.ts';
 import { communes, counties, precincts, unitNames, voivodeships, type DictEntry } from './dictionaries.ts';
 import { RequestError, concurrencyGate, isLoopback, rateLimit } from './http.ts';
+import { parseReport, type Mailer } from './report.ts';
 
 /**
- * API of the app: cached service metadata, dictionaries for the parcel search and a
- * GetFeatureInfo proxy. `index.ts` adds static files and starts listening.
+ * API of the app: cached service metadata, dictionaries for the parcel search, a
+ * GetFeatureInfo proxy and bug reports by e-mail. `index.ts` adds static files and starts listening.
  */
 
 export interface AppOptions {
   cache: CapabilitiesCache;
   refresh(): Promise<CapabilitiesCache>;
+  /** Sends bug reports; without it the report form answers 503. */
+  mailer?: Mailer;
+  /** Public address of the app; links in reports must point here. Defaults to the request's Origin. */
+  origin?: string;
   /** Overridable in tests so bursts can be exercised quickly. */
-  limits?: { dict: [burst: number, perMinute: number]; featureInfo: [burst: number, perMinute: number] };
+  limits?: { dict: [burst: number, perMinute: number]; featureInfo: [burst: number, perMinute: number]; report?: [burst: number, perMinute: number] };
 }
 
-export function createApp({ cache, refresh, limits }: AppOptions): Hono {
+export function createApp({ cache, refresh, mailer, origin, limits }: AppOptions): Hono {
   let current = cache;
   const app = new Hono();
 
@@ -117,6 +123,26 @@ export function createApp({ cache, refresh, limits }: AppOptions): Hono {
       return upstreamFailure(c, 'featureinfo', e);
     }
   });
+
+  /** A few reports per visitor and hour are plenty; the body is small JSON. */
+  app.get('/api/report', (c) => c.json({ enabled: Boolean(mailer) }));
+  app.post(
+    '/api/report',
+    rateLimit(...(limits?.report ?? [3, 0.1])),
+    bodyLimit({ maxSize: 16 * 1024, onError: (c) => c.text('Zgłoszenie jest za długie', 413) }),
+    async (c) => {
+      if (!mailer) return c.text('Formularz zgłoszeń jest wyłączony.', 503);
+      try {
+        const report = parseReport(await c.req.json().catch(() => null), origin ?? c.req.header('origin') ?? '');
+        if (report) await mailer.send(report, { userAgent: c.req.header('user-agent') });
+        return c.json({ ok: true });
+      } catch (e) {
+        if (e instanceof RequestError) return c.text(e.message, 400);
+        console.warn(`report: ${e instanceof Error ? e.message : String(e)}`);
+        return c.text('Nie udało się wysłać zgłoszenia. Spróbuj ponownie później.', 502);
+      }
+    },
+  );
 
   app.all('/api/*', (c) => c.text('Not found', 404));
   return app;

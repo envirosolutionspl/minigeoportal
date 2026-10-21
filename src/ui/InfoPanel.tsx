@@ -1,11 +1,10 @@
-import { ExternalLink, FileText, Layers, LoaderCircle, MapPin, X } from 'lucide-react';
-import { toLonLat } from 'ol/proj';
+import { Bug, ExternalLink, FileText, Layers, LoaderCircle, MapPin, X } from 'lucide-react';
+import { formatCoordinate } from '@/map/format';
 import { GEOPORTAL_MAP, OVERLAY_BY_ID, parcelReportUrl } from '@/services/registry';
 import type { InfoRecord } from '@/services/featureinfo';
 import { useInfoStore, type InfoResult } from '@/state/info';
 import { useMapStore } from '@/state/store';
-
-const fmt = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 });
+import { useReport } from './ReportDialog';
 
 /** Results of a map click: one section per queried overlay. */
 export function InfoPanel() {
@@ -14,7 +13,6 @@ export function InfoPanel() {
   const setPanel = useMapStore((m) => m.setPanel);
   if (!query) return null;
 
-  const [lon, lat] = toLonLat(query.coordinate, 'EPSG:2180');
   const [e, n] = query.coordinate;
 
   return (
@@ -28,7 +26,7 @@ export function InfoPanel() {
         <div className="min-w-0 flex-1">
           <h2 className="text-base font-semibold">Informacje o miejscu</h2>
           <p className="text-xs text-[var(--muted)]">
-            {lat.toFixed(5)}° N, {lon.toFixed(5)}° E · PL-1992: {fmt.format(n)} N, {fmt.format(e)} E
+            {formatCoordinate(query.coordinate)}
           </p>
           <a
             href={parcelReportUrl(query.coordinate)}
@@ -63,6 +61,19 @@ export function InfoPanel() {
           query.services.map((id) => <ServiceResult key={id} id={id} result={query.results[id]} />)
         )}
       </div>
+      <footer className="border-t border-[var(--hover)] px-4 py-2">
+        <button
+          type="button"
+          onClick={() =>
+            useReport.getState().openReport(`Miejsce: PL-1992 X ${Math.round(n)}, Y ${Math.round(e)}
+
+`)
+          }
+          className="inline-flex min-h-6 items-center gap-1.5 text-xs text-[var(--muted)] hover:text-[var(--accent)]"
+        >
+          <Bug className="h-3.5 w-3.5" aria-hidden="true" /> Coś nie działa? Zgłoś błąd
+        </button>
+      </footer>
     </section>
   );
 }

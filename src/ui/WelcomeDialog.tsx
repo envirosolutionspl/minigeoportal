@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { create } from 'zustand';
 import { APP_DOMAIN, APP_NAME, AUTHOR_URL, AuthorLogo, BrandMark } from './Brand';
+import { useReport } from './ReportDialog';
 
 const STORAGE_KEY = 'prostygeoportal.welcome.v1';
 
@@ -44,6 +45,11 @@ export function WelcomeDialog() {
   const close = () => {
     rememberDismissal(hide);
     setOpen(false);
+  };
+
+  const report = () => {
+    close();
+    useReport.getState().openReport();
   };
 
   return (
@@ -116,6 +122,12 @@ export function WelcomeDialog() {
             Przejdź do mapy
           </button>
         </footer>
+
+        <p className="mt-4 text-center text-sm">
+          <button type="button" onClick={report} className="text-[var(--accent)] underline underline-offset-2">
+            Zgłoś błąd w serwisie
+          </button>
+        </p>
 
         <a
           href={AUTHOR_URL}

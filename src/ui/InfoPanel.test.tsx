@@ -20,7 +20,7 @@ describe('InfoPanel', () => {
   it('shows coordinates in both systems and a loading state per service', () => {
     useInfoStore.getState().start(point, ['kieg']);
     render(<InfoPanel />);
-    expect(screen.getByText(/52\.18\d+° N, 21\.29\d+° E · PL-1992: 482 462 N, 656 849 E/)).toBeTruthy();
+    expect(screen.getByText(/^PL-1992 X 482\s462, Y 656\s849 · 52,18\d+° N, 21,29\d+° E$/)).toBeTruthy();
     expect(screen.getByText('Wczytywanie…')).toBeTruthy();
   });
 

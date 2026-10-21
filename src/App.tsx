@@ -5,6 +5,7 @@ import { BasemapSwitcher } from './ui/BasemapSwitcher';
 import { InfoPanel } from './ui/InfoPanel';
 import { MeasureBar } from './ui/MeasureBar';
 import { WelcomeDialog } from './ui/WelcomeDialog';
+import { ReportDialog } from './ui/ReportDialog';
 import { AuthorCredit } from './ui/Brand';
 import { useMapStore } from './state/store';
 
@@ -30,6 +31,7 @@ export default function App() {
         <LayerCatalog />
       </aside>
       <WelcomeDialog />
+      <ReportDialog />
     </div>
   );
 }

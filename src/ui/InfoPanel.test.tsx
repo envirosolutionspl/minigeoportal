@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { InfoPanel } from './InfoPanel';
 import { useInfoStore } from '@/state/info';
 import { useMapStore } from '@/state/store';
@@ -13,8 +13,9 @@ beforeEach(() => {
 });
 
 describe('InfoPanel', () => {
-  it('says when the aerial photo was taken and links its sheet', async () => {
-    stubFetch([
+  it('says when the aerial photo was taken and links its sheet, on the photo base map only', async () => {
+    useMapStore.setState({ base: 'orto' });
+    const { calls } = stubFetch([
       ['/api/orto', { latest: { date: '2025-04-27', pixel: 0.05, color: 'RGB', sheet: 'N-34-138-B-d-2-4', download: 'https://opendata.geoportal.gov.pl/o/a.tif', sizeMb: 1026 }, archived: 23 }],
     ]);
     useInfoStore.getState().start(point, []);
@@ -22,6 +23,13 @@ describe('InfoPanel', () => {
     expect(await screen.findByText('27.04.2025')).toBeTruthy();
     expect(screen.getByText('5 cm')).toBeTruthy();
     expect((screen.getByRole('link', { name: /pobierz arkusz N-34-138-B-d-2-4/ }) as HTMLAnchorElement).href).toBe('https://opendata.geoportal.gov.pl/o/a.tif');
+
+    // On a drawn map the line goes and the backend is not asked again.
+    const asked = calls.length;
+    act(() => useMapStore.setState({ base: 'mapa' }));
+    expect(screen.queryByText('27.04.2025')).toBeNull();
+    act(() => useInfoStore.getState().start([656849, 482000], []));
+    expect(calls.length).toBe(asked);
   });
 
 

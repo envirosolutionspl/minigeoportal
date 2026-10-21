@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Bug, Camera, Download, ExternalLink, FileText, Layers, LoaderCircle, MapPin, X } from 'lucide-react';
 import { formatCoordinate } from '@/map/format';
-import { GEOPORTAL_MAP, OVERLAY_BY_ID, parcelReportUrl } from '@/services/registry';
+import { BASE_MAPS, GEOPORTAL_MAP, OVERLAY_BY_ID, parcelReportUrl } from '@/services/registry';
 import type { InfoRecord } from '@/services/featureinfo';
 import { useInfoStore, type InfoResult } from '@/state/info';
 import { useMapStore } from '@/state/store';
@@ -13,6 +13,8 @@ export function InfoPanel() {
   const query = useInfoStore((s) => s.query);
   const close = useInfoStore((s) => s.close);
   const setPanel = useMapStore((m) => m.setPanel);
+  // The photo date matters only when the photos are on screen.
+  const showsPhotos = useMapStore((m) => BASE_MAPS.find((b) => b.id === m.base)?.sources.some((s) => s.service === 'orto') ?? false);
   if (!query) return null;
 
   const [e, n] = query.coordinate;
@@ -67,7 +69,7 @@ export function InfoPanel() {
           query.services.map((id) => <ServiceResult key={id} id={id} result={query.results[id]} />)
         )}
       </div>
-      <OrthoPhoto coordinate={query.coordinate} />
+      {showsPhotos && <OrthoPhoto coordinate={query.coordinate} />}
       <footer className="border-t border-[var(--hover)] px-4 py-2">
         <button
           type="button"

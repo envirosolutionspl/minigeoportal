@@ -1,27 +1,36 @@
 import { useEffect, useRef, useState } from 'react';
-import { Ban } from 'lucide-react';
+import { Ban, ChevronUp } from 'lucide-react';
 import { BASE_MAPS, GEOPORTAL_MAP, type BaseMap } from '@/services/registry';
 import { useMapStore } from '@/state/store';
 
 /**
- * Base map switcher: a thumbnail of the base map in use; clicking it (or hovering with a mouse)
- * shows every base map to choose from.
+ * Base map switcher as in Google Maps: the thumbnail shows the base map one click switches to
+ * (photos, or back to the last map used). Every base map is listed on hover or keyboard focus;
+ * touch screens, which have no hover, get a small button that opens the list.
  */
 export function BasemapSwitcher() {
   const base = useMapStore((m) => m.base);
   const setBase = useMapStore((m) => m.setBase);
+  const lastMap = useRef(base === 'orto' ? 'mapa' : base);
+  if (base !== 'orto') lastMap.current = base;
+  const target = BASE_MAPS.find((b) => b.id === (base === 'orto' ? lastMap.current : 'orto'))!;
+
+  /** Opened with the touch button. */
   const [open, setOpen] = useState(false);
+  /** Keyboard focus inside the switcher shows the list, until Escape. */
+  const [focused, setFocused] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
-  const current = BASE_MAPS.find((b) => b.id === base) ?? BASE_MAPS[0];
+  const shown = (open || focused) && !dismissed;
 
-  // Escape or a click elsewhere closes the list.
   useEffect(() => {
-    if (!open) return;
+    if (!shown) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       e.stopPropagation();
       setOpen(false);
+      setDismissed(true);
       toggle.current?.focus();
     };
     const onPointer = (e: PointerEvent) => !root.current?.contains(e.target as Node) && setOpen(false);
@@ -31,7 +40,7 @@ export function BasemapSwitcher() {
       document.removeEventListener('keydown', onKey, true);
       document.removeEventListener('pointerdown', onPointer);
     };
-  }, [open]);
+  }, [shown]);
 
   const choose = (id: string) => {
     setBase(id);
@@ -39,22 +48,35 @@ export function BasemapSwitcher() {
   };
 
   return (
-    <div ref={root} className="group pointer-events-auto absolute bottom-9 left-3 z-20 flex items-end gap-2 sm:bottom-10 sm:left-4">
-      <Thumb
-        ref={toggle}
-        def={current}
-        size="lg"
-        label={`Podkład: ${current.title}. Zmień podkład`}
-        expanded={open}
+    <div
+      ref={root}
+      onFocus={(e) => focusVisible(e.target) && setFocused(true)}
+      onBlur={(e) => {
+        if (root.current?.contains(e.relatedTarget as Node)) return;
+        setFocused(false);
+        setDismissed(false);
+      }}
+      className="group pointer-events-auto absolute bottom-9 left-3 z-20 flex items-end gap-2 sm:bottom-10 sm:left-4"
+    >
+      <Thumb ref={toggle} def={target} size="lg" label={`Przełącz podkład na: ${target.title}`} onClick={() => setBase(target.id)} />
+      <button
+        type="button"
         onClick={() => setOpen(!open)}
-      />
+        aria-expanded={shown}
+        aria-controls="basemap-list"
+        aria-label="Wszystkie podkłady"
+        className="-ml-1 flex h-9 w-9 items-center justify-center self-center rounded-full bg-[var(--surface)] text-[var(--accent)] shadow-lg ring-1 ring-black/5 [@media(hover:hover)]:hidden"
+      >
+        <ChevronUp className={`h-5 w-5 transition ${shown ? 'rotate-90' : '-rotate-90'}`} aria-hidden="true" />
+      </button>
       <div
         id="basemap-list"
         role="group"
         aria-label="Podkłady"
-        className={`${open ? 'flex' : 'hidden [@media(hover:hover)]:group-hover:flex'} gap-2 rounded-2xl bg-[var(--surface)] p-2 shadow-lg ring-1 ring-black/5`}
+        className={`${shown ? 'flex' : 'hidden'} gap-2 rounded-2xl bg-[var(--surface)] p-2 shadow-lg ring-1 ring-black/5 [@media(hover:hover)]:group-hover:flex`}
       >
-        {BASE_MAPS.map((b) => (
+        {/* The thumbnail's own base map is one click away, so the list leaves it out. */}
+        {BASE_MAPS.filter((b) => b.id !== target.id).map((b) => (
           <Thumb key={b.id} def={b} size="sm" active={b.id === base} onClick={() => choose(b.id)} />
         ))}
       </div>
@@ -62,12 +84,20 @@ export function BasemapSwitcher() {
   );
 }
 
+/** Keyboard focus, not a click: only then does focus open the list. */
+function focusVisible(el: Element): boolean {
+  try {
+    return el.matches(':focus-visible');
+  } catch {
+    return false;
+  }
+}
+
 function Thumb({
   ref,
   def,
   size,
   active,
-  expanded,
   label: name,
   onClick,
 }: {
@@ -75,8 +105,6 @@ function Thumb({
   def: BaseMap;
   size: 'sm' | 'lg';
   active?: boolean;
-  /** For the main thumbnail: whether the list is open. */
-  expanded?: boolean;
   label?: string;
   onClick: () => void;
 }) {
@@ -107,9 +135,7 @@ function Thumb({
       ref={ref}
       type="button"
       onClick={onClick}
-      aria-pressed={expanded === undefined ? active : undefined}
-      aria-expanded={expanded}
-      aria-controls={expanded === undefined ? undefined : 'basemap-list'}
+      aria-pressed={size === 'sm' ? active : undefined}
       aria-label={name ?? `Podkład: ${def.title}`}
       title={def.description}
       className={`relative shrink-0 overflow-hidden bg-[var(--map-bg)] transition ${box} ${

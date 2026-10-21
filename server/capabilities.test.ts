@@ -82,6 +82,20 @@ describe('buildCache', () => {
     expect(fresh.services.kieg).toMatchObject({ kind: 'error', error: 'HTTP 503' });
   });
 
+  it('stores the geoportal drawing order and keeps the last good one when it cannot be read', async () => {
+    const config = `gpmaps: [{ id: 'modulGK', layers: [
+      { layerId: 'msMPZP' }, { layerId: 'msPlanyOgolneGmin' }, { layerId: 'msKIEG' }, { layerId: 'msKIUT' }, { layerId: 'msRejestrCenNieruchomosci' },
+    ] }]`;
+    stub((url) => new Response(url.includes('part_GeoportalKrajowy') ? config : url.includes('WMTS') ? WMTS : WMS));
+    const cache = await buildCache();
+    expect(cache.drawOrder).toEqual(['kimpzp', 'pog', 'kieg', 'kiut', 'rcn']);
+
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    stub((url) => (url.includes('part_GeoportalKrajowy') ? new Response('gone', { status: 404 }) : new Response(url.includes('WMTS') ? WMTS : WMS)));
+    expect((await buildCache(cache)).drawOrder).toEqual(cache.drawOrder);
+    expect((await buildCache()).drawOrder).toBeUndefined();
+  });
+
   it('treats a WMTS without the expected layer or matrix set as an error', async () => {
     stub((url) => new Response(url.includes('WMTS') ? WMTS.replace('ORTOFOTOMAPA', 'INNA') : WMS));
     const cache = await buildCache();

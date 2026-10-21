@@ -5,7 +5,7 @@ import ImageWMS from 'ol/source/ImageWMS';
 import WMTSTileGrid from 'ol/tilegrid/WMTS';
 import { EPSG2180, OGC_PIXEL, gugikWmtsGrid } from '@/map/projection';
 import { GUGIK_ATTRIBUTION, type Overlay, type TileService } from './registry';
-import { layerMeta, wmtsMeta } from './meta';
+import { cachedDrawOrder, layerMeta, wmtsMeta } from './meta';
 import { useStatusStore } from './status';
 
 const report = (id: string, ok: boolean) => useStatusStore.getState().reportLoad(id, ok);
@@ -57,17 +57,19 @@ export function createTileLayer(
 }
 
 /**
- * Drawing order of overlays, lowest first, as in the national geoportal (geoportal.gov.pl):
- * plans at the bottom (local plans under the general ones), utility networks over them, land
- * register parcels and buildings over both, transaction prices on top. The catalog keeps its
- * own order; this one only decides what covers what.
+ * Drawing order of overlays, lowest first, as in the national geoportal (geoportal.gov.pl).
+ * The server reads it from the geoportal configuration with the capabilities; this copy of it
+ * is used when that fails: plans at the bottom (local plans under the general ones), utility
+ * networks over them, land register parcels and buildings over both, transaction prices on
+ * top. The catalog keeps its own order; this one only decides what covers what.
  */
 export const DRAW_ORDER = ['kimpzp', 'pog', 'kiut', 'kieg', 'rcn'];
 
 /** Overlays missing from the list are drawn above the listed ones. */
 export const drawIndex = (id: string) => {
-  const i = DRAW_ORDER.indexOf(id);
-  return i < 0 ? DRAW_ORDER.length : i;
+  const order = cachedDrawOrder() ?? DRAW_ORDER;
+  const i = order.indexOf(id);
+  return i < 0 ? order.length : i;
 };
 
 /**

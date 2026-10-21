@@ -3,7 +3,7 @@ import type WMTSTileGrid from 'ol/tilegrid/WMTS';
 import { GUGIK_RESOLUTIONS, OGC_PIXEL } from '@/map/projection';
 import { OVERLAYS, OVERLAY_BY_ID, TILE_SERVICE_BY_ID } from './registry';
 import { DRAW_ORDER, createOverlayLayer, createTileLayer, resolutionRange } from './layers';
-import { withCapabilities } from '@/test/helpers';
+import { CAPABILITIES, withCapabilities } from '@/test/helpers';
 
 describe('createTileLayer', () => {
   it('uses the shared GUGiK grid without a cache and the cached matrices with it', async () => {
@@ -43,6 +43,14 @@ describe('drawing order', () => {
     expect(z('pog')).toBeLessThan(z('kiut'));
     expect(z('kiut')).toBeLessThan(z('kieg'));
     expect(z('kieg')).toBeLessThan(z('rcn'));
+  });
+
+  it('uses the order the server read from geoportal.gov.pl when there is one', async () => {
+    await withCapabilities({ ...CAPABILITIES, drawOrder: ['rcn', 'kieg', 'kiut', 'pog', 'kimpzp'] });
+    const z = (id: string) => createOverlayLayer(OVERLAY_BY_ID.get(id)!).getZIndex()!;
+    expect(z('rcn')).toBeLessThan(z('kieg'));
+    expect(z('pog')).toBeLessThan(z('kimpzp'));
+    await withCapabilities();
   });
 
   it('lists every overlay of the registry once', () => {

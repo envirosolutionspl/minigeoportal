@@ -1,0 +1,68 @@
+import { describe, expect, it } from 'vitest';
+import { geoportalLayerOrder, overlayOrder } from './drawOrder.ts';
+
+/** Shape of the geoportal.gov.pl configuration: services with groups, then the map's layer list. */
+const CONFIG = `export const config = {
+  services: [
+    {
+      id: 'groupPlanowanie',
+      type: 'group',
+      layers: [
+        //{
+        //  layerId: 'msBudynkiBDOT10k',
+        //},
+        { layerId: 'msMPZP', visible: false },
+        { layerId: 'msPlanyOgolneGmin', visible: false },
+      ],
+    },
+    {
+      id: 'msPOGP',
+      url: 'https://mapy.geoportal.gov.pl/wss/service/PZGIK/PodstawowaOsnowaGeodezyjnaPozioma',
+    },
+  ],
+  gpmaps: [
+    {
+      id: 'modulGK',
+      basemap: 'msBDOO_BDOT10k_base',
+      basemaps: [{ layerId: 'msBDOO_BDOT10k_base' }],
+      layers: [
+        { layerId: 'groupPlanowanie', visible: false },
+        /* { layerId: 'msOld' }, */
+        { layerId: 'msKIUT', visible: true },
+        { layerId: 'msKIEG', visible: true },
+        { layerId: 'msRejestrCenNieruchomosci', visible: false },
+        { layerId: 'msPRG', visible: false },
+      ],
+    },
+  ],
+};`;
+
+describe('geoportalLayerOrder', () => {
+  it('lists the map layers bottom to top with groups expanded and comments ignored', () => {
+    expect(geoportalLayerOrder(CONFIG)).toEqual([
+      'msBDOO_BDOT10k_base',
+      'msMPZP',
+      'msPlanyOgolneGmin',
+      'msKIUT',
+      'msKIEG',
+      'msRejestrCenNieruchomosci',
+      'msPRG',
+    ]);
+    expect(geoportalLayerOrder('not a config')).toEqual([]);
+  });
+});
+
+describe('overlayOrder', () => {
+  it('orders our overlays as the geoportal draws them', () => {
+    expect(overlayOrder(CONFIG)).toEqual(['kimpzp', 'pog', 'kiut', 'kieg', 'rcn']);
+  });
+
+  it('follows a changed order', () => {
+    const swapped = CONFIG.replace("{ layerId: 'msKIUT', visible: true },\n        { layerId: 'msKIEG', visible: true },", "{ layerId: 'msKIEG', visible: true },\n        { layerId: 'msKIUT', visible: true },");
+    expect(overlayOrder(swapped)).toEqual(['kimpzp', 'pog', 'kieg', 'kiut', 'rcn']);
+  });
+
+  it('gives up when an overlay is missing, so the built-in order is used', () => {
+    expect(overlayOrder(CONFIG.replace("{ layerId: 'msKIUT', visible: true },", ''))).toBeUndefined();
+  });
+});

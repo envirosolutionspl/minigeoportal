@@ -72,6 +72,8 @@ export interface Overlay {
   /** Shown in the "Na start" group of the catalog. */
   starter?: boolean;
   url: string;
+  /** Id of the same layer in the geoportal.gov.pl configuration, which gives the drawing order. */
+  geoportalId: string;
   /** Listed in drawing order, bottom to top. */
   sublayers: SubLayer[];
   opacity?: number;
@@ -146,6 +148,7 @@ export const BASE_MAPS: BaseMap[] = [
 export const OVERLAYS: Overlay[] = [
   {
     id: 'kieg',
+    geoportalId: 'msKIEG',
     kind: 'wms',
     title: 'Ewidencja gruntów i budynków',
     description: 'Działki, numery działek, budynki, obręby, użytki.',
@@ -165,6 +168,7 @@ export const OVERLAYS: Overlay[] = [
   },
   {
     id: 'kimpzp',
+    geoportalId: 'msMPZP',
     kind: 'wms',
     title: 'Plany miejscowe (MPZP)',
     description: 'Miejscowe plany zagospodarowania przestrzennego.',
@@ -185,6 +189,7 @@ export const OVERLAYS: Overlay[] = [
   },
   {
     id: 'pog',
+    geoportalId: 'msPlanyOgolneGmin',
     kind: 'wms',
     title: 'Plany ogólne gmin (POG)',
     description: 'Strefy planistyczne z uchwalonych planów ogólnych.',
@@ -201,6 +206,7 @@ export const OVERLAYS: Overlay[] = [
   },
   {
     id: 'rcn',
+    geoportalId: 'msRejestrCenNieruchomosci',
     kind: 'wms',
     title: 'Ceny transakcyjne (RCN)',
     description: 'Rejestr cen nieruchomości, tylko powiaty publikujące dane.',
@@ -217,6 +223,7 @@ export const OVERLAYS: Overlay[] = [
   },
   {
     id: 'kiut',
+    geoportalId: 'msKIUT',
     kind: 'wms',
     title: 'Uzbrojenie terenu',
     description: 'Sieci: woda, kanalizacja, gaz, prąd, telekomunikacja, ciepło.',

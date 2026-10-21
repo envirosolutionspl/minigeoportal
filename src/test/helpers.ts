@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import type { CapabilitiesCache } from '@/services/meta';
-import { loadCapabilities } from '@/services/meta';
+import { clearCapabilities, loadCapabilities } from '@/services/meta';
 
 /** A fetch stub that answers by URL substring; unknown URLs get 404. */
 export type Route = [match: string | RegExp, body: string | object, init?: ResponseInit];
@@ -66,6 +66,7 @@ export const CAPABILITIES: CapabilitiesCache = {
 
 /** Loads the test capabilities into the app's metadata module. */
 export async function withCapabilities(cache: CapabilitiesCache = CAPABILITIES): Promise<void> {
+  clearCapabilities();
   stubFetch([['/api/capabilities', cache]]);
   await loadCapabilities();
 }

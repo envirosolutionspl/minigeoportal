@@ -1,5 +1,6 @@
 import { XMLParser } from 'fast-xml-parser';
 import { readLimited } from './http.ts';
+import { fetchDrawOrder } from './drawOrder.ts';
 import { OVERLAYS, TILE_SERVICES, type Overlay, type TileService } from '../src/services/registry.ts';
 import type {
   CapabilitiesCache,
@@ -124,14 +125,22 @@ async function safely(fetchMeta: () => Promise<ServiceMeta>): Promise<ServiceMet
  * entry, so one unreachable server never wipes metadata that was already known.
  */
 export async function buildCache(previous?: CapabilitiesCache): Promise<CapabilitiesCache> {
-  const entries = await Promise.all([
-    ...OVERLAYS.map(async (def) => [def.id, await safely(() => wms(def))] as const),
-    ...TILE_SERVICES.map(async (def) => [def.id, await safely(() => wmts(def))] as const),
+  const [entries, drawOrder] = await Promise.all([
+    Promise.all([
+      ...OVERLAYS.map(async (def) => [def.id, await safely(() => wms(def))] as const),
+      ...TILE_SERVICES.map(async (def) => [def.id, await safely(() => wmts(def))] as const),
+    ]),
+    // The layer order of geoportal.gov.pl; when it cannot be read, the last good one is kept.
+    fetchDrawOrder().catch((e: unknown) => {
+      console.warn(`draw order: ${e instanceof Error ? e.message : String(e)}`);
+      return undefined;
+    }),
   ]);
   const services: Record<string, ServiceMeta> = {};
   for (const [id, meta] of entries) {
     const old = previous?.services[id];
     services[id] = meta.kind === 'error' && old && old.kind !== 'error' ? old : meta;
   }
-  return { generatedAt: new Date().toISOString(), services };
+  const order = drawOrder ?? previous?.drawOrder;
+  return { generatedAt: new Date().toISOString(), services, ...(order ? { drawOrder: order } : {}) };
 }

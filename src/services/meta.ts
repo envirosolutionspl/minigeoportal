@@ -52,6 +52,8 @@ export type ServiceMeta = WmsMeta | WmtsMeta | MetaError;
 export interface CapabilitiesCache {
   generatedAt: string;
   services: Record<string, ServiceMeta>;
+  /** Overlay ids in drawing order (lowest first) from the geoportal.gov.pl configuration. */
+  drawOrder?: string[];
 }
 
 let cache: CapabilitiesCache | null = null;
@@ -71,6 +73,11 @@ export async function loadCapabilities(): Promise<void> {
     if (!cache && attempt === 0) await new Promise((r) => setTimeout(r, 500));
   }
 }
+
+/** Test hook: forgets the loaded cache, so the next load fetches it again. */
+export const clearCapabilities = () => {
+  cache = null;
+};
 
 export function wmsMeta(id: string): WmsMeta | undefined {
   const m = cache?.services[id];
@@ -105,3 +112,6 @@ export function infoFormat(id: string): string {
   const offered = wmsMeta(id)?.infoFormats ?? [];
   return INFO_FORMAT_PREFERENCE.find((f) => offered.includes(f)) ?? 'text/html';
 }
+
+/** Overlay drawing order from the cache, when the server could read it from geoportal.gov.pl. */
+export const cachedDrawOrder = (): string[] | undefined => cache?.drawOrder;

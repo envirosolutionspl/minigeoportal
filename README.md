@@ -27,7 +27,7 @@ npm run dev
 
 Aplikacja: http://localhost:5173, API: http://localhost:8787. Front i API można też uruchomić osobno: `npm run dev:web` i `npm run dev:api`.
 
-Odświeżenie cache metadanych usług (GetCapabilities):
+Odświeżenie cache metadanych usług (GetCapabilities) razem z kolejnością rysowania warstw odczytaną z konfiguracji geoportal.gov.pl (moduł „Geoportal Krajowy”; plik jest tylko czytany wzorcem, nigdy wykonywany, a gdy brakuje w nim którejś warstwy, zostaje wbudowana kolejność):
 
 ```bash
 npm run capabilities

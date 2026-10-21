@@ -1,0 +1,78 @@
+import type Map from 'ol/Map';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+import Feature from 'ol/Feature';
+import Point from 'ol/geom/Point';
+import WKT from 'ol/format/WKT';
+import { Circle, Fill, Stroke, Style } from 'ol/style';
+import { useMapStore, type FocusTarget } from '@/state/store';
+
+const ORANGE = '#FF8142';
+const SHOW_MS = 3500;
+const FADE_MS = 900;
+
+/** White halo under an orange line, readable on photos and on maps. */
+const STYLE = [
+  new Style({
+    stroke: new Stroke({ color: 'rgba(255,255,255,0.95)', width: 7 }),
+    image: new Circle({ radius: 11, fill: new Fill({ color: 'rgba(255,255,255,0.95)' }) }),
+  }),
+  new Style({
+    stroke: new Stroke({ color: ORANGE, width: 3.5 }),
+    fill: new Fill({ color: 'rgba(255,129,66,0.14)' }),
+    image: new Circle({ radius: 8, fill: new Fill({ color: ORANGE }) }),
+  }),
+];
+
+const wkt = new WKT();
+
+/** Zooms to a searched object and outlines it for a few seconds, as public geoportals do. */
+export function attachFocus(map: Map): () => void {
+  const source = new VectorSource<Feature>();
+  const layer = new VectorLayer({ source, style: STYLE, zIndex: 90 });
+  map.addLayer(layer);
+  const view = map.getView();
+  let timer: number | undefined;
+  let frame: number | undefined;
+
+  const stop = () => {
+    window.clearTimeout(timer);
+    if (frame !== undefined) window.cancelAnimationFrame(frame);
+  };
+
+  const fadeOut = () => {
+    const start = performance.now();
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / FADE_MS);
+      layer.setOpacity(1 - t);
+      if (t < 1) frame = window.requestAnimationFrame(step);
+      else source.clear();
+    };
+    frame = window.requestAnimationFrame(step);
+  };
+
+  const show = (target: FocusTarget) => {
+    stop();
+    source.clear();
+    layer.setOpacity(1);
+    const geometry = target.wkt ? wkt.readGeometry(target.wkt) : target.center ? new Point(target.center) : null;
+    if (!geometry) return;
+    source.addFeature(new Feature(geometry));
+    if (geometry instanceof Point) {
+      view.animate({ center: geometry.getCoordinates(), zoom: target.zoom, duration: 600 });
+    } else {
+      view.fit(geometry.getExtent(), { padding: [96, 64, 96, 64], maxZoom: target.zoom, duration: 700 });
+    }
+    timer = window.setTimeout(fadeOut, SHOW_MS);
+  };
+
+  const unsubscribe = useMapStore.subscribe((s, prev) => {
+    if (s.focus && s.focus !== prev.focus) show(s.focus);
+  });
+
+  return () => {
+    stop();
+    unsubscribe();
+    map.removeLayer(layer);
+  };
+}

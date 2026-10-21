@@ -1,39 +1,105 @@
-/** Address search through GUGiK's universal geocoder (UUG). */
+/**
+ * Search across GUGiK services: addresses, streets and places from the universal geocoder
+ * (UUG), parcels from the parcel location service (ULDK). Every hit carries its geometry,
+ * or a way to fetch it, so the map can zoom to it and outline it.
+ */
 
-export interface GeocodeHit {
+export type HitKind = 'address' | 'street' | 'place' | 'parcel';
+
+export interface SearchHit {
+  kind: HitKind;
   label: string;
-  /** EPSG:2180 */
-  center: [number, number];
-}
-
-interface UugResult {
-  city?: string;
-  street?: string;
-  number?: string;
-  teryt?: string;
-  x?: string | number;
-  y?: string | number;
-}
-
-interface UugResponse {
-  found_objects?: number;
-  results?: Record<string, UugResult>;
+  detail?: string;
+  /** EPSG:2180 [easting, northing]; absent when the geometry says where the hit is. */
+  center?: [number, number];
+  /** WKT in EPSG:2180, when the service returned a geometry. */
+  wkt?: string;
 }
 
 const UUG = 'https://services.gugik.gov.pl/uug/';
+const ULDK = 'https://uldk.gugik.gov.pl/';
 
-export async function geocode(query: string, signal?: AbortSignal): Promise<GeocodeHit[]> {
+/** Full parcel id, e.g. 141708_2.0021.22/1. */
+const PARCEL_ID = /^\d{6}_\d\.\d{4}(\.AR_\d+)?\.\S+$/i;
+/** "Precinct name number", e.g. "Wiązowna Gminna 22/1": ends with a parcel number. */
+const PRECINCT_AND_NUMBER = /^\p{L}[\p{L}\s.-]*\s\d+[\d/]*$/u;
+
+/** ULDK returns EWKT ("SRID=2180;MULTIPOLYGON(...)"); OpenLayers reads plain WKT. */
+export const stripSrid = (wkt: string) => wkt.replace(/^SRID=\d+;/i, '');
+
+interface UugResult {
+  city?: string;
+  citypart?: string | null;
+  street?: string | null;
+  number?: string | null;
+  x?: string;
+  y?: string;
+  geometry_wkt?: string;
+}
+
+async function uug(query: string, signal: AbortSignal): Promise<SearchHit[]> {
   const url = `${UUG}?request=GetAddress&address=${encodeURIComponent(query)}&srid=2180`;
   const res = await fetch(url, { signal });
-  if (!res.ok) throw new Error(`UUG ${res.status}`);
-  const data = (await res.json()) as UugResponse;
-  return Object.values(data.results ?? {})
-    .map((r) => {
-      const x = Number(r.x);
-      const y = Number(r.y);
-      if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
-      const label = [r.city, [r.street, r.number].filter(Boolean).join(' ')].filter(Boolean).join(', ');
-      return { label, center: [x, y] as [number, number] };
-    })
-    .filter((h): h is GeocodeHit => h !== null);
+  if (!res.ok) return [];
+  const data = (await res.json()) as { type?: string; results?: Record<string, UugResult> | null };
+  const kind: HitKind = data.type === 'street' ? 'street' : data.type === 'city' ? 'place' : 'address';
+  return Object.values(data.results ?? {}).flatMap((r) => {
+    const x = Number(r.x);
+    const y = Number(r.y);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return [];
+    const street = [r.street, r.number].filter(Boolean).join(' ');
+    return [
+      {
+        kind,
+        label: street || r.city || query,
+        detail: street ? [r.citypart, r.city].filter(Boolean).join(', ') : kind === 'place' ? 'Miejscowość' : undefined,
+        center: [x, y] as [number, number],
+        wkt: r.geometry_wkt,
+      },
+    ];
+  });
+}
+
+/** ULDK answers in text: first line is a count or "-1 brak wyników", then one "|"-separated row per hit. */
+async function uldkRows(params: Record<string, string>, signal: AbortSignal): Promise<string[][]> {
+  const res = await fetch(`${ULDK}?${new URLSearchParams({ ...params, srid: '2180' })}`, { signal });
+  if (!res.ok) return [];
+  const [status, ...rows] = (await res.text()).trim().split('\n');
+  if (status.startsWith('-1')) return [];
+  return rows.map((r) => r.split('|'));
+}
+
+async function parcels(query: string, signal: AbortSignal): Promise<SearchHit[]> {
+  const rows = await uldkRows(
+    { request: 'GetParcelByIdOrNr', id: query, result: 'id,commune,region,parcel,geom_wkt' },
+    signal,
+  );
+  return rows.flatMap(([id, commune, region, parcel, wkt]) => {
+    if (!wkt) return [];
+    return [{ kind: 'parcel' as const, label: `Działka ${parcel}`, detail: `obręb ${region}, gm. ${commune} · ${id}`, wkt: stripSrid(wkt) }];
+  });
+}
+
+export async function search(query: string, signal: AbortSignal): Promise<SearchHit[]> {
+  const q = query.trim();
+  if (PARCEL_ID.test(q)) return parcels(q, signal);
+  const lookups: Promise<SearchHit[]>[] = [uug(q, signal)];
+  if (PRECINCT_AND_NUMBER.test(q)) lookups.unshift(parcels(q, signal));
+  const results = await Promise.allSettled(lookups);
+  return results.flatMap((r) => (r.status === 'fulfilled' ? r.value : [])).slice(0, 10);
+}
+
+/**
+ * Outline of a place: a town that is its own municipality gets the municipal boundary,
+ * a village gets the cadastral precinct of the same name. Otherwise there is no outline.
+ */
+export async function placeOutline(hit: SearchHit, signal: AbortSignal): Promise<string | undefined> {
+  if (!hit.center) return undefined;
+  const xy = `${hit.center[0]},${hit.center[1]},2180`;
+  const name = hit.label.toLowerCase();
+  const [commune] = await uldkRows({ request: 'GetCommuneByXY', xy, result: 'commune,geom_wkt' }, signal);
+  if (commune && commune[0].toLowerCase() === `${name} (miasto)`) return stripSrid(commune[1]);
+  const [region] = await uldkRows({ request: 'GetRegionByXY', xy, result: 'region,geom_wkt' }, signal);
+  if (region && region[0].toLowerCase().startsWith(name)) return stripSrid(region[1]);
+  return undefined;
 }

@@ -1,20 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
-import { Layers, LocateFixed, Search, X } from 'lucide-react';
+import { Building2, Home, Layers, LocateFixed, Route, Search, SquareDashed, X, type LucideIcon } from 'lucide-react';
 import { fromLonLat } from 'ol/proj';
-import { geocode, type GeocodeHit } from '@/services/geocoder';
+import { placeOutline, search, type HitKind, type SearchHit } from '@/services/geocoder';
 import { useMapStore } from '@/state/store';
 import { BrandMark, Wordmark } from './Brand';
 import { useWelcome } from './WelcomeDialog';
 
-const ADDRESS_ZOOM = 13;
+/** Closest zoom per hit kind on the GUGiK scale series (13 = 1:1890, 14 = 1:945, 15 = 1:472). */
+const ZOOM: Record<HitKind, number> = { address: 14, street: 14, place: 12, parcel: 15 };
+const ICON: Record<HitKind, LucideIcon> = { address: Home, street: Route, place: Building2, parcel: SquareDashed };
+const OUTLINE_TIMEOUT_MS = 2500;
 
 export function TopBar() {
   const [query, setQuery] = useState('');
-  const [hits, setHits] = useState<GeocodeHit[]>([]);
+  const [hits, setHits] = useState<SearchHit[]>([]);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const abort = useRef<AbortController | null>(null);
-  const flyTo = useMapStore((m) => m.flyTo);
+  const focusOn = useMapStore((m) => m.focusOn);
   const panel = useMapStore((m) => m.panel);
   const setPanel = useMapStore((m) => m.setPanel);
   const openWelcome = useWelcome((w) => w.setOpen);
@@ -31,7 +34,7 @@ export function TopBar() {
     const timer = window.setTimeout(async () => {
       setBusy(true);
       try {
-        setHits(await geocode(q, controller.signal));
+        setHits(await search(q, controller.signal));
         setOpen(true);
       } catch (e) {
         if (!(e instanceof DOMException && e.name === 'AbortError')) setHits([]);
@@ -42,17 +45,22 @@ export function TopBar() {
     return () => window.clearTimeout(timer);
   }, [query]);
 
-  const pick = (hit: GeocodeHit) => {
-    setQuery(hit.label);
+  const pick = async (hit: SearchHit) => {
+    setQuery(hit.detail && (hit.kind === 'address' || hit.kind === 'street') ? `${hit.label}, ${hit.detail}` : hit.label);
     setOpen(false);
-    flyTo(hit.center, ADDRESS_ZOOM);
+    let wkt = hit.wkt;
+    // Places come as points; their outline is looked up separately, without delaying the map for long.
+    if (hit.kind === 'place') {
+      wkt = await placeOutline(hit, AbortSignal.timeout(OUTLINE_TIMEOUT_MS)).catch(() => undefined);
+    }
+    focusOn({ wkt, center: hit.center, zoom: ZOOM[hit.kind] });
   };
 
   const locate = () => {
     navigator.geolocation?.getCurrentPosition(
       (pos) => {
         const c = fromLonLat([pos.coords.longitude, pos.coords.latitude], 'EPSG:2180');
-        flyTo([c[0], c[1]], ADDRESS_ZOOM);
+        focusOn({ center: [c[0], c[1]], zoom: ZOOM.address });
       },
       undefined,
       { enableHighAccuracy: true, timeout: 8000 },
@@ -83,11 +91,11 @@ export function TopBar() {
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => hits.length > 0 && setOpen(true)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && hits[0]) pick(hits[0]);
+              if (e.key === 'Enter' && hits[0]) void pick(hits[0]);
               if (e.key === 'Escape') setOpen(false);
             }}
             onBlur={() => window.setTimeout(() => setOpen(false), 150)}
-            placeholder="Adres, miejscowość…"
+            placeholder="Adres, miejscowość, działka…"
             aria-label="Szukaj"
             autoComplete="off"
             className="h-7 w-full bg-transparent text-base outline-none placeholder:text-[var(--muted)]"
@@ -100,18 +108,25 @@ export function TopBar() {
         </div>
         {open && (hits.length > 0 || busy) && (
           <ul className="absolute inset-x-0 mt-2 overflow-hidden rounded-2xl bg-[var(--surface)] py-1 shadow-lg ring-1 ring-black/5">
-            {hits.map((h) => (
-              <li key={`${h.center[0]},${h.center[1]}`}>
-                <button
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => pick(h)}
-                  className="w-full px-4 py-2 text-left text-sm hover:bg-[var(--hover)]"
-                >
-                  {h.label}
-                </button>
-              </li>
-            ))}
+            {hits.map((h, i) => {
+              const Icon = ICON[h.kind];
+              return (
+                <li key={`${i}-${h.label}-${h.detail ?? ''}`}>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => void pick(h)}
+                    className="flex w-full items-start gap-3 px-4 py-2 text-left hover:bg-[var(--hover)]"
+                  >
+                    <Icon className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" />
+                    <span className="min-w-0">
+                      <span className="block text-sm">{h.label}</span>
+                      {h.detail && <span className="block truncate text-xs text-[var(--muted)]">{h.detail}</span>}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
             {busy && hits.length === 0 && <li className="px-4 py-2 text-sm text-[var(--muted)]">Szukam…</li>}
           </ul>
         )}

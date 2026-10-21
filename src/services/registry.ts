@@ -43,6 +43,11 @@ export interface BaseMap extends ServiceBase {
   /** First level of the shared GUGiK series and number of levels published. */
   firstLevel: number;
   levels: number;
+  /**
+   * Some services publish empty tiles at small scales (BDOT10k draws nothing above 1:47 247).
+   * Above `scale`, the base map shows the `id` base instead, so it is never blank.
+   */
+  overview?: { id: string; scale: number };
 }
 
 /** Overlay: dynamic WMS rendered as one image per view. */
@@ -94,6 +99,7 @@ export const BASE_MAPS: BaseMap[] = [
     format: 'image/png',
     firstLevel: 2,
     levels: 13,
+    overview: { id: 'g2mobile', scale: 70000 },
   },
   {
     ...common,

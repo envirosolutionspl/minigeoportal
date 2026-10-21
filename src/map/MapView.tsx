@@ -8,6 +8,7 @@ import { createBaseLayer, createOverlayLayer, resolutionRange } from '@/services
 import { useStatusStore } from '@/services/status';
 import { hasInitialView, overlayOpacity, useMapStore } from '@/state/store';
 import { attachFeatureInfo } from './featureInfoClick';
+import { attachFocus } from './focus';
 
 export function MapView() {
   const container = useRef<HTMLDivElement>(null);
@@ -17,7 +18,16 @@ export function MapView() {
     if (!el) return;
 
     const { center, zoom, setView } = useMapStore.getState();
-    const bases = BASE_MAPS.map((def) => ({ def, layer: createBaseLayer(def) }));
+    // A base with an overview is two layers: the overview above its scale threshold, the base below it.
+    const bases = BASE_MAPS.flatMap((def) => {
+      if (!def.overview) return [{ def, layer: createBaseLayer(def) }];
+      const r = def.overview.scale * OGC_PIXEL;
+      const overview = BASE_MAPS.find((b) => b.id === def.overview!.id)!;
+      return [
+        { def, layer: createBaseLayer(overview, { minResolution: r }) },
+        { def, layer: createBaseLayer(def, { maxResolution: r }) },
+      ];
+    });
     const overlays = OVERLAYS.map((def) => ({ def, layer: createOverlayLayer(def) }));
 
     const view = new View({
@@ -63,7 +73,6 @@ export function MapView() {
       if (s.base !== prev.base || s.overlays !== prev.overlays || s.sublayers !== prev.sublayers || s.opacity !== prev.opacity) {
         applyState();
       }
-      if (s.fly && s.fly !== prev.fly) view.animate({ center: s.fly.center, zoom: s.fly.zoom, duration: 600 });
     });
 
     map.on('moveend', () => {
@@ -77,8 +86,10 @@ export function MapView() {
     map.once('rendercomplete', () => void useStatusStore.getState().probeAll());
 
     const detachFeatureInfo = attachFeatureInfo(map, overlays);
+    const detachFocus = attachFocus(map);
 
     return () => {
+      detachFocus();
       detachFeatureInfo();
       unsubscribeState();
       map.setTarget(undefined);

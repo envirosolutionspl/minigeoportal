@@ -4,8 +4,13 @@ import { readUrl, writeUrl } from './url';
 
 export type Panel = 'none' | 'catalog';
 
-export interface FlyTarget {
-  center: [number, number];
+/** Something the map should show: zoom to it and briefly outline it. */
+export interface FocusTarget {
+  /** EPSG:2180 WKT; the view fits its extent. */
+  wkt?: string;
+  /** Used when there is no geometry. */
+  center?: [number, number];
+  /** Zoom for points; the closest zoom when fitting a geometry. */
   zoom: number;
   /** Changes on every request so identical targets still trigger. */
   seq: number;
@@ -22,7 +27,7 @@ interface MapStore {
   sublayers: Record<string, string[]>;
   opacity: Record<string, number>;
   panel: Panel;
-  fly: FlyTarget | null;
+  focus: FocusTarget | null;
   /** Called by the map on moveend; keeps store and URL in sync. */
   setView(center: [number, number], zoom: number, scale: number): void;
   setBase(id: string): void;
@@ -31,7 +36,7 @@ interface MapStore {
   toggleSublayer(id: string, name: string): void;
   setOpacity(id: string, value: number): void;
   setPanel(panel: Panel): void;
-  flyTo(center: [number, number], zoom: number): void;
+  focusOn(target: Omit<FocusTarget, 'seq'>): void;
 }
 
 const DEFAULT_BASE = 'orto';
@@ -48,7 +53,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
   sublayers: initial.sublayers ?? {},
   opacity: {},
   panel: 'none',
-  fly: null,
+  focus: null,
 
   setView: (center, zoom, scale) => set({ center, zoom, scale }),
   setBase: (base) => set({ base }),
@@ -73,7 +78,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
     }),
   setOpacity: (id, value) => set((s) => ({ opacity: { ...s.opacity, [id]: value } })),
   setPanel: (panel) => set({ panel }),
-  flyTo: (center, zoom) => set({ fly: { center, zoom, seq: (get().fly?.seq ?? 0) + 1 } }),
+  focusOn: (target) => set({ focus: { ...target, seq: (get().focus?.seq ?? 0) + 1 } }),
 }));
 
 useMapStore.subscribe((s, prev) => {

@@ -26,7 +26,10 @@ function tileGrid(def: BaseMap): WMTSTileGrid {
   });
 }
 
-export function createBaseLayer(def: BaseMap): TileLayer<WMTS> {
+export function createBaseLayer(
+  def: BaseMap,
+  range: { minResolution?: number; maxResolution?: number } = {},
+): TileLayer<WMTS> {
   const source = new WMTS({
     url: def.url,
     layer: def.layer,
@@ -45,6 +48,7 @@ export function createBaseLayer(def: BaseMap): TileLayer<WMTS> {
   return new TileLayer({
     source,
     visible: false,
+    ...range,
     // Lower-resolution tiles stay ready, so zooming out never shows an empty map.
     preload: Infinity,
     zIndex: 0,

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { MapView } from './map/MapView';
 import { TopBar } from './ui/TopBar';
 import { LayerCatalog } from './ui/LayerCatalog';
@@ -7,14 +8,33 @@ import { MeasureBar } from './ui/MeasureBar';
 import { WelcomeDialog } from './ui/WelcomeDialog';
 import { ReportDialog } from './ui/ReportDialog';
 import { PrintDialog, PrintSheet } from './ui/Print';
+import { AccessibilityDialog } from './ui/AccessibilityDialog';
+import { useInfoStore } from './state/info';
 import { AuthorCredit } from './ui/Brand';
 import { useMapStore } from './state/store';
 
 export default function App() {
   const panel = useMapStore((m) => m.panel);
 
+  // Escape closes the place panel, then the layer list; open dialogs close themselves.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented || document.querySelector('dialog[open]')) return;
+      if (useMapStore.getState().tool !== 'none') return;
+      const info = useInfoStore.getState();
+      if (info.query) info.close();
+      else if (useMapStore.getState().panel !== 'none') useMapStore.getState().setPanel('none');
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   return (
     <div className="relative h-dvh w-full overflow-hidden">
+      <nav aria-label="Szybkie przejścia" className="skip-links">
+        <a href="#map">Przejdź do mapy</a>
+        <a href="#search">Przejdź do wyszukiwarki</a>
+      </nav>
       <MapView />
       <TopBar />
       <BasemapSwitcher />
@@ -35,6 +55,7 @@ export default function App() {
       <ReportDialog />
       <PrintDialog />
       <PrintSheet />
+      <AccessibilityDialog />
     </div>
   );
 }

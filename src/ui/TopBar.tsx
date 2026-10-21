@@ -18,6 +18,10 @@ export function TopBar() {
   const [hits, setHits] = useState<SearchHit[]>([]);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  /** Highlighted hit for arrow keys; -1 means none. */
+  const [active, setActive] = useState(-1);
+  /** What screen readers hear once a search finishes. */
+  const [announce, setAnnounce] = useState('');
   const [parcelOpen, setParcelOpen] = useState(false);
   const abort = useRef<AbortController | null>(null);
   const focusOn = useMapStore((m) => m.focusOn);
@@ -34,6 +38,7 @@ export function TopBar() {
     const q = query.trim();
     if (q.length < 3) {
       setHits([]);
+      setAnnounce('');
       return;
     }
     const controller = new AbortController();
@@ -41,7 +46,10 @@ export function TopBar() {
     const timer = window.setTimeout(async () => {
       setBusy(true);
       try {
-        setHits(await search(q, controller.signal));
+        const found = await search(q, controller.signal);
+        setHits(found);
+        setActive(-1);
+        setAnnounce(found.length ? `Wyników: ${found.length}. Strzałki w dół i w górę wybierają, Enter pokazuje na mapie.` : 'Brak wyników.');
         setOpen(true);
       } catch (e) {
         if (!(e instanceof DOMException && e.name === 'AbortError')) setHits([]);
@@ -51,6 +59,8 @@ export function TopBar() {
     }, 300);
     return () => window.clearTimeout(timer);
   }, [query]);
+
+  const listOpen = !parcelOpen && open && (hits.length > 0 || busy);
 
   const pick = async (hit: SearchHit) => {
     setQuery(hit.detail && (hit.kind === 'address' || hit.kind === 'street') ? `${hit.label}, ${hit.detail}` : hit.label);
@@ -91,7 +101,7 @@ export function TopBar() {
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start gap-2 p-3 sm:p-4">
       <div className="pointer-events-auto relative w-full max-w-lg">
-        <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface)] py-1.5 pr-3 pl-1.5 shadow-lg ring-1 ring-black/5">
+        <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface)] py-1.5 pr-3 pl-1.5 shadow-lg ring-1 ring-black/5 has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-[var(--accent)]">
           <button
             type="button"
             onClick={goHome}
@@ -105,21 +115,37 @@ export function TopBar() {
             </span>
           </button>
           <span className="h-6 w-px shrink-0 bg-[var(--hover)]" aria-hidden="true" />
-          <Search className="h-5 w-5 shrink-0 text-[var(--muted)]" />
+          <Search className="h-5 w-5 shrink-0 text-[var(--muted)]" aria-hidden="true" />
           <input
+            id="search"
             type="search"
+            role="combobox"
+            aria-expanded={listOpen}
+            aria-controls="search-results"
+            aria-autocomplete="list"
+            aria-activedescendant={listOpen && active >= 0 ? `search-hit-${active}` : undefined}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => hits.length > 0 && setOpen(true)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && hits[0]) void pick(hits[0]);
-              if (e.key === 'Escape') setOpen(false);
+              if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                if (hits.length === 0) return;
+                e.preventDefault();
+                setOpen(true);
+                const step = e.key === 'ArrowDown' ? 1 : -1;
+                setActive((i) => (i + step + hits.length) % hits.length);
+              }
+              if (e.key === 'Enter' && hits.length > 0) void pick(hits[Math.max(active, 0)]);
+              if (e.key === 'Escape' && listOpen) {
+                e.stopPropagation();
+                setOpen(false);
+              }
             }}
             onBlur={() => window.setTimeout(() => setOpen(false), 150)}
             placeholder="Adres, miejscowość, działka…"
-            aria-label="Szukaj"
+            aria-label="Szukaj adresu, miejscowości lub działki"
             autoComplete="off"
-            className="h-7 w-full bg-transparent text-base outline-none placeholder:text-[var(--muted)]"
+            className="h-8 w-full bg-transparent text-base outline-none placeholder:text-[var(--muted)]"
           />
           {query && (
             <button type="button" onClick={clear} aria-label="Wyczyść" className="rounded-full p-1 hover:bg-[var(--hover)]">
@@ -140,30 +166,42 @@ export function TopBar() {
           </button>
         </div>
         {parcelOpen && <ParcelSearch onClose={() => setParcelOpen(false)} />}
-        {!parcelOpen && open && (hits.length > 0 || busy) && (
-          <ul className="absolute inset-x-0 mt-2 overflow-hidden rounded-2xl bg-[var(--surface)] py-1 shadow-lg ring-1 ring-black/5">
-            {hits.map((h, i) => {
-              const Icon = ICON[h.kind];
-              return (
-                <li key={`${i}-${h.label}-${h.detail ?? ''}`}>
-                  <button
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => void pick(h)}
-                    className="flex w-full items-start gap-3 px-4 py-2 text-left hover:bg-[var(--hover)]"
-                  >
-                    <Icon className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" />
-                    <span className="min-w-0">
-                      <span className="block text-sm">{h.label}</span>
-                      {h.detail && <span className="block truncate text-xs text-[var(--muted)]">{h.detail}</span>}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-            {busy && hits.length === 0 && <li className="px-4 py-2 text-sm text-[var(--muted)]">Szukam…</li>}
-          </ul>
-        )}
+        <ul
+          id="search-results"
+          role="listbox"
+          aria-label="Wyniki wyszukiwania"
+          hidden={!listOpen}
+          className="absolute inset-x-0 mt-2 overflow-hidden rounded-2xl bg-[var(--surface)] py-1 shadow-lg ring-1 ring-black/5"
+        >
+          {hits.map((h, i) => {
+            const Icon = ICON[h.kind];
+            return (
+              <li
+                key={`${i}-${h.label}-${h.detail ?? ''}`}
+                id={`search-hit-${i}`}
+                role="option"
+                aria-selected={i === active}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => void pick(h)}
+                className={`flex cursor-pointer items-start gap-3 px-4 py-2 hover:bg-[var(--hover)] ${i === active ? 'bg-[var(--hover)]' : ''}`}
+              >
+                <Icon className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" aria-hidden="true" />
+                <span className="min-w-0">
+                  <span className="block text-sm">{h.label}</span>
+                  {h.detail && <span className="block truncate text-xs text-[var(--muted)]">{h.detail}</span>}
+                </span>
+              </li>
+            );
+          })}
+          {busy && hits.length === 0 && (
+            <li role="presentation" className="px-4 py-2 text-sm text-[var(--muted)]">
+              Szukam…
+            </li>
+          )}
+        </ul>
+        <p role="status" className="sr-only">
+          {parcelOpen ? '' : announce}
+        </p>
       </div>
 
       {/* On phones the buttons form a column under the search bar, leaving it the full width. */}

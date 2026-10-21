@@ -184,14 +184,17 @@ export function ParcelSearch({ onClose }: { onClose(): void }) {
         </button>
       </form>
 
-      {status === 'none' && (
-        <p className="mt-3 text-sm text-[var(--muted)]">
-          Nie znaleziono działki {choice.number} w obrębie {precinct?.name}. Sprawdź numer, także zapis z ukośnikiem.
-        </p>
-      )}
-      {status === 'error' && (
-        <p className="mt-3 text-sm text-[var(--muted)]">Usługa działek GUGiK nie odpowiada. Spróbuj ponownie za chwilę.</p>
-      )}
+      <div role="status">
+        {status === 'none' && (
+          <p className="mt-3 text-sm text-[var(--muted)]">
+            Nie znaleziono działki {choice.number} w obrębie {precinct?.name}. Sprawdź numer, także zapis z ukośnikiem.
+          </p>
+        )}
+        {status === 'error' && (
+          <p className="mt-3 text-sm text-[var(--muted)]">Usługa działek GUGiK nie odpowiada. Spróbuj ponownie za chwilę.</p>
+        )}
+        {hits.length > 1 && <p className="sr-only">Znaleziono {hits.length} działki o tym numerze. Wybierz jedną.</p>}
+      </div>
       {hits.length > 1 && (
         <ul className="mt-3 flex flex-col gap-1">
           {hits.map((h) => (

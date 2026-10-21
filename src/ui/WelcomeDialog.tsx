@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { create } from 'zustand';
 import { APP_DOMAIN, APP_NAME, AUTHOR_URL, AuthorLogo, BrandMark } from './Brand';
 import { useReport } from './ReportDialog';
+import { useAccessibility } from './AccessibilityDialog';
 
 const STORAGE_KEY = 'prostygeoportal.welcome.v1';
 
@@ -50,6 +51,11 @@ export function WelcomeDialog() {
   const report = () => {
     close();
     useReport.getState().openReport();
+  };
+
+  const accessibility = () => {
+    close();
+    useAccessibility.getState().setOpen(true);
   };
 
   return (
@@ -123,9 +129,12 @@ export function WelcomeDialog() {
           </button>
         </footer>
 
-        <p className="mt-4 text-center text-sm">
-          <button type="button" onClick={report} className="text-[var(--accent)] underline underline-offset-2">
+        <p className="mt-4 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
+          <button type="button" onClick={report} className="min-h-6 text-[var(--accent)] underline underline-offset-2">
             Zgłoś błąd w serwisie
+          </button>
+          <button type="button" onClick={accessibility} className="min-h-6 text-[var(--accent)] underline underline-offset-2">
+            Deklaracja dostępności
           </button>
         </p>
 

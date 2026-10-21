@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import Map from 'ol/Map';
 import View from 'ol/View';
 import { defaults as defaultControls, MousePosition, ScaleLine, ZoomToExtent } from 'ol/control';
+import { defaults as defaultInteractions } from 'ol/interaction/defaults';
+import { duration } from './motion';
 import { EPSG2180, GUGIK_RESOLUTIONS, OGC_PIXEL, POLAND_EXTENT } from './projection';
 import { BASE_MAPS, OVERLAYS, TILE_SERVICE_BY_ID, selectedSublayers } from '@/services/registry';
 import { createOverlayLayer, createTileLayer, resolutionRange } from '@/services/layers';
@@ -47,7 +49,12 @@ export function MapView() {
       target: el,
       layers: [...bases.map((b) => b.layer), ...overlays.map((o) => o.layer)],
       view,
-      controls: defaultControls({ attributionOptions: { collapsible: false }, rotate: false }).extend([
+      interactions: defaultInteractions({ zoomDuration: duration(250) }),
+      controls: defaultControls({
+        attributionOptions: { collapsible: false },
+        rotate: false,
+        zoomOptions: { duration: duration(250), zoomInTipLabel: 'Przybliż', zoomOutTipLabel: 'Oddal' },
+      }).extend([
         new ScaleLine({ units: 'metric' }),
         new ZoomToExtent({ extent: POLAND_EXTENT, label: wholeCountryIcon(), tipLabel: 'Cała Polska' }),
         // Shown only with a mouse (CSS hides it on touch screens), without live announcements.
@@ -104,7 +111,23 @@ export function MapView() {
     };
   }, []);
 
-  return <div ref={container} className="absolute inset-0 bg-[var(--map-bg)]" />;
+  // Focusable so OpenLayers' keyboard pan and zoom work; Enter asks about the centre.
+  return (
+    <>
+      <div
+        ref={container}
+        id="map"
+        tabIndex={0}
+        role="region"
+        aria-label="Mapa"
+        aria-describedby="map-keys"
+        className="absolute inset-0 bg-[var(--map-bg)]"
+      />
+      <p id="map-keys" className="sr-only">
+        Strzałki przesuwają mapę, plus i minus zmieniają skalę, Enter pokazuje informacje o miejscu w środku mapy.
+      </p>
+    </>
+  );
 }
 
 /** Label of the "whole country" control: a frame around a map (Lucide icon shapes). */

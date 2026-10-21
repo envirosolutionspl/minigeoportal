@@ -16,7 +16,10 @@ const MARKER = new Style({
   image: new Circle({ radius: 7, fill: new Fill({ color: '#FF8142' }), stroke: new Stroke({ color: '#ffffff', width: 2.5 }) }),
 });
 
-/** Map click queries every active overlay at that point and marks the spot. */
+/**
+ * Map click queries every active overlay at that point and marks the spot. With the keyboard,
+ * Enter on the focused map asks about the map centre (marked by a crosshair while focused).
+ */
 export function attachFeatureInfo(map: Map, overlays: { def: Overlay; layer: ImageLayer<ImageWMS> }[]): () => void {
   const marker = new Feature<Point>();
   marker.setStyle(MARKER);
@@ -66,6 +69,20 @@ export function attachFeatureInfo(map: Map, overlays: { def: Overlay; layer: Ima
   };
 
   map.on('singleclick', onClick);
+  const target = map.getTargetElement();
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key !== 'Enter' || e.target !== target) return;
+    e.preventDefault();
+    const view = map.getView();
+    // After a keyboard pan the map is still moving: ask about where it stops.
+    const ask = () => {
+      const center = view.getCenter();
+      if (center) onClick({ coordinate: center });
+    };
+    if (view.getAnimating()) map.once('moveend', ask);
+    else ask();
+  };
+  target?.addEventListener('keydown', onKey);
   const unsubscribe = useInfoStore.subscribe((s) => {
     if (!s.query) {
       controller?.abort();
@@ -75,6 +92,7 @@ export function attachFeatureInfo(map: Map, overlays: { def: Overlay; layer: Ima
 
   return () => {
     map.un('singleclick', onClick);
+    target?.removeEventListener('keydown', onKey);
     unsubscribe();
     controller?.abort();
   };

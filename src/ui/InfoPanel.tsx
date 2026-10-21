@@ -14,6 +14,7 @@ export function InfoPanel() {
   if (!query) return null;
 
   const [e, n] = query.coordinate;
+  const loading = query.services.some((id) => query.results[id]?.status === 'loading');
 
   return (
     <section
@@ -45,6 +46,9 @@ export function InfoPanel() {
         </button>
       </header>
 
+      <p role="status" className="sr-only">
+        {loading ? 'Wczytuję informacje o miejscu…' : 'Informacje o miejscu są gotowe.'}
+      </p>
       <div className="flex-1 overflow-y-auto px-4 py-3">
         {query.services.length === 0 ? (
           <div className="py-4 text-sm">

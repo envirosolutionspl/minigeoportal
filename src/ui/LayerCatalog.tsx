@@ -140,6 +140,7 @@ function StatusDot({ status }: { status: ServiceStatus }) {
     <span
       className={`inline-block h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[status]}`}
       title={STATUS_LABEL[status]}
+      role="img"
       aria-label={STATUS_LABEL[status]}
     />
   );
@@ -213,7 +214,7 @@ function OverlayItem({ s, hits }: { s: Overlay; hits: string[] }) {
           value={opacity}
           aria-label={`Przezroczystość: ${s.title}`}
           onChange={(e) => setOpacity(s.id, Number(e.target.value))}
-          className="mt-2 ml-7 h-1 w-[calc(100%-1.75rem)] accent-[var(--accent)]"
+          className="mt-1 ml-7 h-6 w-[calc(100%-1.75rem)] cursor-pointer accent-[var(--accent)]"
         />
       )}
     </div>

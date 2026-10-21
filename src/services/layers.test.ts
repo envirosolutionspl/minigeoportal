@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type WMTSTileGrid from 'ol/tilegrid/WMTS';
 import { GUGIK_RESOLUTIONS, OGC_PIXEL } from '@/map/projection';
-import { OVERLAY_BY_ID, TILE_SERVICE_BY_ID } from './registry';
-import { createOverlayLayer, createTileLayer, resolutionRange } from './layers';
+import { OVERLAYS, OVERLAY_BY_ID, TILE_SERVICE_BY_ID } from './registry';
+import { DRAW_ORDER, createOverlayLayer, createTileLayer, resolutionRange } from './layers';
 import { withCapabilities } from '@/test/helpers';
 
 describe('createTileLayer', () => {
@@ -28,13 +28,25 @@ describe('createTileLayer', () => {
 });
 
 describe('createOverlayLayer', () => {
-  it('asks for one transparent PNG per view in EPSG:2180, in registry order', () => {
+  it('asks for one transparent PNG per view in EPSG:2180', () => {
     const kieg = createOverlayLayer(OVERLAY_BY_ID.get('kieg')!);
-    const kiut = createOverlayLayer(OVERLAY_BY_ID.get('kiut')!);
     expect(kieg.getSource()!.getParams()).toMatchObject({ FORMAT: 'image/png', TRANSPARENT: true, VERSION: '1.3.0' });
     expect(kieg.getOpacity()).toBe(1);
     expect(createOverlayLayer(OVERLAY_BY_ID.get('kimpzp')!).getOpacity()).toBe(0.8);
-    expect(kiut.getZIndex()!).toBeGreaterThan(kieg.getZIndex()!);
+  });
+});
+
+describe('drawing order', () => {
+  it('follows geoportal.gov.pl: plans lowest, then networks, parcels over them, prices on top', () => {
+    const z = (id: string) => createOverlayLayer(OVERLAY_BY_ID.get(id)!).getZIndex()!;
+    expect(z('kimpzp')).toBeLessThan(z('pog'));
+    expect(z('pog')).toBeLessThan(z('kiut'));
+    expect(z('kiut')).toBeLessThan(z('kieg'));
+    expect(z('kieg')).toBeLessThan(z('rcn'));
+  });
+
+  it('lists every overlay of the registry once', () => {
+    expect([...DRAW_ORDER].sort()).toEqual(OVERLAYS.map((o) => o.id).sort());
   });
 });
 

@@ -4,7 +4,7 @@ import WMTS from 'ol/source/WMTS';
 import ImageWMS from 'ol/source/ImageWMS';
 import WMTSTileGrid from 'ol/tilegrid/WMTS';
 import { EPSG2180, OGC_PIXEL, gugikWmtsGrid } from '@/map/projection';
-import { GUGIK_ATTRIBUTION, OVERLAYS, type Overlay, type TileService } from './registry';
+import { GUGIK_ATTRIBUTION, type Overlay, type TileService } from './registry';
 import { layerMeta, wmtsMeta } from './meta';
 import { useStatusStore } from './status';
 
@@ -57,6 +57,20 @@ export function createTileLayer(
 }
 
 /**
+ * Drawing order of overlays, lowest first, as in the national geoportal (geoportal.gov.pl):
+ * plans at the bottom (local plans under the general ones), utility networks over them, land
+ * register parcels and buildings over both, transaction prices on top. The catalog keeps its
+ * own order; this one only decides what covers what.
+ */
+export const DRAW_ORDER = ['kimpzp', 'pog', 'kiut', 'kieg', 'rcn'];
+
+/** Overlays missing from the list are drawn above the listed ones. */
+export const drawIndex = (id: string) => {
+  const i = DRAW_ORDER.indexOf(id);
+  return i < 0 ? DRAW_ORDER.length : i;
+};
+
+/**
  * Dynamic WMS as one image per view: GUGiK integration services render on demand,
  * and a single 1920x1080 image arrives faster than the ~12 tiles covering the same area.
  *
@@ -79,8 +93,7 @@ export function createOverlayLayer(def: Overlay): ImageLayer<ImageWMS> {
     source,
     visible: false,
     opacity: def.opacity ?? 1,
-    // Registry order is drawing order: the first overlay is drawn lowest.
-    zIndex: 10 + OVERLAYS.indexOf(def),
+    zIndex: 10 + drawIndex(def.id),
   });
 }
 

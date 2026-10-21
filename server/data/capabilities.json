@@ -1,0 +1,760 @@
+{
+ "generatedAt": "2026-10-21T11:50:22.344Z",
+ "services": {
+  "kieg": {
+   "kind": "wms",
+   "fetchedAt": "2026-10-21T11:50:22.115Z",
+   "title": "Krajowa Integracja Ewidencji Gruntów",
+   "infoFormats": [
+    "text/xml",
+    "text/html"
+   ],
+   "layers": {
+    "powiaty": {
+     "title": "Powiaty włączone do usługi",
+     "queryable": false,
+     "minScale": 50000,
+     "maxScale": 5000000,
+     "legend": "https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow?language=pol&version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=powiaty&format=image/png&STYLE=default"
+    },
+    "powiaty_obreby": {
+     "title": "Powiaty włączone do usługi - obręby kompletne",
+     "queryable": false,
+     "minScale": 25000,
+     "maxScale": 5000000,
+     "legend": "https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow?language=pol&version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=powiaty_obreby&format=image/png&STYLE=default"
+    },
+    "powiaty_uzytki": {
+     "title": "Powiaty z warstwami użytków gruntowych",
+     "queryable": false,
+     "minScale": 50000,
+     "maxScale": 5000000,
+     "legend": "https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow?language=pol&version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=powiaty_uzytki&format=image/png&STYLE=default"
+    },
+    "ekw": {
+     "title": "Komunikacja systemu EGiB z EKW",
+     "queryable": false,
+     "minScale": 50000,
+     "maxScale": 5000000,
+     "legend": "https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow?language=pol&version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=ekw&format=image/png&STYLE=default"
+    },
+    "regon": {
+     "title": "Komunikacja systemu EGiB z REGON",
+     "queryable": false,
+     "minScale": 50000,
+     "maxScale": 5000000,
+     "legend": "https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow?language=pol&version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=regon&format=image/png&STYLE=default"
+    },
+    "pesel": {
+     "title": "Komunikacja systemu EGiB z PESEL",
+     "queryable": false,
+     "minScale": 50000,
+     "maxScale": 5000000,
+     "legend": "https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow?language=pol&version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=pesel&format=image/png&STYLE=default"
+    },
+    "zsin": {
+     "title": "Zasilenia ZSIN",
+     "queryable": false,
+     "minScale": 50000,
+     "maxScale": 5000000,
+     "legend": "https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow?language=pol&version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=powiaty&format=image/png&STYLE=default"
+    },
+    "obreby": {
+     "title": "Granice obrębów",
+     "queryable": true,
+     "minScale": 10000,
+     "maxScale": 25000,
+     "legend": "https://integracja.gugik.gov.pl/ikonki/kieg/obr.png"
+    },
+    "dzialki": {
+     "title": "Działki ewidencyjne z powiatów",
+     "queryable": true,
+     "maxScale": 10000,
+     "legend": "https://integracja.gugik.gov.pl/ikonki/kieg/dz-n.png"
+    },
+    "geoportal": {
+     "title": "Działki - uzupełnienie z LPIS",
+     "queryable": true,
+     "maxScale": 2500,
+     "legend": "https://integracja.gugik.gov.pl/ikonki/kieg/dz-cz.png"
+    },
+    "numery_dzialek": {
+     "title": "Numery działek",
+     "queryable": false,
+     "maxScale": 1500,
+     "legend": "https://integracja.gugik.gov.pl/ikonki/kieg/numery_dzialek.png"
+    },
+    "budynki": {
+     "title": "Budynki",
+     "queryable": false,
+     "maxScale": 2500,
+     "legend": "https://integracja.gugik.gov.pl/ikonki/kieg/bud.png"
+    },
+    "kontury": {
+     "title": "Kontury klasyfikacyjne",
+     "queryable": true,
+     "maxScale": 10000,
+     "legend": "https://integracja.gugik.gov.pl/ikonki/kieg/ko.png"
+    },
+    "uzytki": {
+     "title": "Użytki gruntowe",
+     "queryable": true,
+     "maxScale": 10000,
+     "legend": "https://integracja.gugik.gov.pl/ikonki/kieg/uz.png"
+    }
+   }
+  },
+  "kimpzp": {
+   "kind": "wms",
+   "fetchedAt": "2026-10-21T11:50:22.134Z",
+   "title": "Krajowa Integracja Miejscowych Planów Zagospodarowania Przestrzennego",
+   "infoFormats": [
+    "text/html",
+    "application/vnd.ogc.gml",
+    "text/plain"
+   ],
+   "layers": {
+    "plany": {
+     "title": "Mapa włączonych jednostek",
+     "queryable": false,
+     "minScale": 50000,
+     "maxScale": 5000000,
+     "legend": "https://integracja.gugik.gov.pl/ikonki/mpzp/mpzp_wdroz.png"
+    },
+    "plany_granice": {
+     "title": "Granice planów zgłoszonych do rejestru MPZP",
+     "queryable": true,
+     "maxScale": 50000,
+     "legend": "https://integracja.gugik.gov.pl/wss/ext/KrajowaIntegracjaMiejscowychPlanowZagospodarowaniaPrzestrzennego?language=pol&version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=plany_granice&format=image/png&STYLE=default"
+    },
+    "raster": {
+     "title": "Plany rastrowe",
+     "queryable": false,
+     "maxScale": 10000,
+     "legend": "https://opendata.geoportal.gov.pl/Geoportal/ikony/mpzp/mpzp-ras.png"
+    },
+    "wektor-str": {
+     "title": "Plany wektorowe-Strefy",
+     "queryable": true,
+     "maxScale": 10000,
+     "legend": "https://opendata.geoportal.gov.pl/Geoportal/ikony/mpzp/mpzp-str.png"
+    },
+    "wektor-lzb": {
+     "title": "Plany wektorowe-Linie zabudowy",
+     "queryable": false,
+     "maxScale": 5000,
+     "legend": "https://opendata.geoportal.gov.pl/Geoportal/ikony/mpzp/mpzp-lzb.png"
+    },
+    "wektor-pow": {
+     "title": "Plany wektorowe-Obiekty powierzchniowe",
+     "queryable": false,
+     "maxScale": 5000,
+     "legend": "https://opendata.geoportal.gov.pl/Geoportal/ikony/mpzp/mpzp-pow.png"
+    },
+    "wektor-lin": {
+     "title": "Plany wektorowe-Obiekty liniowe",
+     "queryable": false,
+     "maxScale": 5000,
+     "legend": "https://opendata.geoportal.gov.pl/Geoportal/ikony/mpzp/mpzp-lin.png"
+    },
+    "wektor-pkt": {
+     "title": "Plany wektorowe-Obiekty punktowe",
+     "queryable": false,
+     "maxScale": 5000,
+     "legend": "https://opendata.geoportal.gov.pl/Geoportal/ikony/mpzp/mpzp-pkt.png"
+    },
+    "granice": {
+     "title": "Granice planów",
+     "queryable": false,
+     "minScale": 10000,
+     "maxScale": 50000,
+     "legend": "https://opendata.geoportal.gov.pl/Geoportal/ikony/mpzp/mpzp-gra.png"
+    }
+   }
+  },
+  "pog": {
+   "kind": "wms",
+   "fetchedAt": "2026-10-21T11:50:22.255Z",
+   "title": "Plany ogólne gmin - uchwalone",
+   "infoFormats": [
+    "text/html",
+    "text/xml",
+    "application/vnd.ogc.gml",
+    "text/plain"
+   ],
+   "layers": {
+    "strefaPlanistyczna": {
+     "title": "POG - Strefa Planistyczna",
+     "queryable": true,
+     "maxScale": 100001,
+     "legend": "https://mapy.geoportal.gov.pl/wss/ext/PlanyOgolneGmin?version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=strefaPlanistyczna&format=image/png&STYLE=default"
+    },
+    "obszarUzupelnieniaZabudowy": {
+     "title": "POG - Obszar Uzupełnienia Zabudowy",
+     "queryable": true,
+     "maxScale": 100001,
+     "legend": "https://mapy.geoportal.gov.pl/wss/ext/PlanyOgolneGmin?version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=obszarUzupelnieniaZabudowy&format=image/png&STYLE=default"
+    },
+    "obszarZabSrodmiejskiej": {
+     "title": "POG - Obszar Zabudowy Śródmiejskiej",
+     "queryable": true,
+     "maxScale": 100001,
+     "legend": "https://mapy.geoportal.gov.pl/wss/ext/PlanyOgolneGmin?version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=obszarZabSrodmiejskiej&format=image/png&STYLE=default"
+    },
+    "aktPlanowaniaprzestrzennego": {
+     "title": "POG - Akt Planowania Przestrzennego",
+     "queryable": true,
+     "maxScale": 8000000,
+     "legend": "https://mapy.geoportal.gov.pl/wss/ext/PlanyOgolneGmin?version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=aktPlanowaniaprzestrzennego&format=image/png&STYLE=default"
+    }
+   }
+  },
+  "rcn": {
+   "kind": "wms",
+   "fetchedAt": "2026-10-21T11:50:22.344Z",
+   "title": "Rejestr Cen Nieruchomości",
+   "infoFormats": [
+    "text/xml",
+    "text/html",
+    "application/vnd.ogc.gml",
+    "text/plain"
+   ],
+   "layers": {
+    "lokale": {
+     "title": "Lokale",
+     "queryable": true,
+     "maxScale": 2000,
+     "legend": "https://mapy.geoportal.gov.pl/wss/service/rcn?language=pol&version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=lokale&format=image/png&STYLE=default"
+    },
+    "budynki": {
+     "title": "Budynki",
+     "queryable": true,
+     "maxScale": 2000,
+     "legend": "https://mapy.geoportal.gov.pl/wss/service/rcn?language=pol&version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=budynki&format=image/png&STYLE=default"
+    },
+    "dzialki": {
+     "title": "Działki",
+     "queryable": true,
+     "maxScale": 5001,
+     "legend": "https://mapy.geoportal.gov.pl/wss/service/rcn?language=pol&version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=dzialki&format=image/png&STYLE=default"
+    },
+    "powiaty": {
+     "title": "powiaty",
+     "queryable": true,
+     "minScale": 5001,
+     "legend": "https://mapy.geoportal.gov.pl/wss/service/rcn?language=pol&version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=powiaty&format=image/png&STYLE=default"
+    }
+   }
+  },
+  "kiut": {
+   "kind": "wms",
+   "fetchedAt": "2026-10-21T11:50:22.131Z",
+   "title": "Krajowa Integracja Uzbrojenia Terenu",
+   "infoFormats": [
+    "text/xml",
+    "text/html"
+   ],
+   "layers": {
+    "gesut": {
+     "title": "Powiaty włączone do usługi",
+     "queryable": true,
+     "minScale": 50000,
+     "legend": "https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaUzbrojeniaTerenu?version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=gesut&format=image/png&STYLE=default"
+    },
+    "kgesut": {
+     "title": "Jednostki włączone do KGESUT",
+     "queryable": true,
+     "minScale": 50000,
+     "maxScale": 5000000,
+     "legend": "https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaUzbrojeniaTerenu?version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=kgesut&format=image/png&STYLE=default"
+    },
+    "kgesut_dane": {
+     "title": "Dane KGESUT",
+     "queryable": true,
+     "maxScale": 2000,
+     "legend": "https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaUzbrojeniaTerenu?version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=kgesut&format=image/png&STYLE=default"
+    },
+    "przewod_urzadzenia": {
+     "title": "Urządzenia",
+     "queryable": true,
+     "maxScale": 1000,
+     "legend": "https://integracja.gugik.gov.pl/ikonki/kiut/u.png"
+    },
+    "przewod_niezidentyfikowany": {
+     "title": "Sieci niezidentyfikowane",
+     "queryable": true,
+     "maxScale": 1000,
+     "legend": "https://integracja.gugik.gov.pl/ikonki/kiut/ui.png"
+    },
+    "przewod_specjalny": {
+     "title": "Sieć specjalna",
+     "queryable": true,
+     "maxScale": 1000,
+     "legend": "https://integracja.gugik.gov.pl/ikonki/kiut/ui.png"
+    },
+    "przewod_telekomunikacyjny": {
+     "title": "Sieć telekomunikacyjna",
+     "queryable": true,
+     "maxScale": 1000,
+     "legend": "https://integracja.gugik.gov.pl/ikonki/kiut/ut.png"
+    },
+    "przewod_cieplowniczy": {
+     "title": "Sieć ciepłownicza",
+     "queryable": true,
+     "maxScale": 1000,
+     "legend": "https://integracja.gugik.gov.pl/ikonki/kiut/uc.png"
+    },
+    "przewod_gazowy": {
+     "title": "Sieć gazowa",
+     "queryable": true,
+     "maxScale": 1000,
+     "legend": "https://integracja.gugik.gov.pl/ikonki/kiut/ug.png"
+    },
+    "przewod_elektroenergetyczny": {
+     "title": "Sieć elektroenergetyczna",
+     "queryable": true,
+     "maxScale": 1000,
+     "legend": "https://integracja.gugik.gov.pl/ikonki/kiut/ue.png"
+    },
+    "przewod_kanalizacyjny": {
+     "title": "Sieć kanalizacyjna",
+     "queryable": true,
+     "maxScale": 1000,
+     "legend": "https://integracja.gugik.gov.pl/ikonki/kiut/uk.png"
+    },
+    "przewod_wodociagowy": {
+     "title": "Sieć wodociągowa",
+     "queryable": true,
+     "maxScale": 1000,
+     "legend": "https://integracja.gugik.gov.pl/ikonki/kiut/uw.png"
+    }
+   }
+  },
+  "orto": {
+   "kind": "wmts",
+   "fetchedAt": "2026-10-21T11:50:22.167Z",
+   "title": "Usługa przeglądania ortofotomap dla obszaru Polski. Profil kafelkowany (WMTS)",
+   "formats": [
+    "image/jpeg"
+   ],
+   "matrixSet": {
+    "id": "EPSG:2180",
+    "origin": [
+     100000,
+     850000
+    ],
+    "tileSize": 512,
+    "matrices": [
+     {
+      "id": "EPSG:2180:0",
+      "scale": 30238155.714285716,
+      "width": 1,
+      "height": 1
+     },
+     {
+      "id": "EPSG:2180:1",
+      "scale": 15119077.857142858,
+      "width": 1,
+      "height": 1
+     },
+     {
+      "id": "EPSG:2180:2",
+      "scale": 7559538.928571429,
+      "width": 1,
+      "height": 1
+     },
+     {
+      "id": "EPSG:2180:3",
+      "scale": 3779769.4642857146,
+      "width": 2,
+      "height": 2
+     },
+     {
+      "id": "EPSG:2180:4",
+      "scale": 1889884.7321428573,
+      "width": 3,
+      "height": 3
+     },
+     {
+      "id": "EPSG:2180:5",
+      "scale": 944942.3660714286,
+      "width": 6,
+      "height": 6
+     },
+     {
+      "id": "EPSG:2180:6",
+      "scale": 472471.1830357143,
+      "width": 12,
+      "height": 11
+     },
+     {
+      "id": "EPSG:2180:7",
+      "scale": 236235.59151785716,
+      "width": 23,
+      "height": 22
+     },
+     {
+      "id": "EPSG:2180:8",
+      "scale": 94494.23660714286,
+      "width": 57,
+      "height": 54
+     },
+     {
+      "id": "EPSG:2180:9",
+      "scale": 47247.11830357143,
+      "width": 114,
+      "height": 107
+     },
+     {
+      "id": "EPSG:2180:10",
+      "scale": 23623.559151785714,
+      "width": 227,
+      "height": 214
+     },
+     {
+      "id": "EPSG:2180:11",
+      "scale": 9449.423660714287,
+      "width": 567,
+      "height": 533
+     },
+     {
+      "id": "EPSG:2180:12",
+      "scale": 4724.711830357143,
+      "width": 1133,
+      "height": 1066
+     },
+     {
+      "id": "EPSG:2180:13",
+      "scale": 1889.8847321428573,
+      "width": 2831,
+      "height": 2664
+     },
+     {
+      "id": "EPSG:2180:14",
+      "scale": 944.9423660714286,
+      "width": 5662,
+      "height": 5328
+     },
+     {
+      "id": "EPSG:2180:15",
+      "scale": 472.4711830357143,
+      "width": 11323,
+      "height": 10656
+     },
+     {
+      "id": "EPSG:2180:16",
+      "scale": 236.23559151785716,
+      "width": 22645,
+      "height": 21312
+     }
+    ]
+   }
+  },
+  "bdot10k": {
+   "kind": "wmts",
+   "fetchedAt": "2026-10-21T11:50:22.176Z",
+   "title": "Usługa przeglądania danych Bazy Danych Obiektów Topograficznych BDOT10k. Profil kafelkowany (WMTS)",
+   "formats": [
+    "image/png"
+   ],
+   "matrixSet": {
+    "id": "EPSG:2180",
+    "origin": [
+     100000,
+     850000
+    ],
+    "tileSize": 512,
+    "matrices": [
+     {
+      "id": "EPSG:2180:0",
+      "scale": 7559538.928571429,
+      "width": 6,
+      "height": 15
+     },
+     {
+      "id": "EPSG:2180:1",
+      "scale": 3779769.4642857146,
+      "width": 12,
+      "height": 30
+     },
+     {
+      "id": "EPSG:2180:2",
+      "scale": 1889884.7321428573,
+      "width": 23,
+      "height": 60
+     },
+     {
+      "id": "EPSG:2180:3",
+      "scale": 944942.3660714286,
+      "width": 45,
+      "height": 120
+     },
+     {
+      "id": "EPSG:2180:4",
+      "scale": 472471.1830357143,
+      "width": 89,
+      "height": 239
+     },
+     {
+      "id": "EPSG:2180:5",
+      "scale": 236235.59151785716,
+      "width": 178,
+      "height": 477
+     },
+     {
+      "id": "EPSG:2180:6",
+      "scale": 94494.23660714286,
+      "width": 445,
+      "height": 1192
+     },
+     {
+      "id": "EPSG:2180:7",
+      "scale": 47247.11830357143,
+      "width": 889,
+      "height": 2384
+     },
+     {
+      "id": "EPSG:2180:8",
+      "scale": 23623.559151785714,
+      "width": 1778,
+      "height": 4768
+     },
+     {
+      "id": "EPSG:2180:9",
+      "scale": 9449.423660714287,
+      "width": 4444,
+      "height": 11919
+     },
+     {
+      "id": "EPSG:2180:10",
+      "scale": 4724.711830357143,
+      "width": 8887,
+      "height": 23837
+     },
+     {
+      "id": "EPSG:2180:11",
+      "scale": 1889.8847321428573,
+      "width": 22217,
+      "height": 59591
+     },
+     {
+      "id": "EPSG:2180:12",
+      "scale": 944.9423660714286,
+      "width": 44433,
+      "height": 119181
+     }
+    ]
+   }
+  },
+  "g2mobile": {
+   "kind": "wmts",
+   "fetchedAt": "2026-10-21T11:50:22.103Z",
+   "title": "Usługa przeglądania WMTS dla urządzeń mobilnych (G2_MOBILE500)",
+   "formats": [
+    "image/png"
+   ],
+   "matrixSet": {
+    "id": "EPSG:2180",
+    "origin": [
+     100000,
+     850000
+    ],
+    "tileSize": 512,
+    "matrices": [
+     {
+      "id": "EPSG:2180:0",
+      "scale": 30238155.714285716,
+      "width": 1,
+      "height": 1
+     },
+     {
+      "id": "EPSG:2180:1",
+      "scale": 15119077.857142858,
+      "width": 1,
+      "height": 1
+     },
+     {
+      "id": "EPSG:2180:2",
+      "scale": 7559538.928571429,
+      "width": 2,
+      "height": 1
+     },
+     {
+      "id": "EPSG:2180:3",
+      "scale": 3779769.4642857146,
+      "width": 3,
+      "height": 2
+     },
+     {
+      "id": "EPSG:2180:4",
+      "scale": 1889884.7321428573,
+      "width": 5,
+      "height": 4
+     },
+     {
+      "id": "EPSG:2180:5",
+      "scale": 944942.3660714286,
+      "width": 9,
+      "height": 8
+     },
+     {
+      "id": "EPSG:2180:6",
+      "scale": 472471.1830357143,
+      "width": 17,
+      "height": 15
+     },
+     {
+      "id": "EPSG:2180:7",
+      "scale": 236235.59151785716,
+      "width": 34,
+      "height": 30
+     },
+     {
+      "id": "EPSG:2180:8",
+      "scale": 94494.23660714286,
+      "width": 85,
+      "height": 73
+     },
+     {
+      "id": "EPSG:2180:9",
+      "scale": 47247.11830357143,
+      "width": 169,
+      "height": 146
+     },
+     {
+      "id": "EPSG:2180:10",
+      "scale": 23623.559151785714,
+      "width": 337,
+      "height": 291
+     },
+     {
+      "id": "EPSG:2180:11",
+      "scale": 9449.423660714287,
+      "width": 842,
+      "height": 727
+     },
+     {
+      "id": "EPSG:2180:12",
+      "scale": 4724.711830357143,
+      "width": 1683,
+      "height": 1454
+     },
+     {
+      "id": "EPSG:2180:13",
+      "scale": 1889.8847321428573,
+      "width": 4207,
+      "height": 3635
+     },
+     {
+      "id": "EPSG:2180:14",
+      "scale": 944.9423660714286,
+      "width": 8414,
+      "height": 7270
+     },
+     {
+      "id": "EPSG:2180:15",
+      "scale": 472.4711830357143,
+      "width": 16828,
+      "height": 14539
+     }
+    ]
+   }
+  },
+  "topo": {
+   "kind": "wmts",
+   "fetchedAt": "2026-10-21T11:50:22.121Z",
+   "title": "Usługa przeglądania rastrowych map topograficznych dla Polski. Profil kafelkowany (WMTS)",
+   "formats": [
+    "image/jpeg"
+   ],
+   "matrixSet": {
+    "id": "EPSG:2180",
+    "origin": [
+     100000,
+     850000
+    ],
+    "tileSize": 512,
+    "matrices": [
+     {
+      "id": "EPSG:2180:0",
+      "scale": 7559538.928571429,
+      "width": 1,
+      "height": 1
+     },
+     {
+      "id": "EPSG:2180:1",
+      "scale": 3779769.4642857146,
+      "width": 2,
+      "height": 2
+     },
+     {
+      "id": "EPSG:2180:2",
+      "scale": 1889884.7321428573,
+      "width": 3,
+      "height": 3
+     },
+     {
+      "id": "EPSG:2180:3",
+      "scale": 944942.3660714286,
+      "width": 6,
+      "height": 6
+     },
+     {
+      "id": "EPSG:2180:4",
+      "scale": 472471.1830357143,
+      "width": 12,
+      "height": 12
+     },
+     {
+      "id": "EPSG:2180:5",
+      "scale": 236235.59151785716,
+      "width": 24,
+      "height": 23
+     },
+     {
+      "id": "EPSG:2180:6",
+      "scale": 94494.23660714286,
+      "width": 60,
+      "height": 57
+     },
+     {
+      "id": "EPSG:2180:7",
+      "scale": 47247.11830357143,
+      "width": 120,
+      "height": 113
+     },
+     {
+      "id": "EPSG:2180:8",
+      "scale": 23623.559151785714,
+      "width": 240,
+      "height": 225
+     },
+     {
+      "id": "EPSG:2180:9",
+      "scale": 9449.423660714287,
+      "width": 598,
+      "height": 562
+     },
+     {
+      "id": "EPSG:2180:10",
+      "scale": 4724.711830357143,
+      "width": 1196,
+      "height": 1123
+     },
+     {
+      "id": "EPSG:2180:11",
+      "scale": 1889.8847321428573,
+      "width": 2990,
+      "height": 2806
+     },
+     {
+      "id": "EPSG:2180:12",
+      "scale": 944.9423660714286,
+      "width": 5980,
+      "height": 5611
+     }
+    ]
+   }
+  }
+ }
+}

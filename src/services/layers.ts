@@ -2,11 +2,29 @@ import TileLayer from 'ol/layer/Tile';
 import ImageLayer from 'ol/layer/Image';
 import WMTS from 'ol/source/WMTS';
 import ImageWMS from 'ol/source/ImageWMS';
+import WMTSTileGrid from 'ol/tilegrid/WMTS';
 import { EPSG2180, OGC_PIXEL, gugikTileAt, gugikWmtsGrid } from '@/map/projection';
 import { OVERLAYS, type BaseMap, type Overlay } from './registry';
+import { layerMeta, wmtsMeta } from './meta';
 import { useStatusStore } from './status';
 
 const report = (id: string, ok: boolean) => useStatusStore.getState().reportLoad(id, ok);
+
+/**
+ * Tile grid from the cached capabilities. Matrix sizes keep the map from requesting
+ * tiles outside the published coverage. Without the cache the shared GUGiK grid is used.
+ */
+function tileGrid(def: BaseMap): WMTSTileGrid {
+  const set = wmtsMeta(def.id)?.matrixSet;
+  if (!set) return gugikWmtsGrid(def.firstLevel, def.levels);
+  return new WMTSTileGrid({
+    origin: set.origin,
+    tileSize: set.tileSize,
+    resolutions: set.matrices.map((m) => m.scale * OGC_PIXEL),
+    matrixIds: set.matrices.map((m) => m.id),
+    sizes: set.matrices.map((m) => [m.width, m.height]),
+  });
+}
 
 export function createBaseLayer(def: BaseMap): TileLayer<WMTS> {
   const source = new WMTS({
@@ -16,7 +34,7 @@ export function createBaseLayer(def: BaseMap): TileLayer<WMTS> {
     format: def.format,
     style: 'default',
     projection: EPSG2180,
-    tileGrid: gugikWmtsGrid(def.firstLevel, def.levels),
+    tileGrid: tileGrid(def),
     attributions: def.attribution,
     // GUGiK WMTS sends CORS headers; readable tiles allow exporting the map later.
     crossOrigin: 'anonymous',
@@ -68,9 +86,9 @@ export function createOverlayLayer(def: Overlay): ImageLayer<ImageWMS> {
  * Outside it the layer stays hidden and sends no requests.
  */
 export function resolutionRange(def: Overlay, names: string[]): { min: number; max: number } {
-  const chosen = def.sublayers.filter((l) => names.includes(l.name));
-  const maxScale = Math.max(...chosen.map((l) => l.maxScale ?? Infinity));
-  const minScale = Math.min(...chosen.map((l) => l.minScale ?? 0));
+  const meta = names.map((n) => layerMeta(def.id, n));
+  const maxScale = Math.max(...meta.map((m) => m?.maxScale ?? Infinity));
+  const minScale = Math.min(...meta.map((m) => m?.minScale ?? 0));
   return { min: minScale * OGC_PIXEL, max: maxScale * OGC_PIXEL };
 }
 

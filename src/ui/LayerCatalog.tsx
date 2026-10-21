@@ -1,14 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ChevronDown, ExternalLink, Search, X, ZoomIn } from 'lucide-react';
-import {
-  OVERLAYS,
-  TOPICS,
-  isVisibleAtScale,
-  selectedSublayers,
-  type Overlay,
-  type SubLayer,
-  type Topic,
-} from '@/services/registry';
+import { OVERLAYS, TOPICS, selectedSublayers, type Overlay, type SubLayer, type Topic } from '@/services/registry';
+import { layerMeta, visibleAtScale } from '@/services/meta';
 import { useStatusStore, type ServiceStatus } from '@/services/status';
 import { overlayOpacity, useMapStore } from '@/state/store';
 
@@ -21,13 +14,14 @@ const STATUS_LABEL: Record<ServiceStatus, string> = {
   degraded: 'Część danych nie ładuje się w tym miejscu',
 };
 
+/** Brand book palette: clover for ok, amber and raspberry from the additional colours for problems. */
 const STATUS_DOT: Record<ServiceStatus, string> = {
-  unknown: 'bg-neutral-400',
-  ok: 'bg-emerald-500',
-  slow: 'bg-amber-500',
-  blocked: 'bg-neutral-400',
-  down: 'bg-red-500',
-  degraded: 'bg-amber-500',
+  unknown: 'bg-[#9db49e]',
+  ok: 'bg-[#7da87f]',
+  slow: 'bg-[#FFBC42]',
+  blocked: 'bg-[#9db49e]',
+  down: 'bg-[#D25F87]',
+  degraded: 'bg-[#FFBC42]',
 };
 
 const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
@@ -102,7 +96,7 @@ export function LayerCatalog() {
               onClick={() => setTopic(topic === t ? null : t)}
               aria-pressed={topic === t}
               className={`rounded-full px-3 py-1 text-xs transition ${
-                topic === t ? 'bg-[var(--accent)] text-white' : 'bg-[var(--field)] hover:bg-[var(--hover)]'
+                topic === t ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'bg-[var(--field)] hover:bg-[var(--hover)]'
               }`}
             >
               {TOPICS[t]}
@@ -231,8 +225,9 @@ function OverlayItem({ s, hits }: { s: Overlay; hits: string[] }) {
 function SublayerRow({ s, l, highlighted, disabled }: { s: Overlay; l: SubLayer; highlighted: boolean; disabled: boolean }) {
   const checked = useMapStore((m) => m.overlays.includes(s.id) && selectedSublayers(s, m.sublayers).includes(l.name));
   const toggle = useMapStore((m) => m.toggleSublayer);
-  const outOfScale = useMapStore((m) => !isVisibleAtScale(l, m.scale));
-  const zoomedOutTooFar = outOfScale && l.maxScale !== undefined;
+  const outOfScale = useMapStore((m) => !visibleAtScale(s.id, l.name, m.scale));
+  const meta = layerMeta(s.id, l.name);
+  const zoomedOutTooFar = useMapStore((m) => outOfScale && meta?.maxScale !== undefined && m.scale > meta.maxScale);
   return (
     <li>
       <label
@@ -252,7 +247,11 @@ function SublayerRow({ s, l, highlighted, disabled }: { s: Overlay; l: SubLayer;
         {checked && outOfScale && (
           <span
             className="flex items-center gap-1 text-[11px] text-[var(--muted)]"
-            title={zoomedOutTooFar ? `Widoczne od skali 1:${l.maxScale}` : `Widoczne do skali 1:${l.minScale}`}
+            title={
+              zoomedOutTooFar
+                ? `Widoczne od skali 1:${Math.round(meta?.maxScale ?? 0)}`
+                : `Widoczne do skali 1:${Math.round(meta?.minScale ?? 0)}`
+            }
           >
             {zoomedOutTooFar ? <ZoomIn className="h-3 w-3" /> : null}
             {zoomedOutTooFar ? 'przybliż' : 'oddal'}

@@ -5,12 +5,19 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -k -n web,api -c green,blue \"vite\" \"node --watch --import tsx server/index.ts\"",
+    "dev:web": "vite",
+    "dev:api": "node --watch --import tsx server/index.ts",
     "build": "tsc -b && vite build",
+    "start": "node --import tsx server/index.ts",
+    "capabilities": "tsx server/refresh.ts",
     "preview": "vite preview",
     "typecheck": "tsc -b"
   },
   "dependencies": {
+    "@hono/node-server": "^2.1.5",
+    "fast-xml-parser": "^5.11.2",
+    "hono": "^4.13.13",
     "lucide-react": "^0.546.0",
     "ol": "^10.6.1",
     "proj4": "^2.19.10",
@@ -25,7 +32,9 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
+    "concurrently": "^10.0.6",
     "tailwindcss": "^4.1.14",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vite": "^7.1.9"
   }

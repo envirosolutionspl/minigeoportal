@@ -3,6 +3,8 @@ import { Layers, LocateFixed, Search, X } from 'lucide-react';
 import { fromLonLat } from 'ol/proj';
 import { geocode, type GeocodeHit } from '@/services/geocoder';
 import { useMapStore } from '@/state/store';
+import { BrandMark, Wordmark } from './Brand';
+import { useWelcome } from './WelcomeDialog';
 
 const ADDRESS_ZOOM = 13;
 
@@ -15,6 +17,7 @@ export function TopBar() {
   const flyTo = useMapStore((m) => m.flyTo);
   const panel = useMapStore((m) => m.panel);
   const setPanel = useMapStore((m) => m.setPanel);
+  const openWelcome = useWelcome((w) => w.setOpen);
 
   useEffect(() => {
     abort.current?.abort();
@@ -58,8 +61,21 @@ export function TopBar() {
 
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start gap-2 p-3 sm:p-4">
-      <div className="pointer-events-auto relative w-full max-w-md">
-        <label className="flex items-center gap-2 rounded-2xl bg-[var(--surface)] px-3 py-2 shadow-lg ring-1 ring-black/5">
+      <div className="pointer-events-auto relative w-full max-w-lg">
+        <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface)] py-1.5 pr-3 pl-1.5 shadow-lg ring-1 ring-black/5">
+          <button
+            type="button"
+            onClick={() => openWelcome(true)}
+            title="O serwisie"
+            aria-label="Prosty Geoportal: o serwisie"
+            className="flex shrink-0 items-center gap-2 rounded-xl py-0.5 pr-2 pl-0.5 hover:bg-[var(--hover)]"
+          >
+            <BrandMark />
+            <span className="hidden md:inline">
+              <Wordmark />
+            </span>
+          </button>
+          <span className="h-6 w-px shrink-0 bg-[var(--hover)]" aria-hidden="true" />
           <Search className="h-5 w-5 shrink-0 text-[var(--muted)]" />
           <input
             type="search"
@@ -81,7 +97,7 @@ export function TopBar() {
               <X className="h-4 w-4" />
             </button>
           )}
-        </label>
+        </div>
         {open && (hits.length > 0 || busy) && (
           <ul className="absolute inset-x-0 mt-2 overflow-hidden rounded-2xl bg-[var(--surface)] py-1 shadow-lg ring-1 ring-black/5">
             {hits.map((h) => (
@@ -132,7 +148,7 @@ function IconButton({
       title={label}
       aria-pressed={active}
       className={`flex h-11 w-11 items-center justify-center rounded-2xl shadow-lg ring-1 ring-black/5 transition ${
-        active ? 'bg-[var(--accent)] text-white' : 'bg-[var(--surface)] hover:bg-[var(--hover)]'
+        active ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'bg-[var(--surface)] hover:bg-[var(--hover)]'
       }`}
     >
       {children}

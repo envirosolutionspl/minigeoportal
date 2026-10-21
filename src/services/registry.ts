@@ -13,16 +13,15 @@ export const TOPICS: Record<Topic, string> = {
   uzbrojenie: 'Uzbrojenie',
 };
 
-/** One WMS layer inside a service. Scale limits come from the service capabilities. */
+/**
+ * One WMS layer inside a service, with a title written for non-specialists.
+ * Scale limits, queryability and legends come from the capabilities cache (see meta.ts).
+ */
 export interface SubLayer {
   name: string;
   title: string;
   /** Selected when the service is switched on. */
   default?: boolean;
-  /** Visible at scales up to 1:maxScale (zoomed in further than that). */
-  maxScale?: number;
-  /** Visible at scales from 1:minScale (zoomed out further than that). */
-  minScale?: number;
 }
 
 interface ServiceBase {
@@ -137,13 +136,13 @@ export const OVERLAYS: Overlay[] = [
     starter: true,
     url: `${INTEGRACJA}KrajowaIntegracjaEwidencjiGruntow`,
     sublayers: [
-      { name: 'uzytki', title: 'Użytki gruntowe', maxScale: 10000 },
-      { name: 'kontury', title: 'Kontury klasyfikacyjne', maxScale: 10000 },
-      { name: 'obreby', title: 'Granice obrębów', default: true, maxScale: 25000, minScale: 10000 },
-      { name: 'dzialki', title: 'Działki', default: true, maxScale: 10000 },
-      { name: 'geoportal', title: 'Działki uzupełnione z LPIS', maxScale: 2500 },
-      { name: 'budynki', title: 'Budynki', default: true, maxScale: 2500 },
-      { name: 'numery_dzialek', title: 'Numery działek', default: true, maxScale: 1500 },
+      { name: 'uzytki', title: 'Użytki gruntowe' },
+      { name: 'kontury', title: 'Kontury klasyfikacyjne' },
+      { name: 'obreby', title: 'Granice obrębów', default: true },
+      { name: 'dzialki', title: 'Działki', default: true },
+      { name: 'geoportal', title: 'Działki uzupełnione z LPIS' },
+      { name: 'budynki', title: 'Budynki', default: true },
+      { name: 'numery_dzialek', title: 'Numery działek', default: true },
     ],
   },
   {
@@ -159,12 +158,12 @@ export const OVERLAYS: Overlay[] = [
     opacity: 0.8,
     // `granice` and `plany` are left out: they redirect (302) to municipal servers that reject browser requests.
     sublayers: [
-      { name: 'raster', title: 'Plany rastrowe (skany rysunków)', default: true, maxScale: 10000 },
-      { name: 'wektor-str', title: 'Strefy przeznaczenia', default: true, maxScale: 10000 },
-      { name: 'wektor-pow', title: 'Obiekty powierzchniowe', default: true, maxScale: 5000 },
-      { name: 'wektor-lin', title: 'Obiekty liniowe', default: true, maxScale: 5000 },
-      { name: 'wektor-lzb', title: 'Linie zabudowy', default: true, maxScale: 5000 },
-      { name: 'wektor-pkt', title: 'Obiekty punktowe', default: true, maxScale: 5000 },
+      { name: 'raster', title: 'Plany rastrowe (skany rysunków)', default: true },
+      { name: 'wektor-str', title: 'Strefy przeznaczenia', default: true },
+      { name: 'wektor-pow', title: 'Obiekty powierzchniowe', default: true },
+      { name: 'wektor-lin', title: 'Obiekty liniowe', default: true },
+      { name: 'wektor-lzb', title: 'Linie zabudowy', default: true },
+      { name: 'wektor-pkt', title: 'Obiekty punktowe', default: true },
     ],
   },
   {
@@ -178,10 +177,10 @@ export const OVERLAYS: Overlay[] = [
     url: `${EXT}PlanyOgolneGmin`,
     opacity: 0.8,
     sublayers: [
-      { name: 'aktPlanowaniaprzestrzennego', title: 'Zasięg planu ogólnego', default: true, maxScale: 8000000 },
-      { name: 'strefaPlanistyczna', title: 'Strefy planistyczne', default: true, maxScale: 100001 },
-      { name: 'obszarUzupelnieniaZabudowy', title: 'Obszary uzupełnienia zabudowy', default: true, maxScale: 100001 },
-      { name: 'obszarZabSrodmiejskiej', title: 'Obszary zabudowy śródmiejskiej', default: true, maxScale: 100001 },
+      { name: 'aktPlanowaniaprzestrzennego', title: 'Zasięg planu ogólnego', default: true },
+      { name: 'strefaPlanistyczna', title: 'Strefy planistyczne', default: true },
+      { name: 'obszarUzupelnieniaZabudowy', title: 'Obszary uzupełnienia zabudowy', default: true },
+      { name: 'obszarZabSrodmiejskiej', title: 'Obszary zabudowy śródmiejskiej', default: true },
     ],
   },
   {
@@ -195,10 +194,10 @@ export const OVERLAYS: Overlay[] = [
     starter: true,
     url: 'https://mapy.geoportal.gov.pl/wss/service/rcn',
     sublayers: [
-      { name: 'powiaty', title: 'Powiaty z danymi', default: true, minScale: 5001 },
-      { name: 'dzialki', title: 'Transakcje: działki', default: true, maxScale: 5001 },
-      { name: 'budynki', title: 'Transakcje: budynki', default: true, maxScale: 2000 },
-      { name: 'lokale', title: 'Transakcje: lokale', default: true, maxScale: 2000 },
+      { name: 'powiaty', title: 'Powiaty z danymi', default: true },
+      { name: 'dzialki', title: 'Transakcje: działki', default: true },
+      { name: 'budynki', title: 'Transakcje: budynki', default: true },
+      { name: 'lokale', title: 'Transakcje: lokale', default: true },
     ],
   },
   {
@@ -212,16 +211,16 @@ export const OVERLAYS: Overlay[] = [
     starter: true,
     url: `${INTEGRACJA}KrajowaIntegracjaUzbrojeniaTerenu`,
     sublayers: [
-      { name: 'gesut', title: 'Powiaty z danymi', default: true, minScale: 50000 },
-      { name: 'przewod_wodociagowy', title: 'Woda', default: true, maxScale: 1000 },
-      { name: 'przewod_kanalizacyjny', title: 'Kanalizacja', default: true, maxScale: 1000 },
-      { name: 'przewod_gazowy', title: 'Gaz', default: true, maxScale: 1000 },
-      { name: 'przewod_elektroenergetyczny', title: 'Elektroenergetyka', default: true, maxScale: 1000 },
-      { name: 'przewod_telekomunikacyjny', title: 'Telekomunikacja', default: true, maxScale: 1000 },
-      { name: 'przewod_cieplowniczy', title: 'Ciepłownictwo', default: true, maxScale: 1000 },
-      { name: 'przewod_specjalny', title: 'Sieć specjalna', default: true, maxScale: 1000 },
-      { name: 'przewod_niezidentyfikowany', title: 'Sieci niezidentyfikowane', default: true, maxScale: 1000 },
-      { name: 'przewod_urzadzenia', title: 'Urządzenia', default: true, maxScale: 1000 },
+      { name: 'gesut', title: 'Powiaty z danymi', default: true },
+      { name: 'przewod_wodociagowy', title: 'Woda', default: true },
+      { name: 'przewod_kanalizacyjny', title: 'Kanalizacja', default: true },
+      { name: 'przewod_gazowy', title: 'Gaz', default: true },
+      { name: 'przewod_elektroenergetyczny', title: 'Elektroenergetyka', default: true },
+      { name: 'przewod_telekomunikacyjny', title: 'Telekomunikacja', default: true },
+      { name: 'przewod_cieplowniczy', title: 'Ciepłownictwo', default: true },
+      { name: 'przewod_specjalny', title: 'Sieć specjalna', default: true },
+      { name: 'przewod_niezidentyfikowany', title: 'Sieci niezidentyfikowane', default: true },
+      { name: 'przewod_urzadzenia', title: 'Urządzenia', default: true },
     ],
   },
 ];
@@ -239,8 +238,4 @@ export function selectedSublayers(def: Overlay, custom: Record<string, string[]>
   const chosen = custom[def.id];
   if (!chosen) return defaultSublayers(def);
   return def.sublayers.filter((l) => chosen.includes(l.name)).map((l) => l.name);
-}
-
-export function isVisibleAtScale(l: SubLayer, scale: number): boolean {
-  return scale >= (l.minScale ?? 0) && scale <= (l.maxScale ?? Infinity);
 }

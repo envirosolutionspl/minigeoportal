@@ -7,6 +7,7 @@ import { BASE_MAPS, OVERLAYS, selectedSublayers } from '@/services/registry';
 import { createBaseLayer, createOverlayLayer, resolutionRange } from '@/services/layers';
 import { useStatusStore } from '@/services/status';
 import { hasInitialView, overlayOpacity, useMapStore } from '@/state/store';
+import { attachFeatureInfo } from './featureInfoClick';
 
 export function MapView() {
   const container = useRef<HTMLDivElement>(null);
@@ -75,7 +76,10 @@ export function MapView() {
     // Probe services only after the first view is drawn, so probes never compete with visible tiles.
     map.once('rendercomplete', () => void useStatusStore.getState().probeAll());
 
+    const detachFeatureInfo = attachFeatureInfo(map, overlays);
+
     return () => {
+      detachFeatureInfo();
       unsubscribeState();
       map.setTarget(undefined);
     };

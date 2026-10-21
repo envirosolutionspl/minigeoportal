@@ -1,28 +1,36 @@
 @import 'tailwindcss';
 @import 'ol/ol.css';
 
+/*
+ * EnviroSolutions brand book palette:
+ * Antracyt #444444 (text), Ciemna zieleń #253326, Mech #466946, Leśna zieleń #59705b,
+ * Koniczyna #7da87f, Łąka #9db49e, Mięta #b3cbb4, Szron #d9e1d9, Szara biel #f2f4f5 (light background).
+ */
 :root {
+  --text: #444444;
   --surface: #ffffff;
-  --field: #f1f5f9;
-  --hover: #e2e8f0;
-  --muted: #64748b;
-  --accent: #0f766e;
-  --accent-soft: #ccfbf1;
+  --field: #f2f4f5;
+  --hover: #d9e1d9;
+  --muted: #59705b;
+  --accent: #466946;
+  --on-accent: #ffffff;
+  --accent-soft: #e6ede6;
   /* Paper colour under transparent map tiles, the same in light and dark mode. */
-  --map-bg: #f4f1ea;
-  color: #0f172a;
+  --map-bg: #f2f4f5;
+  color: var(--text);
   color-scheme: light dark;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --surface: #1e293b;
-    --field: #0f172a;
-    --hover: #334155;
-    --muted: #94a3b8;
-    --accent: #2dd4bf;
-    --accent-soft: #134e4a;
-    color: #f1f5f9;
+    --text: #f2f4f5;
+    --surface: #253326;
+    --field: #2e3f2f;
+    --hover: #466946;
+    --muted: #b3cbb4;
+    --accent: #9db49e;
+    --on-accent: #253326;
+    --accent-soft: #34483a;
   }
 }
 
@@ -31,7 +39,7 @@ body,
 #root {
   height: 100%;
   margin: 0;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -42,7 +50,7 @@ body,
 }
 .ol-control button {
   background: var(--surface);
-  color: inherit;
+  color: var(--accent);
   border-radius: 0.75rem;
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
   width: 2.5rem;
@@ -55,11 +63,12 @@ body,
   background: var(--hover);
   outline: none;
 }
+/* Above the author credit in the bottom-right corner. */
 .ol-zoom {
   top: auto;
   left: auto;
   right: 0.75rem;
-  bottom: 2.5rem;
+  bottom: 4.75rem;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -67,12 +76,12 @@ body,
 @media (min-width: 640px) {
   .ol-zoom {
     right: 1rem;
-    bottom: 3rem;
+    bottom: 5.25rem;
   }
 }
 /* Right of the base map switcher. */
 .ol-scale-line {
-  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
   border-radius: 0.375rem;
   left: 5.5rem;
   bottom: 2.25rem;
@@ -84,7 +93,7 @@ body,
   }
 }
 .ol-scale-line-inner {
-  color: inherit;
+  color: var(--text);
   border-color: currentColor;
   font-size: 0.7rem;
 }
@@ -99,7 +108,7 @@ body,
   border-radius: 0;
 }
 .ol-attribution ul {
-  color: inherit;
+  color: var(--text);
   text-shadow: none;
   font-size: inherit;
 }

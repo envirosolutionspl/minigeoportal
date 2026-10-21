@@ -1,0 +1,102 @@
+/**
+ * Service metadata derived from GetCapabilities and cached by the backend.
+ * Types are shared by the server (which builds the cache) and the app (which reads it).
+ */
+
+export interface WmsLayerMeta {
+  title: string;
+  queryable: boolean;
+  /** Visible at scales from 1:minScale (zoomed out at least that far). */
+  minScale?: number;
+  /** Visible at scales up to 1:maxScale (zoomed in at least that far). */
+  maxScale?: number;
+  legend?: string;
+}
+
+export interface WmsMeta {
+  kind: 'wms';
+  fetchedAt: string;
+  title: string;
+  infoFormats: string[];
+  layers: Record<string, WmsLayerMeta>;
+}
+
+export interface TileMatrixMeta {
+  id: string;
+  scale: number;
+  width: number;
+  height: number;
+}
+
+export interface WmtsMeta {
+  kind: 'wmts';
+  fetchedAt: string;
+  title: string;
+  formats: string[];
+  matrixSet: {
+    id: string;
+    /** Top-left corner as [easting, northing]. */
+    origin: [number, number];
+    tileSize: number;
+    matrices: TileMatrixMeta[];
+  };
+}
+
+export interface MetaError {
+  kind: 'error';
+  fetchedAt: string;
+  error: string;
+}
+
+export type ServiceMeta = WmsMeta | WmtsMeta | MetaError;
+
+export interface CapabilitiesCache {
+  generatedAt: string;
+  services: Record<string, ServiceMeta>;
+}
+
+let cache: CapabilitiesCache | null = null;
+
+/**
+ * Loads the cache once at startup, with one retry for a restarting server.
+ * Without it the app still works on registry defaults, only without scale limits.
+ */
+export async function loadCapabilities(): Promise<void> {
+  for (let attempt = 0; attempt < 2 && !cache; attempt++) {
+    try {
+      const res = await fetch('/api/capabilities', { signal: AbortSignal.timeout(4000) });
+      if (res.ok) cache = (await res.json()) as CapabilitiesCache;
+    } catch {
+      // Network error or timeout; retried once below.
+    }
+    if (!cache && attempt === 0) await new Promise((r) => setTimeout(r, 500));
+  }
+}
+
+export function wmsMeta(id: string): WmsMeta | undefined {
+  const m = cache?.services[id];
+  return m?.kind === 'wms' ? m : undefined;
+}
+
+export function wmtsMeta(id: string): WmtsMeta | undefined {
+  const m = cache?.services[id];
+  return m?.kind === 'wmts' ? m : undefined;
+}
+
+export function layerMeta(id: string, name: string): WmsLayerMeta | undefined {
+  return wmsMeta(id)?.layers[name];
+}
+
+/** Without metadata a layer is assumed visible at every scale. */
+export function visibleAtScale(id: string, name: string, scale: number): boolean {
+  const m = layerMeta(id, name);
+  return scale >= (m?.minScale ?? 0) && scale <= (m?.maxScale ?? Infinity);
+}
+
+/** Preferred GetFeatureInfo format; text/xml parses most reliably, text/html is the common fallback. */
+const INFO_FORMAT_PREFERENCE = ['text/xml', 'text/html', 'application/vnd.ogc.gml', 'text/plain'];
+
+export function infoFormat(id: string): string {
+  const offered = wmsMeta(id)?.infoFormats ?? [];
+  return INFO_FORMAT_PREFERENCE.find((f) => offered.includes(f)) ?? 'text/html';
+}

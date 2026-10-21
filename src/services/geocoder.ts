@@ -69,7 +69,8 @@ async function uldkRows(params: Record<string, string>, signal: AbortSignal): Pr
   return rows.map((r) => r.split('|'));
 }
 
-async function parcels(query: string, signal: AbortSignal): Promise<SearchHit[]> {
+/** Parcels by full id or "precinct name number"; several hits when precinct names repeat. */
+export async function findParcels(query: string, signal: AbortSignal): Promise<SearchHit[]> {
   const rows = await uldkRows(
     { request: 'GetParcelByIdOrNr', id: query, result: 'id,commune,region,parcel,geom_wkt' },
     signal,
@@ -82,9 +83,9 @@ async function parcels(query: string, signal: AbortSignal): Promise<SearchHit[]>
 
 export async function search(query: string, signal: AbortSignal): Promise<SearchHit[]> {
   const q = query.trim();
-  if (PARCEL_ID.test(q)) return parcels(q, signal);
+  if (PARCEL_ID.test(q)) return findParcels(q, signal);
   const lookups: Promise<SearchHit[]>[] = [uug(q, signal)];
-  if (PRECINCT_AND_NUMBER.test(q)) lookups.unshift(parcels(q, signal));
+  if (PRECINCT_AND_NUMBER.test(q)) lookups.unshift(findParcels(q, signal));
   const results = await Promise.allSettled(lookups);
   return results.flatMap((r) => (r.status === 'fulfilled' ? r.value : [])).slice(0, 10);
 }
@@ -102,4 +103,13 @@ export async function placeOutline(hit: SearchHit, signal: AbortSignal): Promise
   const [region] = await uldkRows({ request: 'GetRegionByXY', xy, result: 'region,geom_wkt' }, signal);
   if (region && region[0].toLowerCase().startsWith(name)) return stripSrid(region[1]);
   return undefined;
+}
+
+/** Outline of the building at a point (an address), from the land register via ULDK. */
+export async function buildingAt(center: [number, number], signal: AbortSignal): Promise<string | undefined> {
+  const [row] = await uldkRows(
+    { request: 'GetBuildingByXY', xy: `${center[0]},${center[1]},2180`, result: 'geom_wkt' },
+    signal,
+  );
+  return row?.[0] ? stripSrid(row[0]) : undefined;
 }

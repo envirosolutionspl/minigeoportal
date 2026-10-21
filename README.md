@@ -27,7 +27,7 @@ Produkcja: `npm run build`, potem `NODE_ENV=production npm start` serwuje aplika
 
 - `src/` aplikacja: React 19, TypeScript, OpenLayers 10 z widokiem w EPSG:2180, Tailwind CSS.
 - `src/services/registry.ts` rejestr usług GUGiK: jedno miejsce, z którego powstają warstwy, katalog i atrybucja.
-- `server/` lekki backend (Hono): cache metadanych usług i pośrednik GetFeatureInfo. Bez bazy danych.
+- `server/` lekki backend (Hono): cache metadanych usług, słowniki do wyszukiwarki działek (województwa, powiaty, gminy, obręby) z cache na dysku i pośrednik GetFeatureInfo. Bez bazy danych.
 
 ## Dane
 

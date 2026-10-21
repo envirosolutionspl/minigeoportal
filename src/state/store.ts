@@ -1,17 +1,22 @@
 import { create } from 'zustand';
 import { BASE_MAPS, OVERLAY_BY_ID, selectedSublayers } from '@/services/registry';
+import { POLAND_EXTENT } from '@/map/projection';
 import { readUrl, writeUrl } from './url';
 
 export type Panel = 'none' | 'catalog';
 
-/** Something the map should show: zoom to it and briefly outline it. */
+/** Something the map should show: zoom to it and outline it. */
 export interface FocusTarget {
   /** EPSG:2180 WKT; the view fits its extent. */
   wkt?: string;
   /** Used when there is no geometry. */
   center?: [number, number];
+  /** Area to show without outlining anything (the whole country). */
+  extent?: [number, number, number, number];
   /** Zoom for points; the closest zoom when fitting a geometry. */
   zoom: number;
+  /** Parcels and buildings stay outlined until cleared; other objects fade out. */
+  persist?: boolean;
   /** Changes on every request so identical targets still trigger. */
   seq: number;
 }
@@ -37,6 +42,9 @@ interface MapStore {
   setOpacity(id: string, value: number): void;
   setPanel(panel: Panel): void;
   focusOn(target: Omit<FocusTarget, 'seq'>): void;
+  clearFocus(): void;
+  /** Whole country, as on first opening. */
+  goHome(): void;
 }
 
 const DEFAULT_BASE = 'orto';
@@ -79,6 +87,8 @@ export const useMapStore = create<MapStore>((set, get) => ({
   setOpacity: (id, value) => set((s) => ({ opacity: { ...s.opacity, [id]: value } })),
   setPanel: (panel) => set({ panel }),
   focusOn: (target) => set({ focus: { ...target, seq: (get().focus?.seq ?? 0) + 1 } }),
+  clearFocus: () => set({ focus: null }),
+  goHome: () => get().focusOn({ extent: POLAND_EXTENT, zoom: 0 }),
 }));
 
 useMapStore.subscribe((s, prev) => {

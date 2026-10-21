@@ -43,6 +43,11 @@ body,
   -webkit-font-smoothing: antialiased;
 }
 
+/* The app draws its own clear buttons in search fields. */
+input[type='search']::-webkit-search-cancel-button {
+  display: none;
+}
+
 /* OpenLayers controls styled to match the app surfaces. */
 .ol-control {
   background: none;
@@ -77,6 +82,26 @@ body,
   .ol-zoom {
     right: 1rem;
     bottom: 5.25rem;
+  }
+}
+/* "Whole country" button above the zoom buttons; .ol-touch overrides OpenLayers' touch layout. */
+.ol-zoom-extent,
+.ol-touch .ol-zoom-extent {
+  top: auto;
+  left: auto;
+  right: 0.75rem;
+  bottom: 10.5rem;
+}
+.ol-zoom-extent button span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+@media (min-width: 640px) {
+  .ol-zoom-extent,
+  .ol-touch .ol-zoom-extent {
+    right: 1rem;
+    bottom: 11rem;
   }
 }
 /* Right of the base map switcher. */

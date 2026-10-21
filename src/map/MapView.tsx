@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import Map from 'ol/Map';
 import View from 'ol/View';
-import { defaults as defaultControls, ScaleLine } from 'ol/control';
+import { defaults as defaultControls, ScaleLine, ZoomToExtent } from 'ol/control';
 import { EPSG2180, GUGIK_RESOLUTIONS, OGC_PIXEL, POLAND_EXTENT } from './projection';
 import { BASE_MAPS, OVERLAYS, TILE_SERVICE_BY_ID, selectedSublayers } from '@/services/registry';
 import { createOverlayLayer, createTileLayer, resolutionRange } from '@/services/layers';
@@ -47,6 +47,7 @@ export function MapView() {
       view,
       controls: defaultControls({ attributionOptions: { collapsible: false }, rotate: false }).extend([
         new ScaleLine({ units: 'metric' }),
+        new ZoomToExtent({ extent: POLAND_EXTENT, label: wholeCountryIcon(), tipLabel: 'Cała Polska' }),
       ]),
     });
 
@@ -99,4 +100,12 @@ export function MapView() {
   }, []);
 
   return <div ref={container} className="absolute inset-0 bg-[var(--map-bg)]" />;
+}
+
+/** Label of the "whole country" control: a frame around a map (Lucide icon shapes). */
+function wholeCountryIcon(): HTMLElement {
+  const span = document.createElement('span');
+  span.innerHTML =
+    '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect width="10" height="8" x="7" y="8" rx="1"/></svg>';
+  return span;
 }

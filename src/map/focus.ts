@@ -26,7 +26,10 @@ const STYLE = [
 
 const wkt = new WKT();
 
-/** Zooms to a searched object and outlines it for a few seconds, as public geoportals do. */
+/**
+ * Zooms to a searched object and outlines it, as public geoportals do: for a few seconds,
+ * or until cleared for parcels and buildings.
+ */
 export function attachFocus(map: Map): () => void {
   const source = new VectorSource<Feature>();
   const layer = new VectorLayer({ source, style: STYLE, zIndex: 90 });
@@ -52,6 +55,11 @@ export function attachFocus(map: Map): () => void {
   };
 
   const show = (target: FocusTarget) => {
+    // Showing an area (the whole country) keeps the current outline, e.g. a found parcel.
+    if (target.extent) {
+      view.fit(target.extent, { padding: [24, 24, 24, 24], duration: 700 });
+      return;
+    }
     stop();
     source.clear();
     layer.setOpacity(1);
@@ -63,11 +71,16 @@ export function attachFocus(map: Map): () => void {
     } else {
       view.fit(geometry.getExtent(), { padding: [96, 64, 96, 64], maxZoom: target.zoom, duration: 700 });
     }
-    timer = window.setTimeout(fadeOut, SHOW_MS);
+    if (!target.persist) timer = window.setTimeout(fadeOut, SHOW_MS);
   };
 
   const unsubscribe = useMapStore.subscribe((s, prev) => {
-    if (s.focus && s.focus !== prev.focus) show(s.focus);
+    if (s.focus === prev.focus) return;
+    if (s.focus) show(s.focus);
+    else {
+      stop();
+      source.clear();
+    }
   });
 
   return () => {

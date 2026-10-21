@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { Building2, Home, Layers, LocateFixed, Route, Search, SquareDashed, X, type LucideIcon } from 'lucide-react';
+import { Building2, Home, Info, Layers, LocateFixed, Route, Search, SquareDashed, X, type LucideIcon } from 'lucide-react';
 import { fromLonLat } from 'ol/proj';
-import { placeOutline, search, type HitKind, type SearchHit } from '@/services/geocoder';
+import { buildingAt, placeOutline, search, type HitKind, type SearchHit } from '@/services/geocoder';
 import { useMapStore } from '@/state/store';
 import { BrandMark, Wordmark } from './Brand';
 import { useWelcome } from './WelcomeDialog';
+import { ParcelSearch } from './ParcelSearch';
 
 /** Closest zoom per hit kind on the GUGiK scale series (13 = 1:1890, 14 = 1:945, 15 = 1:472). */
 const ZOOM: Record<HitKind, number> = { address: 14, street: 14, place: 12, parcel: 15 };
@@ -16,8 +17,11 @@ export function TopBar() {
   const [hits, setHits] = useState<SearchHit[]>([]);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [parcelOpen, setParcelOpen] = useState(false);
   const abort = useRef<AbortController | null>(null);
   const focusOn = useMapStore((m) => m.focusOn);
+  const clearFocus = useMapStore((m) => m.clearFocus);
+  const goHome = useMapStore((m) => m.goHome);
   const panel = useMapStore((m) => m.panel);
   const setPanel = useMapStore((m) => m.setPanel);
   const openWelcome = useWelcome((w) => w.setOpen);
@@ -48,12 +52,26 @@ export function TopBar() {
   const pick = async (hit: SearchHit) => {
     setQuery(hit.detail && (hit.kind === 'address' || hit.kind === 'street') ? `${hit.label}, ${hit.detail}` : hit.label);
     setOpen(false);
+    setParcelOpen(false);
     let wkt = hit.wkt;
-    // Places come as points; their outline is looked up separately, without delaying the map for long.
-    if (hit.kind === 'place') {
-      wkt = await placeOutline(hit, AbortSignal.timeout(OUTLINE_TIMEOUT_MS)).catch(() => undefined);
+    let persist = hit.kind === 'parcel';
+    // Places and addresses come as points; their outline (town boundary, building) is looked up
+    // separately, without delaying the map for long.
+    const signal = AbortSignal.timeout(OUTLINE_TIMEOUT_MS);
+    if (hit.kind === 'place') wkt = await placeOutline(hit, signal).catch(() => undefined);
+    if (hit.kind === 'address' && hit.center) {
+      const building = await buildingAt(hit.center, signal).catch(() => undefined);
+      if (building) {
+        wkt = building;
+        persist = true;
+      }
     }
-    focusOn({ wkt, center: hit.center, zoom: ZOOM[hit.kind] });
+    focusOn({ wkt, center: hit.center, zoom: ZOOM[hit.kind], persist });
+  };
+
+  const clear = () => {
+    setQuery('');
+    clearFocus();
   };
 
   const locate = () => {
@@ -68,14 +86,14 @@ export function TopBar() {
   };
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start gap-2 p-3 sm:p-4">
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start gap-2 p-3 sm:p-4">
       <div className="pointer-events-auto relative w-full max-w-lg">
         <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface)] py-1.5 pr-3 pl-1.5 shadow-lg ring-1 ring-black/5">
           <button
             type="button"
-            onClick={() => openWelcome(true)}
-            title="O serwisie"
-            aria-label="Prosty Geoportal: o serwisie"
+            onClick={goHome}
+            title="Cała Polska"
+            aria-label="Prosty Geoportal: pokaż całą Polskę"
             className="flex shrink-0 items-center gap-2 rounded-xl py-0.5 pr-2 pl-0.5 hover:bg-[var(--hover)]"
           >
             <BrandMark />
@@ -101,12 +119,25 @@ export function TopBar() {
             className="h-7 w-full bg-transparent text-base outline-none placeholder:text-[var(--muted)]"
           />
           {query && (
-            <button type="button" onClick={() => setQuery('')} aria-label="Wyczyść" className="rounded-full p-1 hover:bg-[var(--hover)]">
+            <button type="button" onClick={clear} aria-label="Wyczyść" className="rounded-full p-1 hover:bg-[var(--hover)]">
               <X className="h-4 w-4" />
             </button>
           )}
+          <button
+            type="button"
+            onClick={() => setParcelOpen(!parcelOpen)}
+            aria-expanded={parcelOpen}
+            title="Znajdź działkę po numerze i obrębie"
+            className={`flex shrink-0 items-center gap-1.5 rounded-xl px-2 py-1 text-sm transition ${
+              parcelOpen ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'text-[var(--accent)] hover:bg-[var(--hover)]'
+            }`}
+          >
+            <SquareDashed className="h-4 w-4" />
+            <span className="hidden sm:inline">Działka</span>
+          </button>
         </div>
-        {open && (hits.length > 0 || busy) && (
+        {parcelOpen && <ParcelSearch onClose={() => setParcelOpen(false)} />}
+        {!parcelOpen && open && (hits.length > 0 || busy) && (
           <ul className="absolute inset-x-0 mt-2 overflow-hidden rounded-2xl bg-[var(--surface)] py-1 shadow-lg ring-1 ring-black/5">
             {hits.map((h, i) => {
               const Icon = ICON[h.kind];
@@ -132,7 +163,11 @@ export function TopBar() {
         )}
       </div>
 
-      <div className="pointer-events-auto ml-auto flex gap-2">
+      {/* On phones the buttons form a column under the search bar, leaving it the full width. */}
+      <div className="pointer-events-auto ml-auto flex gap-2 max-sm:absolute max-sm:top-[4.25rem] max-sm:right-3 max-sm:flex-col">
+        <IconButton label="O serwisie" onClick={() => openWelcome(true)}>
+          <Info className="h-5 w-5" />
+        </IconButton>
         <IconButton label="Moja lokalizacja" onClick={locate}>
           <LocateFixed className="h-5 w-5" />
         </IconButton>

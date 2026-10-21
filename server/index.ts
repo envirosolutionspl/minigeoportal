@@ -1,9 +1,10 @@
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { compress } from 'hono/compress';
 import { readCache, refreshCache } from './cache.ts';
 import { featureInfo } from './featureinfo.ts';
+import { communes, counties, precincts, voivodeships, type DictEntry } from './dictionaries.ts';
 
 const PORT = Number(process.env.PORT ?? 8787);
 /** Serves the built app from ./dist as well; set NODE_ENV=production on the server. */
@@ -28,6 +29,22 @@ app.post('/api/capabilities/refresh', async (c) => {
   cache = await refreshCache();
   return c.json({ generatedAt: cache.generatedAt });
 });
+
+/** Dictionaries for the parcel search, cached on disk (see dictionaries.ts). */
+const dictionary = (load: (parent: string) => Promise<DictEntry[]>) => async (c: Context) => {
+  try {
+    const entries = await load(c.req.param('parent') ?? '');
+    c.header('Cache-Control', 'public, max-age=86400');
+    return c.json(entries);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Upstream error';
+    return c.text(message, message.startsWith('Invalid') ? 400 : 502);
+  }
+};
+app.get('/api/dict/wojewodztwa', dictionary(() => voivodeships()));
+app.get('/api/dict/powiaty/:parent', dictionary(counties));
+app.get('/api/dict/gminy/:parent', dictionary(communes));
+app.get('/api/dict/obreby/:parent', dictionary(precincts));
 
 app.get('/api/featureinfo/:service', async (c) => {
   try {

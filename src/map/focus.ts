@@ -5,6 +5,7 @@ import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import WKT from 'ol/format/WKT';
 import { Circle, Fill, Stroke, Style } from 'ol/style';
+import { OGC_PIXEL } from './projection';
 import { useMapStore, type FocusTarget } from '@/state/store';
 
 const ORANGE = '#FF8142';
@@ -55,9 +56,13 @@ export function attachFocus(map: Map): () => void {
   };
 
   const show = (target: FocusTarget) => {
-    // Showing an area (the whole country) keeps the current outline, e.g. a found parcel.
+    // Showing an area or a scale keeps the current outline, e.g. a found parcel.
     if (target.extent) {
       view.fit(target.extent, { padding: [24, 24, 24, 24], duration: 700 });
+      return;
+    }
+    if (target.scale) {
+      view.animate({ resolution: target.scale * OGC_PIXEL, duration: 500 });
       return;
     }
     stop();

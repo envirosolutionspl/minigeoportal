@@ -1,12 +1,16 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { RequestError, readLimited } from './http.ts';
 
 /**
  * Administrative dictionaries for the parcel search: voivodeships, counties and
  * municipalities from the PRG search service, cadastral precincts from ULDK.
  * Both sources are slow or unstable at times, so every list is cached on disk;
  * when a refresh fails, the last good copy is served.
+ *
+ * A code is accepted only when its parent list contains it, so the set of cache keys
+ * is bounded by the real administrative division, not by what a client sends.
  */
 
 export interface DictEntry {
@@ -18,7 +22,11 @@ export interface DictEntry {
 const PRG = 'https://mapy.geoportal.gov.pl/wss/ims/maps/PRG_gugik_wyszukiwarka/MapServer';
 const ULDK = 'https://uldk.gugik.gov.pl/';
 const TTL_MS = 30 * 24 * 3600 * 1000;
+/** Empty answers are retried sooner: a county may have been temporarily unavailable. */
+const EMPTY_TTL_MS = 6 * 3600 * 1000;
 const TIMEOUT_MS = 20000;
+const MAX_BYTES = 2_000_000;
+const MAX_PAGES = 5;
 const CACHE_DIR = resolve(dirname(fileURLToPath(import.meta.url)), 'data', 'dict');
 
 interface Cached {
@@ -29,7 +37,7 @@ interface Cached {
 const memory = new Map<string, Cached>();
 const pending = new Map<string, Promise<DictEntry[]>>();
 
-const fileFor = (key: string) => resolve(CACHE_DIR, `${key.replace(/[^\w.-]/g, '_')}.json`);
+const fileFor = (key: string) => resolve(CACHE_DIR, `${key}.json`);
 
 async function readDisk(key: string): Promise<Cached | undefined> {
   try {
@@ -39,67 +47,89 @@ async function readDisk(key: string): Promise<Cached | undefined> {
   }
 }
 
+/** One upstream request per key at a time, however many users ask; the result is stored once. */
+function loadOnce(key: string, load: () => Promise<DictEntry[]>): Promise<DictEntry[]> {
+  let request = pending.get(key);
+  if (!request) {
+    request = load()
+      .then(async (entries) => {
+        memory.set(key, { fetchedAt: Date.now(), entries });
+        if (entries.length > 0) {
+          await mkdir(CACHE_DIR, { recursive: true });
+          await writeFile(fileFor(key), JSON.stringify(memory.get(key)));
+        }
+        return entries;
+      })
+      .finally(() => pending.delete(key));
+    pending.set(key, request);
+  }
+  return request;
+}
+
 /** Fresh copy from memory or disk; otherwise load, and on failure fall back to a stale copy. */
 async function cached(key: string, load: () => Promise<DictEntry[]>): Promise<DictEntry[]> {
   const hit = memory.get(key) ?? (await readDisk(key));
-  if (hit) memory.set(key, hit);
-  if (hit && Date.now() - hit.fetchedAt < TTL_MS) return hit.entries;
-
-  // One upstream request per key at a time, however many users ask.
-  let request = pending.get(key);
-  if (!request) {
-    request = load().finally(() => pending.delete(key));
-    pending.set(key, request);
+  if (hit) {
+    memory.set(key, hit);
+    const ttl = hit.entries.length > 0 ? TTL_MS : EMPTY_TTL_MS;
+    if (Date.now() - hit.fetchedAt < ttl) return hit.entries;
   }
   try {
-    const entries = await request;
-    const fresh = { fetchedAt: Date.now(), entries };
-    memory.set(key, fresh);
-    await mkdir(CACHE_DIR, { recursive: true });
-    await writeFile(fileFor(key), JSON.stringify(fresh));
-    return entries;
+    return await loadOnce(key, load);
   } catch (e) {
     if (hit) return hit.entries;
     throw e;
   }
 }
 
+async function fetchJson<T>(url: string): Promise<T> {
+  const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return JSON.parse(new TextDecoder().decode(await readLimited(res, MAX_BYTES))) as T;
+}
+
 const byName = (a: DictEntry, b: DictEntry) => a.name.localeCompare(b.name, 'pl');
 
+interface PrgRow {
+  teryt: string;
+  nazwa: string;
+}
+
 /** PRG search layers: 2 voivodeships, 1 counties, 0 municipalities (paged, 1000 per request). */
-async function prg(layer: number, where: string): Promise<{ teryt: string; nazwa: string }[]> {
-  const out: { teryt: string; nazwa: string }[] = [];
-  for (let offset = 0; ; offset += 1000) {
+async function prg(layer: number, terytPrefix: string): Promise<PrgRow[]> {
+  const out: PrgRow[] = [];
+  for (let page = 0; page < MAX_PAGES; page++) {
     const q = new URLSearchParams({
-      where,
+      where: terytPrefix ? `teryt like '${terytPrefix}%'` : '1=1',
       outFields: 'teryt,nazwa',
       returnGeometry: 'false',
       orderByFields: 'teryt',
-      resultOffset: String(offset),
+      resultOffset: String(page * 1000),
       resultRecordCount: '1000',
       f: 'json',
     });
-    const res = await fetch(`${PRG}/${layer}/query?${q}`, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-    if (!res.ok) throw new Error(`PRG ${res.status}`);
-    const data = (await res.json()) as { features?: { attributes: { teryt: string; nazwa: string } }[]; error?: unknown };
+    const data = await fetchJson<{ features?: { attributes: PrgRow }[]; error?: unknown }>(`${PRG}/${layer}/query?${q}`);
     if (data.error || !data.features) throw new Error('PRG query failed');
     out.push(...data.features.map((f) => f.attributes));
-    if (data.features.length < 1000) return out;
+    if (data.features.length < 1000) break;
   }
+  return out;
 }
 
-const DIGITS = /^\d+$/;
+/** The code must come from the parent list, which bounds the cache to real units. */
+async function ensureKnown(parent: Promise<DictEntry[]>, id: string, what: string): Promise<void> {
+  if (!(await parent).some((e) => e.id === id)) throw new RequestError(`Unknown ${what}`);
+}
 
 export function voivodeships(): Promise<DictEntry[]> {
-  return cached('woj', async () =>
-    (await prg(2, '1=1')).map((r) => ({ id: r.teryt, name: r.nazwa })).sort(byName),
-  );
+  return cached('woj', async () => (await prg(2, '')).map((r) => ({ id: r.teryt, name: r.nazwa })).sort(byName));
 }
 
-export function counties(voivodeship: string): Promise<DictEntry[]> {
-  if (!/^\d{2}$/.test(voivodeship)) return Promise.reject(new Error('Invalid voivodeship'));
+export async function counties(voivodeship: string): Promise<DictEntry[]> {
+  if (!/^\d{2}$/.test(voivodeship)) throw new RequestError('Invalid voivodeship');
+  await ensureKnown(voivodeships(), voivodeship, 'voivodeship');
   return cached(`pow-${voivodeship}`, async () =>
-    (await prg(1, `teryt like '${voivodeship}%'`)).map((r) => ({ id: r.teryt, name: r.nazwa })).sort(byName),
+    (await prg(1, voivodeship)).map((r) => ({ id: r.teryt, name: r.nazwa })).sort(byName),
   );
 }
 
@@ -130,11 +160,12 @@ const CITY_DISTRICTS: Record<string, { city: string; districts: [string, string]
 };
 
 /** Municipalities, or cadastral units where a city is split into districts. PRG writes 1417082, ULDK uses 141708_2. */
-export function communes(county: string): Promise<DictEntry[]> {
-  if (!/^\d{4}$/.test(county)) return Promise.reject(new Error('Invalid county'));
+export async function communes(county: string): Promise<DictEntry[]> {
+  if (!/^\d{4}$/.test(county)) throw new RequestError('Invalid county');
+  await ensureKnown(counties(county.slice(0, 2)), county, 'county');
   return cached(`gmi-${county}`, async () =>
-    (await prg(0, `teryt like '${county}%'`))
-      .filter((r) => r.teryt.length === 7 && DIGITS.test(r.teryt))
+    (await prg(0, county))
+      .filter((r) => /^\d{7}$/.test(r.teryt))
       .flatMap((r) => {
         const split = CITY_DISTRICTS[r.teryt];
         if (split) return split.districts.map(([id, name]) => ({ id, name: `${split.city}-${name}` }));
@@ -145,15 +176,16 @@ export function communes(county: string): Promise<DictEntry[]> {
 }
 
 /** ULDK lists every precinct of a municipality for GetRegionById with the municipality id. */
-export function precincts(commune: string): Promise<DictEntry[]> {
-  if (!/^\d{6}_\d$/.test(commune)) return Promise.reject(new Error('Invalid municipality'));
+export async function precincts(commune: string): Promise<DictEntry[]> {
+  if (!/^\d{6}_\d$/.test(commune)) throw new RequestError('Invalid municipality');
+  await ensureKnown(communes(commune.slice(0, 4)), commune, 'municipality');
   return cached(`obr-${commune}`, async () => {
     const q = new URLSearchParams({ request: 'GetRegionById', id: commune, result: 'teryt,region' });
     const res = await fetch(`${ULDK}?${q}`, { signal: AbortSignal.timeout(TIMEOUT_MS) });
     if (!res.ok) throw new Error(`ULDK ${res.status}`);
-    const [status, ...rows] = (await res.text()).trim().split('\n');
+    const [status, ...rows] = new TextDecoder().decode(await readLimited(res, MAX_BYTES)).trim().split('\n');
     if (status.startsWith('-1')) return [];
-    if (!status.startsWith('0')) throw new Error(`ULDK: ${status}`);
+    if (!status.startsWith('0')) throw new Error('ULDK error status');
     return rows
       .map((r) => r.split('|'))
       .filter(([id]) => /^\d{6}_\d\.\d{4}$/.test(id))

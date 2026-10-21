@@ -3,8 +3,8 @@ import ImageLayer from 'ol/layer/Image';
 import WMTS from 'ol/source/WMTS';
 import ImageWMS from 'ol/source/ImageWMS';
 import WMTSTileGrid from 'ol/tilegrid/WMTS';
-import { EPSG2180, OGC_PIXEL, gugikTileAt, gugikWmtsGrid } from '@/map/projection';
-import { GUGIK_ATTRIBUTION, OVERLAYS, TILE_SERVICE_BY_ID, type BaseMap, type Overlay, type TileService } from './registry';
+import { EPSG2180, OGC_PIXEL, gugikWmtsGrid } from '@/map/projection';
+import { GUGIK_ATTRIBUTION, OVERLAYS, type Overlay, type TileService } from './registry';
 import { layerMeta, wmtsMeta } from './meta';
 import { useStatusStore } from './status';
 
@@ -53,7 +53,6 @@ export function createTileLayer(
     // Lower-resolution tiles stay ready, so zooming out never shows an empty map.
     preload: Infinity,
     zIndex: 0,
-    properties: { serviceId: def.id },
   });
 }
 
@@ -72,7 +71,7 @@ export function createOverlayLayer(def: Overlay): ImageLayer<ImageWMS> {
     params: { LAYERS: '', FORMAT: 'image/png', TRANSPARENT: true, VERSION: '1.3.0' },
     projection: EPSG2180,
     ratio: 1.25,
-    attributions: def.attribution,
+    attributions: GUGIK_ATTRIBUTION,
   });
   source.on('imageloadend', () => report(def.id, true));
   source.on('imageloaderror', () => report(def.id, false));
@@ -82,7 +81,6 @@ export function createOverlayLayer(def: Overlay): ImageLayer<ImageWMS> {
     opacity: def.opacity ?? 1,
     // Registry order is drawing order: the first overlay is drawn lowest.
     zIndex: 10 + OVERLAYS.indexOf(def),
-    properties: { serviceId: def.id },
   });
 }
 
@@ -95,25 +93,4 @@ export function resolutionRange(def: Overlay, names: string[]): { min: number; m
   const maxScale = Math.max(...meta.map((m) => m?.maxScale ?? Infinity));
   const minScale = Math.min(...meta.map((m) => m?.minScale ?? 0));
   return { min: minScale * OGC_PIXEL, max: maxScale * OGC_PIXEL };
-}
-
-/** Static preview tile for the base map switcher. */
-export function thumbnailUrl(base: BaseMap): string | undefined {
-  const def = base.thumbnail && TILE_SERVICE_BY_ID.get(base.thumbnail.service);
-  if (!base.thumbnail || !def) return undefined;
-  const seriesLevel = base.thumbnail.level;
-  const { col, row } = gugikTileAt(base.thumbnail.at ?? [637000, 487500], seriesLevel);
-  const q = new URLSearchParams({
-    SERVICE: 'WMTS',
-    REQUEST: 'GetTile',
-    VERSION: '1.0.0',
-    LAYER: def.layer,
-    STYLE: 'default',
-    FORMAT: def.format,
-    TILEMATRIXSET: 'EPSG:2180',
-    TILEMATRIX: `EPSG:2180:${seriesLevel - def.firstLevel}`,
-    TILEROW: String(row),
-    TILECOL: String(col),
-  });
-  return `${def.url}?${q.toString()}`;
 }

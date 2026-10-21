@@ -1,6 +1,6 @@
 /**
- * Registry of GUGiK services used by the app. Each entry drives the map layer,
- * the layer catalog, attribution and the availability probe.
+ * Registry of GUGiK services used by the app. Each entry drives the map layers, the
+ * layer catalog, the capabilities cache and the GetFeatureInfo proxy.
  * Adding a service means adding one entry here.
  */
 
@@ -22,16 +22,6 @@ export interface SubLayer {
   title: string;
   /** Selected when the service is switched on. */
   default?: boolean;
-}
-
-interface ServiceBase {
-  id: string;
-  title: string;
-  description: string;
-  keywords: string[];
-  attribution: string;
-  /** Same content on geoportal.gov.pl, for the "blocked" fallback. */
-  geoportalUrl: string;
 }
 
 /** A WMTS service on the shared GUGiK EPSG:2180 grid: a building block of base maps. */
@@ -65,16 +55,20 @@ export interface BaseMap {
   title: string;
   description: string;
   sources: BaseSource[];
-  /** Preview tile: service, level of the shared series and point (EPSG:2180), central Warsaw by default. */
-  thumbnail?: { service: string; level: number; at?: [number, number] };
+  /** Static preview in public/thumbs, made from one tile of the service. */
+  thumb?: string;
   /** Requires a token on geoportal.gov.pl: listed, but disabled with a link. */
   restricted?: boolean;
 }
 
 /** Overlay: dynamic WMS rendered as one image per view. */
-export interface Overlay extends ServiceBase {
+export interface Overlay {
+  id: string;
   kind: 'wms';
+  title: string;
+  description: string;
   topic: Topic;
+  keywords: string[];
   /** Shown in the "Na start" group of the catalog. */
   starter?: boolean;
   url: string;
@@ -85,14 +79,15 @@ export interface Overlay extends ServiceBase {
 
 export type ServiceDef = TileService | Overlay;
 
-export const GUGIK_ATTRIBUTION = 'Dane: <a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">GUGiK, geoportal.gov.pl</a>';
+export const GUGIK_ATTRIBUTION =
+  'Dane: <a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">GUGiK, geoportal.gov.pl</a>';
+/** The same content on geoportal.gov.pl, offered when a service is unavailable here. */
+export const GEOPORTAL_MAP = 'https://mapy.geoportal.gov.pl/imap/Imgp_2.html';
+
 const WMTS_GUEST = 'https://mapy.geoportal.gov.pl/wss/service/WMTS/guest/wmts/';
 const PZGIK = 'https://mapy.geoportal.gov.pl/wss/service/PZGIK/';
 const INTEGRACJA = 'https://integracja.gugik.gov.pl/cgi-bin/';
 const EXT = 'https://mapy.geoportal.gov.pl/wss/ext/';
-export const GEOPORTAL_MAP = 'https://mapy.geoportal.gov.pl/imap/Imgp_2.html';
-
-const common = { attribution: GUGIK_ATTRIBUTION, geoportalUrl: GEOPORTAL_MAP };
 
 export const TILE_SERVICES: TileService[] = [
   { id: 'orto', kind: 'wmts', url: `${PZGIK}ORTO/WMTS/StandardResolution`, layer: 'ORTOFOTOMAPA', format: 'image/jpeg', firstLevel: 0, levels: 17 },
@@ -109,13 +104,7 @@ export const TILE_SERVICE_BY_ID: ReadonlyMap<string, TileService> = new Map(TILE
 const MAP_SWITCH_SCALE = 70000;
 
 export const BASE_MAPS: BaseMap[] = [
-  {
-    id: 'orto',
-    title: 'Zdjęcia',
-    description: 'Ortofotomapa',
-    sources: [{ service: 'orto' }],
-    thumbnail: { service: 'orto', level: 10 },
-  },
+  { id: 'orto', title: 'Zdjęcia', description: 'Ortofotomapa', sources: [{ service: 'orto' }], thumb: '/thumbs/orto.jpg' },
   {
     id: 'mapa',
     title: 'Mapa',
@@ -124,42 +113,29 @@ export const BASE_MAPS: BaseMap[] = [
       { service: 'bdoo', minScale: MAP_SWITCH_SCALE },
       { service: 'bdot10k', maxScale: MAP_SWITCH_SCALE },
     ],
-    thumbnail: { service: 'bdot10k', level: 10 },
+    thumb: '/thumbs/mapa.jpg',
   },
   {
     id: 'teren',
     title: 'Teren',
     description: 'Rzeźba terenu: wysokości i cieniowanie z NMT',
     sources: [{ service: 'relief' }],
-    // The Tatra mountains show relief better than flat Warsaw.
-    thumbnail: { service: 'relief', level: 6, at: [570000, 160000] },
+    thumb: '/thumbs/teren.jpg',
   },
   {
     id: 'prosta',
     title: 'Prosta',
     description: 'Uproszczona mapa, szybka na telefonie',
     sources: [{ service: 'g2mobile' }],
-    thumbnail: { service: 'g2mobile', level: 10 },
+    thumb: '/thumbs/prosta.jpg',
   },
-  {
-    id: 'skany',
-    title: 'Skany',
-    description: 'Skany map topograficznych',
-    sources: [{ service: 'topo' }],
-    thumbnail: { service: 'topo', level: 10 },
-  },
-  {
-    id: 'brak',
-    title: 'Brak',
-    description: 'Bez podkładu mapowego',
-    sources: [],
-  },
+  { id: 'skany', title: 'Skany', description: 'Skany map topograficznych', sources: [{ service: 'topo' }], thumb: '/thumbs/skany.jpg' },
+  { id: 'brak', title: 'Brak', description: 'Bez podkładu mapowego', sources: [] },
 ];
 
 /** Listed in drawing order, bottom to top. */
 export const OVERLAYS: Overlay[] = [
   {
-    ...common,
     id: 'kieg',
     kind: 'wms',
     title: 'Ewidencja gruntów i budynków',
@@ -179,7 +155,6 @@ export const OVERLAYS: Overlay[] = [
     ],
   },
   {
-    ...common,
     id: 'kimpzp',
     kind: 'wms',
     title: 'Plany miejscowe (MPZP)',
@@ -200,7 +175,6 @@ export const OVERLAYS: Overlay[] = [
     ],
   },
   {
-    ...common,
     id: 'pog',
     kind: 'wms',
     title: 'Plany ogólne gmin (POG)',
@@ -217,7 +191,6 @@ export const OVERLAYS: Overlay[] = [
     ],
   },
   {
-    ...common,
     id: 'rcn',
     kind: 'wms',
     title: 'Ceny transakcyjne (RCN)',
@@ -234,7 +207,6 @@ export const OVERLAYS: Overlay[] = [
     ],
   },
   {
-    ...common,
     id: 'kiut',
     kind: 'wms',
     title: 'Uzbrojenie terenu',
@@ -257,8 +229,6 @@ export const OVERLAYS: Overlay[] = [
     ],
   },
 ];
-
-export const SERVICES: ServiceDef[] = [...TILE_SERVICES, ...OVERLAYS];
 
 export const OVERLAY_BY_ID: ReadonlyMap<string, Overlay> = new Map(OVERLAYS.map((s) => [s.id, s]));
 

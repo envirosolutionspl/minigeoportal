@@ -58,12 +58,3 @@ export function gugikWmtsGrid(first: number, levels: number): WMTSTileGrid {
     matrixIds: Array.from({ length: levels }, (_, i) => `EPSG:2180:${i}`),
   });
 }
-
-/** Tile column and row covering a point at a given level of the shared series. */
-export function gugikTileAt(point: [number, number], seriesLevel: number): { col: number; row: number } {
-  const span = GUGIK_RESOLUTIONS[seriesLevel] * TILE_SIZE;
-  return {
-    col: Math.floor((point[0] - TILE_ORIGIN[0]) / span),
-    row: Math.floor((TILE_ORIGIN[1] - point[1]) / span),
-  };
-}

@@ -5,16 +5,16 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "concurrently -k -n web,api -c green,blue \"vite\" \"node --watch --import tsx server/index.ts\"",
+    "dev": "concurrently -k -n web,api -c green,blue \"vite\" \"npm run dev:api\"",
     "dev:web": "vite",
-    "dev:api": "node --watch --import tsx server/index.ts",
-    "build": "tsc -b && vite build",
-    "start": "node --import tsx server/index.ts",
-    "capabilities": "tsx server/refresh.ts",
-    "preview": "vite preview",
+    "dev:api": "node --watch-path=server --watch-path=src/services server/index.ts",
+    "build": "tsc -b && vite build && node scripts/precompress.ts",
+    "start": "node server/index.ts",
+    "capabilities": "node server/refresh.ts",
     "typecheck": "tsc -b"
   },
   "dependencies": {
+    "@fontsource-variable/figtree": "^5.3.0",
     "@hono/node-server": "^2.1.5",
     "fast-xml-parser": "^5.11.2",
     "hono": "^4.13.13",
@@ -28,14 +28,15 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.14",
     "@types/node": "^24.7.0",
-    "@types/proj4": "^2.5.6",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
     "concurrently": "^10.0.6",
     "tailwindcss": "^4.1.14",
-    "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vite": "^7.1.9"
+  },
+  "engines": {
+    "node": ">=22.18"
   }
 }

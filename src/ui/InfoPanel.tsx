@@ -1,6 +1,6 @@
 import { ExternalLink, Layers, LoaderCircle, MapPin, X } from 'lucide-react';
 import { toLonLat } from 'ol/proj';
-import { OVERLAY_BY_ID } from '@/services/registry';
+import { GEOPORTAL_MAP, OVERLAY_BY_ID } from '@/services/registry';
 import type { InfoRecord } from '@/services/featureinfo';
 import { useInfoStore, type InfoResult } from '@/state/info';
 import { useMapStore } from '@/state/store';
@@ -70,7 +70,7 @@ function ServiceResult({ id, result }: { id: string; result: InfoResult | undefi
       {result.status === 'error' && (
         <p className="text-sm text-[var(--muted)]">
           Nie udało się pobrać danych. Serwer usługi nie odpowiada albo odrzucił zapytanie.{' '}
-          <a href={def.geoportalUrl} target="_blank" rel="noopener" className="text-[var(--accent)] underline">
+          <a href={GEOPORTAL_MAP} target="_blank" rel="noopener" className="text-[var(--accent)] underline">
             Sprawdź w geoportal.gov.pl
           </a>
         </p>

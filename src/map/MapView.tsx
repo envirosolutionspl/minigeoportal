@@ -5,7 +5,6 @@ import { defaults as defaultControls, ScaleLine, ZoomToExtent } from 'ol/control
 import { EPSG2180, GUGIK_RESOLUTIONS, OGC_PIXEL, POLAND_EXTENT } from './projection';
 import { BASE_MAPS, OVERLAYS, TILE_SERVICE_BY_ID, selectedSublayers } from '@/services/registry';
 import { createOverlayLayer, createTileLayer, resolutionRange } from '@/services/layers';
-import { useStatusStore } from '@/services/status';
 import { hasInitialView, overlayOpacity, useMapStore } from '@/state/store';
 import { attachFeatureInfo } from './featureInfoClick';
 import { attachFocus } from './focus';
@@ -84,9 +83,6 @@ export function MapView() {
       const r = view.getResolution();
       if (c && z !== undefined && r !== undefined) setView([c[0], c[1]], z, r / OGC_PIXEL);
     });
-
-    // Probe services only after the first view is drawn, so probes never compete with visible tiles.
-    map.once('rendercomplete', () => void useStatusStore.getState().probeAll());
 
     const detachFeatureInfo = attachFeatureInfo(map, overlays);
     const detachFocus = attachFocus(map);

@@ -18,9 +18,10 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          ol: ['ol', 'proj4'],
-          react: ['react', 'react-dom'],
+        // Libraries change rarely and app code often; separate chunks keep the big ones cached.
+        manualChunks(id) {
+          if (/node_modules\/(ol|proj4|rbush|quickselect|pbf|earcut)\//.test(id)) return 'ol';
+          if (id.includes('node_modules')) return 'vendor';
         },
       },
     },

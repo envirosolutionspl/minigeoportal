@@ -1,4 +1,5 @@
 import { XMLParser } from 'fast-xml-parser';
+import { readLimited } from './http.ts';
 import { OVERLAYS, TILE_SERVICES, type Overlay, type TileService } from '../src/services/registry.ts';
 import type {
   CapabilitiesCache,
@@ -36,11 +37,12 @@ const num = (v: unknown): number | undefined => {
 };
 
 const TIMEOUT_MS = 30000;
+const MAX_BYTES = 5_000_000;
 
 async function fetchXml(url: string): Promise<Node> {
   const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return node(parser.parse(await res.text()));
+  return node(parser.parse(new TextDecoder().decode(await readLimited(res, MAX_BYTES))));
 }
 
 /** Named layers of a WMS layer tree; scale hints and queryable are inherited as the WMS spec requires. */
@@ -82,8 +84,7 @@ async function wms(def: Overlay): Promise<WmsMeta> {
 async function wmts(def: TileService): Promise<WmtsMeta> {
   const root = node((await fetchXml(`${def.url}?SERVICE=WMTS&REQUEST=GetCapabilities&VERSION=1.0.0`)).Capabilities);
   const contents = node(root.Contents);
-  const layer = list(contents.Layer).find((l) => text(l.Identifier) === def.layer);
-  if (!layer) throw new Error(`Layer ${def.layer} not found`);
+  if (!list(contents.Layer).some((l) => text(l.Identifier) === def.layer)) throw new Error(`Layer ${def.layer} not found`);
   const set = list(contents.TileMatrixSet).find((s) => text(s.Identifier) === 'EPSG:2180');
   if (!set) throw new Error('No EPSG:2180 tile matrix set');
   const matrices = list(set.TileMatrix);
@@ -94,7 +95,6 @@ async function wmts(def: TileService): Promise<WmtsMeta> {
     kind: 'wmts',
     fetchedAt: new Date().toISOString(),
     title: text(node(root.ServiceIdentification).Title) ?? def.layer,
-    formats: texts(layer.Format).filter((f) => f.startsWith('image/')),
     matrixSet: {
       id: 'EPSG:2180',
       origin: [east, north],

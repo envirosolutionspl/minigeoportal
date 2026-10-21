@@ -1,14 +1,13 @@
 import { useMemo, useState } from 'react';
-import { ChevronDown, ExternalLink, Search, X, ZoomIn } from 'lucide-react';
-import { OVERLAYS, TOPICS, selectedSublayers, type Overlay, type SubLayer, type Topic } from '@/services/registry';
+import { ChevronDown, ExternalLink, Search, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { GEOPORTAL_MAP, OVERLAYS, TOPICS, selectedSublayers, type Overlay, type SubLayer, type Topic } from '@/services/registry';
 import { layerMeta, visibleAtScale } from '@/services/meta';
-import { useStatusStore, type ServiceStatus } from '@/services/status';
+import { statusOf, useStatusStore, type ServiceStatus } from '@/services/status';
 import { overlayOpacity, useMapStore } from '@/state/store';
 
 const STATUS_LABEL: Record<ServiceStatus, string> = {
-  unknown: 'Sprawdzanie',
+  unknown: 'Jeszcze nie wczytywana',
   ok: 'Dostępna',
-  slow: 'Działa wolno',
   blocked: 'Dostępna tylko na geoportal.gov.pl',
   down: 'Usługa nie odpowiada',
   degraded: 'Część danych nie ładuje się w tym miejscu',
@@ -18,7 +17,6 @@ const STATUS_LABEL: Record<ServiceStatus, string> = {
 const STATUS_DOT: Record<ServiceStatus, string> = {
   unknown: 'bg-[#9db49e]',
   ok: 'bg-[#7da87f]',
-  slow: 'bg-[#FFBC42]',
   blocked: 'bg-[#9db49e]',
   down: 'bg-[#D25F87]',
   degraded: 'bg-[#FFBC42]',
@@ -152,7 +150,7 @@ function OverlayItem({ s, hits }: { s: Overlay; hits: string[] }) {
   const toggle = useMapStore((m) => m.toggleOverlay);
   const opacity = useMapStore((m) => overlayOpacity(s.id, m.opacity));
   const setOpacity = useMapStore((m) => m.setOpacity);
-  const status = useStatusStore((st) => st.status[s.id] ?? 'unknown');
+  const status = useStatusStore((st) => statusOf(st.status, s.id));
   const [expanded, setExpanded] = useState(false);
   const blocked = status === 'blocked';
   const open = expanded || hits.length > 0;
@@ -189,7 +187,7 @@ function OverlayItem({ s, hits }: { s: Overlay; hits: string[] }) {
 
       {(status === 'blocked' || status === 'degraded') && (
         <a
-          href={s.geoportalUrl}
+          href={GEOPORTAL_MAP}
           target="_blank"
           rel="noopener"
           className="mt-1 ml-7 inline-flex items-center gap-1 text-xs text-[var(--accent)]"
@@ -225,9 +223,12 @@ function OverlayItem({ s, hits }: { s: Overlay; hits: string[] }) {
 function SublayerRow({ s, l, highlighted, disabled }: { s: Overlay; l: SubLayer; highlighted: boolean; disabled: boolean }) {
   const checked = useMapStore((m) => m.overlays.includes(s.id) && selectedSublayers(s, m.sublayers).includes(l.name));
   const toggle = useMapStore((m) => m.toggleSublayer);
+  const zoomToScale = useMapStore((m) => m.zoomToScale);
   const outOfScale = useMapStore((m) => !visibleAtScale(s.id, l.name, m.scale));
   const meta = layerMeta(s.id, l.name);
   const zoomedOutTooFar = useMapStore((m) => outOfScale && meta?.maxScale !== undefined && m.scale > meta.maxScale);
+  /** Scale the map should go to for the layer to appear: just inside its visible range. */
+  const targetScale = zoomedOutTooFar ? (meta?.maxScale ?? 0) * 0.9 : (meta?.minScale ?? 0) * 1.1;
   return (
     <li>
       <label
@@ -245,17 +246,23 @@ function SublayerRow({ s, l, highlighted, disabled }: { s: Overlay; l: SubLayer;
         />
         <span className={`flex-1 ${outOfScale ? 'text-[var(--muted)]' : ''}`}>{l.title}</span>
         {checked && outOfScale && (
-          <span
-            className="flex items-center gap-1 text-[11px] text-[var(--muted)]"
+          // Inside the label: preventDefault keeps the click from toggling the checkbox.
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              zoomToScale(targetScale);
+            }}
+            className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-[var(--accent)] hover:bg-[var(--hover)]"
             title={
               zoomedOutTooFar
                 ? `Widoczne od skali 1:${Math.round(meta?.maxScale ?? 0)}`
                 : `Widoczne do skali 1:${Math.round(meta?.minScale ?? 0)}`
             }
           >
-            {zoomedOutTooFar ? <ZoomIn className="h-3 w-3" /> : null}
+            {zoomedOutTooFar ? <ZoomIn className="h-3 w-3" /> : <ZoomOut className="h-3 w-3" />}
             {zoomedOutTooFar ? 'przybliż' : 'oddal'}
-          </span>
+          </button>
         )}
       </label>
     </li>

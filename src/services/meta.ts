@@ -32,7 +32,6 @@ export interface WmtsMeta {
   kind: 'wmts';
   fetchedAt: string;
   title: string;
-  formats: string[];
   matrixSet: {
     id: string;
     /** Top-left corner as [easting, northing]. */
@@ -85,6 +84,12 @@ export function wmtsMeta(id: string): WmtsMeta | undefined {
 
 export function layerMeta(id: string, name: string): WmsLayerMeta | undefined {
   return wmsMeta(id)?.layers[name];
+}
+
+/** Error text when GUGiK did not answer the metadata request for the service. */
+export function serviceError(id: string): string | undefined {
+  const m = cache?.services[id];
+  return m?.kind === 'error' ? m.error : undefined;
 }
 
 /** Without metadata a layer is assumed visible at every scale. */

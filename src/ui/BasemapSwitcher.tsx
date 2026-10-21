@@ -1,7 +1,6 @@
 import { useRef } from 'react';
 import { Ban } from 'lucide-react';
 import { BASE_MAPS, GEOPORTAL_MAP, type BaseMap } from '@/services/registry';
-import { thumbnailUrl } from '@/services/layers';
 import { useMapStore } from '@/state/store';
 
 /**
@@ -39,7 +38,7 @@ function Thumb({
   active?: boolean;
   onClick: () => void;
 }) {
-  const src = thumbnailUrl(def);
+  const src = def.thumb;
   const box = size === 'lg' ? 'h-16 w-16 rounded-2xl shadow-lg ring-2 ring-white/90' : 'h-14 w-14 rounded-xl ring-2';
   const label = (
     <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-1 pt-3 pb-0.5 text-[10px] font-medium text-white">

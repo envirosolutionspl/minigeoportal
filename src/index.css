@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'ol/ol.css';
+@import '@fontsource-variable/figtree';
 
 /*
  * EnviroSolutions brand book palette:
@@ -39,7 +40,7 @@ body,
 #root {
   height: 100%;
   margin: 0;
-  font-family: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Figtree Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 

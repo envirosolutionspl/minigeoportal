@@ -13,6 +13,8 @@ export interface FocusTarget {
   center?: [number, number];
   /** Area to show without outlining anything (the whole country). */
   extent?: [number, number, number, number];
+  /** Scale denominator to zoom to at the current centre, without outlining anything. */
+  scale?: number;
   /** Zoom for points; the closest zoom when fitting a geometry. */
   zoom: number;
   /** Parcels and buildings stay outlined until cleared; other objects fade out. */
@@ -45,6 +47,8 @@ interface MapStore {
   clearFocus(): void;
   /** Whole country, as on first opening. */
   goHome(): void;
+  /** Zooms at the current centre to the given scale denominator, e.g. where a layer becomes visible. */
+  zoomToScale(scale: number): void;
 }
 
 const DEFAULT_BASE = 'orto';
@@ -89,6 +93,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
   focusOn: (target) => set({ focus: { ...target, seq: (get().focus?.seq ?? 0) + 1 } }),
   clearFocus: () => set({ focus: null }),
   goHome: () => get().focusOn({ extent: POLAND_EXTENT, zoom: 0 }),
+  zoomToScale: (scale) => get().focusOn({ scale, zoom: 0 }),
 }));
 
 useMapStore.subscribe((s, prev) => {

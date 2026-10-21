@@ -16,6 +16,9 @@ async function load(key: string): Promise<DictEntry[]> {
   return (await res.json()) as DictEntry[];
 }
 
+/** Forgets loaded lists; used by tests, which share one module instance. */
+export const clearDictionaryCache = () => memo.clear();
+
 export function dictionary(level: DictLevel, parent = ''): Promise<DictEntry[]> {
   const key = parent ? `${level}/${parent}` : level;
   let request = memo.get(key);

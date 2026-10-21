@@ -37,7 +37,10 @@ export async function readLimited(res: Response, maxBytes: number): Promise<Uint
   return out;
 }
 
-/** Addresses a redirect must never lead to: loopback, private, link-local, carrier NAT, unspecified. */
+/**
+ * Addresses a redirect must never lead to: loopback, private, link-local, carrier NAT,
+ * unspecified. IPv4-mapped IPv6 addresses are matched against the IPv4 rules by Node itself.
+ */
 const PRIVATE = new BlockList();
 for (const [net, prefix, family] of [
   ['0.0.0.0', 8, 'ipv4'],
@@ -49,7 +52,6 @@ for (const [net, prefix, family] of [
   ['192.168.0.0', 16, 'ipv4'],
   ['::', 128, 'ipv6'],
   ['::1', 128, 'ipv6'],
-  ['::ffff:0:0', 96, 'ipv6'],
   ['64:ff9b::', 96, 'ipv6'],
   ['fc00::', 7, 'ipv6'],
   ['fe80::', 10, 'ipv6'],
@@ -78,20 +80,26 @@ export async function isPublicHost(hostname: string): Promise<boolean> {
   }
 }
 
-const TRUSTED_PROXY = process.env.TRUSTED_PROXY === '1';
+/** Socket address of the request; empty outside the Node server (e.g. in tests without a socket). */
+function remoteAddress(c: Context): string {
+  try {
+    return getConnInfo(c).remote.address ?? '';
+  } catch {
+    return '';
+  }
+}
 
 /** Client address; the proxy header is honoured only when the deployment says a proxy sets it. */
 export function clientAddress(c: Context): string {
-  if (TRUSTED_PROXY) {
+  if (process.env.TRUSTED_PROXY === '1') {
     const forwarded = c.req.header('x-forwarded-for')?.split(',')[0].trim();
     if (forwarded) return forwarded;
   }
-  return getConnInfo(c).remote.address ?? 'unknown';
+  return remoteAddress(c) || 'unknown';
 }
 
 export function isLoopback(c: Context): boolean {
-  const address = getConnInfo(c).remote.address ?? '';
-  return !c.req.header('x-forwarded-for') && /^(127\.|::1$|::ffff:127\.)/.test(address);
+  return !c.req.header('x-forwarded-for') && /^(127\.|::1$|::ffff:127\.)/.test(remoteAddress(c));
 }
 
 /**

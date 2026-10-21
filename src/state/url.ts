@@ -16,11 +16,13 @@ export interface UrlState {
 export function readUrl(): Partial<UrlState> {
   const q = new URLSearchParams(window.location.search);
   const state: Partial<UrlState> = {};
-  const x = Number(q.get('x'));
-  const y = Number(q.get('y'));
-  const z = Number(q.get('z'));
-  if (q.has('x') && q.has('y') && Number.isFinite(x) && Number.isFinite(y)) state.center = [x, y];
-  if (q.has('z') && Number.isFinite(z)) state.zoom = z;
+  const num = (key: string) => {
+    const v = q.get(key);
+    return v ? Number(v) : NaN;
+  };
+  const [x, y, z] = [num('x'), num('y'), num('z')];
+  if (Number.isFinite(x) && Number.isFinite(y)) state.center = [x, y];
+  if (Number.isFinite(z)) state.zoom = z;
   const b = q.get('b');
   if (b) state.base = b;
   const l = q.get('l');

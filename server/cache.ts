@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
 import { buildCache } from './capabilities.ts';
 
-export const CACHE_FILE = resolve(dirname(fileURLToPath(import.meta.url)), 'data', 'capabilities.json');
+export const CACHE_FILE =
+  process.env.CAPABILITIES_FILE ?? resolve(dirname(fileURLToPath(import.meta.url)), 'data', 'capabilities.json');
 
 export async function readCache(): Promise<CapabilitiesCache | undefined> {
   try {

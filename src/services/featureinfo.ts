@@ -58,6 +58,13 @@ export async function fetchFeatureInfo(
 
 const clean = (s: string | null | undefined) => (s ?? '').replace(/\s+/g, ' ').trim();
 
+/** Parses markup and drops what carries no text for a reader. */
+function parseHtmlFragment(markup: string): Document {
+  const doc = new DOMParser().parseFromString(markup, 'text/html');
+  doc.querySelectorAll('script, style').forEach((n) => n.remove());
+  return doc;
+}
+
 /** Readable names for technical attribute names seen in GUGiK and local services. */
 const LABELS: Record<string, string> = {
   opis_oznac: 'Przeznaczenie',
@@ -74,7 +81,7 @@ function field(label: string, raw: string): InfoField | null {
   if (!label || HIDDEN.test(label)) return null;
   label = LABELS[label] ?? label;
   if (/<[a-z]/i.test(raw)) {
-    const doc = new DOMParser().parseFromString(raw, 'text/html');
+    const doc = parseHtmlFragment(raw);
     const link = doc.querySelector('a[href]');
     const text = clean(doc.body.textContent);
     if (link && /^https?:/i.test(link.getAttribute('href') ?? '')) {
@@ -185,5 +192,5 @@ function parseAny(body: string, contentType: string): InfoRecord[] {
     if (!doc.querySelector('parsererror')) return parseXml(doc);
   }
   // HTML without tables is a server's own page (help text, empty templates), not feature data.
-  return parseHtml(new DOMParser().parseFromString(body, 'text/html'));
+  return parseHtml(parseHtmlFragment(body));
 }

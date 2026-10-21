@@ -1,3 +1,5 @@
+import { unitNames, type UnitNames } from './units';
+
 /**
  * Search across GUGiK services: addresses, streets and places from the universal geocoder
  * (UUG), parcels from the parcel location service (ULDK). Every hit carries its geometry,
@@ -14,6 +16,8 @@ export interface SearchHit {
   center?: [number, number];
   /** WKT in EPSG:2180, when the service returned a geometry. */
   wkt?: string;
+  /** 6-digit municipality TERYT code from the geocoder, used to name the units in `detail`. */
+  teryt?: string;
 }
 
 const UUG = 'https://services.gugik.gov.pl/uug/';
@@ -28,6 +32,7 @@ const PRECINCT_AND_NUMBER = /^\p{L}[\p{L}\s.-]*\s\d+[\d/]*$/u;
 export const stripSrid = (wkt: string) => wkt.replace(/^SRID=\d+;/i, '');
 
 interface UugResult {
+  teryt?: string;
   city?: string;
   citypart?: string | null;
   street?: string | null;
@@ -55,9 +60,28 @@ async function uug(query: string, signal: AbortSignal): Promise<SearchHit[]> {
         detail: street ? [r.citypart, r.city].filter(Boolean).join(', ') : kind === 'place' ? 'Miejscowość' : undefined,
         center: [x, y] as [number, number],
         wkt: r.geometry_wkt,
+        teryt: r.teryt,
       },
     ];
   });
+}
+
+/**
+ * Adds the municipality, county and voivodeship to the detail line, so two places of one
+ * name can be told apart. Parts equal to the place name itself (a town that is its own
+ * municipality or county) are left out.
+ */
+function withUnits(hit: SearchHit, units: Map<string, UnitNames>): SearchHit {
+  const u = hit.teryt && units.get(hit.teryt);
+  if (!u) return hit;
+  const place = hit.kind === 'place' ? hit.label : hit.detail?.split(', ').pop();
+  const parts = [
+    u.commune && u.commune !== place ? `gm. ${u.commune}` : '',
+    u.county !== place ? `pow. ${u.county}` : '',
+    hit.kind === 'place' ? `woj. ${u.voivodeship}` : '',
+  ].filter(Boolean);
+  const detail = hit.kind === 'place' ? parts.join(', ') : [hit.detail, ...parts].filter(Boolean).join(', ');
+  return { ...hit, detail: detail || hit.detail };
 }
 
 /** ULDK answers in text: first line is a count or "-1 brak wyników", then one "|"-separated row per hit. */
@@ -87,7 +111,9 @@ export async function search(query: string, signal: AbortSignal): Promise<Search
   const lookups: Promise<SearchHit[]>[] = [uug(q, signal)];
   if (PRECINCT_AND_NUMBER.test(q)) lookups.unshift(findParcels(q, signal));
   const results = await Promise.allSettled(lookups);
-  return results.flatMap((r) => (r.status === 'fulfilled' ? r.value : [])).slice(0, 10);
+  const hits = results.flatMap((r) => (r.status === 'fulfilled' ? r.value : [])).slice(0, 10);
+  const units = await unitNames(hits.flatMap((h) => (h.teryt ? [h.teryt] : [])));
+  return hits.map((h) => withUnits(h, units));
 }
 
 /**

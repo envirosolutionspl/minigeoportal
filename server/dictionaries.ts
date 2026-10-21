@@ -27,7 +27,8 @@ const EMPTY_TTL_MS = 6 * 3600 * 1000;
 const TIMEOUT_MS = 20000;
 const MAX_BYTES = 2_000_000;
 const MAX_PAGES = 5;
-const CACHE_DIR = resolve(dirname(fileURLToPath(import.meta.url)), 'data', 'dict');
+/** Overridable so tests never touch the real cache. */
+const CACHE_DIR = process.env.DICT_CACHE_DIR ?? resolve(dirname(fileURLToPath(import.meta.url)), 'data', 'dict');
 
 interface Cached {
   fetchedAt: number;
@@ -192,4 +193,37 @@ export async function precincts(commune: string): Promise<DictEntry[]> {
       .map(([id, name]) => ({ id, name: name || id.slice(-4) }))
       .sort((a, b) => a.name.localeCompare(b.name, 'pl', { numeric: true }));
   });
+}
+
+export interface UnitNames {
+  voivodeship: string;
+  county: string;
+  /** Absent for codes without a municipality entry, e.g. cities listed by districts. */
+  commune?: string;
+}
+
+const MAX_UNIT_CODES = 20;
+
+/**
+ * Names of the voivodeship, county and municipality for 6-digit municipality TERYT codes,
+ * as the geocoder returns them; search results use them to tell places of one name apart.
+ * Unknown codes are left out of the answer.
+ */
+export async function unitNames(codes: string[]): Promise<Record<string, UnitNames>> {
+  const unique = [...new Set(codes)];
+  if (unique.length > MAX_UNIT_CODES || !unique.every((c) => /^\d{6}$/.test(c))) {
+    throw new RequestError('Invalid TERYT codes');
+  }
+  const out: Record<string, UnitNames> = {};
+  await Promise.all(
+    unique.map(async (code) => {
+      const voivodeship = (await voivodeships()).find((v) => v.id === code.slice(0, 2));
+      if (!voivodeship) return;
+      const county = (await counties(voivodeship.id)).find((c) => c.id === code.slice(0, 4));
+      if (!county) return;
+      const commune = (await communes(county.id)).find((c) => c.id.startsWith(code));
+      out[code] = { voivodeship: voivodeship.name, county: county.name, ...(commune ? { commune: commune.name } : {}) };
+    }),
+  );
+  return out;
 }

@@ -22,7 +22,8 @@ const STATUS_DOT: Record<ServiceStatus, string> = {
   degraded: 'bg-[#FFBC42]',
 };
 
-const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+/** Lower case without Polish diacritics; ł has no decomposed form and is replaced by hand. */
+const normalize = (s: string) => s.toLowerCase().replace(/ł/g, 'l').normalize('NFD').replace(/\p{Diacritic}/gu, '');
 
 /** Words of the query that every match must contain, ignoring case and Polish diacritics. */
 function words(query: string): string[] {

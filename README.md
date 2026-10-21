@@ -21,6 +21,8 @@ Odświeżenie cache metadanych usług (GetCapabilities):
 npm run capabilities
 ```
 
+Testy (Vitest): `npm test`, w trybie ciągłym `npm run test:watch`. Testy leżą obok kodu: `server/*.test.ts` działają w Node i sprawdzają walidację, filtr przekierowań, limity, słowniki, parser capabilities i trasy API; `src/**/*.test.ts(x)` działają w jsdom i sprawdzają parser odpowiedzi, wyszukiwarkę, stan mapy, adres URL, rejestr usług i komponenty (katalog warstw, wyszukiwarka działek, panel informacji). Każda nowa funkcja lub poprawka ma mieć test w tym samym commicie.
+
 Produkcja: `npm run build` (buduje aplikację i zapisuje skompresowane kopie `.br`/`.gz`), potem `NODE_ENV=production npm start` serwuje aplikację i API. Zmienne środowiskowe: `PORT` (8787), `HOST` (`0.0.0.0` w produkcji, `127.0.0.1` poza nią), `TRUSTED_PROXY=1`, gdy przed serwerem stoi reverse proxy ustawiające `X-Forwarded-For` (limity zapytań liczą się wtedy per adres klienta, nie per proxy).
 
 ## Architektura

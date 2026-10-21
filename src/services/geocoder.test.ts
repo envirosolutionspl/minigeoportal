@@ -1,0 +1,122 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { buildingAt, findParcels, placeOutline, search, stripSrid } from './geocoder';
+import { clearUnitNames } from './units';
+import { stubFetch } from '@/test/helpers';
+
+beforeEach(() => clearUnitNames());
+
+const signal = () => new AbortController().signal;
+
+const UUG_STREET = {
+  type: 'street',
+  results: { 1: { city: 'Wiązowna', street: 'Firletki', number: null, teryt: '141708', x: '656753.84', y: '482462.38', geometry_wkt: 'MULTILINESTRING((1 2,3 4))' } },
+};
+const UUG_CITY = { type: 'city', results: { 1: { city: 'Otwock', teryt: '141702', x: '656860', y: '474612', geometry_wkt: 'POINT(656860 474612)' } } };
+const UUG_TWO_PLACES = {
+  type: 'city',
+  results: {
+    1: { city: 'Komaszyce', teryt: '040704', x: '454776', y: '546382' },
+    2: { city: 'Komaszyce', teryt: '260502', x: '601729', y: '376839' },
+  },
+};
+const UUG_ADDRESS = {
+  type: 'address',
+  results: {
+    1: { city: 'Kraków', citypart: 'Stare Miasto', street: 'Rynek Główny', number: '1', teryt: '126101', x: '567009.37', y: '244218.48', geometry_wkt: 'POINT(567009.37 244218.48)' },
+    2: { city: 'Kraków', street: 'Mały Rynek', number: '1', x: 'abc', y: '1' },
+  },
+};
+const UNITS = {
+  '141708': { voivodeship: 'mazowieckie', county: 'otwocki', commune: 'Wiązowna' },
+  '141702': { voivodeship: 'mazowieckie', county: 'otwocki', commune: 'Otwock' },
+  '040704': { voivodeship: 'kujawsko-pomorskie', county: 'brodnicki', commune: 'Brzozie' },
+  '260502': { voivodeship: 'świętokrzyskie', county: 'kielecki', commune: 'Bodzentyn' },
+  '126101': { voivodeship: 'małopolskie', county: 'Kraków' },
+};
+const ULDK_PARCEL = '1\n141708_2.0021.22/1|Wiązowna|Wiązowna Gminna|22/1|SRID=2180;POLYGON((0 0,1 0,1 1,0 0))\n';
+
+describe('search', () => {
+  it('maps geocoder answers to hits with kind, label, detail and geometry', async () => {
+    stubFetch([['services.gugik.gov.pl/uug', UUG_ADDRESS], ['/api/dict/jednostki', UNITS]]);
+    const hits = await search('Kraków, Rynek Główny 1', signal());
+    // Kraków is its own county, so no county is repeated after the city.
+    expect(hits).toEqual([
+      { kind: 'address', label: 'Rynek Główny 1', detail: 'Stare Miasto, Kraków', center: [567009.37, 244218.48], wkt: 'POINT(567009.37 244218.48)', teryt: '126101' },
+    ]);
+  });
+
+  it('labels streets and places with their county and municipality', async () => {
+    stubFetch([['services.gugik.gov.pl/uug', UUG_STREET], ['/api/dict/jednostki', UNITS]]);
+    expect((await search('Wiązowna, Firletki', signal()))[0]).toMatchObject({ kind: 'street', label: 'Firletki', detail: 'Wiązowna, pow. otwocki' });
+    stubFetch([['services.gugik.gov.pl/uug', UUG_CITY], ['/api/dict/jednostki', UNITS]]);
+    expect((await search('Otwock', signal()))[0]).toMatchObject({ kind: 'place', label: 'Otwock', detail: 'pow. otwocki, woj. mazowieckie' });
+  });
+
+  it('tells two places of one name apart and asks for the names once', async () => {
+    const { calls } = stubFetch([['services.gugik.gov.pl/uug', UUG_TWO_PLACES], ['/api/dict/jednostki', UNITS]]);
+    const hits = await search('Komaszyce', signal());
+    expect(hits.map((h) => h.detail)).toEqual(['gm. Brzozie, pow. brodnicki, woj. kujawsko-pomorskie', 'gm. Bodzentyn, pow. kielecki, woj. świętokrzyskie']);
+    expect(calls.filter((c) => c.includes('/api/dict/jednostki'))).toEqual(['/api/dict/jednostki?teryt=040704,260502']);
+    await search('Komaszyce', signal());
+    expect(calls.filter((c) => c.includes('/api/dict/jednostki'))).toHaveLength(1);
+  });
+
+  it('still lists places when the names cannot be loaded', async () => {
+    stubFetch([['services.gugik.gov.pl/uug', UUG_CITY], ['/api/dict/jednostki', 'down', { status: 503 }]]);
+    expect((await search('Otwock', signal()))[0]).toMatchObject({ detail: 'Miejscowość' });
+  });
+
+  it('sends a full parcel id to ULDK only', async () => {
+    const { calls } = stubFetch([['uldk.gugik.gov.pl', ULDK_PARCEL]]);
+    const hits = await search('141708_2.0021.22/1', signal());
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toContain('request=GetParcelByIdOrNr');
+    expect(hits).toEqual([{ kind: 'parcel', label: 'Działka 22/1', detail: 'obręb Wiązowna Gminna, gm. Wiązowna · 141708_2.0021.22/1', wkt: 'POLYGON((0 0,1 0,1 1,0 0))' }]);
+  });
+
+  it('asks both services for "precinct number" and lists parcels first', async () => {
+    const { calls } = stubFetch([['uldk.gugik.gov.pl', ULDK_PARCEL], ['services.gugik.gov.pl/uug', UUG_STREET], ['/api/dict/jednostki', UNITS]]);
+    const hits = await search('Wiązowna Gminna 22/1', signal());
+    expect(calls.filter((c) => !c.includes('/api/'))).toHaveLength(2);
+    expect(hits.map((h) => h.kind)).toEqual(['parcel', 'street']);
+  });
+
+  it('survives one failing service and an empty ULDK answer', async () => {
+    stubFetch([['uldk.gugik.gov.pl', '-1 brak wyników'], ['services.gugik.gov.pl/uug', 'error', { status: 500 }]]);
+    expect(await search('Nigdzie 1', signal())).toEqual([]);
+  });
+});
+
+describe('findParcels and stripSrid', () => {
+  it('drops rows without geometry and strips the SRID prefix', async () => {
+    stubFetch([['uldk.gugik.gov.pl', '2\nid1|g|r|1|\nid2|g|r|2|SRID=2180;POINT(1 1)\n']]);
+    expect(await findParcels('r 1', signal())).toEqual([{ kind: 'parcel', label: 'Działka 2', detail: 'obręb r, gm. g · id2', wkt: 'POINT(1 1)' }]);
+    expect(stripSrid('SRID=4326;POINT(0 0)')).toBe('POINT(0 0)');
+  });
+});
+
+describe('placeOutline', () => {
+  const hit = { kind: 'place' as const, label: 'Otwock', center: [656860, 474612] as [number, number] };
+
+  it('returns the municipal boundary for a town that is its own municipality', async () => {
+    stubFetch([['GetCommuneByXY', '0\nOtwock (miasto)|SRID=2180;MULTIPOLYGON(((1 1,2 2,3 3,1 1)))']]);
+    expect(await placeOutline(hit, signal())).toBe('MULTIPOLYGON(((1 1,2 2,3 3,1 1)))');
+  });
+
+  it('falls back to the precinct of the same name, and to nothing', async () => {
+    stubFetch([['GetCommuneByXY', '0\nWiązowna|SRID=2180;POLYGON((0 0,1 0,1 1,0 0))'], ['GetRegionByXY', '0\nOtwock Mały|SRID=2180;POLYGON((5 5,6 5,6 6,5 5))']]);
+    expect(await placeOutline(hit, signal())).toBe('POLYGON((5 5,6 5,6 6,5 5))');
+    stubFetch([['GetCommuneByXY', '0\nWiązowna|x'], ['GetRegionByXY', '0\nInny|y']]);
+    expect(await placeOutline(hit, signal())).toBeUndefined();
+    expect(await placeOutline({ ...hit, center: undefined }, signal())).toBeUndefined();
+  });
+});
+
+describe('buildingAt', () => {
+  it('returns the building outline or nothing', async () => {
+    stubFetch([['GetBuildingByXY', '0\nSRID=2180;POLYGON((0 0,1 0,1 1,0 0))']]);
+    expect(await buildingAt([1, 2], signal())).toBe('POLYGON((0 0,1 0,1 1,0 0))');
+    stubFetch([['GetBuildingByXY', '-1 brak wyników']]);
+    expect(await buildingAt([1, 2], signal())).toBeUndefined();
+  });
+});

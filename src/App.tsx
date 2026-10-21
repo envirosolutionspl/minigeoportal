@@ -7,7 +7,7 @@ import { InfoPanel } from './ui/InfoPanel';
 import { MeasureBar } from './ui/MeasureBar';
 import { WelcomeDialog } from './ui/WelcomeDialog';
 import { ReportDialog } from './ui/ReportDialog';
-import { PrintDialog, PrintSheet } from './ui/Print';
+import { PrintPanel, PrintSheet } from './ui/Print';
 import { AccessibilityDialog } from './ui/AccessibilityDialog';
 import { useInfoStore } from './state/info';
 import { AuthorCredit } from './ui/Brand';
@@ -20,7 +20,9 @@ export default function App() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.defaultPrevented || document.querySelector('dialog[open]')) return;
-      if (useMapStore.getState().tool !== 'none') return;
+      const { tool, setTool } = useMapStore.getState();
+      if (tool === 'print') return setTool('none');
+      if (tool !== 'none') return;
       const info = useInfoStore.getState();
       if (info.query) info.close();
       else if (useMapStore.getState().panel !== 'none') useMapStore.getState().setPanel('none');
@@ -30,7 +32,7 @@ export default function App() {
   }, []);
 
   return (
-    <div className="relative h-dvh w-full overflow-hidden">
+    <div data-panel={panel} className="relative h-dvh w-full overflow-hidden">
       <nav aria-label="Szybkie przejścia" className="skip-links">
         <a href="#map">Przejdź do mapy</a>
         <a href="#search">Przejdź do wyszukiwarki</a>
@@ -40,6 +42,7 @@ export default function App() {
       <BasemapSwitcher />
       <InfoPanel />
       <MeasureBar />
+      <PrintPanel />
       <AuthorCredit />
       <aside
         aria-hidden={panel !== 'catalog'}
@@ -53,7 +56,6 @@ export default function App() {
       </aside>
       <WelcomeDialog />
       <ReportDialog />
-      <PrintDialog />
       <PrintSheet />
       <AccessibilityDialog />
     </div>

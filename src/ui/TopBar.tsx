@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { Building2, Home, Info, Landmark, Layers, LocateFixed, Mountain, Printer, Route, Ruler, Search, SquareDashed, X, type LucideIcon } from 'lucide-react';
+import { Building2, Home, Info, Landmark, Layers, Link2, LocateFixed, Mountain, Printer, Route, Ruler, Search, SquareDashed, X, type LucideIcon } from 'lucide-react';
 import { fromLonLat } from 'ol/proj';
 import { buildingAt, placeOutline, search, unitOutline, type HitKind, type SearchHit } from '@/services/geocoder';
 import { useMapStore } from '@/state/store';
+import { useInfoStore } from '@/state/info';
+import { openPrint } from '@/map/print';
+import { linkFor } from '@/state/url';
 import { BrandMark, Wordmark } from './Brand';
 import { useWelcome } from './WelcomeDialog';
 import { ParcelSearch } from './ParcelSearch';
-import { usePrintDialog } from './Print';
+import { DisplayMenu } from './DisplayMenu';
 
 /** Closest zoom per hit kind on the GUGiK scale series (13 = 1:1890, 14 = 1:945, 15 = 1:472). */
 const ZOOM: Record<HitKind, number> = { address: 14, street: 14, place: 12, unit: 14, nature: 12, parcel: 15 };
@@ -42,6 +45,9 @@ export function TopBar() {
   const setPanel = useMapStore((m) => m.setPanel);
   const tool = useMapStore((m) => m.tool);
   const setTool = useMapStore((m) => m.setTool);
+  const measuring = tool === 'measure-line' || tool === 'measure-area';
+  /** Message after copying the link; read out by screen readers. */
+  const [copied, setCopied] = useState('');
   const openWelcome = useWelcome((w) => w.setOpen);
 
   useEffect(() => {
@@ -105,6 +111,19 @@ export function TopBar() {
   const clear = () => {
     setQuery('');
     clearFocus();
+  };
+
+  /** Link to this view with the base map and the layers that are on, ready to paste. */
+  const copyLink = async () => {
+    const link = linkFor(useMapStore.getState());
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied('Skopiowano link do tego widoku mapy.');
+    } catch {
+      // No clipboard access (e.g. an insecure page): the link is shown to copy by hand.
+      setCopied(link);
+    }
+    window.setTimeout(() => setCopied(''), 4000);
   };
 
   const locate = () => {
@@ -225,23 +244,41 @@ export function TopBar() {
       </div>
 
       {/* On phones the buttons form a column under the search bar, leaving it the full width. */}
-      <div className="pointer-events-auto ml-auto flex gap-2 max-sm:absolute max-sm:top-[4.25rem] max-sm:right-3 max-sm:flex-col">
+      <div className="map-tools pointer-events-auto ml-auto flex gap-2 max-sm:absolute max-sm:top-[4.25rem] max-sm:right-3 max-sm:flex-col">
+        <DisplayMenu />
         <IconButton label="O serwisie" onClick={() => openWelcome(true)}>
           <Info className="h-5 w-5" />
         </IconButton>
         <IconButton label="Moja lokalizacja" onClick={locate}>
           <LocateFixed className="h-5 w-5" />
         </IconButton>
-        <IconButton label="Pomiar odległości i powierzchni" active={tool !== 'none'} onClick={() => setTool(tool === 'none' ? 'measure-line' : 'none')}>
+        <IconButton label="Pomiar odległości i powierzchni" active={measuring} onClick={() => setTool(measuring ? 'none' : 'measure-line')}>
           <Ruler className="h-5 w-5" />
         </IconButton>
-        <IconButton label="Drukuj mapę" onClick={() => usePrintDialog.getState().setOpen(true)}>
+        <IconButton label="Drukuj mapę" active={tool === 'print'} onClick={() => {
+            // The print panel takes the place panel's spot on the left.
+            useInfoStore.getState().close();
+            if (tool === 'print') setTool('none');
+            else openPrint();
+          }}
+        >
           <Printer className="h-5 w-5" />
+        </IconButton>
+        <IconButton label="Kopiuj link do tego widoku mapy" onClick={() => void copyLink()}>
+          <Link2 className="h-5 w-5" />
         </IconButton>
         <IconButton label="Warstwy" active={panel === 'catalog'} onClick={() => setPanel(panel === 'catalog' ? 'none' : 'catalog')}>
           <Layers className="h-5 w-5" />
         </IconButton>
       </div>
+      <p
+        role="status"
+        className={`pointer-events-auto fixed bottom-20 left-1/2 z-50 max-w-[min(28rem,calc(100%-2rem))] -translate-x-1/2 rounded-xl bg-[var(--text)] px-4 py-2 text-sm break-all text-[var(--surface)] shadow-lg ${
+          copied ? '' : 'sr-only'
+        }`}
+      >
+        {copied}
+      </p>
     </div>
   );
 }

@@ -12,7 +12,7 @@ export function MeasureBar() {
   const result = useMapStore((m) => m.measureResult);
   const setTool = useMapStore((m) => m.setTool);
   const clear = useMapStore((m) => m.clearMeasurements);
-  if (tool === 'none') return null;
+  if (tool !== 'measure-line' && tool !== 'measure-area') return null;
 
   return (
     <section

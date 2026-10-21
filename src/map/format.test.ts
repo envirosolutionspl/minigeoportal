@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fromLonLat } from 'ol/proj';
 import '@/map/projection';
-import { formatArea, formatCoordinate, formatLength } from './format';
+import { coordinateBar, formatArea, formatCoordinate, formatLength } from './format';
 
 // Intl in pl-PL groups with a narrow no-break space; compare with plain spaces.
 const plain = (s: string) => s.replace(/\s/g, ' ');
@@ -27,5 +27,15 @@ describe('formatArea', () => {
     expect(plain(formatArea(850))).toBe('850 m²');
     expect(plain(formatArea(12500))).toBe('1,25 ha (12 500 m²)');
     expect(plain(formatArea(2_500_000))).toBe('2,50 km²');
+  });
+});
+
+describe('coordinateBar', () => {
+  it('puts each system and value in its own box, with digits only from the point', () => {
+    const html = coordinateBar(fromLonLat([21, 52], 'EPSG:2180')).replace(/\s/g, ' ');
+    const el = document.createElement('div');
+    el.innerHTML = html;
+    expect([...el.querySelectorAll('.mp-system')].map((s) => s.querySelector('b')?.textContent)).toEqual(['PL-1992', 'WGS 84']);
+    expect(el.textContent).toMatch(/^PL-1992X \d{3} \d{3}Y \d{3} \d{3}WGS 8452,00000° N21,00000° E$/);
   });
 });

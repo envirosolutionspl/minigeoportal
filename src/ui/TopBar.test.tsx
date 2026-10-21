@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { TopBar } from './TopBar';
 import { useMapStore } from '@/state/store';
@@ -33,7 +33,7 @@ describe('search box', () => {
     const box = await type('komaszyce');
     expect(box.getAttribute('aria-expanded')).toBe('true');
     expect(screen.getAllByRole('option')).toHaveLength(2);
-    expect(screen.getByRole('status').textContent).toMatch(/^Wyników: 2\./);
+    expect(screen.getByText(/^Wyników: 2\./)).toBeTruthy();
 
     fireEvent.keyDown(box, { key: 'ArrowDown' });
     fireEvent.keyDown(box, { key: 'ArrowDown' });
@@ -59,6 +59,29 @@ describe('search box', () => {
     expect(box.getAttribute('aria-expanded')).toBe('false');
     stubFetch([['services.gugik.gov.pl/uug', { type: 'city', results: {} }]]);
     await type('Xyzzyx');
-    expect(screen.getByRole('status').textContent).toBe('Brak wyników.');
+    expect(screen.getByText('Brak wyników.')).toBeTruthy();
+  });
+});
+
+describe('copy link', () => {
+  it('copies a link to this view with the base map and the layers that are on', async () => {
+    const writeText = vi.fn(async () => {});
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+    useMapStore.setState({ center: [656849.4, 482462.6], zoom: 13, base: 'orto', overlays: ['kieg', 'kiut'], sublayers: { kiut: ['przewod_gazowy'] } });
+    render(<TopBar />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Kopiuj link do tego widoku mapy' }));
+    });
+    expect(writeText).toHaveBeenCalledWith(`${location.origin}${location.pathname}?x=656849&y=482463&z=13.0&b=orto&l=kieg,kiut.przewod_gazowy`);
+    expect(screen.getByText('Skopiowano link do tego widoku mapy.')).toBeTruthy();
+  });
+
+  it('shows the link to copy by hand when the clipboard is not available', async () => {
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText: async () => Promise.reject(new Error('denied')) } });
+    render(<TopBar />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Kopiuj link do tego widoku mapy' }));
+    });
+    expect(screen.getByText(new RegExp(`^${location.origin.replace(/[.:/]/g, '\$&')}.*\?x=`))).toBeTruthy();
   });
 });

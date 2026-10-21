@@ -1,42 +1,30 @@
-import { useEffect, useId, useRef, useState } from 'react';
-import { create } from 'zustand';
+import { useEffect, useId, useRef } from 'react';
 import { LoaderCircle, Printer, X } from 'lucide-react';
-import { BASE_MAPS, OVERLAY_BY_ID, selectedSublayers } from '@/services/registry';
-import { layerMeta } from '@/services/meta';
+import { BASE_MAPS, OVERLAY_BY_ID, selectedSublayers, type Overlay } from '@/services/registry';
+import { layerMeta, visibleAtScale } from '@/services/meta';
 import { useMapStore } from '@/state/store';
 import { formatCoordinate } from '@/map/format';
-import { PRINT_SCALES, nearestPrintScale, printLayout, type Orientation, type Paper } from '@/map/print';
+import { PRINT_SCALES, printLayout, serverScale, type PrintOptions } from '@/map/print';
 import { APP_DOMAIN, APP_NAME } from './Brand';
 
 const scaleText = (scale: number) => `1:${scale.toLocaleString('pl-PL')}`;
 
-export const usePrintDialog = create<{ open: boolean; setOpen(open: boolean): void }>((set) => ({
-  open: false,
-  setOpen: (open) => set({ open }),
-}));
-
-/** Print settings; printing itself happens in the map (see map/print.ts). */
-export function PrintDialog() {
-  const open = usePrintDialog((s) => s.open);
-  const setOpen = usePrintDialog((s) => s.setOpen);
+/**
+ * Print settings, beside the map rather than over it: the map shows the printed area and can
+ * be moved to frame it. Printing itself happens in the map (see map/print.ts).
+ */
+export function PrintPanel() {
+  const open = useMapStore((m) => m.tool === 'print');
+  const settings = useMapStore((m) => m.printSettings);
   const printing = useMapStore((m) => m.printRequest !== null);
-  const requestPrint = useMapStore((m) => m.requestPrint);
-  const dialog = useRef<HTMLDialogElement>(null);
+  const { setPrintSettings, requestPrint, setTool } = useMapStore.getState();
   const started = useRef(false);
-  const [title, setTitle] = useState('');
-  const [paper, setPaper] = useState<Paper>('A4');
-  const [orientation, setOrientation] = useState<Orientation>('landscape');
-  const [scale, setScale] = useState(1000);
+  const title = useRef<HTMLInputElement>(null);
   const id = useId();
 
+  // The focus goes to the form when it opens.
   useEffect(() => {
-    const d = dialog.current;
-    if (!d) return;
-    if (open && !d.open) {
-      setScale(nearestPrintScale(useMapStore.getState().scale));
-      d.showModal();
-    }
-    if (!open && d.open) d.close();
+    if (open) title.current?.focus();
   }, [open]);
 
   // Closes once the browser's print dialog has been closed.
@@ -44,49 +32,53 @@ export function PrintDialog() {
     if (printing) started.current = true;
     else if (started.current) {
       started.current = false;
-      setOpen(false);
+      setTool('none');
     }
-  }, [printing, setOpen]);
+  }, [printing, setTool]);
 
+  if (!open) return null;
+
+  const set = (s: Partial<PrintOptions>) => setPrintSettings(s);
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    requestPrint({ paper, orientation, scale, title: title.trim() });
+    requestPrint({ ...settings, title: settings.title.trim() });
   };
 
   const field = 'w-full rounded-xl bg-[var(--field)] px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]';
   const choice = (checked: boolean) =>
-    `flex min-h-10 flex-1 cursor-pointer items-center justify-center rounded-xl px-3 text-sm ring-1 ring-[var(--hover)] has-focus-visible:ring-2 has-focus-visible:ring-[var(--accent)] ${
+    `flex min-h-9 flex-1 cursor-pointer items-center justify-center rounded-xl px-3 text-sm ring-1 ring-[var(--hover)] has-focus-visible:ring-2 has-focus-visible:ring-[var(--accent)] ${
       checked ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'hover:bg-[var(--hover)]'
     }`;
 
   return (
-    <dialog
-      ref={dialog}
-      onClose={() => setOpen(false)}
-      onClick={(e) => e.target === dialog.current && !printing && setOpen(false)}
+    <section
       aria-labelledby={`${id}-title`}
-      className="m-auto w-[min(26rem,calc(100%-2rem))] rounded-3xl bg-[var(--surface)] p-0 text-[var(--text)] shadow-2xl outline-none backdrop:bg-[#253326]/50"
+      className="pointer-events-auto absolute inset-x-0 bottom-0 z-30 max-h-[60dvh] overflow-y-auto rounded-t-3xl bg-[var(--surface)] shadow-2xl
+        sm:inset-x-auto sm:top-[4.75rem] sm:bottom-auto sm:left-4 sm:max-h-[calc(100dvh-7rem)] sm:w-80 sm:rounded-2xl"
     >
-      <form onSubmit={submit} className="space-y-4 p-6 text-sm">
-        <header className="flex items-center gap-3">
-          <Printer className="h-6 w-6 text-[var(--accent)]" aria-hidden="true" />
-          <h2 id={`${id}-title`} className="flex-1 text-lg font-bold">
+      <form onSubmit={submit} className="space-y-3 p-4 text-sm">
+        <header className="flex items-center gap-2">
+          <Printer className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
+          <h2 id={`${id}-title`} className="flex-1 text-base font-semibold">
             Drukuj mapę
           </h2>
-          <button type="button" onClick={() => setOpen(false)} aria-label="Zamknij" className="rounded-full p-2 hover:bg-[var(--hover)]">
+          <button type="button" onClick={() => setTool('none')} aria-label="Zamknij" className="rounded-full p-2 hover:bg-[var(--hover)]">
             <X className="h-5 w-5" />
           </button>
         </header>
+        <p className="text-xs text-[var(--muted)]">
+          Pomarańczowa ramka na mapie pokazuje obszar wydruku. Przesuń mapę, aby go ustawić.
+        </p>
         <label className="block">
           <span className="mb-1 block font-medium">Tytuł (opcjonalnie)</span>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} className={field} />
+          <input ref={title} value={settings.title} onChange={(e) => set({ title: e.target.value })} maxLength={120} className={field} />
         </label>
         <fieldset>
           <legend className="mb-1 font-medium">Format</legend>
           <div className="flex gap-2">
             {(['A4', 'A3'] as const).map((p) => (
-              <label key={p} className={choice(paper === p)}>
-                <input type="radio" name="paper" value={p} checked={paper === p} onChange={() => setPaper(p)} className="sr-only" />
+              <label key={p} className={choice(settings.paper === p)}>
+                <input type="radio" name="paper" value={p} checked={settings.paper === p} onChange={() => set({ paper: p })} className="sr-only" />
                 {p}
               </label>
             ))}
@@ -101,8 +93,15 @@ export function PrintDialog() {
                 ['portrait', 'Pionowa'],
               ] as const
             ).map(([o, label]) => (
-              <label key={o} className={choice(orientation === o)}>
-                <input type="radio" name="orientation" value={o} checked={orientation === o} onChange={() => setOrientation(o)} className="sr-only" />
+              <label key={o} className={choice(settings.orientation === o)}>
+                <input
+                  type="radio"
+                  name="orientation"
+                  value={o}
+                  checked={settings.orientation === o}
+                  onChange={() => set({ orientation: o })}
+                  className="sr-only"
+                />
                 {label}
               </label>
             ))}
@@ -110,7 +109,7 @@ export function PrintDialog() {
         </fieldset>
         <label className="block">
           <span className="mb-1 block font-medium">Skala</span>
-          <select value={scale} onChange={(e) => setScale(Number(e.target.value))} className={field}>
+          <select value={settings.scale} onChange={(e) => set({ scale: Number(e.target.value) })} className={field}>
             {PRINT_SCALES.map((s) => (
               <option key={s} value={s}>
                 {scaleText(s)}
@@ -119,8 +118,8 @@ export function PrintDialog() {
           </select>
         </label>
         <p className="text-xs text-[var(--muted)]">
-          Wydruk obejmuje środek obecnego widoku. Aby zapisać plik, wybierz w oknie drukowania „Zapisz jako PDF”. Skala
-          zgadza się przy druku bez dopasowania do strony (100%).
+          Aby zapisać plik, wybierz w oknie drukowania „Zapisz jako PDF”. Skala zgadza się przy druku bez dopasowania do
+          strony (100%).
         </p>
         <button
           type="submit"
@@ -134,8 +133,26 @@ export function PrintDialog() {
           {printing ? 'Przygotowuję wydruk, wczytuję mapę.' : ''}
         </p>
       </form>
-    </dialog>
+    </section>
   );
+}
+
+/**
+ * Overlays and their sublayers that the printed map actually shows: switched on and drawn by
+ * their server at the print scale. Layers visible only at other scales stay off the legend.
+ */
+export function printedLayers(
+  overlays: string[],
+  sublayers: Record<string, string[]>,
+  options: Pick<PrintOptions, 'paper' | 'orientation' | 'scale'>,
+): { def: Overlay; names: string[] }[] {
+  const scale = serverScale(options);
+  return overlays.flatMap((id) => {
+    const def = OVERLAY_BY_ID.get(id);
+    if (!def) return [];
+    const names = selectedSublayers(def, sublayers).filter((name) => visibleAtScale(id, name, scale));
+    return names.length > 0 ? [{ def, names }] : [];
+  });
 }
 
 /**
@@ -147,14 +164,10 @@ export function PrintSheet() {
   const base = useMapStore((m) => m.base);
   const overlays = useMapStore((m) => m.overlays);
   const sublayers = useMapStore((m) => m.sublayers);
-  const center = useMapStore((m) => m.center);
+  const center = useMapStore((m) => m.printCenter ?? m.center);
   const layout = request ? printLayout(request) : null;
 
-  const layers = overlays.flatMap((id) => {
-    const def = OVERLAY_BY_ID.get(id);
-    if (!def) return [];
-    return [{ def, names: selectedSublayers(def, sublayers) }];
-  });
+  const layers = request ? printedLayers(overlays, sublayers, request) : [];
   const legends = layers.flatMap(({ def, names }) =>
     names.flatMap((name) => {
       const url = layerMeta(def.id, name)?.legend;

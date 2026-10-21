@@ -40,7 +40,7 @@ export function AuthorCredit() {
       href={AUTHOR_URL}
       target="_blank"
       rel="noopener"
-      className="pointer-events-auto absolute right-3 bottom-7 z-20 flex items-center gap-1 rounded-xl bg-white/95 py-0.5 pr-1 pl-2.5 text-[10px] text-[#444444] shadow-md ring-1 ring-black/5 sm:right-4 sm:bottom-8"
+      className="author-credit pointer-events-auto absolute right-3 bottom-7 z-20 flex items-center gap-1 rounded-xl bg-white/95 py-0.5 pr-1 pl-2.5 text-[10px] text-[#444444] shadow-md ring-1 ring-black/5 sm:right-4 sm:bottom-8"
       title="EnviroSolutions: systemy i narzędzia OpenSource GIS"
     >
       Stworzone przez

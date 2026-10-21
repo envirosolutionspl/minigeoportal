@@ -7,7 +7,7 @@ import { InfoPanel } from './InfoPanel';
 import { MeasureBar } from './MeasureBar';
 import { WelcomeDialog, useWelcome } from './WelcomeDialog';
 import { ReportDialog, useReport } from './ReportDialog';
-import { PrintDialog, usePrintDialog } from './Print';
+import { PrintPanel } from './Print';
 import { AccessibilityDialog, useAccessibility } from './AccessibilityDialog';
 import { BasemapSwitcher } from './BasemapSwitcher';
 import { useInfoStore } from '@/state/info';
@@ -54,6 +54,16 @@ describe('accessibility (axe, WCAG 2.1 AA)', () => {
     expect(await violations(container)).toEqual([]);
   });
 
+  it('print panel', async () => {
+    useMapStore.setState({ tool: 'print' });
+    const { container } = render(
+      <main>
+        <PrintPanel />
+      </main>,
+    );
+    expect(await violations(container)).toEqual([]);
+  });
+
   it('place panel and measurement bar', async () => {
     useInfoStore.getState().start([656849, 482462], ['kieg']);
     useMapStore.setState({ tool: 'measure-line', measureResult: '1 km' });
@@ -71,14 +81,12 @@ describe('accessibility (axe, WCAG 2.1 AA)', () => {
       <main>
         <WelcomeDialog />
         <ReportDialog />
-        <PrintDialog />
         <AccessibilityDialog />
       </main>,
     );
     for (const open of [
       () => useWelcome.getState().setOpen(true),
       () => useReport.getState().openReport(),
-      () => usePrintDialog.getState().setOpen(true),
       () => useAccessibility.getState().setOpen(true),
     ]) {
       act(open);

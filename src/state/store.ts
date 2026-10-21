@@ -7,7 +7,7 @@ import type { PrintOptions } from '@/map/print';
 export type Panel = 'none' | 'catalog';
 
 /** A map tool that takes over clicks: while one is active, clicks do not ask for information. */
-export type Tool = 'none' | 'measure-line' | 'measure-area';
+export type Tool = 'none' | 'measure-line' | 'measure-area' | 'print';
 
 /** Something the map should show: zoom to it and outline it. */
 export interface FocusTarget {
@@ -46,6 +46,10 @@ interface MapStore {
   measureResult: string;
   /** Print in progress; the map takes it up and clears it when the print dialog closes. */
   printRequest: PrintOptions | null;
+  /** Sheet chosen in the print panel; the map outlines the area it covers. */
+  printSettings: PrintOptions;
+  /** Centre of the sheet being printed, for its caption. */
+  printCenter: [number, number] | null;
   /** Called by the map on moveend; keeps store and URL in sync. */
   setView(center: [number, number], zoom: number, scale: number): void;
   setBase(id: string): void;
@@ -63,6 +67,7 @@ interface MapStore {
   setTool(tool: Tool): void;
   clearMeasurements(): void;
   setMeasureResult(text: string): void;
+  setPrintSettings(settings: Partial<PrintOptions>): void;
   requestPrint(options: PrintOptions): void;
   printDone(): void;
 }
@@ -90,6 +95,8 @@ export const useMapStore = create<MapStore>((set, get) => ({
   measureClears: 0,
   measureResult: '',
   printRequest: null,
+  printSettings: { paper: 'A4', orientation: 'landscape', scale: 10000, title: '' },
+  printCenter: null,
 
   setView: (center, zoom, scale) => set({ center, zoom, scale }),
   setBase: (base) => set({ base }),
@@ -121,6 +128,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
   setTool: (tool) => set({ tool }),
   clearMeasurements: () => set((s) => ({ measureClears: s.measureClears + 1, measureResult: '' })),
   setMeasureResult: (measureResult) => set({ measureResult }),
+  setPrintSettings: (settings) => set((s) => ({ printSettings: { ...s.printSettings, ...settings } })),
   requestPrint: (options) => set({ printRequest: { ...options } }),
   printDone: () => set({ printRequest: null }),
 }));

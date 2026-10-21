@@ -1,4 +1,12 @@
 import type Map from 'ol/Map';
+import Feature from 'ol/Feature';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+import { fromExtent } from 'ol/geom/Polygon';
+import { containsExtent, type Extent } from 'ol/extent';
+import { Fill, Stroke, Style } from 'ol/style';
+import { OGC_PIXEL } from './projection';
+import { duration } from './motion';
 import { useMapStore } from '@/state/store';
 
 /**
@@ -53,15 +61,109 @@ export function printLayout({ paper, orientation, scale }: Pick<PrintOptions, 'p
   };
 }
 
+/** Ground area of the map frame around a centre: what ends up on paper. */
+export function printExtent([x, y]: number[], options: Pick<PrintOptions, 'paper' | 'orientation' | 'scale'>): Extent {
+  const { mapMm } = printLayout(options);
+  const halfW = (mapMm[0] / 1000) * options.scale * 0.5;
+  const halfH = (mapMm[1] / 1000) * options.scale * 0.5;
+  return [x - halfW, y - halfH, x + halfW, y + halfH];
+}
+
+/**
+ * Scale denominator a WMS server sees on the printed map. Servers assume 0.28 mm pixels, the
+ * print has smaller ones, so 1:10 000 on paper reads as about 1:6000; layers switch on and off
+ * by this number, which decides what the legend lists.
+ */
+export const serverScale = (options: Pick<PrintOptions, 'paper' | 'orientation' | 'scale'>) =>
+  printLayout(options).resolution / OGC_PIXEL;
+
 /** The print scale closest to the screen scale; 1:10 000 before the map has reported one. */
 export function nearestPrintScale(scale: number): number {
   if (!Number.isFinite(scale)) return 10000;
   return PRINT_SCALES.reduce((best, s) => (Math.abs(Math.log(s / scale)) < Math.abs(Math.log(best / scale)) ? s : best));
 }
 
+/** Opens the print panel at the print scale closest to the map, so the frame fits at once. */
+export function openPrint(): void {
+  const s = useMapStore.getState();
+  s.setPrintSettings({ scale: nearestPrintScale(s.scale) });
+  s.setTool('print');
+}
+
 const RENDER_TIMEOUT_MS = 20000;
 
+/** Dimmed map outside the frame, so the printed area stands out. */
+const FRAME_STYLE = new Style({
+  stroke: new Stroke({ color: '#FF8142', width: 3, lineDash: [10, 6] }),
+  fill: new Fill({ color: 'rgba(37, 51, 38, 0.18)' }),
+});
+/** Larger than Poland in EPSG:2180: the outer ring of the dimming mask. */
+const WORLD: Extent = [-1e6, -1e6, 2e6, 2e6];
+
+/** Margins (top, right, bottom, left) the print panel takes: the left on wide screens, the bottom on phones. */
+function panelMargins(): [number, number, number, number] {
+  return window.innerWidth >= 640 ? [88, 72, 56, 368] : [132, 16, Math.round(window.innerHeight * 0.6) + 16, 16];
+}
+
+/** Map area left free by the print panel, and its middle: the centre of the printed sheet. */
+export function freeArea(map: Map): { extent: Extent; center: [number, number] } | undefined {
+  const view = map.getView();
+  const c = view.getCenter();
+  const r = view.getResolution();
+  if (!c || !r) return undefined;
+  const [w, h] = map.getSize() ?? [0, 0];
+  const [top, right, bottom, left] = w > 0 ? panelMargins() : [0, 0, 0, 0];
+  const extent: Extent = [c[0] + (left - w / 2) * r, c[1] - (h / 2 - bottom) * r, c[0] + (w / 2 - right) * r, c[1] + (h / 2 - top) * r];
+  return { extent, center: [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2] };
+}
+
+/**
+ * While the print panel is open, the area that will be printed is outlined in the middle of the
+ * map beside the panel and follows the map as it moves. When the frame does not fit, the map
+ * zooms out.
+ */
+function attachPreview(map: Map): () => void {
+  const view = map.getView();
+  const frame = new Feature();
+  const layer = new VectorLayer({ source: new VectorSource({ features: [frame] }), style: FRAME_STYLE, zIndex: 120, visible: false });
+  map.addLayer(layer);
+
+  const update = () => {
+    const { tool, printSettings, printRequest } = useMapStore.getState();
+    const free = freeArea(map);
+    const on = tool === 'print' && !printRequest && Boolean(free);
+    layer.setVisible(on);
+    if (!on || !free) return;
+    const extent = printExtent(free.center, printSettings);
+    // The world with the frame cut out: everything outside the print is dimmed.
+    const mask = fromExtent(WORLD);
+    mask.appendLinearRing(fromExtent(extent).getLinearRing(0)!);
+    frame.setGeometry(mask);
+  };
+
+  const fitIfHidden = () => {
+    const { tool, printSettings } = useMapStore.getState();
+    const free = freeArea(map);
+    if (tool !== 'print' || !free || !map.getSize()) return;
+    const extent = printExtent(free.center, printSettings);
+    // Fitting with the panel margins keeps the frame in the middle of the free area.
+    if (!containsExtent(free.extent, extent)) view.fit(extent, { padding: panelMargins(), duration: duration(400) });
+  };
+
+  const unsubscribe = useMapStore.subscribe((s, prev) => {
+    if (s.tool !== prev.tool || s.printSettings !== prev.printSettings || s.printRequest !== prev.printRequest) update();
+    if ((s.tool === 'print' && prev.tool !== 'print') || (s.tool === 'print' && s.printSettings !== prev.printSettings)) fitIfHidden();
+  });
+  view.on('change:center', update);
+  return () => {
+    unsubscribe();
+    view.un('change:center', update);
+    map.removeLayer(layer);
+  };
+}
+
 export function attachPrint(map: Map): () => void {
+  const detachPreview = attachPreview(map);
   const run = (options: PrintOptions) => {
     const frame = document.getElementById('print-map');
     const home = map.getTargetElement();
@@ -70,6 +172,9 @@ export function attachPrint(map: Map): () => void {
     const center = view.getCenter();
     const resolution = view.getResolution();
     const layout = printLayout(options);
+    // The sheet is centred where the frame was shown, beside the print panel.
+    const sheetCenter = freeArea(map)?.center ?? center;
+    useMapStore.setState({ printCenter: sheetCenter ? [sheetCenter[0], sheetCenter[1]] : null });
 
     const page = document.createElement('style');
     page.textContent = `@page { size: ${options.paper} ${options.orientation}; margin: ${MARGIN_MM}mm; }`;
@@ -98,6 +203,7 @@ export function attachPrint(map: Map): () => void {
     };
 
     map.setTarget(frame);
+    if (sheetCenter) view.setCenter(sheetCenter);
     view.setResolution(layout.resolution);
     // Print what has loaded if some server is slow.
     const timer = window.setTimeout(print, RENDER_TIMEOUT_MS);
@@ -108,5 +214,8 @@ export function attachPrint(map: Map): () => void {
   const unsubscribe = useMapStore.subscribe((s, prev) => {
     if (s.printRequest && s.printRequest !== prev.printRequest) run(s.printRequest);
   });
-  return unsubscribe;
+  return () => {
+    unsubscribe();
+    detachPreview();
+  };
 }

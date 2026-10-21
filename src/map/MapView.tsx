@@ -12,7 +12,7 @@ import { attachFeatureInfo } from './featureInfoClick';
 import { attachFocus } from './focus';
 import { attachMeasure } from './measure';
 import { attachPrint } from './print';
-import { formatCoordinate } from './format';
+import { coordinateBar } from './format';
 
 export function MapView() {
   const container = useRef<HTMLDivElement>(null);
@@ -58,7 +58,7 @@ export function MapView() {
         new ScaleLine({ units: 'metric' }),
         new ZoomToExtent({ extent: POLAND_EXTENT, label: wholeCountryIcon(), tipLabel: 'Cała Polska' }),
         // Shown only with a mouse (CSS hides it on touch screens), without live announcements.
-        new MousePosition({ projection: EPSG2180, coordinateFormat: (c) => (c ? formatCoordinate(c) : ''), placeholder: '' }),
+        new MousePosition({ projection: EPSG2180, coordinateFormat: (c) => (c ? coordinateBar(c) : ''), placeholder: '' }),
       ]),
     });
 

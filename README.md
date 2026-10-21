@@ -11,9 +11,10 @@ Projekt open source na licencji MIT, tworzony przez [EnviroSolutions](https://en
 - Warstwy: ewidencja gruntów i budynków, plany miejscowe i ogólne, ceny transakcyjne, uzbrojenie terenu, z wyborem pojedynczych warstw i przezroczystości.
 - Informacje o klikniętym miejscu (GetFeatureInfo) i link do raportu o działce z geoportal.gov.pl (dane ewidencyjne, mapy, eksport do PDF).
 - Pomiar odległości i powierzchni (geodezyjnie, na elipsoidzie) i współrzędne kursora w PL-1992 oraz WGS 84.
-- Wydruk w skali 1:500–1:2 500 000 na A4 lub A3 z tytułem, legendą i źródłami, także jako PDF przez okno drukowania przeglądarki.
+- Wydruk w skali 1:500–1:2 500 000 na A4 lub A3 z tytułem, legendą i źródłami, także jako PDF przez okno drukowania przeglądarki. Obszar wydruku jest zaznaczony ramką na mapie, a legenda obejmuje tylko warstwy, które serwer narysuje w tej skali.
+- Kopiowanie linku do bieżącego widoku (środek, skala, podkład, włączone warstwy).
 - Formularz zgłaszania błędów wysyłany e-mailem do administratora.
-- Dostępność WCAG 2.1 AA: obsługa klawiaturą, czytniki ekranu, tryb ciemny, ograniczenie ruchu, deklaracja dostępności w oknie informacyjnym.
+- Dostępność WCAG 2.1 AA: obsługa klawiaturą, czytniki ekranu, tryb ciemny, ograniczenie ruchu, przełączniki wielkości tekstu i wysokiego kontrastu, deklaracja dostępności.
 
 ## Uruchomienie
 

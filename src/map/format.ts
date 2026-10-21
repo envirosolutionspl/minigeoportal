@@ -12,9 +12,28 @@ const deg = new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 5, maximumFr
  * `coordinate` is the map coordinate [easting, northing].
  */
 export function formatCoordinate(coordinate: number[]): string {
+  const { x, y, lat, lon } = coordinateParts(coordinate);
+  return `PL-1992 X ${x}, Y ${y} · ${lat} N, ${lon} E`;
+}
+
+function coordinateParts(coordinate: number[]) {
   const [e, n] = coordinate;
   const [lon, lat] = toLonLat(coordinate, 'EPSG:2180');
-  return `PL-1992 X ${int.format(n)}, Y ${int.format(e)} · ${deg.format(lat)}° N, ${deg.format(lon)}° E`;
+  return { x: int.format(n), y: int.format(e), lat: `${deg.format(lat)}°`, lon: `${deg.format(lon)}°` };
+}
+
+/**
+ * The same point for the bar under the map, as markup for OpenLayers' MousePosition: each
+ * system and each value in its own box so they do not run together. Only digits and fixed
+ * words go into it.
+ */
+export function coordinateBar(coordinate: number[]): string {
+  const { x, y, lat, lon } = coordinateParts(coordinate);
+  const value = (label: string, v: string) => `<span><span class="mp-label">${label}</span> ${v}</span>`;
+  return (
+    `<span class="mp-system"><b>PL-1992</b>${value('X', x)}${value('Y', y)}</span>` +
+    `<span class="mp-system"><b>WGS 84</b><span>${lat} N</span><span>${lon} E</span></span>`
+  );
 }
 
 /** Length in metres, as metres below a kilometre. */

@@ -87,8 +87,10 @@ export function AccessibilityDialog() {
           <section>
             <h3 className="mb-1 font-semibold">Ułatwienia</h3>
             <p>
-              Serwis działa przy powiększeniu tekstu do 200% i na wąskich ekranach, ma tryb ciemny zgodny z ustawieniem
-              systemu i wyłącza animacje, gdy system prosi o ograniczenie ruchu. Komunikaty o wynikach wyszukiwania,
+              Przycisk ułatwień obok wyszukiwarki powiększa tekst (A, A+, A++) i włącza wysoki kontrast (żółty na
+              czarnym); wybór jest zapamiętywany. Serwis działa przy powiększeniu przeglądarki do 200% i na wąskich
+              ekranach, ma tryb ciemny zgodny z ustawieniem systemu i wyłącza animacje, gdy system prosi o ograniczenie
+              ruchu. Komunikaty o wynikach wyszukiwania,
               wczytywaniu danych i pomiarach są odczytywane przez czytniki ekranu.
             </p>
           </section>

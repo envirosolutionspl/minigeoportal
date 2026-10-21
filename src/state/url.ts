@@ -38,17 +38,23 @@ export function readUrl(): Partial<UrlState> {
   return state;
 }
 
+/** Query string of a view, e.g. "?x=637000&y=486000&z=12.0&b=orto&l=kieg". */
+export function queryFor(state: UrlState): string {
+  const q = new URLSearchParams();
+  q.set('x', Math.round(state.center[0]).toString());
+  q.set('y', Math.round(state.center[1]).toString());
+  q.set('z', state.zoom.toFixed(1));
+  q.set('b', state.base);
+  q.set('l', state.overlays.map((id) => [id, ...(state.sublayers[id] ?? [])].join('.')).join(','));
+  return `?${q.toString().replace(/%2C/g, ',')}`;
+}
+
+/** Full link to a view, for sharing: the same page with the view in the query. */
+export const linkFor = (state: UrlState) => `${window.location.origin}${window.location.pathname}${queryFor(state)}`;
+
 let pending: number | undefined;
 
 export function writeUrl(state: UrlState): void {
   window.clearTimeout(pending);
-  pending = window.setTimeout(() => {
-    const q = new URLSearchParams();
-    q.set('x', Math.round(state.center[0]).toString());
-    q.set('y', Math.round(state.center[1]).toString());
-    q.set('z', state.zoom.toFixed(1));
-    q.set('b', state.base);
-    q.set('l', state.overlays.map((id) => [id, ...(state.sublayers[id] ?? [])].join('.')).join(','));
-    window.history.replaceState(null, '', `?${q.toString().replace(/%2C/g, ',')}`);
-  }, 250);
+  pending = window.setTimeout(() => window.history.replaceState(null, '', queryFor(state)), 250);
 }

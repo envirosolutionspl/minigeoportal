@@ -6,7 +6,7 @@ Status: koncepcja.
 
 ## Stack (planowany)
 
-OpenLayers 10, Vite, React 19, TypeScript, Tailwind CSS, PWA. Hosting statyczny (Cloudflare Pages), opcjonalny Worker jako proxy dla usług bez CORS.
+OpenLayers 10 z widokiem w EPSG:2180, Vite, React 19, TypeScript, Tailwind CSS, PWA. Bez backendu: hosting statyczny (Cloudflare Pages), opcjonalny bezstanowy Worker jako proxy dla usług bez CORS. Kod open source na licencji MIT.
 
 ## Dane
 

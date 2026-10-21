@@ -2,10 +2,11 @@ import { useEffect, useRef } from 'react';
 import Map from 'ol/Map';
 import View from 'ol/View';
 import { defaults as defaultControls, ScaleLine } from 'ol/control';
-import { EPSG2180, GUGIK_RESOLUTIONS, POLAND_EXTENT } from './projection';
-import { SERVICES } from '@/services/registry';
-import { createLayer } from '@/services/layers';
-import { hasInitialView, serviceOpacity, useMapStore } from '@/state/store';
+import { EPSG2180, GUGIK_RESOLUTIONS, OGC_PIXEL, POLAND_EXTENT } from './projection';
+import { BASE_MAPS, OVERLAYS, selectedSublayers } from '@/services/registry';
+import { createBaseLayer, createOverlayLayer, resolutionRange } from '@/services/layers';
+import { useStatusStore } from '@/services/status';
+import { hasInitialView, overlayOpacity, useMapStore } from '@/state/store';
 
 export function MapView() {
   const container = useRef<HTMLDivElement>(null);
@@ -15,8 +16,8 @@ export function MapView() {
     if (!el) return;
 
     const { center, zoom, setView } = useMapStore.getState();
-    const layers = SERVICES.map(createLayer);
-    const byId = new window.Map(layers.map((l) => [l.get('serviceId') as string, l]));
+    const bases = BASE_MAPS.map((def) => ({ def, layer: createBaseLayer(def) }));
+    const overlays = OVERLAYS.map((def) => ({ def, layer: createOverlayLayer(def) }));
 
     const view = new View({
       projection: EPSG2180,
@@ -24,13 +25,12 @@ export function MapView() {
       center,
       zoom,
       extent: EPSG2180.getExtent(),
-      smoothExtentConstraint: true,
       constrainOnlyCenter: true,
     });
 
     const map = new Map({
       target: el,
-      layers,
+      layers: [...bases.map((b) => b.layer), ...overlays.map((o) => o.layer)],
       view,
       controls: defaultControls({ attributionOptions: { collapsible: false }, rotate: false }).extend([
         new ScaleLine({ units: 'metric' }),
@@ -40,28 +40,40 @@ export function MapView() {
     if (!hasInitialView) view.fit(POLAND_EXTENT, { padding: [24, 24, 24, 24] });
 
     const applyState = () => {
-      const { base, overlays, opacity } = useMapStore.getState();
-      for (const [id, layer] of byId) {
-        const visible = id === base || overlays.includes(id);
-        if (layer.getVisible() !== visible) layer.setVisible(visible);
-        const o = serviceOpacity(id, opacity);
-        if (layer.getOpacity() !== o) layer.setOpacity(o);
+      const s = useMapStore.getState();
+      for (const { def, layer } of bases) layer.setVisible(def.id === s.base);
+      for (const { def, layer } of overlays) {
+        const names = selectedSublayers(def, s.sublayers);
+        const visible = s.overlays.includes(def.id) && names.length > 0;
+        layer.setVisible(visible);
+        if (!visible) continue;
+        const source = layer.getSource()!;
+        const layersParam = names.join(',');
+        if (source.getParams().LAYERS !== layersParam) source.updateParams({ LAYERS: layersParam });
+        const range = resolutionRange(def, names);
+        layer.setMinResolution(range.min);
+        layer.setMaxResolution(range.max);
+        layer.setOpacity(overlayOpacity(def.id, s.opacity));
       }
     };
     applyState();
 
     const unsubscribeState = useMapStore.subscribe((s, prev) => {
-      if (s.base !== prev.base || s.overlays !== prev.overlays || s.opacity !== prev.opacity) applyState();
-      if (s.fly && s.fly !== prev.fly) {
-        view.animate({ center: s.fly.center, zoom: s.fly.zoom, duration: 600 });
+      if (s.base !== prev.base || s.overlays !== prev.overlays || s.sublayers !== prev.sublayers || s.opacity !== prev.opacity) {
+        applyState();
       }
+      if (s.fly && s.fly !== prev.fly) view.animate({ center: s.fly.center, zoom: s.fly.zoom, duration: 600 });
     });
 
     map.on('moveend', () => {
       const c = view.getCenter();
       const z = view.getZoom();
-      if (c && z !== undefined) setView([c[0], c[1]], z);
+      const r = view.getResolution();
+      if (c && z !== undefined && r !== undefined) setView([c[0], c[1]], z, r / OGC_PIXEL);
     });
+
+    // Probe services only after the first view is drawn, so probes never compete with visible tiles.
+    map.once('rendercomplete', () => void useStatusStore.getState().probeAll());
 
     return () => {
       unsubscribeState();

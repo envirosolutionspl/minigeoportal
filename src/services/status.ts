@@ -2,32 +2,46 @@ import { create } from 'zustand';
 import { SERVICES, type ServiceDef } from './registry';
 
 /**
- * ok: responded quickly; slow: responded after the threshold; blocked: 401/403;
- * down: network error or timeout; degraded: most recent tiles failed to load
- * (integration services redirect to local servers that may reject requests);
- * unknown: not probed yet.
+ * ok: GUGiK answered quickly; slow: answered after the threshold; blocked: 401/403 from GUGiK;
+ * down: GUGiK did not answer; degraded: map images keep failing in the current area
+ * (integration services redirect to county and city servers, which may be down or refuse);
+ * unknown: not checked yet.
  */
 export type ServiceStatus = 'unknown' | 'ok' | 'slow' | 'blocked' | 'down' | 'degraded';
 
 interface StatusStore {
   status: Record<string, ServiceStatus>;
   probeAll(): Promise<void>;
-  /** Called from tile load events; flips a service to `degraded` when loads keep failing. */
-  reportTile(id: string, ok: boolean): void;
+  /** Called from tile and image load events of the map layers. */
+  reportLoad(id: string, ok: boolean): void;
 }
-
-const WINDOW = 12;
-const tileHistory = new Map<string, boolean[]>();
 
 const SLOW_MS = 4000;
 const TIMEOUT_MS = 10000;
+const failures = new Map<string, number>();
+const KIND = new Map(SERVICES.map((s) => [s.id, s.kind]));
 
+/**
+ * Base maps: one tile. Overlays: GetCapabilities, which GUGiK answers itself;
+ * map requests may be redirected to local servers and say nothing about the service.
+ */
 function probeUrl(def: ServiceDef): string {
-  if (def.kind === 'wmts') {
-    const level = `EPSG:2180:${Math.min(5, def.levels - 1)}`;
-    return `${def.url}?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${encodeURIComponent(def.layer)}&STYLE=default&FORMAT=${encodeURIComponent(def.format)}&TILEMATRIXSET=EPSG:2180&TILEMATRIX=${level}&TILEROW=1&TILECOL=1`;
-  }
-  return `${def.url}?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0&LAYERS=${encodeURIComponent(def.layers)}&STYLES=&CRS=EPSG:2180&BBOX=485000,637000,486000,638000&WIDTH=64&HEIGHT=64&FORMAT=image/png&TRANSPARENT=true`;
+  const q =
+    def.kind === 'wmts'
+      ? new URLSearchParams({
+          SERVICE: 'WMTS',
+          REQUEST: 'GetTile',
+          VERSION: '1.0.0',
+          LAYER: def.layer,
+          STYLE: 'default',
+          FORMAT: def.format,
+          TILEMATRIXSET: 'EPSG:2180',
+          TILEMATRIX: `EPSG:2180:${Math.min(5, def.levels - 1)}`,
+          TILEROW: '1',
+          TILECOL: '1',
+        })
+      : new URLSearchParams({ SERVICE: 'WMS', REQUEST: 'GetCapabilities', VERSION: '1.3.0' });
+  return `${def.url}?${q.toString()}`;
 }
 
 async function probe(def: ServiceDef): Promise<ServiceStatus> {
@@ -35,13 +49,9 @@ async function probe(def: ServiceDef): Promise<ServiceStatus> {
   const timer = window.setTimeout(() => controller.abort(), TIMEOUT_MS);
   const started = performance.now();
   try {
-    const res = await fetch(probeUrl(def), {
-      signal: controller.signal,
-      mode: def.cors ? 'cors' : 'no-cors',
-      cache: 'no-store',
-    });
+    const res = await fetch(probeUrl(def), { signal: controller.signal, cache: 'no-store' });
     if (res.status === 401 || res.status === 403) return 'blocked';
-    if (def.cors && !res.ok) return 'down';
+    if (!res.ok) return 'down';
     return performance.now() - started > SLOW_MS ? 'slow' : 'ok';
   } catch {
     return 'down';
@@ -56,19 +66,20 @@ export const useStatusStore = create<StatusStore>((set, get) => ({
     await Promise.all(
       SERVICES.map(async (def) => {
         const result = await probe(def);
+        // A result from real map loads is more recent than the probe; keep it.
+        if (get().status[def.id] === 'degraded') return;
         set((s) => ({ status: { ...s.status, [def.id]: result } }));
       }),
     );
   },
-  reportTile: (id, ok) => {
-    const history = tileHistory.get(id) ?? [];
-    history.push(ok);
-    if (history.length > WINDOW) history.shift();
-    tileHistory.set(id, history);
-    if (history.length < WINDOW / 2) return;
-    const failures = history.filter((v) => !v).length;
+  reportLoad: (id, ok) => {
+    // One overlay image covers the whole view, so a single failure matters; tiles fail more often.
+    const threshold = KIND.get(id) === 'wms' ? 1 : 2;
+    const count = ok ? 0 : (failures.get(id) ?? 0) + 1;
+    failures.set(id, count);
     const current = get().status[id];
-    const next: ServiceStatus = failures > history.length / 2 ? 'degraded' : current === 'degraded' ? 'ok' : current;
-    if (next !== current && next !== undefined) set((s) => ({ status: { ...s.status, [id]: next } }));
+    const next: ServiceStatus | undefined =
+      count >= threshold ? 'degraded' : ok && current === 'degraded' ? 'ok' : current;
+    if (next !== undefined && next !== current) set((s) => ({ status: { ...s.status, [id]: next } }));
   },
 }));

@@ -66,6 +66,10 @@ export function TopBar() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => hits.length > 0 && setOpen(true)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && hits[0]) pick(hits[0]);
+              if (e.key === 'Escape') setOpen(false);
+            }}
             onBlur={() => window.setTimeout(() => setOpen(false), 150)}
             placeholder="Adres, miejscowość…"
             aria-label="Szukaj"

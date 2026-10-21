@@ -1,8 +1,16 @@
 import { useMemo, useState } from 'react';
-import { ExternalLink, Search, X } from 'lucide-react';
-import { BASE_SERVICES, OVERLAY_SERVICES, TOPICS, type ServiceDef, type Topic } from '@/services/registry';
+import { ChevronDown, ExternalLink, Search, X, ZoomIn } from 'lucide-react';
+import {
+  OVERLAYS,
+  TOPICS,
+  isVisibleAtScale,
+  selectedSublayers,
+  type Overlay,
+  type SubLayer,
+  type Topic,
+} from '@/services/registry';
 import { useStatusStore, type ServiceStatus } from '@/services/status';
-import { serviceOpacity, useMapStore } from '@/state/store';
+import { overlayOpacity, useMapStore } from '@/state/store';
 
 const STATUS_LABEL: Record<ServiceStatus, string> = {
   unknown: 'Sprawdzanie',
@@ -22,112 +30,44 @@ const STATUS_DOT: Record<ServiceStatus, string> = {
   degraded: 'bg-amber-500',
 };
 
-function matches(s: ServiceDef, q: string): boolean {
-  if (!q) return true;
-  const hay = [s.title, s.description, ...s.keywords, TOPICS[s.topic]].join(' ').toLowerCase();
-  return q
-    .toLowerCase()
-    .split(/\s+/)
-    .every((w) => hay.includes(w));
+const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+
+/** Words of the query that every match must contain, ignoring case and Polish diacritics. */
+function words(query: string): string[] {
+  return normalize(query).split(/\s+/).filter(Boolean);
 }
 
-function StatusDot({ status }: { status: ServiceStatus }) {
-  return <span className={`inline-block h-2 w-2 rounded-full ${STATUS_DOT[status]}`} title={STATUS_LABEL[status]} />;
+function textMatches(text: string, q: string[]): boolean {
+  const hay = normalize(text);
+  return q.every((w) => hay.includes(w));
 }
 
-function BaseItem({ s }: { s: ServiceDef }) {
-  const active = useMapStore((m) => m.base === s.id);
-  const setBase = useMapStore((m) => m.setBase);
-  const status = useStatusStore((st) => st.status[s.id] ?? 'unknown');
-  const blocked = status === 'blocked';
-  return (
-    <button
-      type="button"
-      disabled={blocked}
-      onClick={() => setBase(s.id)}
-      aria-pressed={active}
-      aria-label={s.title}
-      className={`flex w-full items-start gap-3 rounded-xl border px-3 py-2 text-left transition ${
-        active
-          ? 'border-[var(--accent)] bg-[var(--accent-soft)]'
-          : 'border-transparent hover:bg-[var(--hover)]'
-      } ${blocked ? 'opacity-50' : ''}`}
-    >
-      <span className="mt-1.5">
-        <StatusDot status={status} />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium">{s.title}</span>
-        <span className="block text-xs text-[var(--muted)]">{blocked ? STATUS_LABEL.blocked : s.description}</span>
-      </span>
-    </button>
-  );
-}
-
-function OverlayItem({ s }: { s: ServiceDef }) {
-  const active = useMapStore((m) => m.overlays.includes(s.id));
-  const toggle = useMapStore((m) => m.toggleOverlay);
-  const opacity = useMapStore((m) => serviceOpacity(s.id, m.opacity));
-  const setOpacity = useMapStore((m) => m.setOpacity);
-  const status = useStatusStore((st) => st.status[s.id] ?? 'unknown');
-  const blocked = status === 'blocked';
-  return (
-    <div className={`rounded-xl px-3 py-2 ${active ? 'bg-[var(--accent-soft)]' : ''} ${blocked ? 'opacity-60' : ''}`}>
-      <label className="flex cursor-pointer items-start gap-3">
-        <input
-          type="checkbox"
-          checked={active}
-          disabled={blocked}
-          onChange={() => toggle(s.id)}
-          className="mt-1 h-4 w-4 accent-[var(--accent)]"
-        />
-        <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-2 text-sm font-medium">
-            {s.title}
-            <StatusDot status={status} />
-          </span>
-          <span className="block text-xs text-[var(--muted)]">{s.description}</span>
-          {blocked && (
-            <a
-              href={s.geoportalUrl}
-              target="_blank"
-              rel="noopener"
-              className="mt-1 inline-flex items-center gap-1 text-xs text-[var(--accent)]"
-            >
-              {STATUS_LABEL.blocked} <ExternalLink className="h-3 w-3" />
-            </a>
-          )}
-        </span>
-      </label>
-      {active && (
-        <input
-          type="range"
-          min={0.1}
-          max={1}
-          step={0.05}
-          value={opacity}
-          aria-label={`Przezroczystość: ${s.title}`}
-          onChange={(e) => setOpacity(s.id, Number(e.target.value))}
-          className="mt-2 ml-7 h-1 w-[calc(100%-1.75rem)] accent-[var(--accent)]"
-        />
-      )}
-    </div>
-  );
+function serviceText(s: Overlay): string {
+  return [s.title, s.description, ...s.keywords, TOPICS[s.topic]].join(' ');
 }
 
 export function LayerCatalog() {
   const close = useMapStore((m) => m.setPanel);
   const [query, setQuery] = useState('');
   const [topic, setTopic] = useState<Topic | null>(null);
+  const q = useMemo(() => words(query), [query]);
 
-  const filtered = useMemo(() => {
-    const keep = (s: ServiceDef) => matches(s, query) && (topic === null || s.topic === topic);
-    return { base: BASE_SERVICES.filter(keep), overlays: OVERLAY_SERVICES.filter(keep) };
-  }, [query, topic]);
+  /** Services matching the filter; matching sublayers open the service with those rows highlighted. */
+  const results = useMemo(
+    () =>
+      OVERLAYS.filter((s) => topic === null || s.topic === topic)
+        .map((s) => {
+          if (q.length === 0) return { s, hits: [] as string[] };
+          const hits = s.sublayers.filter((l) => textMatches(l.title, q)).map((l) => l.name);
+          return hits.length > 0 || textMatches(serviceText(s), q) ? { s, hits } : null;
+        })
+        .filter((r): r is { s: Overlay; hits: string[] } => r !== null),
+    [q, topic],
+  );
 
-  const filtering = query !== '' || topic !== null;
-  const starters = filtering ? [] : OVERLAY_SERVICES.filter((s) => s.starter);
-  const rest = filtering ? filtered.overlays : OVERLAY_SERVICES.filter((s) => !s.starter);
+  const filtering = q.length > 0 || topic !== null;
+  const starters = filtering ? [] : results.filter((r) => r.s.starter);
+  const rest = filtering ? results : results.filter((r) => !r.s.starter);
 
   return (
     <section className="flex h-full flex-col" aria-label="Katalog warstw">
@@ -150,7 +90,7 @@ export function LayerCatalog() {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Szukaj warstwy: gaz, plan, ceny…"
+            placeholder="Szukaj warstwy: woda, gaz, plan, ceny…"
             className="w-full bg-transparent text-sm outline-none placeholder:text-[var(--muted)]"
           />
         </label>
@@ -172,28 +112,21 @@ export function LayerCatalog() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 pb-4">
-        {filtered.base.length > 0 && (
-          <Group title="Podkład">
-            {filtered.base.map((s) => (
-              <BaseItem key={s.id} s={s} />
-            ))}
-          </Group>
-        )}
         {starters.length > 0 && (
           <Group title="Na start">
-            {starters.map((s) => (
-              <OverlayItem key={s.id} s={s} />
+            {starters.map(({ s, hits }) => (
+              <OverlayItem key={s.id} s={s} hits={hits} />
             ))}
           </Group>
         )}
         {rest.length > 0 && (
-          <Group title={filtering ? 'Warstwy' : 'Pozostałe'}>
-            {rest.map((s) => (
-              <OverlayItem key={s.id} s={s} />
+          <Group title={filtering ? 'Wyniki' : 'Pozostałe'}>
+            {rest.map(({ s, hits }) => (
+              <OverlayItem key={s.id} s={s} hits={hits} />
             ))}
           </Group>
         )}
-        {filtered.base.length + filtered.overlays.length === 0 && (
+        {results.length === 0 && (
           <p className="px-3 py-6 text-center text-sm text-[var(--muted)]">Brak warstw dla tego filtru.</p>
         )}
       </div>
@@ -207,5 +140,125 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
       <h3 className="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">{title}</h3>
       <div className="flex flex-col gap-0.5">{children}</div>
     </div>
+  );
+}
+
+function StatusDot({ status }: { status: ServiceStatus }) {
+  return (
+    <span
+      className={`inline-block h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[status]}`}
+      title={STATUS_LABEL[status]}
+      aria-label={STATUS_LABEL[status]}
+    />
+  );
+}
+
+function OverlayItem({ s, hits }: { s: Overlay; hits: string[] }) {
+  const active = useMapStore((m) => m.overlays.includes(s.id));
+  const toggle = useMapStore((m) => m.toggleOverlay);
+  const opacity = useMapStore((m) => overlayOpacity(s.id, m.opacity));
+  const setOpacity = useMapStore((m) => m.setOpacity);
+  const status = useStatusStore((st) => st.status[s.id] ?? 'unknown');
+  const [expanded, setExpanded] = useState(false);
+  const blocked = status === 'blocked';
+  const open = expanded || hits.length > 0;
+
+  return (
+    <div className={`rounded-xl px-3 py-2 ${active ? 'bg-[var(--accent-soft)]' : ''} ${blocked ? 'opacity-60' : ''}`}>
+      <div className="flex items-start gap-3">
+        <input
+          id={`ov-${s.id}`}
+          type="checkbox"
+          checked={active}
+          disabled={blocked}
+          onChange={() => toggle(s.id)}
+          aria-label={s.title}
+          className="mt-1 h-4 w-4 shrink-0 accent-[var(--accent)]"
+        />
+        <label htmlFor={`ov-${s.id}`} className="min-w-0 flex-1 cursor-pointer">
+          <span className="flex items-center gap-2 text-sm font-medium">
+            {s.title}
+            <StatusDot status={status} />
+          </span>
+          <span className="block text-xs text-[var(--muted)]">{s.description}</span>
+        </label>
+        <button
+          type="button"
+          onClick={() => setExpanded(!open)}
+          aria-expanded={open}
+          aria-label={`Warstwy usługi: ${s.title}`}
+          className="rounded-full p-1 text-[var(--muted)] hover:bg-[var(--hover)]"
+        >
+          <ChevronDown className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
+
+      {(status === 'blocked' || status === 'degraded') && (
+        <a
+          href={s.geoportalUrl}
+          target="_blank"
+          rel="noopener"
+          className="mt-1 ml-7 inline-flex items-center gap-1 text-xs text-[var(--accent)]"
+        >
+          {STATUS_LABEL[status]}: otwórz w geoportal.gov.pl <ExternalLink className="h-3 w-3" />
+        </a>
+      )}
+
+      {open && (
+        <ul className="mt-2 ml-7 flex flex-col gap-1">
+          {s.sublayers.map((l) => (
+            <SublayerRow key={l.name} s={s} l={l} highlighted={hits.includes(l.name)} disabled={blocked} />
+          ))}
+        </ul>
+      )}
+
+      {active && (
+        <input
+          type="range"
+          min={0.1}
+          max={1}
+          step={0.05}
+          value={opacity}
+          aria-label={`Przezroczystość: ${s.title}`}
+          onChange={(e) => setOpacity(s.id, Number(e.target.value))}
+          className="mt-2 ml-7 h-1 w-[calc(100%-1.75rem)] accent-[var(--accent)]"
+        />
+      )}
+    </div>
+  );
+}
+
+function SublayerRow({ s, l, highlighted, disabled }: { s: Overlay; l: SubLayer; highlighted: boolean; disabled: boolean }) {
+  const checked = useMapStore((m) => m.overlays.includes(s.id) && selectedSublayers(s, m.sublayers).includes(l.name));
+  const toggle = useMapStore((m) => m.toggleSublayer);
+  const outOfScale = useMapStore((m) => !isVisibleAtScale(l, m.scale));
+  const zoomedOutTooFar = outOfScale && l.maxScale !== undefined;
+  return (
+    <li>
+      <label
+        className={`flex cursor-pointer items-center gap-2 rounded-lg px-1.5 py-1 text-sm ${
+          highlighted ? 'bg-[var(--field)] font-medium' : ''
+        }`}
+      >
+        <input
+          type="checkbox"
+          checked={checked}
+          disabled={disabled}
+          onChange={() => toggle(s.id, l.name)}
+          aria-label={`${s.title}: ${l.title}`}
+          className="h-3.5 w-3.5 shrink-0 accent-[var(--accent)]"
+        />
+        <span className={`flex-1 ${outOfScale ? 'text-[var(--muted)]' : ''}`}>{l.title}</span>
+        {checked && outOfScale && (
+          <span
+            className="flex items-center gap-1 text-[11px] text-[var(--muted)]"
+            title={zoomedOutTooFar ? `Widoczne od skali 1:${l.maxScale}` : `Widoczne do skali 1:${l.minScale}`}
+          >
+            {zoomedOutTooFar ? <ZoomIn className="h-3 w-3" /> : null}
+            {zoomedOutTooFar ? 'przybliż' : 'oddal'}
+          </span>
+        )}
+      </label>
+    </li>
   );
 }

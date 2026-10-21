@@ -1,10 +1,12 @@
-import { Bug, ExternalLink, FileText, Layers, LoaderCircle, MapPin, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Bug, Camera, Download, ExternalLink, FileText, Layers, LoaderCircle, MapPin, X } from 'lucide-react';
 import { formatCoordinate } from '@/map/format';
 import { GEOPORTAL_MAP, OVERLAY_BY_ID, parcelReportUrl } from '@/services/registry';
 import type { InfoRecord } from '@/services/featureinfo';
 import { useInfoStore, type InfoResult } from '@/state/info';
 import { useMapStore } from '@/state/store';
 import { useReport } from './ReportDialog';
+import { dateText, orthoAt, pixelText, type OrthoInfo } from '@/services/ortho';
 
 /** Results of a map click: one section per queried overlay. */
 export function InfoPanel() {
@@ -65,6 +67,7 @@ export function InfoPanel() {
           query.services.map((id) => <ServiceResult key={id} id={id} result={query.results[id]} />)
         )}
       </div>
+      <OrthoPhoto coordinate={query.coordinate} />
       <footer className="border-t border-[var(--hover)] px-4 py-2">
         <button
           type="button"
@@ -134,6 +137,48 @@ function Record({ record }: { record: InfoRecord }) {
           </div>
         ))}
       </dl>
+    </div>
+  );
+}
+
+type OrthoState = { status: 'loading' } | { status: 'done'; info: OrthoInfo } | { status: 'error' };
+
+/** When the aerial photo here was taken and how sharp it is, with its sheet to download. */
+function OrthoPhoto({ coordinate }: { coordinate: [number, number] }) {
+  const [state, setState] = useState<OrthoState>({ status: 'loading' });
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setState({ status: 'loading' });
+    orthoAt(coordinate, controller.signal)
+      .then((info) => setState({ status: 'done', info }))
+      .catch(() => !controller.signal.aborted && setState({ status: 'error' }));
+    return () => controller.abort();
+  }, [coordinate]);
+
+  const latest = state.status === 'done' ? state.info.latest : undefined;
+  if (state.status === 'error' || (state.status === 'done' && !latest)) return null;
+
+  return (
+    <div className="flex items-start gap-2 border-t border-[var(--hover)] px-4 py-2 text-xs">
+      <Camera className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" aria-hidden="true" />
+      {latest ? (
+        <p className="min-w-0">
+          Ortofotomapa ze zdjęcia z <strong className="font-semibold">{dateText(latest.date)}</strong>, piksel{' '}
+          <strong className="font-semibold">{pixelText(latest.pixel)}</strong>
+          {latest.download && (
+            <>
+              {' · '}
+              <a href={latest.download} className="inline-flex items-center gap-1 text-[var(--accent)] underline underline-offset-2" download>
+                <Download className="h-3 w-3" aria-hidden="true" />
+                pobierz arkusz {latest.sheet} (GeoTIFF{latest.sizeMb ? `, ${latest.sizeMb.toLocaleString('pl-PL')} MB` : ''})
+              </a>
+            </>
+          )}
+        </p>
+      ) : (
+        <p className="text-[var(--muted)]">Sprawdzam datę zdjęcia lotniczego…</p>
+      )}
     </div>
   );
 }

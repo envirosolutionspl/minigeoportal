@@ -9,7 +9,7 @@ Projekt open source na licencji MIT, tworzony przez [EnviroSolutions](https://en
 - Wyszukiwarka adresów, ulic, miejscowości, gmin, powiatów, województw i obiektów fizjograficznych (rzeki, jeziora, szczyty) oraz osobna wyszukiwarka działek z listami województw, powiatów, gmin i obrębów. Źródła: geokoder UUG, indeks pełnotekstowy geoportalu (miejscowości i obiekty z PRNG, miasta przed wsiami), listy PRG z cache serwera. Jednostki są pokazywane z obrysem z PRG (uogólnionym, kilkadziesiąt KB), a obiekty fizjograficzne jako punkty, bo PRNG nie ma ich obrysów: rzeka to szereg punktów wzdłuż biegu.
 - Podkłady: ortofotomapa, mapa BDOO + BDOT10k (domyślna na komputerze), mapa uproszczona (domyślna na telefonie), mapa terenu, skany, brak podkładu.
 - Warstwy: ewidencja gruntów i budynków, plany miejscowe i ogólne, ceny transakcyjne, uzbrojenie terenu, z wyborem pojedynczych warstw i przezroczystości.
-- Informacje o klikniętym miejscu (GetFeatureInfo) i link do raportu o działce z geoportal.gov.pl (dane ewidencyjne, mapy, eksport do PDF).
+- Informacje o klikniętym miejscu (GetFeatureInfo), link do raportu o działce z geoportal.gov.pl (dane ewidencyjne, mapy, eksport do PDF) oraz data i wielkość piksela zdjęcia lotniczego w tym miejscu ze skorowidzów ortofotomap, z linkiem do pobrania arkusza GeoTIFF.
 - Pomiar odległości i powierzchni (geodezyjnie, na elipsoidzie) i współrzędne kursora w PL-1992 oraz WGS 84.
 - Wydruk w skali 1:500–1:2 500 000 na A4 lub A3 z tytułem, legendą i źródłami, także jako PDF przez okno drukowania przeglądarki. Obszar wydruku jest zaznaczony ramką na mapie, a legenda obejmuje tylko warstwy, które serwer narysuje w tej skali.
 - Kopiowanie linku do bieżącego widoku (środek, skala, podkład, włączone warstwy).
@@ -64,6 +64,7 @@ API nie ma kont ani danych użytkowników. Zabezpieczenia:
 - Limity zapytań per adres (token bucket w pamięci) na słownikach i GetFeatureInfo, limit równoległych zapytań do usług źródłowych.
 - `POST /api/capabilities/refresh` działa tylko z tej samej maszyny i wymaga nagłówka `X-Refresh: capabilities`.
 - `POST /api/report` przyjmuje JSON do 16 KB: rodzaj ze stałej listy, opis 10–3000 znaków bez znaków sterujących, opcjonalny e-mail (sprawdzany, trafia tylko do `Reply-To`) i link wyłącznie do tej aplikacji. Temat wiadomości powstaje z rodzaju, a treść jest zwykłym tekstem. Ukryte pole odsiewa boty, a limit to 3 zgłoszenia na raz i 6 na godzinę z jednego adresu. Dane logowania SMTP są tylko w `.env` na serwerze.
+- `/api/orto?x=&y=` przyjmuje tylko punkt w granicach Polski (EPSG:2180) i pyta skorowidze ortofotomap GUGiK o ten punkt. Usługa odpowiada stroną HTML z rekordami w JavaScript; serwer wyciąga z niej pola wzorcem (nigdy jej nie wykonuje) i przepuszcza tylko daty, piksel, kolor, godło i linki do opendata.geoportal.gov.pl.
 - Wydruk nie ma punktu końcowego na serwerze: obraz składa przeglądarka użytkownika z tych samych kafli, które widzi na ekranie.
 - Nagłówki: Content Security Policy (skrypty tylko własne, obrazy map z dowolnego hosta https, połączenia tylko do usług GUGiK), `frame-ancestors 'none'`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`.
 - Błędy usług źródłowych są logowane na serwerze, a klient dostaje jedno ogólne zdanie.

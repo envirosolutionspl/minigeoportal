@@ -6,6 +6,7 @@ import { featureInfo } from './featureinfo.ts';
 import { communes, counties, findUnits, precincts, unitNames, voivodeships, type DictEntry } from './dictionaries.ts';
 import { RequestError, concurrencyGate, isLoopback, rateLimit } from './http.ts';
 import { parseReport, type Mailer } from './report.ts';
+import { orthoAt } from './ortho.ts';
 
 /**
  * API of the app: cached service metadata, dictionaries for the parcel search, a
@@ -20,7 +21,12 @@ export interface AppOptions {
   /** Public address of the app; links in reports must point here. Defaults to the request's Origin. */
   origin?: string;
   /** Overridable in tests so bursts can be exercised quickly. */
-  limits?: { dict: [burst: number, perMinute: number]; featureInfo: [burst: number, perMinute: number]; report?: [burst: number, perMinute: number] };
+  limits?: {
+    dict: [burst: number, perMinute: number];
+    featureInfo: [burst: number, perMinute: number];
+    report?: [burst: number, perMinute: number];
+    ortho?: [burst: number, perMinute: number];
+  };
 }
 
 export function createApp({ cache, refresh, mailer, origin, limits }: AppOptions): Hono {
@@ -130,6 +136,20 @@ export function createApp({ cache, refresh, mailer, origin, limits }: AppOptions
     } catch (e) {
       if (e instanceof RequestError) return c.text(e.message, 400);
       return upstreamFailure(c, 'featureinfo', e);
+    }
+  });
+
+  /** Date and pixel size of the aerial photo at a map click; one request per click. */
+  app.use('/api/orto', rateLimit(...(limits?.ortho ?? [10, 30])));
+  app.get('/api/orto', async (c) => {
+    try {
+      const info = await upstream(() => orthoAt(c.req.query('x'), c.req.query('y')));
+      if (!info) return c.text('Serwer jest zajęty, spróbuj za chwilę.', 503);
+      c.header('Cache-Control', 'public, max-age=86400');
+      return c.json(info);
+    } catch (e) {
+      if (e instanceof RequestError) return c.text(e.message, 400);
+      return upstreamFailure(c, 'orto', e);
     }
   });
 

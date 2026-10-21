@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { InfoPanel } from './InfoPanel';
 import { useInfoStore } from '@/state/info';
 import { useMapStore } from '@/state/store';
+import { stubFetch } from '@/test/helpers';
 
 const point: [number, number] = [656849, 482462];
 
@@ -12,6 +13,18 @@ beforeEach(() => {
 });
 
 describe('InfoPanel', () => {
+  it('says when the aerial photo was taken and links its sheet', async () => {
+    stubFetch([
+      ['/api/orto', { latest: { date: '2025-04-27', pixel: 0.05, color: 'RGB', sheet: 'N-34-138-B-d-2-4', download: 'https://opendata.geoportal.gov.pl/o/a.tif', sizeMb: 1026 }, archived: 23 }],
+    ]);
+    useInfoStore.getState().start(point, []);
+    render(<InfoPanel />);
+    expect(await screen.findByText('27.04.2025')).toBeTruthy();
+    expect(screen.getByText('5 cm')).toBeTruthy();
+    expect((screen.getByRole('link', { name: /pobierz arkusz N-34-138-B-d-2-4/ }) as HTMLAnchorElement).href).toBe('https://opendata.geoportal.gov.pl/o/a.tif');
+  });
+
+
   it('renders nothing without a query', () => {
     render(<InfoPanel />);
     expect(screen.queryByText('Informacje o miejscu')).toBeNull();

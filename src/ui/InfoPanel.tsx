@@ -1,6 +1,6 @@
-import { ExternalLink, Layers, LoaderCircle, MapPin, X } from 'lucide-react';
+import { ExternalLink, FileText, Layers, LoaderCircle, MapPin, X } from 'lucide-react';
 import { toLonLat } from 'ol/proj';
-import { GEOPORTAL_MAP, OVERLAY_BY_ID } from '@/services/registry';
+import { GEOPORTAL_MAP, OVERLAY_BY_ID, parcelReportUrl } from '@/services/registry';
 import type { InfoRecord } from '@/services/featureinfo';
 import { useInfoStore, type InfoResult } from '@/state/info';
 import { useMapStore } from '@/state/store';
@@ -30,6 +30,17 @@ export function InfoPanel() {
           <p className="text-xs text-[var(--muted)]">
             {lat.toFixed(5)}° N, {lon.toFixed(5)}° E · PL-1992: {fmt.format(n)} N, {fmt.format(e)} E
           </p>
+          <a
+            href={parcelReportUrl(query.coordinate)}
+            target="_blank"
+            rel="noopener"
+            className="mt-1.5 inline-flex min-h-6 items-center gap-1.5 text-sm font-medium text-[var(--accent)] underline-offset-2 hover:underline"
+          >
+            <FileText className="h-4 w-4" aria-hidden="true" />
+            Raport o działce
+            <span className="sr-only">(geoportal.gov.pl, otwiera się w nowej karcie)</span>
+            <ExternalLink className="h-3 w-3" aria-hidden="true" />
+          </a>
         </div>
         <button type="button" onClick={close} aria-label="Zamknij" className="rounded-full p-2 hover:bg-[var(--hover)]">
           <X className="h-5 w-5" />

@@ -84,6 +84,15 @@ export const GUGIK_ATTRIBUTION =
 /** The same content on geoportal.gov.pl, offered when a service is unavailable here. */
 export const GEOPORTAL_MAP = 'https://mapy.geoportal.gov.pl/imap/Imgp_2.html';
 
+/**
+ * Parcel report of geoportal.gov.pl for the parcel at a point: land register data, plans,
+ * terrain and more, with a PDF export. It takes PL-1992 X (northing) and Y (easting).
+ */
+export function parcelReportUrl([easting, northing]: [number, number]): string {
+  const params = new URLSearchParams({ x: northing.toFixed(2), y: easting.toFixed(2) });
+  return `https://mapy.geoportal.gov.pl/imap/parcelInfo/index3_a.html?${params}`;
+}
+
 const WMTS_GUEST = 'https://mapy.geoportal.gov.pl/wss/service/WMTS/guest/wmts/';
 const PZGIK = 'https://mapy.geoportal.gov.pl/wss/service/PZGIK/';
 const INTEGRACJA = 'https://integracja.gugik.gov.pl/cgi-bin/';

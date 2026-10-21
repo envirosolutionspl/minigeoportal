@@ -24,6 +24,14 @@ describe('InfoPanel', () => {
     expect(screen.getByText('Wczytywanie…')).toBeTruthy();
   });
 
+  it('links to the geoportal parcel report for the clicked point, X = northing', () => {
+    useInfoStore.getState().start(point, []);
+    render(<InfoPanel />);
+    const link = screen.getByRole('link', { name: /Raport o działce/ }) as HTMLAnchorElement;
+    expect(link.href).toBe('https://mapy.geoportal.gov.pl/imap/parcelInfo/index3_a.html?x=482462.00&y=656849.00');
+    expect(link.target).toBe('_blank');
+  });
+
   it('renders records with links, empty answers and errors', () => {
     const store = useInfoStore.getState();
     store.start(point, ['kieg', 'kimpzp', 'rcn']);

@@ -357,6 +357,12 @@ html[data-printing] #print-sheet {
     left: calc((100% - 24rem) / 2);
   }
 }
+/* Where the map beside the list is narrow, the credit would cover the base map choices. */
+@media (min-width: 640px) and (max-width: 1199px) {
+  [data-panel='catalog'] .author-credit {
+    display: none;
+  }
+}
 
 /* High contrast (switch in the display menu): yellow on black, outlined surfaces. */
 html[data-contrast='high'] {

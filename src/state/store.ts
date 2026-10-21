@@ -150,3 +150,9 @@ export const hasInitialView = initial.center !== undefined;
 export function overlayOpacity(id: string, opacity: Record<string, number>): number {
   return opacity[id] ?? OVERLAY_BY_ID.get(id)?.opacity ?? 1;
 }
+
+/**
+ * Development only: a hot update would create a second store while the map keeps listening to
+ * the first one, so base map and layer switches would stop reaching it. Reload the page instead.
+ */
+import.meta.hot?.accept(() => window.location.reload());

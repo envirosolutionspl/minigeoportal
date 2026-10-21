@@ -1,26 +1,61 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Ban } from 'lucide-react';
 import { BASE_MAPS, GEOPORTAL_MAP, type BaseMap } from '@/services/registry';
 import { useMapStore } from '@/state/store';
 
 /**
- * Base map switcher in the style of consumer maps: one thumbnail toggles between
- * photos and the last used map; hovering or focusing it reveals every base map.
+ * Base map switcher: a thumbnail of the base map in use; clicking it (or hovering with a mouse)
+ * shows every base map to choose from.
  */
 export function BasemapSwitcher() {
   const base = useMapStore((m) => m.base);
   const setBase = useMapStore((m) => m.setBase);
-  const lastMap = useRef(base === 'orto' ? 'mapa' : base);
-  if (base !== 'orto') lastMap.current = base;
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const toggle = useRef<HTMLButtonElement>(null);
+  const current = BASE_MAPS.find((b) => b.id === base) ?? BASE_MAPS[0];
 
-  const toggleTarget = BASE_MAPS.find((b) => b.id === (base === 'orto' ? lastMap.current : 'orto'))!;
+  // Escape or a click elsewhere closes the list.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      setOpen(false);
+      toggle.current?.focus();
+    };
+    const onPointer = (e: PointerEvent) => !root.current?.contains(e.target as Node) && setOpen(false);
+    document.addEventListener('keydown', onKey, true);
+    document.addEventListener('pointerdown', onPointer);
+    return () => {
+      document.removeEventListener('keydown', onKey, true);
+      document.removeEventListener('pointerdown', onPointer);
+    };
+  }, [open]);
+
+  const choose = (id: string) => {
+    setBase(id);
+    setOpen(false);
+  };
 
   return (
-    <div className="group pointer-events-auto absolute bottom-9 left-3 z-20 flex items-end gap-2 sm:bottom-10 sm:left-4">
-      <Thumb def={toggleTarget} size="lg" onClick={() => setBase(toggleTarget.id)} />
-      <div className="hidden gap-2 rounded-2xl bg-[var(--surface)] p-2 shadow-lg ring-1 ring-black/5 group-focus-within:flex group-hover:flex">
+    <div ref={root} className="group pointer-events-auto absolute bottom-9 left-3 z-20 flex items-end gap-2 sm:bottom-10 sm:left-4">
+      <Thumb
+        ref={toggle}
+        def={current}
+        size="lg"
+        label={`Podkład: ${current.title}. Zmień podkład`}
+        expanded={open}
+        onClick={() => setOpen(!open)}
+      />
+      <div
+        id="basemap-list"
+        role="group"
+        aria-label="Podkłady"
+        className={`${open ? 'flex' : 'hidden [@media(hover:hover)]:group-hover:flex'} gap-2 rounded-2xl bg-[var(--surface)] p-2 shadow-lg ring-1 ring-black/5`}
+      >
         {BASE_MAPS.map((b) => (
-          <Thumb key={b.id} def={b} size="sm" active={b.id === base} onClick={() => setBase(b.id)} />
+          <Thumb key={b.id} def={b} size="sm" active={b.id === base} onClick={() => choose(b.id)} />
         ))}
       </div>
     </div>
@@ -28,14 +63,21 @@ export function BasemapSwitcher() {
 }
 
 function Thumb({
+  ref,
   def,
   size,
   active,
+  expanded,
+  label: name,
   onClick,
 }: {
+  ref?: React.Ref<HTMLButtonElement>;
   def: BaseMap;
   size: 'sm' | 'lg';
   active?: boolean;
+  /** For the main thumbnail: whether the list is open. */
+  expanded?: boolean;
+  label?: string;
   onClick: () => void;
 }) {
   const src = def.thumb;
@@ -46,7 +88,7 @@ function Thumb({
     </span>
   );
   // Restricted base maps stay visible but lead to geoportal.gov.pl, where they work.
-  if (def.restricted) {
+  if (def.restricted && size === 'sm') {
     return (
       <a
         href={GEOPORTAL_MAP}
@@ -62,10 +104,13 @@ function Thumb({
   }
   return (
     <button
+      ref={ref}
       type="button"
       onClick={onClick}
-      aria-pressed={active}
-      aria-label={`Podkład: ${def.title}`}
+      aria-pressed={expanded === undefined ? active : undefined}
+      aria-expanded={expanded}
+      aria-controls={expanded === undefined ? undefined : 'basemap-list'}
+      aria-label={name ?? `Podkład: ${def.title}`}
       title={def.description}
       className={`relative shrink-0 overflow-hidden bg-[var(--map-bg)] transition ${box} ${
         active ? 'ring-[var(--accent)]' : size === 'sm' ? 'ring-transparent hover:ring-[var(--hover)]' : ''

@@ -176,3 +176,84 @@ input[type='search']::-webkit-search-cancel-button {
 .ol-attribution a {
   color: var(--accent);
 }
+
+/* Printing (see map/print.ts): the sheet is laid out off screen and is all that gets printed. */
+#print-sheet {
+  display: none;
+}
+html[data-printing] #print-sheet {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: -100000px;
+  background: #fff;
+  color: #1f2a20;
+  font-size: 9pt;
+}
+.print-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  height: 14mm;
+  font-size: 11pt;
+}
+.print-header strong {
+  font-size: 14pt;
+}
+.print-frame {
+  border: 0.3mm solid #1f2a20;
+  width: max-content;
+}
+.print-footer {
+  height: 36mm;
+  overflow: hidden;
+  padding-top: 2mm;
+  line-height: 1.35;
+}
+.print-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1mm 4mm;
+  max-height: 16mm;
+  overflow: hidden;
+  margin: 1mm 0;
+}
+.print-legend figure {
+  display: flex;
+  align-items: center;
+  gap: 1mm;
+  margin: 0;
+}
+.print-legend img {
+  max-height: 14mm;
+}
+.print-note {
+  color: #4b5a4c;
+  font-size: 7.5pt;
+}
+#print-map .ol-control,
+#print-map .ol-mouse-position {
+  display: none;
+}
+@media print {
+  html[data-printing],
+  html[data-printing] body,
+  html[data-printing] #root,
+  html[data-printing] #root > div {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+  html[data-printing] #root > div > :not(#print-sheet) {
+    display: none !important;
+  }
+  html[data-printing] #print-sheet {
+    position: static;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .print-frame {
+    zoom: var(--print-zoom);
+  }
+}

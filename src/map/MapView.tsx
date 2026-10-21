@@ -9,6 +9,7 @@ import { hasInitialView, overlayOpacity, useMapStore } from '@/state/store';
 import { attachFeatureInfo } from './featureInfoClick';
 import { attachFocus } from './focus';
 import { attachMeasure } from './measure';
+import { attachPrint } from './print';
 import { formatCoordinate } from './format';
 
 export function MapView() {
@@ -91,8 +92,10 @@ export function MapView() {
     const detachFeatureInfo = attachFeatureInfo(map, overlays);
     const detachFocus = attachFocus(map);
     const detachMeasure = attachMeasure(map);
+    const detachPrint = attachPrint(map);
 
     return () => {
+      detachPrint();
       detachMeasure();
       detachFocus();
       detachFeatureInfo();

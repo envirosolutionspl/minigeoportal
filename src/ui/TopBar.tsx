@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Building2, Home, Info, Layers, LocateFixed, Route, Ruler, Search, SquareDashed, X, type LucideIcon } from 'lucide-react';
+import { Building2, Home, Info, Layers, LocateFixed, Printer, Route, Ruler, Search, SquareDashed, X, type LucideIcon } from 'lucide-react';
 import { fromLonLat } from 'ol/proj';
 import { buildingAt, placeOutline, search, type HitKind, type SearchHit } from '@/services/geocoder';
 import { useMapStore } from '@/state/store';
 import { BrandMark, Wordmark } from './Brand';
 import { useWelcome } from './WelcomeDialog';
 import { ParcelSearch } from './ParcelSearch';
+import { usePrintDialog } from './Print';
 
 /** Closest zoom per hit kind on the GUGiK scale series (13 = 1:1890, 14 = 1:945, 15 = 1:472). */
 const ZOOM: Record<HitKind, number> = { address: 14, street: 14, place: 12, parcel: 15 };
@@ -175,6 +176,9 @@ export function TopBar() {
         </IconButton>
         <IconButton label="Pomiar odległości i powierzchni" active={tool !== 'none'} onClick={() => setTool(tool === 'none' ? 'measure-line' : 'none')}>
           <Ruler className="h-5 w-5" />
+        </IconButton>
+        <IconButton label="Drukuj mapę" onClick={() => usePrintDialog.getState().setOpen(true)}>
+          <Printer className="h-5 w-5" />
         </IconButton>
         <IconButton label="Warstwy" active={panel === 'catalog'} onClick={() => setPanel(panel === 'catalog' ? 'none' : 'catalog')}>
           <Layers className="h-5 w-5" />

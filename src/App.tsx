@@ -6,6 +6,7 @@ import { InfoPanel } from './ui/InfoPanel';
 import { MeasureBar } from './ui/MeasureBar';
 import { WelcomeDialog } from './ui/WelcomeDialog';
 import { ReportDialog } from './ui/ReportDialog';
+import { PrintDialog, PrintSheet } from './ui/Print';
 import { AuthorCredit } from './ui/Brand';
 import { useMapStore } from './state/store';
 
@@ -32,6 +33,8 @@ export default function App() {
       </aside>
       <WelcomeDialog />
       <ReportDialog />
+      <PrintDialog />
+      <PrintSheet />
     </div>
   );
 }

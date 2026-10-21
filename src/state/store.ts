@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { BASE_MAPS, OVERLAY_BY_ID, selectedSublayers } from '@/services/registry';
 import { POLAND_EXTENT } from '@/map/projection';
 import { readUrl, writeUrl } from './url';
+import type { PrintOptions } from '@/map/print';
 
 export type Panel = 'none' | 'catalog';
 
@@ -43,6 +44,8 @@ interface MapStore {
   measureClears: number;
   /** Text of the last finished measurement, announced to screen readers. */
   measureResult: string;
+  /** Print in progress; the map takes it up and clears it when the print dialog closes. */
+  printRequest: PrintOptions | null;
   /** Called by the map on moveend; keeps store and URL in sync. */
   setView(center: [number, number], zoom: number, scale: number): void;
   setBase(id: string): void;
@@ -60,6 +63,8 @@ interface MapStore {
   setTool(tool: Tool): void;
   clearMeasurements(): void;
   setMeasureResult(text: string): void;
+  requestPrint(options: PrintOptions): void;
+  printDone(): void;
 }
 
 /**
@@ -84,6 +89,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
   tool: 'none',
   measureClears: 0,
   measureResult: '',
+  printRequest: null,
 
   setView: (center, zoom, scale) => set({ center, zoom, scale }),
   setBase: (base) => set({ base }),
@@ -115,6 +121,8 @@ export const useMapStore = create<MapStore>((set, get) => ({
   setTool: (tool) => set({ tool }),
   clearMeasurements: () => set((s) => ({ measureClears: s.measureClears + 1, measureResult: '' })),
   setMeasureResult: (measureResult) => set({ measureResult }),
+  requestPrint: (options) => set({ printRequest: { ...options } }),
+  printDone: () => set({ printRequest: null }),
 }));
 
 useMapStore.subscribe((s, prev) => {

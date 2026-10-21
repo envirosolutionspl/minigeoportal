@@ -1,5 +1,5 @@
 import { XMLParser } from 'fast-xml-parser';
-import { BASE_MAPS, OVERLAYS, type BaseMap, type Overlay } from '../src/services/registry.ts';
+import { OVERLAYS, TILE_SERVICES, type Overlay, type TileService } from '../src/services/registry.ts';
 import type {
   CapabilitiesCache,
   ServiceMeta,
@@ -79,7 +79,7 @@ async function wms(def: Overlay): Promise<WmsMeta> {
   };
 }
 
-async function wmts(def: BaseMap): Promise<WmtsMeta> {
+async function wmts(def: TileService): Promise<WmtsMeta> {
   const root = node((await fetchXml(`${def.url}?SERVICE=WMTS&REQUEST=GetCapabilities&VERSION=1.0.0`)).Capabilities);
   const contents = node(root.Contents);
   const layer = list(contents.Layer).find((l) => text(l.Identifier) === def.layer);
@@ -93,7 +93,7 @@ async function wmts(def: BaseMap): Promise<WmtsMeta> {
   return {
     kind: 'wmts',
     fetchedAt: new Date().toISOString(),
-    title: text(node(root.ServiceIdentification).Title) ?? def.title,
+    title: text(node(root.ServiceIdentification).Title) ?? def.layer,
     formats: texts(layer.Format).filter((f) => f.startsWith('image/')),
     matrixSet: {
       id: 'EPSG:2180',
@@ -126,7 +126,7 @@ async function safely(fetchMeta: () => Promise<ServiceMeta>): Promise<ServiceMet
 export async function buildCache(previous?: CapabilitiesCache): Promise<CapabilitiesCache> {
   const entries = await Promise.all([
     ...OVERLAYS.map(async (def) => [def.id, await safely(() => wms(def))] as const),
-    ...BASE_MAPS.map(async (def) => [def.id, await safely(() => wmts(def))] as const),
+    ...TILE_SERVICES.map(async (def) => [def.id, await safely(() => wmts(def))] as const),
   ]);
   const services: Record<string, ServiceMeta> = {};
   for (const [id, meta] of entries) {

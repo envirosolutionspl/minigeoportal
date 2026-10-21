@@ -34,8 +34,9 @@ interface ServiceBase {
   geoportalUrl: string;
 }
 
-/** Base map: cached WMTS tiles on the shared GUGiK EPSG:2180 grid. */
-export interface BaseMap extends ServiceBase {
+/** A WMTS service on the shared GUGiK EPSG:2180 grid: a building block of base maps. */
+export interface TileService {
+  id: string;
   kind: 'wmts';
   url: string;
   layer: string;
@@ -43,11 +44,31 @@ export interface BaseMap extends ServiceBase {
   /** First level of the shared GUGiK series and number of levels published. */
   firstLevel: number;
   levels: number;
-  /**
-   * Some services publish empty tiles at small scales (BDOT10k draws nothing above 1:47 247).
-   * Above `scale`, the base map shows the `id` base instead, so it is never blank.
-   */
-  overview?: { id: string; scale: number };
+}
+
+/** A tile service inside a base map, drawn only in its scale range. */
+export interface BaseSource {
+  service: string;
+  /** Drawn at scales from 1:minScale (zoomed out at least that far). */
+  minScale?: number;
+  /** Drawn at scales up to 1:maxScale (zoomed in at least that far). */
+  maxScale?: number;
+}
+
+/**
+ * Base map as the user sees it: one map, composed of tile services that switch with scale,
+ * the way geoportal.gov.pl composes its base maps. Some services have content only in part
+ * of the scale range (BDOT10k from 1:47 247, BDOO up to 1:94 494), so they are combined.
+ */
+export interface BaseMap {
+  id: string;
+  title: string;
+  description: string;
+  sources: BaseSource[];
+  /** Preview tile: service, level of the shared series and point (EPSG:2180), central Warsaw by default. */
+  thumbnail?: { service: string; level: number; at?: [number, number] };
+  /** Requires a token on geoportal.gov.pl: listed, but disabled with a link. */
+  restricted?: boolean;
 }
 
 /** Overlay: dynamic WMS rendered as one image per view. */
@@ -62,70 +83,76 @@ export interface Overlay extends ServiceBase {
   opacity?: number;
 }
 
-export type ServiceDef = BaseMap | Overlay;
+export type ServiceDef = TileService | Overlay;
 
-const GUGIK = 'Dane: <a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">GUGiK, geoportal.gov.pl</a>';
+export const GUGIK_ATTRIBUTION = 'Dane: <a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">GUGiK, geoportal.gov.pl</a>';
 const WMTS_GUEST = 'https://mapy.geoportal.gov.pl/wss/service/WMTS/guest/wmts/';
 const PZGIK = 'https://mapy.geoportal.gov.pl/wss/service/PZGIK/';
 const INTEGRACJA = 'https://integracja.gugik.gov.pl/cgi-bin/';
 const EXT = 'https://mapy.geoportal.gov.pl/wss/ext/';
-const GEOPORTAL_MAP = 'https://mapy.geoportal.gov.pl/imap/Imgp_2.html';
+export const GEOPORTAL_MAP = 'https://mapy.geoportal.gov.pl/imap/Imgp_2.html';
 
-const common = { attribution: GUGIK, geoportalUrl: GEOPORTAL_MAP };
+const common = { attribution: GUGIK_ATTRIBUTION, geoportalUrl: GEOPORTAL_MAP };
+
+export const TILE_SERVICES: TileService[] = [
+  { id: 'orto', kind: 'wmts', url: `${PZGIK}ORTO/WMTS/StandardResolution`, layer: 'ORTOFOTOMAPA', format: 'image/jpeg', firstLevel: 0, levels: 17 },
+  { id: 'bdoo', kind: 'wmts', url: `${PZGIK}BDOO/WMTS/aktualne`, layer: 'BDOO', format: 'image/png', firstLevel: 2, levels: 13 },
+  { id: 'bdot10k', kind: 'wmts', url: `${WMTS_GUEST}BDOT10k`, layer: 'BDOT10k', format: 'image/png', firstLevel: 2, levels: 13 },
+  { id: 'relief', kind: 'wmts', url: `${PZGIK}NMT/GRID1/WMTS/HypsometryAndShadedRelief`, layer: 'HipsoCien', format: 'image/jpeg', firstLevel: 2, levels: 13 },
+  { id: 'g2mobile', kind: 'wmts', url: `${WMTS_GUEST}G2_MOBILE_500`, layer: 'G2_MOBILE_500', format: 'image/png', firstLevel: 0, levels: 16 },
+  { id: 'topo', kind: 'wmts', url: `${WMTS_GUEST}TOPO`, layer: 'MAPA TOPOGRAFICZNA', format: 'image/jpeg', firstLevel: 2, levels: 13 },
+];
+
+export const TILE_SERVICE_BY_ID: ReadonlyMap<string, TileService> = new Map(TILE_SERVICES.map((s) => [s.id, s]));
+
+/** Switch between BDOO and BDOT10k, inside the gap where neither has much detail. */
+const MAP_SWITCH_SCALE = 70000;
 
 export const BASE_MAPS: BaseMap[] = [
   {
-    ...common,
     id: 'orto',
-    kind: 'wmts',
     title: 'Zdjęcia',
-    description: 'Aktualna ortofotomapa',
-    keywords: ['orto', 'zdjęcia', 'satelita'],
-    url: `${PZGIK}ORTO/WMTS/StandardResolution`,
-    layer: 'ORTOFOTOMAPA',
-    format: 'image/jpeg',
-    firstLevel: 0,
-    levels: 17,
+    description: 'Ortofotomapa',
+    sources: [{ service: 'orto' }],
+    thumbnail: { service: 'orto', level: 10 },
   },
   {
-    ...common,
-    id: 'bdot10k',
-    kind: 'wmts',
+    id: 'mapa',
     title: 'Mapa',
-    description: 'Mapa topograficzna BDOT10k',
-    keywords: ['mapa', 'bdot'],
-    url: `${WMTS_GUEST}BDOT10k`,
-    layer: 'BDOT10k',
-    format: 'image/png',
-    firstLevel: 2,
-    levels: 13,
-    overview: { id: 'g2mobile', scale: 70000 },
+    description: 'Mapa ogólnogeograficzna BDOO, po przybliżeniu topograficzna BDOT10k',
+    sources: [
+      { service: 'bdoo', minScale: MAP_SWITCH_SCALE },
+      { service: 'bdot10k', maxScale: MAP_SWITCH_SCALE },
+    ],
+    thumbnail: { service: 'bdot10k', level: 10 },
   },
   {
-    ...common,
-    id: 'g2mobile',
-    kind: 'wmts',
+    id: 'teren',
+    title: 'Teren',
+    description: 'Rzeźba terenu: wysokości i cieniowanie z NMT',
+    sources: [{ service: 'relief' }],
+    // The Tatra mountains show relief better than flat Warsaw.
+    thumbnail: { service: 'relief', level: 6, at: [570000, 160000] },
+  },
+  {
+    id: 'prosta',
     title: 'Prosta',
-    description: 'Lekki podkład kartograficzny',
-    keywords: ['mobile', 'prosta'],
-    url: `${WMTS_GUEST}G2_MOBILE_500`,
-    layer: 'G2_MOBILE_500',
-    format: 'image/png',
-    firstLevel: 0,
-    levels: 16,
+    description: 'Uproszczona mapa, szybka na telefonie',
+    sources: [{ service: 'g2mobile' }],
+    thumbnail: { service: 'g2mobile', level: 10 },
   },
   {
-    ...common,
-    id: 'topo',
-    kind: 'wmts',
+    id: 'skany',
     title: 'Skany',
     description: 'Skany map topograficznych',
-    keywords: ['topo', 'skan'],
-    url: `${WMTS_GUEST}TOPO`,
-    layer: 'MAPA TOPOGRAFICZNA',
-    format: 'image/jpeg',
-    firstLevel: 2,
-    levels: 13,
+    sources: [{ service: 'topo' }],
+    thumbnail: { service: 'topo', level: 10 },
+  },
+  {
+    id: 'brak',
+    title: 'Brak',
+    description: 'Bez podkładu mapowego',
+    sources: [],
   },
 ];
 
@@ -231,7 +258,7 @@ export const OVERLAYS: Overlay[] = [
   },
 ];
 
-export const SERVICES: ServiceDef[] = [...BASE_MAPS, ...OVERLAYS];
+export const SERVICES: ServiceDef[] = [...TILE_SERVICES, ...OVERLAYS];
 
 export const OVERLAY_BY_ID: ReadonlyMap<string, Overlay> = new Map(OVERLAYS.map((s) => [s.id, s]));
 

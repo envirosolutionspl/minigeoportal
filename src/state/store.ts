@@ -48,7 +48,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
   center: initial.center ?? [500000, 465000],
   zoom: initial.zoom ?? 3,
   scale: Infinity,
-  base: initial.base && BASE_MAPS.some((s) => s.id === initial.base) ? initial.base : DEFAULT_BASE,
+  base: BASE_MAPS.find((s) => s.id === initial.base)?.id ?? DEFAULT_BASE,
   overlays: (initial.overlays ?? DEFAULT_OVERLAYS).filter((id) => OVERLAY_BY_ID.has(id)),
   sublayers: initial.sublayers ?? {},
   opacity: {},

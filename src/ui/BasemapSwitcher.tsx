@@ -1,7 +1,7 @@
 import { useRef } from 'react';
-import { BASE_MAPS, type BaseMap } from '@/services/registry';
+import { Ban } from 'lucide-react';
+import { BASE_MAPS, GEOPORTAL_MAP, type BaseMap } from '@/services/registry';
 import { thumbnailUrl } from '@/services/layers';
-import { useStatusStore } from '@/services/status';
 import { useMapStore } from '@/state/store';
 
 /**
@@ -11,7 +11,7 @@ import { useMapStore } from '@/state/store';
 export function BasemapSwitcher() {
   const base = useMapStore((m) => m.base);
   const setBase = useMapStore((m) => m.setBase);
-  const lastMap = useRef(base === 'orto' ? 'bdot10k' : base);
+  const lastMap = useRef(base === 'orto' ? 'mapa' : base);
   if (base !== 'orto') lastMap.current = base;
 
   const toggleTarget = BASE_MAPS.find((b) => b.id === (base === 'orto' ? lastMap.current : 'orto'))!;
@@ -39,24 +39,45 @@ function Thumb({
   active?: boolean;
   onClick: () => void;
 }) {
-  const blocked = useStatusStore((s) => s.status[def.id] === 'blocked');
+  const src = thumbnailUrl(def);
   const box = size === 'lg' ? 'h-16 w-16 rounded-2xl shadow-lg ring-2 ring-white/90' : 'h-14 w-14 rounded-xl ring-2';
+  const label = (
+    <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-1 pt-3 pb-0.5 text-[10px] font-medium text-white">
+      {def.title}
+    </span>
+  );
+  // Restricted base maps stay visible but lead to geoportal.gov.pl, where they work.
+  if (def.restricted) {
+    return (
+      <a
+        href={GEOPORTAL_MAP}
+        target="_blank"
+        rel="noopener"
+        title="Dostępne tylko na geoportal.gov.pl"
+        className={`relative shrink-0 overflow-hidden bg-[var(--field)] opacity-50 grayscale ${box} ring-transparent`}
+      >
+        {src && <img src={src} alt="" loading="lazy" className="h-full w-full object-cover" />}
+        {label}
+      </a>
+    );
+  }
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={blocked}
       aria-pressed={active}
       aria-label={`Podkład: ${def.title}`}
-      title={blocked ? 'Dostępne tylko na geoportal.gov.pl' : def.description}
-      className={`relative shrink-0 overflow-hidden bg-[var(--field)] transition ${box} ${
+      title={def.description}
+      className={`relative shrink-0 overflow-hidden bg-[var(--map-bg)] transition ${box} ${
         active ? 'ring-[var(--accent)]' : size === 'sm' ? 'ring-transparent hover:ring-[var(--hover)]' : ''
-      } ${blocked ? 'opacity-40 grayscale' : ''}`}
+      }`}
     >
-      <img src={thumbnailUrl(def)} alt="" loading="lazy" className="h-full w-full object-cover" />
-      <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-1 pt-3 pb-0.5 text-[10px] font-medium text-white">
-        {def.title}
-      </span>
+      {src ? (
+        <img src={src} alt="" loading="lazy" className="h-full w-full object-cover" />
+      ) : (
+        <Ban className="absolute top-2 left-1/2 h-6 w-6 -translate-x-1/2 text-[#9db49e]" aria-hidden="true" />
+      )}
+      {label}
     </button>
   );
 }

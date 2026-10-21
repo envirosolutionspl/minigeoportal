@@ -3,8 +3,8 @@ import Map from 'ol/Map';
 import View from 'ol/View';
 import { defaults as defaultControls, ScaleLine } from 'ol/control';
 import { EPSG2180, GUGIK_RESOLUTIONS, OGC_PIXEL, POLAND_EXTENT } from './projection';
-import { BASE_MAPS, OVERLAYS, selectedSublayers } from '@/services/registry';
-import { createBaseLayer, createOverlayLayer, resolutionRange } from '@/services/layers';
+import { BASE_MAPS, OVERLAYS, TILE_SERVICE_BY_ID, selectedSublayers } from '@/services/registry';
+import { createOverlayLayer, createTileLayer, resolutionRange } from '@/services/layers';
 import { useStatusStore } from '@/services/status';
 import { hasInitialView, overlayOpacity, useMapStore } from '@/state/store';
 import { attachFeatureInfo } from './featureInfoClick';
@@ -18,16 +18,18 @@ export function MapView() {
     if (!el) return;
 
     const { center, zoom, setView } = useMapStore.getState();
-    // A base with an overview is two layers: the overview above its scale threshold, the base below it.
-    const bases = BASE_MAPS.flatMap((def) => {
-      if (!def.overview) return [{ def, layer: createBaseLayer(def) }];
-      const r = def.overview.scale * OGC_PIXEL;
-      const overview = BASE_MAPS.find((b) => b.id === def.overview!.id)!;
-      return [
-        { def, layer: createBaseLayer(overview, { minResolution: r }) },
-        { def, layer: createBaseLayer(def, { maxResolution: r }) },
-      ];
-    });
+    // Each base map is a composition: one layer per tile service, drawn in its scale range.
+    const bases = BASE_MAPS.flatMap((def) =>
+      def.sources.flatMap((src) => {
+        const service = TILE_SERVICE_BY_ID.get(src.service);
+        if (!service) return [];
+        const layer = createTileLayer(service, {
+          minResolution: src.minScale !== undefined ? src.minScale * OGC_PIXEL : undefined,
+          maxResolution: src.maxScale !== undefined ? src.maxScale * OGC_PIXEL : undefined,
+        });
+        return [{ def, layer }];
+      }),
+    );
     const overlays = OVERLAYS.map((def) => ({ def, layer: createOverlayLayer(def) }));
 
     const view = new View({

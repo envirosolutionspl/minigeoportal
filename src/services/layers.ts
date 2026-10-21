@@ -4,7 +4,7 @@ import WMTS from 'ol/source/WMTS';
 import ImageWMS from 'ol/source/ImageWMS';
 import WMTSTileGrid from 'ol/tilegrid/WMTS';
 import { EPSG2180, OGC_PIXEL, gugikTileAt, gugikWmtsGrid } from '@/map/projection';
-import { OVERLAYS, type BaseMap, type Overlay } from './registry';
+import { GUGIK_ATTRIBUTION, OVERLAYS, TILE_SERVICE_BY_ID, type BaseMap, type Overlay, type TileService } from './registry';
 import { layerMeta, wmtsMeta } from './meta';
 import { useStatusStore } from './status';
 
@@ -14,7 +14,7 @@ const report = (id: string, ok: boolean) => useStatusStore.getState().reportLoad
  * Tile grid from the cached capabilities. Matrix sizes keep the map from requesting
  * tiles outside the published coverage. Without the cache the shared GUGiK grid is used.
  */
-function tileGrid(def: BaseMap): WMTSTileGrid {
+function tileGrid(def: TileService): WMTSTileGrid {
   const set = wmtsMeta(def.id)?.matrixSet;
   if (!set) return gugikWmtsGrid(def.firstLevel, def.levels);
   return new WMTSTileGrid({
@@ -26,8 +26,9 @@ function tileGrid(def: BaseMap): WMTSTileGrid {
   });
 }
 
-export function createBaseLayer(
-  def: BaseMap,
+/** One tile service of a base map, drawn in the given resolution range. */
+export function createTileLayer(
+  def: TileService,
   range: { minResolution?: number; maxResolution?: number } = {},
 ): TileLayer<WMTS> {
   const source = new WMTS({
@@ -38,7 +39,7 @@ export function createBaseLayer(
     style: 'default',
     projection: EPSG2180,
     tileGrid: tileGrid(def),
-    attributions: def.attribution,
+    attributions: GUGIK_ATTRIBUTION,
     // GUGiK WMTS sends CORS headers; readable tiles allow exporting the map later.
     crossOrigin: 'anonymous',
     wrapX: false,
@@ -96,11 +97,12 @@ export function resolutionRange(def: Overlay, names: string[]): { min: number; m
   return { min: minScale * OGC_PIXEL, max: maxScale * OGC_PIXEL };
 }
 
-/** Static preview tile of central Warsaw, for the base map switcher. */
-export function thumbnailUrl(def: BaseMap): string {
-  const seriesLevel = 10;
-  const { col, row } = gugikTileAt([637000, 487500], seriesLevel);
-  const matrix = `EPSG:2180:${seriesLevel - def.firstLevel}`;
+/** Static preview tile for the base map switcher. */
+export function thumbnailUrl(base: BaseMap): string | undefined {
+  const def = base.thumbnail && TILE_SERVICE_BY_ID.get(base.thumbnail.service);
+  if (!base.thumbnail || !def) return undefined;
+  const seriesLevel = base.thumbnail.level;
+  const { col, row } = gugikTileAt(base.thumbnail.at ?? [637000, 487500], seriesLevel);
   const q = new URLSearchParams({
     SERVICE: 'WMTS',
     REQUEST: 'GetTile',
@@ -109,7 +111,7 @@ export function thumbnailUrl(def: BaseMap): string {
     STYLE: 'default',
     FORMAT: def.format,
     TILEMATRIXSET: 'EPSG:2180',
-    TILEMATRIX: matrix,
+    TILEMATRIX: `EPSG:2180:${seriesLevel - def.firstLevel}`,
     TILEROW: String(row),
     TILECOL: String(col),
   });

@@ -1,9 +1,9 @@
 {
- "generatedAt": "2026-10-21T11:50:22.344Z",
+ "generatedAt": "2026-10-21T12:11:48.279Z",
  "services": {
   "kieg": {
    "kind": "wms",
-   "fetchedAt": "2026-10-21T11:50:22.115Z",
+   "fetchedAt": "2026-10-21T12:11:48.183Z",
    "title": "Krajowa Integracja Ewidencji Gruntów",
    "infoFormats": [
     "text/xml",
@@ -106,7 +106,7 @@
   },
   "kimpzp": {
    "kind": "wms",
-   "fetchedAt": "2026-10-21T11:50:22.134Z",
+   "fetchedAt": "2026-10-21T12:11:48.187Z",
    "title": "Krajowa Integracja Miejscowych Planów Zagospodarowania Przestrzennego",
    "infoFormats": [
     "text/html",
@@ -174,7 +174,7 @@
   },
   "pog": {
    "kind": "wms",
-   "fetchedAt": "2026-10-21T11:50:22.255Z",
+   "fetchedAt": "2026-10-21T12:11:48.231Z",
    "title": "Plany ogólne gmin - uchwalone",
    "infoFormats": [
     "text/html",
@@ -211,7 +211,7 @@
   },
   "rcn": {
    "kind": "wms",
-   "fetchedAt": "2026-10-21T11:50:22.344Z",
+   "fetchedAt": "2026-10-21T12:11:48.279Z",
    "title": "Rejestr Cen Nieruchomości",
    "infoFormats": [
     "text/xml",
@@ -248,7 +248,7 @@
   },
   "kiut": {
    "kind": "wms",
-   "fetchedAt": "2026-10-21T11:50:22.131Z",
+   "fetchedAt": "2026-10-21T12:11:48.178Z",
    "title": "Krajowa Integracja Uzbrojenia Terenu",
    "infoFormats": [
     "text/xml",
@@ -332,7 +332,7 @@
   },
   "orto": {
    "kind": "wmts",
-   "fetchedAt": "2026-10-21T11:50:22.167Z",
+   "fetchedAt": "2026-10-21T12:11:48.192Z",
    "title": "Usługa przeglądania ortofotomap dla obszaru Polski. Profil kafelkowany (WMTS)",
    "formats": [
     "image/jpeg"
@@ -450,9 +450,105 @@
     ]
    }
   },
+  "bdoo": {
+   "kind": "wmts",
+   "fetchedAt": "2026-10-21T12:11:48.209Z",
+   "title": "Usługa przeglądania treści Bazy Danych Obiektów Ogólnogeograficznych. Profil kafelkowany (WMTS)",
+   "formats": [
+    "image/png"
+   ],
+   "matrixSet": {
+    "id": "EPSG:2180",
+    "origin": [
+     100000,
+     850000
+    ],
+    "tileSize": 512,
+    "matrices": [
+     {
+      "id": "EPSG:2180:0",
+      "scale": 7559538.928571429,
+      "width": 1,
+      "height": 1
+     },
+     {
+      "id": "EPSG:2180:1",
+      "scale": 3779769.4642857146,
+      "width": 2,
+      "height": 2
+     },
+     {
+      "id": "EPSG:2180:2",
+      "scale": 1889884.7321428573,
+      "width": 4,
+      "height": 3
+     },
+     {
+      "id": "EPSG:2180:3",
+      "scale": 944942.3660714286,
+      "width": 8,
+      "height": 6
+     },
+     {
+      "id": "EPSG:2180:4",
+      "scale": 472471.1830357143,
+      "width": 15,
+      "height": 12
+     },
+     {
+      "id": "EPSG:2180:5",
+      "scale": 236235.59151785716,
+      "width": 29,
+      "height": 23
+     },
+     {
+      "id": "EPSG:2180:6",
+      "scale": 94494.23660714286,
+      "width": 73,
+      "height": 56
+     },
+     {
+      "id": "EPSG:2180:7",
+      "scale": 47247.11830357143,
+      "width": 145,
+      "height": 112
+     },
+     {
+      "id": "EPSG:2180:8",
+      "scale": 23623.559151785714,
+      "width": 289,
+      "height": 224
+     },
+     {
+      "id": "EPSG:2180:9",
+      "scale": 9449.423660714287,
+      "width": 723,
+      "height": 559
+     },
+     {
+      "id": "EPSG:2180:10",
+      "scale": 4724.711830357143,
+      "width": 1445,
+      "height": 1118
+     },
+     {
+      "id": "EPSG:2180:11",
+      "scale": 1889.8847321428573,
+      "width": 3611,
+      "height": 2795
+     },
+     {
+      "id": "EPSG:2180:12",
+      "scale": 944.9423660714286,
+      "width": 7221,
+      "height": 5590
+     }
+    ]
+   }
+  },
   "bdot10k": {
    "kind": "wmts",
-   "fetchedAt": "2026-10-21T11:50:22.176Z",
+   "fetchedAt": "2026-10-21T12:11:48.216Z",
    "title": "Usługa przeglądania danych Bazy Danych Obiektów Topograficznych BDOT10k. Profil kafelkowany (WMTS)",
    "formats": [
     "image/png"
@@ -546,9 +642,105 @@
     ]
    }
   },
+  "relief": {
+   "kind": "wmts",
+   "fetchedAt": "2026-10-21T12:11:48.164Z",
+   "title": "Usługa przeglądania cieniowanej hipsometrii dla NMT o rozdzielczoćci 1m. Profil kafelkowany (WMTS)",
+   "formats": [
+    "image/jpeg"
+   ],
+   "matrixSet": {
+    "id": "EPSG:2180",
+    "origin": [
+     100000,
+     850000
+    ],
+    "tileSize": 512,
+    "matrices": [
+     {
+      "id": "EPSG:2180:0",
+      "scale": 7559538.928571429,
+      "width": 1,
+      "height": 1
+     },
+     {
+      "id": "EPSG:2180:1",
+      "scale": 3779769.4642857146,
+      "width": 2,
+      "height": 2
+     },
+     {
+      "id": "EPSG:2180:2",
+      "scale": 1889884.7321428573,
+      "width": 3,
+      "height": 3
+     },
+     {
+      "id": "EPSG:2180:3",
+      "scale": 944942.3660714286,
+      "width": 6,
+      "height": 6
+     },
+     {
+      "id": "EPSG:2180:4",
+      "scale": 472471.1830357143,
+      "width": 12,
+      "height": 11
+     },
+     {
+      "id": "EPSG:2180:5",
+      "scale": 236235.59151785716,
+      "width": 23,
+      "height": 22
+     },
+     {
+      "id": "EPSG:2180:6",
+      "scale": 94494.23660714286,
+      "width": 57,
+      "height": 54
+     },
+     {
+      "id": "EPSG:2180:7",
+      "scale": 47247.11830357143,
+      "width": 114,
+      "height": 108
+     },
+     {
+      "id": "EPSG:2180:8",
+      "scale": 23623.559151785714,
+      "width": 228,
+      "height": 215
+     },
+     {
+      "id": "EPSG:2180:9",
+      "scale": 9449.423660714287,
+      "width": 569,
+      "height": 536
+     },
+     {
+      "id": "EPSG:2180:10",
+      "scale": 4724.711830357143,
+      "width": 1137,
+      "height": 1071
+     },
+     {
+      "id": "EPSG:2180:11",
+      "scale": 1889.8847321428573,
+      "width": 2843,
+      "height": 2676
+     },
+     {
+      "id": "EPSG:2180:12",
+      "scale": 944.9423660714286,
+      "width": 5685,
+      "height": 5352
+     }
+    ]
+   }
+  },
   "g2mobile": {
    "kind": "wmts",
-   "fetchedAt": "2026-10-21T11:50:22.103Z",
+   "fetchedAt": "2026-10-21T12:11:48.173Z",
    "title": "Usługa przeglądania WMTS dla urządzeń mobilnych (G2_MOBILE500)",
    "formats": [
     "image/png"
@@ -662,7 +854,7 @@
   },
   "topo": {
    "kind": "wmts",
-   "fetchedAt": "2026-10-21T11:50:22.121Z",
+   "fetchedAt": "2026-10-21T12:11:48.203Z",
    "title": "Usługa przeglądania rastrowych map topograficznych dla Polski. Profil kafelkowany (WMTS)",
    "formats": [
     "image/jpeg"

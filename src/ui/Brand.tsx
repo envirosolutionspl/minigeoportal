@@ -4,19 +4,25 @@ export const APP_NAME = 'Prosty Geoportal';
 export const APP_DOMAIN = 'prostygeoportal.pl';
 export const AUTHOR_URL = 'https://envirosolutions.pl';
 
-/** Sign of the app: a parcel outline with a point, in the EnviroSolutions palette. */
+/**
+ * Sign of the app: a magnifying glass over parcel boundaries, one parcel picked out in the
+ * orange the map uses for found objects; EnviroSolutions greens. The lines inside the lens are
+ * chords of its circle, so no clip path (and no id that could clash) is needed.
+ */
 export function BrandMark({ className = 'h-7 w-7' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
-      <rect width="32" height="32" rx="8" fill="#466946" />
+    <svg viewBox="0 0 104 104" className={className} aria-hidden="true">
+      <rect width="104" height="104" rx="22" fill="#466946" />
+      <circle cx="46" cy="46" r="19" fill="#f2f4f5" />
       <path
-        d="M7.5 22.5 10.5 8.5 22 7.5 25 20 15.5 25.5Z"
+        d="M28.6 41.3 62.9 39.8M41.3 28.6 42.9 63.7M29.1 52.2 63.4 50.7M50.7 28.6V63.4"
         fill="none"
-        stroke="#fff"
-        strokeWidth="2.2"
-        strokeLinejoin="round"
+        stroke="#59705b"
+        strokeWidth="2.5"
       />
-      <circle cx="16.2" cy="16" r="2.6" fill="#b3cbb4" />
+      <path d="M42.6 40.9 50.7 40.5V50.9L42.8 51.3Z" fill="#FF8142" />
+      <circle cx="46" cy="46" r="21" fill="none" stroke="#fff" strokeWidth="6" />
+      <path d="M62 62 79 79" stroke="#fff" strokeWidth="10" strokeLinecap="round" />
     </svg>
   );
 }

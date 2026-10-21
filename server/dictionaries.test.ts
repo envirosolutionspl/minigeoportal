@@ -145,3 +145,33 @@ describe('PRG paging', () => {
     expect(counties).toHaveLength(5000);
   });
 });
+
+describe('findUnits', () => {
+  const ALL_COUNTIES = json(prgRows([['1417', 'otwocki'], ['1261', 'Kraków'], ['1206', 'krakowski']]));
+  const ALL_COMMUNES = json(prgRows([['1417082', 'Wiązowna'], ['1417011', 'Otwock'], ['1261011', 'Kraków'], ['1206032', 'Krzeszowice']]));
+  beforeEach(() => stubUpstream({ '/2/query': VOIVODESHIPS, '/1/query': ALL_COUNTIES, '/0/query': ALL_COMMUNES }));
+
+  it('finds units of every level by the start of the name, exact names first', async () => {
+    expect(await dict.findUnits('mazow')).toEqual([{ level: 'woj', teryt: '14', name: 'mazowieckie' }]);
+    expect(await dict.findUnits('wiazowna')).toEqual([
+      { level: 'gm', teryt: '1417082', name: 'Wiązowna', county: 'otwocki', voivodeship: 'mazowieckie' },
+    ]);
+    // The city county Kraków is also a municipality; only the county is listed.
+    expect((await dict.findUnits('krak')).map((h) => [h.level, h.name])).toEqual([
+      ['pow', 'krakowski'],
+      ['pow', 'Kraków'],
+    ]);
+    expect((await dict.findUnits('kraków')).map((h) => h.name)).toEqual(['Kraków', 'krakowski']);
+    expect((await dict.findUnits('otwock')).map((h) => [h.level, h.name])).toEqual([
+      ['gm', 'Otwock'],
+      ['pow', 'otwocki'],
+    ]);
+  });
+
+  it('limits the level with a leading word and ignores odd input', async () => {
+    expect((await dict.findUnits('powiat otw')).map((h) => h.name)).toEqual(['otwocki']);
+    expect((await dict.findUnits('gm. otw')).map((h) => h.name)).toEqual(['Otwock']);
+    expect(await dict.findUnits('w')).toEqual([]);
+    expect(await dict.findUnits("o' or 1=1")).toEqual([]);
+  });
+});

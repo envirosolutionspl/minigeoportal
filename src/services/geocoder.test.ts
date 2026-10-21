@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { buildingAt, findParcels, placeOutline, search, stripSrid } from './geocoder';
+import { buildingAt, findParcels, placeOutline, search, stripSrid, unitLabel, unitOutline } from './geocoder';
 import { clearUnitNames } from './units';
 import { stubFetch } from '@/test/helpers';
 
@@ -106,7 +106,7 @@ const FTS_GORZOW = {
 
 describe('search with the full-text place index', () => {
   it('finds towns whose name starts with the query, towns first, without loose matches', async () => {
-    const { calls } = stubFetch([['capap.gugik.gov.pl/api/fts', FTS_GORZOW]]);
+    const { calls } = stubFetch([['idx=prngjo', FTS_GORZOW]]);
     const hits = await search('gorzów', signal());
     expect(hits.map((h) => [h.label, h.detail])).toEqual([
       ['Gorzów Wielkopolski', 'woj. lubuskie'],
@@ -126,9 +126,59 @@ describe('search with the full-text place index', () => {
 
   it('keeps one hit for a place both sources know', async () => {
     const uug = { type: 'city', results: { 1: { city: 'Gorzów', teryt: '121304', x: '1', y: '2' } } };
-    stubFetch([['services.gugik.gov.pl/uug', uug], ['capap.gugik.gov.pl/api/fts', FTS_GORZOW], ['/api/dict/jednostki', {}]]);
+    stubFetch([['services.gugik.gov.pl/uug', uug], ['idx=prngjo', FTS_GORZOW], ['/api/dict/jednostki', {}]]);
     const hits = await search('gorzów', signal());
     expect(hits.map((h) => h.label)).toEqual(['Gorzów Wielkopolski', 'Gorzów']);
+  });
+});
+
+describe('search for units and physiographic objects', () => {
+  const UNITS_ANSWER = [
+    { level: 'gm', teryt: '1417082', name: 'Wiązowna', county: 'otwocki', voivodeship: 'mazowieckie' },
+    { level: 'pow', teryt: '1417', name: 'otwocki', voivodeship: 'mazowieckie' },
+  ];
+  const lonLat = (e: number, n: number) => [e, n];
+  const NATURE = {
+    features: [
+      { properties: { NAZWAGLOWNA: 'Czarna Hańcza', RODZAJOBIEKTU: 'rzeka' }, geometry: { type: 'MultiPoint', coordinates: [lonLat(23.0, 54.1), lonLat(23.2, 54.0), lonLat(23.4, 53.9)] } },
+      { properties: { NAZWAGLOWNA: 'Hańcza', RODZAJOBIEKTU: 'jezioro' }, geometry: { type: 'Point', coordinates: lonLat(22.8, 54.26) } },
+      { properties: { NAZWAGLOWNA: 'Jańcza', RODZAJOBIEKTU: 'polana' }, geometry: { type: 'Point', coordinates: lonLat(20, 49.3) } },
+    ],
+  };
+
+  it('labels units by level and lists them after towns', async () => {
+    stubFetch([['/api/dict/szukaj', UNITS_ANSWER], ['idx=prngjo', FTS_GORZOW]]);
+    const hits = await search('wiązowna', signal());
+    expect(hits.filter((h) => h.kind === 'unit')).toEqual([
+      { kind: 'unit', label: 'gmina Wiązowna', detail: 'gmina wiejska, pow. otwocki, woj. mazowieckie', unit: { level: 'gm', teryt: '1417082', name: 'Wiązowna' } },
+      { kind: 'unit', label: 'powiat otwocki', detail: 'woj. mazowieckie', unit: { level: 'pow', teryt: '1417', name: 'otwocki' } },
+    ]);
+    expect(unitLabel('pow', '1261', 'Kraków')).toBe('miasto na prawach powiatu Kraków');
+    expect(unitLabel('woj', '14', 'mazowieckie')).toBe('województwo mazowieckie');
+  });
+
+  it('finds physiographic objects by any word of the name and says where points lie', async () => {
+    const { calls } = stubFetch([
+      ['idx=prngof', NATURE],
+      ['PRG_gugik_wyszukiwarka/MapServer/0/query', { features: [{ attributes: { teryt: '2012032' } }] }],
+      ['/api/dict/jednostki', { '201203': { voivodeship: 'podlaskie', county: 'suwalski', commune: 'Przerośl' } }],
+    ]);
+    const hits = await search('hańcza', signal());
+    expect(hits.map((h) => [h.kind, h.label, h.detail])).toEqual([
+      ['nature', 'Hańcza', 'jezioro · gm. Przerośl, woj. podlaskie'],
+      ['nature', 'Czarna Hańcza', 'rzeka'],
+    ]);
+    // A river is a series of points along its course, without one municipality.
+    expect(hits[1].wkt).toMatch(/^MULTIPOINT\(\(\d+(\.\d+)? \d+(\.\d+)?\),/);
+    expect(calls.filter((c) => c.includes('MapServer/0/query'))).toHaveLength(1);
+  });
+
+  it('draws a unit boundary from PRG rings and refuses odd codes', async () => {
+    const { calls } = stubFetch([['MapServer/1/query', { features: [{ geometry: { rings: [[[0, 0], [10, 0], [10, 10], [0, 0]], [[20, 20], [30, 20], [30, 30], [20, 20]]] } }] }]]);
+    expect(await unitOutline({ level: 'pow', teryt: '1417', name: 'otwocki' }, signal())).toBe('POLYGON((0 0,10 0,10 10,0 0),(20 20,30 20,30 30,20 20))');
+    expect(new URL(calls[0]).searchParams.get('where')).toBe("teryt='1417'");
+    expect(await unitOutline({ level: 'pow', teryt: "1' or '1'='1", name: 'x' }, signal())).toBeUndefined();
+    expect(calls).toHaveLength(1);
   });
 });
 

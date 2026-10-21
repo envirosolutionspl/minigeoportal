@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { RequestError, readLimited } from './http.ts';
+import { normalize } from '../src/services/text.ts';
 
 /**
  * Administrative dictionaries for the parcel search: voivodeships, counties and
@@ -226,4 +227,70 @@ export async function unitNames(codes: string[]): Promise<Record<string, UnitNam
     }),
   );
   return out;
+}
+
+export type UnitLevel = 'woj' | 'pow' | 'gm';
+
+export interface UnitHit {
+  level: UnitLevel;
+  /** PRG code: 2 digits, 4 digits, or 7 digits with the municipality type. */
+  teryt: string;
+  name: string;
+  county?: string;
+  voivodeship?: string;
+}
+
+const LEVEL_ORDER: UnitLevel[] = ['woj', 'pow', 'gm'];
+/** "powiat otwocki", "gm. Wiązowna": a leading word limits the search to one level. */
+const LEVEL_WORDS: [RegExp, UnitLevel][] = [
+  [/^(wojewodztwo|woj\.?)\s+/, 'woj'],
+  [/^(powiat|pow\.?)\s+/, 'pow'],
+  [/^(gmina|gm\.?)\s+/, 'gm'],
+];
+const MAX_UNIT_HITS = 8;
+
+const allCounties = () =>
+  cached('pow-all', async () => (await prg(1, '')).map((r) => ({ id: r.teryt, name: r.nazwa })));
+const allCommunes = () =>
+  cached('gmi-all', async () => (await prg(0, '')).filter((r) => /^\d{7}$/.test(r.teryt)).map((r) => ({ id: r.teryt, name: r.nazwa })));
+
+/** City counties (TERYT 61-99) are also one municipality; only the county is listed. */
+const inCityCounty = (communeCode: string) => Number(communeCode.slice(2, 4)) >= 61;
+
+/**
+ * Voivodeships, counties and municipalities whose name starts with the query, from the
+ * cached PRG lists of the whole country (three upstream requests, then served from cache).
+ */
+export async function findUnits(query: string): Promise<UnitHit[]> {
+  let q = normalize(query);
+  let only: UnitLevel | undefined;
+  for (const [word, level] of LEVEL_WORDS) {
+    if (word.test(q)) {
+      q = q.replace(word, '');
+      only = level;
+    }
+  }
+  if (q.length < 2 || q.length > 60 || !/^[\p{L}\s.-]+$/u.test(q)) return [];
+
+  const [woj, pow, gm] = await Promise.all([voivodeships(), allCounties(), allCommunes()]);
+  const wojName = new Map(woj.map((e) => [e.id, e.name]));
+  const powName = new Map(pow.map((e) => [e.id, e.name]));
+  const matches = (e: DictEntry) => normalize(e.name).startsWith(q);
+  const hits: UnitHit[] = [
+    ...woj.filter(matches).map((e) => ({ level: 'woj' as const, teryt: e.id, name: e.name })),
+    ...pow.filter(matches).map((e) => ({ level: 'pow' as const, teryt: e.id, name: e.name, voivodeship: wojName.get(e.id.slice(0, 2)) })),
+    ...gm
+      .filter((e) => matches(e) && !inCityCounty(e.id))
+      .map((e) => ({
+        level: 'gm' as const,
+        teryt: e.id,
+        name: e.name,
+        county: powName.get(e.id.slice(0, 4)),
+        voivodeship: wojName.get(e.id.slice(0, 2)),
+      })),
+  ].filter((h) => !only || h.level === only);
+
+  // Exact names first, then by level (voivodeship, county, municipality), then by name.
+  const rank = (h: UnitHit) => (normalize(h.name) === q ? 0 : 3) + LEVEL_ORDER.indexOf(h.level);
+  return hits.sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'pl')).slice(0, MAX_UNIT_HITS);
 }

@@ -75,6 +75,17 @@ describe('routes', () => {
     expect((await app.request('/api/dict/jednostki?teryt=141708', {}, client)).status).toBe(502);
   });
 
+  it('searches units by name, answering short queries without asking upstream', async () => {
+    const fetchMock = vi.fn(async () => new Response('boom', { status: 503 }));
+    vi.stubGlobal('fetch', fetchMock);
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const client = { incoming: { socket: { remoteAddress: '198.51.100.9', remoteFamily: 'IPv4', remotePort: 1 } } };
+    const short = await app.request('/api/dict/szukaj?q=w', {}, client);
+    expect(await short.json()).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect((await app.request('/api/dict/szukaj?q=otwock', {}, client)).status).toBe(502);
+  });
+
   it('returns feature info as plain text with the upstream type in a header', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('<a>x</a>', { headers: { 'content-type': 'text/xml' } })));
     const res = await app.request(

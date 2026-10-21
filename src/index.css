@@ -273,9 +273,12 @@ html[data-printing] #print-sheet {
 .skip-links a:focus {
   top: 0.75rem;
 }
-:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: 2px;
+/* In the base layer, so fields that draw their own focus ring (outline-none) can opt out. */
+@layer base {
+  :focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+  }
 }
 /* The map's own layers would cover an outline, so the focus frame is drawn above them. */
 #map:focus-visible {

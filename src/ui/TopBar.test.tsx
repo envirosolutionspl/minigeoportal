@@ -30,7 +30,7 @@ const type = async (text: string) => {
 describe('search box', () => {
   it('is a combobox: arrows move through the results, Enter shows the chosen one', async () => {
     render(<TopBar />);
-    const box = await type('Komaszyce');
+    const box = await type('komaszyce');
     expect(box.getAttribute('aria-expanded')).toBe('true');
     expect(screen.getAllByRole('option')).toHaveLength(2);
     expect(screen.getByRole('status').textContent).toMatch(/^Wyników: 2\./);
@@ -46,6 +46,10 @@ describe('search box', () => {
     fireEvent.keyDown(box, { key: 'Enter' });
     await act(() => new Promise((r) => setTimeout(r, 50)));
     expect(useMapStore.getState().focus).toMatchObject({ center: [601729, 376839] });
+    // Writing the chosen name into the box is not a new search: the list stays closed.
+    await act(() => new Promise((r) => setTimeout(r, 400)));
+    expect((box as HTMLInputElement).value).toBe('Komaszyce');
+    expect(box.getAttribute('aria-expanded')).toBe('false');
   });
 
   it('closes the list with Escape and says when nothing was found', async () => {

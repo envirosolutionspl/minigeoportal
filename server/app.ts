@@ -3,7 +3,7 @@ import { bodyLimit } from 'hono/body-limit';
 import { secureHeaders } from 'hono/secure-headers';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
 import { featureInfo } from './featureinfo.ts';
-import { communes, counties, precincts, unitNames, voivodeships, type DictEntry } from './dictionaries.ts';
+import { communes, counties, findUnits, precincts, unitNames, voivodeships, type DictEntry } from './dictionaries.ts';
 import { RequestError, concurrencyGate, isLoopback, rateLimit } from './http.ts';
 import { parseReport, type Mailer } from './report.ts';
 
@@ -95,6 +95,15 @@ export function createApp({ cache, refresh, mailer, origin, limits }: AppOptions
   app.get('/api/dict/powiaty/:parent', dictionary(counties));
   app.get('/api/dict/gminy/:parent', dictionary(communes));
   app.get('/api/dict/obreby/:parent', dictionary(precincts));
+  app.get('/api/dict/szukaj', async (c) => {
+    try {
+      const hits = await findUnits((c.req.query('q') ?? '').slice(0, 80));
+      c.header('Cache-Control', 'public, max-age=86400');
+      return c.json(hits);
+    } catch (e) {
+      return upstreamFailure(c, 'dict', e);
+    }
+  });
   app.get('/api/dict/jednostki', async (c) => {
     try {
       const names = await unitNames((c.req.query('teryt') ?? '').split(',').filter(Boolean));

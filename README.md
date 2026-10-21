@@ -6,7 +6,7 @@ Projekt open source na licencji MIT, tworzony przez [EnviroSolutions](https://en
 
 ## Funkcje
 
-- Wyszukiwarka adresów, ulic i miejscowości (geokoder UUG oraz indeks pełnotekstowy geoportalu: miejscowości po początku nazwy, miasta przed wsiami) i osobna wyszukiwarka działek z listami województw, powiatów, gmin i obrębów.
+- Wyszukiwarka adresów, ulic, miejscowości, gmin, powiatów, województw i obiektów fizjograficznych (rzeki, jeziora, szczyty) oraz osobna wyszukiwarka działek z listami województw, powiatów, gmin i obrębów. Źródła: geokoder UUG, indeks pełnotekstowy geoportalu (miejscowości i obiekty z PRNG, miasta przed wsiami), listy PRG z cache serwera. Jednostki są pokazywane z obrysem z PRG (uogólnionym, kilkadziesiąt KB), a obiekty fizjograficzne jako punkty, bo PRNG nie ma ich obrysów: rzeka to szereg punktów wzdłuż biegu.
 - Podkłady: ortofotomapa, mapa BDOO + BDOT10k (domyślna na komputerze), mapa uproszczona (domyślna na telefonie), mapa terenu, skany, brak podkładu.
 - Warstwy: ewidencja gruntów i budynków, plany miejscowe i ogólne, ceny transakcyjne, uzbrojenie terenu, z wyborem pojedynczych warstw i przezroczystości.
 - Informacje o klikniętym miejscu (GetFeatureInfo) i link do raportu o działce z geoportal.gov.pl (dane ewidencyjne, mapy, eksport do PDF).
@@ -58,6 +58,7 @@ Konfiguracja w zmiennych środowiskowych albo w pliku `.env` (wzór: `.env.examp
 API nie ma kont ani danych użytkowników. Zabezpieczenia:
 
 - `/api/featureinfo/:service` przyjmuje tylko usługi z rejestru, a każdy parametr jest walidowany i budowany na nowo (warstwy ze znanej listy, BBOX liczbowy, rozmiary do 4096 px, do 50 obiektów). Przekierowania usług GUGiK są śledzone po stronie serwera tylko na publiczne hosty (adresy rozwiązywane i sprawdzane względem sieci prywatnych) na portach 80, 443, 8080 i 8443. Odpowiedź jest czytana do 1 MB z jednym limitem czasu na cały łańcuch i zwracana jako zwykły tekst.
+- `/api/dict/szukaj?q=` szuka jednostek w liście całego kraju zapisanej w cache (trzy zapytania do PRG raz na 30 dni); nazwa ma do 60 liter, spacji, kropek i myślników, inne zapytania dostają pustą listę bez pytania usługi źródłowej.
 - `/api/dict/...` przyjmuje kod tylko wtedy, gdy występuje na liście nadrzędnej (powiat musi istnieć w województwie itd.), więc cache na dysku nie rośnie od zmyślonych identyfikatorów. Puste odpowiedzi nie trafiają na dysk.
 - Limity zapytań per adres (token bucket w pamięci) na słownikach i GetFeatureInfo, limit równoległych zapytań do usług źródłowych.
 - `POST /api/capabilities/refresh` działa tylko z tej samej maszyny i wymaga nagłówka `X-Refresh: capabilities`.

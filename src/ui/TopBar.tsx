@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Building2, Home, Info, Layers, LocateFixed, Printer, Route, Ruler, Search, SquareDashed, X, type LucideIcon } from 'lucide-react';
+import { Building2, Home, Info, Landmark, Layers, LocateFixed, Mountain, Printer, Route, Ruler, Search, SquareDashed, X, type LucideIcon } from 'lucide-react';
 import { fromLonLat } from 'ol/proj';
-import { buildingAt, placeOutline, search, type HitKind, type SearchHit } from '@/services/geocoder';
+import { buildingAt, placeOutline, search, unitOutline, type HitKind, type SearchHit } from '@/services/geocoder';
 import { useMapStore } from '@/state/store';
 import { BrandMark, Wordmark } from './Brand';
 import { useWelcome } from './WelcomeDialog';
@@ -9,9 +9,18 @@ import { ParcelSearch } from './ParcelSearch';
 import { usePrintDialog } from './Print';
 
 /** Closest zoom per hit kind on the GUGiK scale series (13 = 1:1890, 14 = 1:945, 15 = 1:472). */
-const ZOOM: Record<HitKind, number> = { address: 14, street: 14, place: 12, parcel: 15 };
-const ICON: Record<HitKind, LucideIcon> = { address: Home, street: Route, place: Building2, parcel: SquareDashed };
+const ZOOM: Record<HitKind, number> = { address: 14, street: 14, place: 12, unit: 14, nature: 12, parcel: 15 };
+const ICON: Record<HitKind, LucideIcon> = {
+  address: Home,
+  street: Route,
+  place: Building2,
+  unit: Landmark,
+  nature: Mountain,
+  parcel: SquareDashed,
+};
 const OUTLINE_TIMEOUT_MS = 2500;
+/** A unit has no point to fall back on, so its boundary may take longer. */
+const UNIT_TIMEOUT_MS = 8000;
 
 export function TopBar() {
   const [query, setQuery] = useState('');
@@ -24,6 +33,8 @@ export function TopBar() {
   const [announce, setAnnounce] = useState('');
   const [parcelOpen, setParcelOpen] = useState(false);
   const abort = useRef<AbortController | null>(null);
+  /** Set when choosing a hit writes its name into the box, which is not a new search. */
+  const chosen = useRef(false);
   const focusOn = useMapStore((m) => m.focusOn);
   const clearFocus = useMapStore((m) => m.clearFocus);
   const goHome = useMapStore((m) => m.goHome);
@@ -35,6 +46,10 @@ export function TopBar() {
 
   useEffect(() => {
     abort.current?.abort();
+    if (chosen.current) {
+      chosen.current = false;
+      return;
+    }
     const q = query.trim();
     if (q.length < 3) {
       setHits([]);
@@ -63,15 +78,20 @@ export function TopBar() {
   const listOpen = !parcelOpen && open && (hits.length > 0 || busy);
 
   const pick = async (hit: SearchHit) => {
-    setQuery(hit.detail && (hit.kind === 'address' || hit.kind === 'street') ? `${hit.label}, ${hit.detail}` : hit.label);
+    const text = hit.detail && (hit.kind === 'address' || hit.kind === 'street') ? `${hit.label}, ${hit.detail}` : hit.label;
+    // Only a changed text runs the search effect, which then skips this one change.
+    chosen.current = text !== query;
+    setQuery(text);
     setOpen(false);
     setParcelOpen(false);
     let wkt = hit.wkt;
-    let persist = hit.kind === 'parcel';
+    // Parcels, units and river courses stay on the map until the search is cleared.
+    let persist = hit.kind === 'parcel' || hit.kind === 'unit' || (hit.kind === 'nature' && Boolean(hit.wkt));
     // Places and addresses come as points; their outline (town boundary, building) is looked up
     // separately, without delaying the map for long.
     const signal = AbortSignal.timeout(OUTLINE_TIMEOUT_MS);
     if (hit.kind === 'place') wkt = await placeOutline(hit, signal).catch(() => undefined);
+    if (hit.unit) wkt = await unitOutline(hit.unit, AbortSignal.timeout(UNIT_TIMEOUT_MS)).catch(() => undefined);
     if (hit.kind === 'address' && hit.center) {
       const building = await buildingAt(hit.center, signal).catch(() => undefined);
       if (building) {

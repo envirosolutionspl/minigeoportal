@@ -76,10 +76,11 @@ export function LayerCatalog() {
       </header>
 
       <div className="px-4 pb-2">
-        <label className="flex items-center gap-2 rounded-xl bg-[var(--field)] px-3 py-2">
-          <Search className="h-4 w-4 text-[var(--muted)]" />
+        <label className="flex items-center gap-2 rounded-xl bg-[var(--field)] px-3 py-2 has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-[var(--accent)]">
+          <Search className="h-4 w-4 text-[var(--muted)]" aria-hidden="true" />
           <input
             type="search"
+            aria-label="Szukaj warstwy"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Szukaj warstwy: woda, gaz, plan, ceny…"

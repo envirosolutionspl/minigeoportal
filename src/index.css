@@ -105,6 +105,41 @@ input[type='search']::-webkit-search-cancel-button {
     bottom: 11rem;
   }
 }
+/* Cursor coordinates in the bottom bar, left of the attribution; mice only. */
+.ol-mouse-position {
+  /* Centred in the attribution bar, clear of the credits on both sides. */
+  top: auto;
+  right: auto;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0.15rem;
+  white-space: nowrap;
+  z-index: 1;
+  font-size: 0.7rem;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+@media (hover: none), (max-width: 639px) {
+  .ol-mouse-position {
+    display: none;
+  }
+}
+
+/* Measurement labels on the map. */
+.measure-label {
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  color: var(--text);
+  border-radius: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.2);
+  pointer-events: none;
+}
+.measure-label-done {
+  font-weight: 600;
+}
+
 /* Right of the base map switcher. */
 .ol-scale-line {
   background: color-mix(in srgb, var(--surface) 85%, transparent);

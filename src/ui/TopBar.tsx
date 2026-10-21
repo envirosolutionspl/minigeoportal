@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Building2, Home, Info, Layers, LocateFixed, Route, Search, SquareDashed, X, type LucideIcon } from 'lucide-react';
+import { Building2, Home, Info, Layers, LocateFixed, Route, Ruler, Search, SquareDashed, X, type LucideIcon } from 'lucide-react';
 import { fromLonLat } from 'ol/proj';
 import { buildingAt, placeOutline, search, type HitKind, type SearchHit } from '@/services/geocoder';
 import { useMapStore } from '@/state/store';
@@ -24,6 +24,8 @@ export function TopBar() {
   const goHome = useMapStore((m) => m.goHome);
   const panel = useMapStore((m) => m.panel);
   const setPanel = useMapStore((m) => m.setPanel);
+  const tool = useMapStore((m) => m.tool);
+  const setTool = useMapStore((m) => m.setTool);
   const openWelcome = useWelcome((w) => w.setOpen);
 
   useEffect(() => {
@@ -170,6 +172,9 @@ export function TopBar() {
         </IconButton>
         <IconButton label="Moja lokalizacja" onClick={locate}>
           <LocateFixed className="h-5 w-5" />
+        </IconButton>
+        <IconButton label="Pomiar odległości i powierzchni" active={tool !== 'none'} onClick={() => setTool(tool === 'none' ? 'measure-line' : 'none')}>
+          <Ruler className="h-5 w-5" />
         </IconButton>
         <IconButton label="Warstwy" active={panel === 'catalog'} onClick={() => setPanel(panel === 'catalog' ? 'none' : 'catalog')}>
           <Layers className="h-5 w-5" />

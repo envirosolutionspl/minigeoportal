@@ -1,13 +1,15 @@
 import { useEffect, useRef } from 'react';
 import Map from 'ol/Map';
 import View from 'ol/View';
-import { defaults as defaultControls, ScaleLine, ZoomToExtent } from 'ol/control';
+import { defaults as defaultControls, MousePosition, ScaleLine, ZoomToExtent } from 'ol/control';
 import { EPSG2180, GUGIK_RESOLUTIONS, OGC_PIXEL, POLAND_EXTENT } from './projection';
 import { BASE_MAPS, OVERLAYS, TILE_SERVICE_BY_ID, selectedSublayers } from '@/services/registry';
 import { createOverlayLayer, createTileLayer, resolutionRange } from '@/services/layers';
 import { hasInitialView, overlayOpacity, useMapStore } from '@/state/store';
 import { attachFeatureInfo } from './featureInfoClick';
 import { attachFocus } from './focus';
+import { attachMeasure } from './measure';
+import { formatCoordinate } from './format';
 
 export function MapView() {
   const container = useRef<HTMLDivElement>(null);
@@ -47,6 +49,8 @@ export function MapView() {
       controls: defaultControls({ attributionOptions: { collapsible: false }, rotate: false }).extend([
         new ScaleLine({ units: 'metric' }),
         new ZoomToExtent({ extent: POLAND_EXTENT, label: wholeCountryIcon(), tipLabel: 'Cała Polska' }),
+        // Shown only with a mouse (CSS hides it on touch screens), without live announcements.
+        new MousePosition({ projection: EPSG2180, coordinateFormat: (c) => (c ? formatCoordinate(c) : ''), placeholder: '' }),
       ]),
     });
 
@@ -86,8 +90,10 @@ export function MapView() {
 
     const detachFeatureInfo = attachFeatureInfo(map, overlays);
     const detachFocus = attachFocus(map);
+    const detachMeasure = attachMeasure(map);
 
     return () => {
+      detachMeasure();
       detachFocus();
       detachFeatureInfo();
       unsubscribeState();

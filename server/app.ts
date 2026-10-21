@@ -35,6 +35,7 @@ export function createApp({ cache, refresh, limits }: AppOptions): Hono {
           "'self'",
           'https://services.gugik.gov.pl',
           'https://uldk.gugik.gov.pl',
+          'https://capap.gugik.gov.pl',
           'https://mapy.geoportal.gov.pl',
           'https://integracja.gugik.gov.pl',
           'https://integracja01.gugik.gov.pl',

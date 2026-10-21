@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { ChevronDown, ExternalLink, Search, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { GEOPORTAL_MAP, OVERLAYS, TOPICS, selectedSublayers, type Overlay, type SubLayer, type Topic } from '@/services/registry';
 import { layerMeta, visibleAtScale } from '@/services/meta';
+import { normalize } from '@/services/text';
 import { statusOf, useStatusStore, type ServiceStatus } from '@/services/status';
 import { overlayOpacity, useMapStore } from '@/state/store';
 
@@ -22,8 +23,6 @@ const STATUS_DOT: Record<ServiceStatus, string> = {
   degraded: 'bg-[#FFBC42]',
 };
 
-/** Lower case without Polish diacritics; ł has no decomposed form and is replaced by hand. */
-const normalize = (s: string) => s.toLowerCase().replace(/ł/g, 'l').normalize('NFD').replace(/\p{Diacritic}/gu, '');
 
 /** Words of the query that every match must contain, ignoring case and Polish diacritics. */
 function words(query: string): string[] {
@@ -230,13 +229,12 @@ function SublayerRow({ s, l, highlighted, disabled }: { s: Overlay; l: SubLayer;
   const zoomedOutTooFar = useMapStore((m) => outOfScale && meta?.maxScale !== undefined && m.scale > meta.maxScale);
   /** Scale the map should go to for the layer to appear: just inside its visible range. */
   const targetScale = zoomedOutTooFar ? (meta?.maxScale ?? 0) * 0.9 : (meta?.minScale ?? 0) * 1.1;
+  const hint = zoomedOutTooFar
+    ? `Widoczne od skali 1:${Math.round(meta?.maxScale ?? 0)}`
+    : `Widoczne do skali 1:${Math.round(meta?.minScale ?? 0)}`;
   return (
-    <li>
-      <label
-        className={`flex cursor-pointer items-center gap-2 rounded-lg px-1.5 py-1 text-sm ${
-          highlighted ? 'bg-[var(--field)] font-medium' : ''
-        }`}
-      >
+    <li className={`flex items-center gap-1 rounded-lg text-sm ${highlighted ? 'bg-[var(--field)] font-medium' : ''}`}>
+      <label className="flex min-h-8 flex-1 cursor-pointer items-center gap-2 px-1.5 py-1">
         <input
           type="checkbox"
           checked={checked}
@@ -245,27 +243,21 @@ function SublayerRow({ s, l, highlighted, disabled }: { s: Overlay; l: SubLayer;
           aria-label={`${s.title}: ${l.title}`}
           className="h-3.5 w-3.5 shrink-0 accent-[var(--accent)]"
         />
-        <span className={`flex-1 ${outOfScale ? 'text-[var(--muted)]' : ''}`}>{l.title}</span>
-        {checked && outOfScale && (
-          // Inside the label: preventDefault keeps the click from toggling the checkbox.
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              zoomToScale(targetScale);
-            }}
-            className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-[var(--accent)] hover:bg-[var(--hover)]"
-            title={
-              zoomedOutTooFar
-                ? `Widoczne od skali 1:${Math.round(meta?.maxScale ?? 0)}`
-                : `Widoczne do skali 1:${Math.round(meta?.minScale ?? 0)}`
-            }
-          >
-            {zoomedOutTooFar ? <ZoomIn className="h-3 w-3" /> : <ZoomOut className="h-3 w-3" />}
-            {zoomedOutTooFar ? 'przybliż' : 'oddal'}
-          </button>
-        )}
+        <span className={outOfScale ? 'text-[var(--muted)]' : ''}>{l.title}</span>
       </label>
+      {checked && outOfScale && (
+        // Outside the label, so a click next to it cannot switch the layer off.
+        <button
+          type="button"
+          onClick={() => zoomToScale(targetScale)}
+          title={hint}
+          aria-label={`${zoomedOutTooFar ? 'Przybliż' : 'Oddal'} mapę do warstwy ${l.title}. ${hint}`}
+          className="flex min-h-7 shrink-0 items-center gap-1 rounded-md px-2 text-xs text-[var(--accent)] hover:bg-[var(--hover)]"
+        >
+          {zoomedOutTooFar ? <ZoomIn className="h-3.5 w-3.5" aria-hidden="true" /> : <ZoomOut className="h-3.5 w-3.5" aria-hidden="true" />}
+          {zoomedOutTooFar ? 'przybliż' : 'oddal'}
+        </button>
+      )}
     </li>
   );
 }

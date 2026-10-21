@@ -49,7 +49,10 @@ describe('LayerCatalog', () => {
   it('offers to zoom in for a checked sublayer outside its scale, without toggling it', () => {
     render(<LayerCatalog />);
     fireEvent.click(screen.getByRole('button', { name: 'Warstwy usługi: Ewidencja gruntów i budynków' }));
-    fireEvent.click(screen.getByTitle('Widoczne od skali 1:10000'));
+    const zoom = screen.getByTitle('Widoczne od skali 1:10000');
+    // Outside the checkbox label: a click next to the button cannot switch the layer off.
+    expect(zoom.closest('label')).toBeNull();
+    fireEvent.click(zoom);
     const s = useMapStore.getState();
     expect(s.focus).toMatchObject({ scale: 9000 });
     expect(s.sublayers).toEqual({});

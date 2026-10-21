@@ -5,6 +5,9 @@ import { readUrl, writeUrl } from './url';
 
 export type Panel = 'none' | 'catalog';
 
+/** A map tool that takes over clicks: while one is active, clicks do not ask for information. */
+export type Tool = 'none' | 'measure-line' | 'measure-area';
+
 /** Something the map should show: zoom to it and outline it. */
 export interface FocusTarget {
   /** EPSG:2180 WKT; the view fits its extent. */
@@ -35,6 +38,11 @@ interface MapStore {
   opacity: Record<string, number>;
   panel: Panel;
   focus: FocusTarget | null;
+  tool: Tool;
+  /** Changes when measurements are cleared. */
+  measureClears: number;
+  /** Text of the last finished measurement, announced to screen readers. */
+  measureResult: string;
   /** Called by the map on moveend; keeps store and URL in sync. */
   setView(center: [number, number], zoom: number, scale: number): void;
   setBase(id: string): void;
@@ -49,9 +57,16 @@ interface MapStore {
   goHome(): void;
   /** Zooms at the current centre to the given scale denominator, e.g. where a layer becomes visible. */
   zoomToScale(scale: number): void;
+  setTool(tool: Tool): void;
+  clearMeasurements(): void;
+  setMeasureResult(text: string): void;
 }
 
-const DEFAULT_BASE = 'orto';
+/**
+ * The BDOO and BDOT10k map on wide screens; the simplified map on phones, where its small
+ * tiles load fastest on mobile connections.
+ */
+const DEFAULT_BASE = typeof window !== 'undefined' && window.matchMedia?.('(max-width: 639px)').matches ? 'prosta' : 'mapa';
 const DEFAULT_OVERLAYS = ['kieg'];
 
 const initial = readUrl();
@@ -66,6 +81,9 @@ export const useMapStore = create<MapStore>((set, get) => ({
   opacity: {},
   panel: 'none',
   focus: null,
+  tool: 'none',
+  measureClears: 0,
+  measureResult: '',
 
   setView: (center, zoom, scale) => set({ center, zoom, scale }),
   setBase: (base) => set({ base }),
@@ -94,6 +112,9 @@ export const useMapStore = create<MapStore>((set, get) => ({
   clearFocus: () => set({ focus: null }),
   goHome: () => get().focusOn({ extent: POLAND_EXTENT, zoom: 0 }),
   zoomToScale: (scale) => get().focusOn({ scale, zoom: 0 }),
+  setTool: (tool) => set({ tool }),
+  clearMeasurements: () => set((s) => ({ measureClears: s.measureClears + 1, measureResult: '' })),
+  setMeasureResult: (measureResult) => set({ measureResult }),
 }));
 
 useMapStore.subscribe((s, prev) => {

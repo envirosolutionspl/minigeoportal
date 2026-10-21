@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { POLAND_EXTENT } from '@/map/projection';
 import { overlayOpacity, useMapStore } from './store';
 
@@ -9,10 +9,22 @@ beforeEach(() => {
 });
 
 describe('defaults', () => {
-  it('starts on the orthophoto with the land register on and no custom sublayers', () => {
-    expect(state().base).toBe('orto');
-    expect(state().overlays).toEqual(['kieg']);
-    expect(state().sublayers).toEqual({});
+  const fresh = async (phone: boolean) => {
+    vi.resetModules();
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: phone && query.includes('max-width'), media: query }));
+    return (await import('./store')).useMapStore.getState();
+  };
+
+  it('starts on the general map on a computer and on the simple map on a phone', async () => {
+    expect((await fresh(false)).base).toBe('mapa');
+    expect((await fresh(true)).base).toBe('prosta');
+  });
+
+  it('starts with the land register on, no custom sublayers and no tool', async () => {
+    const s = await fresh(false);
+    expect(s.overlays).toEqual(['kieg']);
+    expect(s.sublayers).toEqual({});
+    expect(s.tool).toBe('none');
   });
 });
 
@@ -69,6 +81,20 @@ describe('focus', () => {
     expect(state().focus).toMatchObject({ extent: POLAND_EXTENT });
     state().zoomToScale(9000);
     expect(state().focus).toMatchObject({ scale: 9000 });
+  });
+});
+
+describe('measurement tool', () => {
+  it('switches tools, keeps the last result and clears it with the drawings', () => {
+    state().setTool('measure-area');
+    expect(state().tool).toBe('measure-area');
+    state().setMeasureResult('1 ha');
+    const clears = state().measureClears;
+    state().clearMeasurements();
+    expect(state().measureClears).toBe(clears + 1);
+    expect(state().measureResult).toBe('');
+    state().setTool('none');
+    expect(state().tool).toBe('none');
   });
 });
 

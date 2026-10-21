@@ -3,6 +3,7 @@ import { TopBar } from './ui/TopBar';
 import { LayerCatalog } from './ui/LayerCatalog';
 import { BasemapSwitcher } from './ui/BasemapSwitcher';
 import { InfoPanel } from './ui/InfoPanel';
+import { MeasureBar } from './ui/MeasureBar';
 import { WelcomeDialog } from './ui/WelcomeDialog';
 import { AuthorCredit } from './ui/Brand';
 import { useMapStore } from './state/store';
@@ -16,6 +17,7 @@ export default function App() {
       <TopBar />
       <BasemapSwitcher />
       <InfoPanel />
+      <MeasureBar />
       <AuthorCredit />
       <aside
         aria-hidden={panel !== 'catalog'}

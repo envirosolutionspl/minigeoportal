@@ -34,6 +34,7 @@ export function attachFeatureInfo(map: Map, overlays: { def: Overlay; layer: Ima
   };
 
   const onClick = (evt: { coordinate: number[] }) => {
+    if (useMapStore.getState().tool !== 'none') return;
     const view = map.getView();
     const resolution = view.getResolution();
     if (resolution === undefined) return;

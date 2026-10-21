@@ -95,6 +95,43 @@ describe('findParcels and stripSrid', () => {
   });
 });
 
+const FTS_GORZOW = {
+  features: [
+    { properties: { NAZWAGLOWNA: 'Gorzów', RODZAJOBIEKTU: 'wieś', GMINA: 'Chełmek-gmina miejsko-wiejska', POWIAT: 'oświęcimski', WOJEWODZTWO: 'małopolskie', IDENTYFIKATORGMINY: '1213042' }, geometry: { type: 'Point', coordinates: [19.25, 50.1] } },
+    { properties: { NAZWAGLOWNA: 'Gorzów Wielkopolski', RODZAJOBIEKTU: 'miasto', GMINA: 'Gorzów Wielkopolski-gmina miejska', POWIAT: 'Gorzów Wielkopolski', WOJEWODZTWO: 'lubuskie', IDENTYFIKATORGMINY: '0861011' }, geometry: { type: 'Point', coordinates: [15.23, 52.73] } },
+    { properties: { NAZWAGLOWNA: 'Gorzków', RODZAJOBIEKTU: 'wieś', GMINA: 'Gorzków-gmina wiejska', POWIAT: 'krasnostawski', WOJEWODZTWO: 'lubelskie', IDENTYFIKATORGMINY: '0607032' }, geometry: { type: 'Point', coordinates: [22.9, 50.9] } },
+    { properties: { NAZWAGLOWNA: 'Gorzów Śląski', RODZAJOBIEKTU: 'część miasta', GMINA: 'x', IDENTYFIKATORGMINY: '1' }, geometry: { type: 'Point', coordinates: [18.4, 51] } },
+  ],
+};
+
+describe('search with the full-text place index', () => {
+  it('finds towns whose name starts with the query, towns first, without loose matches', async () => {
+    const { calls } = stubFetch([['capap.gugik.gov.pl/api/fts', FTS_GORZOW]]);
+    const hits = await search('gorzów', signal());
+    expect(hits.map((h) => [h.label, h.detail])).toEqual([
+      ['Gorzów Wielkopolski', 'woj. lubuskie'],
+      ['Gorzów', 'gm. Chełmek, pow. oświęcimski, woj. małopolskie'],
+    ]);
+    expect(hits[0]).toMatchObject({ kind: 'place', teryt: '086101' });
+    expect(calls.some((c) => c.includes('idx=prngjo'))).toBe(true);
+    // Full voivodeship in the detail: no extra lookup of unit names.
+    expect(calls.some((c) => c.includes('/api/dict/jednostki'))).toBe(false);
+  });
+
+  it('does not ask the full-text index for addresses or parcel numbers', async () => {
+    const { calls } = stubFetch([['services.gugik.gov.pl/uug', UUG_ADDRESS], ['/api/dict/jednostki', UNITS]]);
+    await search('Kraków, Rynek Główny 1', signal());
+    expect(calls.some((c) => c.includes('capap'))).toBe(false);
+  });
+
+  it('keeps one hit for a place both sources know', async () => {
+    const uug = { type: 'city', results: { 1: { city: 'Gorzów', teryt: '121304', x: '1', y: '2' } } };
+    stubFetch([['services.gugik.gov.pl/uug', uug], ['capap.gugik.gov.pl/api/fts', FTS_GORZOW], ['/api/dict/jednostki', {}]]);
+    const hits = await search('gorzów', signal());
+    expect(hits.map((h) => h.label)).toEqual(['Gorzów Wielkopolski', 'Gorzów']);
+  });
+});
+
 describe('placeOutline', () => {
   const hit = { kind: 'place' as const, label: 'Otwock', center: [656860, 474612] as [number, number] };
 

@@ -5,9 +5,9 @@ id: osm-example
 name: OSM Map
 title: { en: 'OSM Map: an example deployment', pl: 'Mapa OSM: przykładowe wdrożenie' }
 description:
-  en: An example deployment of Prosty Geoportal on OpenStreetMap, without GUGiK services.
-  pl: Przykładowe wdrożenie Prostego Geoportalu na OpenStreetMap, bez usług GUGiK.
-domain: localhost
+  en: An example deployment of MiniGeoportal on OpenStreetMap, without GUGiK services.
+  pl: Przykładowe wdrożenie MiniGeoportalu na OpenStreetMap, bez usług GUGiK.
+domain: example.org
 contact: admin@example.org
 
 author:

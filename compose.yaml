@@ -8,7 +8,7 @@
 services:
   app:
     build: .
-    image: prosty-geoportal
+    image: minigeoportal
     init: true
     restart: unless-stopped
     environment:
@@ -25,7 +25,7 @@ services:
       replicas: 2
 
   updater:
-    image: prosty-geoportal
+    image: minigeoportal
     init: true
     restart: unless-stopped
     environment:

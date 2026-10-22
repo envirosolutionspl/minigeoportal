@@ -4,7 +4,7 @@
 
 ```bash
 npm install
-npm run dev # the app on http://localhost:5173, the API on 8787
+npm run dev # the app and the API, both restarting on changes
 CONFIG_DIR=examples/osm npm run dev # another deployment
 ```
 
@@ -45,8 +45,8 @@ Your own configuration goes in by replacing the `./config` mount of `compose.yam
 The image runs without root, needs no build tools at runtime and stops cleanly on SIGTERM. Built alone:
 
 ```bash
-docker build -t prosty-geoportal .
-docker run -p 8787:8787 -v geoportal-data:/data prosty-geoportal
+docker build -t minigeoportal .
+docker run -p 8787:8787 -v minigeoportal-data:/data minigeoportal
 ```
 
 ## Environment variables

@@ -5,8 +5,8 @@ Wdrożenie to katalog z trzema plikami YAML: `app.yaml`, `map.yaml` i `layers.ya
 **Teksty.** Każde pole oznaczone jako _tekst_ to jeden napis albo napis dla każdego języka:
 
 ```yaml
-title: Prosty Geoportal
-title: { pl: Prosty Geoportal, en: Simple Geoportal }
+title: Mapa gminy
+title: { pl: Mapa gminy, en: Municipal map }
 ```
 
 Język bez własnego tekstu dostaje tekst języka domyślnego.

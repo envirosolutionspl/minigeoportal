@@ -1,6 +1,6 @@
-# Prosty Geoportal: the app and its API in one image. Build: docker build -t prosty-geoportal .
+# MiniGeoportal: the app and its API in one image. Build: docker build -t minigeoportal .
 # Run with compose.yaml (Caddy in front, several replicas, one updater) or alone:
-#   docker run -p 8787:8787 -v geoportal-data:/data prosty-geoportal
+#   docker run -p 8787:8787 -v minigeoportal-data:/data minigeoportal
 
 FROM node:22-alpine AS build
 WORKDIR /app

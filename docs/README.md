@@ -1,8 +1,8 @@
 # Documentation · Dokumentacja
 
-Prosty Geoportal is a fast, simple web map for public map services. One application serves any set of services: a deployment is a directory of configuration files.
+MiniGeoportal is a fast, simple web map for public map services. One application serves any set of services: a deployment is a directory of configuration files.
 
-Prosty Geoportal to szybka, prosta mapa internetowa dla publicznych usług mapowych. Jedna aplikacja obsługuje dowolny zestaw usług: wdrożenie to katalog plików konfiguracyjnych.
+MiniGeoportal to szybka, prosta mapa internetowa dla publicznych usług mapowych. Jedna aplikacja obsługuje dowolny zestaw usług: wdrożenie to katalog plików konfiguracyjnych.
 
 | English                                           | Polski                                               |
 | ------------------------------------------------- | ---------------------------------------------------- |

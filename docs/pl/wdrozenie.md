@@ -4,7 +4,7 @@
 
 ```bash
 npm install
-npm run dev # aplikacja na http://localhost:5173, API na 8787
+npm run dev # aplikacja i API, odświeżane przy zmianach
 CONFIG_DIR=examples/osm npm run dev # inne wdrożenie
 ```
 
@@ -45,8 +45,8 @@ Własną konfigurację podłącza się, zastępując w `compose.yaml` montowany 
 Obraz działa bez uprawnień roota, nie potrzebuje w działaniu narzędzi do budowania i poprawnie kończy pracę na SIGTERM. Samodzielnie:
 
 ```bash
-docker build -t prosty-geoportal .
-docker run -p 8787:8787 -v geoportal-data:/data prosty-geoportal
+docker build -t minigeoportal .
+docker run -p 8787:8787 -v minigeoportal-data:/data minigeoportal
 ```
 
 ## Zmienne środowiskowe

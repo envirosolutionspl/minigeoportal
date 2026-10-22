@@ -1,6 +1,6 @@
-# Prosty Geoportal: przegląd
+# MiniGeoportal: przegląd
 
-Prosty Geoportal pokazuje publiczne usługi mapowe (WMS, WMTS, ArcGIS REST, kafle XYZ) na mapie, która szybko się wczytuje i jest prosta w obsłudze dla osób niepracujących z mapami na co dzień. Działa jako jeden niewielki serwer Node, który serwuje aplikację i cienkie API; nie ma bazy danych.
+MiniGeoportal pokazuje publiczne usługi mapowe (WMS, WMTS, ArcGIS REST, kafle XYZ) na mapie, która szybko się wczytuje i jest prosta w obsłudze dla osób niepracujących z mapami na co dzień. Działa jako jeden niewielki serwer Node, który serwuje aplikację i cienkie API; nie ma bazy danych.
 
 Wszystko, co wyróżnia dane wdrożenie, jest w **katalogu konfiguracji**:
 
@@ -17,7 +17,7 @@ config/
 
 Repozytorium zawiera dwa wdrożenia:
 
-- `config/`: domyślne, prostygeoportal.pl, na usługach Głównego Urzędu Geodezji i Kartografii (GUGiK) w układzie PL-1992 (EPSG:2180), z modułem `gugik`.
+- `config/`: Prosty Geoportal (prostygeoportal.pl), na usługach Głównego Urzędu Geodezji i Kartografii (GUGiK) w układzie PL-1992 (EPSG:2180), z modułem `gugik`.
 - `examples/osm/`: kafle OpenStreetMap w układzie Web Mercator (EPSG:3857), wyszukiwarka Nominatim i jedna warstwa WMS, bez żadnej usługi GUGiK.
 
 Uruchomienie przykładu:

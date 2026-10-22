@@ -1,93 +1,280 @@
-# Prosty Geoportal
+# MiniGeoportal
 
-Niezależna, lekka aplikacja mapowa dla osób, które chcą szybko sprawdzić działkę: granice, numer, przeznaczenie w planie, ceny w okolicy, uzbrojenie, ortofotomapę aktualną i archiwalną. Interfejs w stylu map konsumenckich, dane na żywo z usług GUGiK (geoportal.gov.pl).
+Lekka, szybka mapa internetowa dla publicznych usług mapowych, przeznaczona dla osób, które nie pracują z mapami zawodowo. Jedna aplikacja obsługuje dowolny zestaw usług: wdrożenie to katalog plików konfiguracyjnych (układ współrzędnych, podkłady, warstwy, wyszukiwarka, języki, skórka, treści), bez zmian w kodzie.
+
+_A fast, simple web map for public map services. Every deployment is a directory of configuration files. Documentation in English: [docs/en](docs/en/README.md)._
 
 Projekt open source na licencji MIT, tworzony przez [EnviroSolutions](https://envirosolutions.pl).
 
-Aplikacja jest uniwersalna: wdrożenie to katalog plików konfiguracyjnych (układ współrzędnych, podkłady, warstwy, wyszukiwarka, języki, skórka, treści), a integracja z geoportal.gov.pl to opcjonalny moduł. Przykład bez usług GUGiK, na OpenStreetMap, jest w `examples/osm`. Dokumentacja po polsku i angielsku: [docs/](docs/README.md).
+## Wdrożenia w repozytorium
+
+| Katalog         | Wdrożenie                                                                                                                                                                                                                                                                    |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config/`       | [Prosty Geoportal](https://prostygeoportal.pl): usługi Głównego Urzędu Geodezji i Kartografii (geoportal.gov.pl) w układzie PL-1992, z modułem `gugik`: działki, plany miejscowe i ogólne, ceny transakcyjne, uzbrojenie terenu, ortofotomapa i ponad 400 warstw geoportalu. |
+| `examples/osm/` | Kafle OpenStreetMap w układzie Web Mercator, wyszukiwarka Nominatim i jedna warstwa WMS, bez żadnej usługi GUGiK. Dobry punkt wyjścia dla własnego wdrożenia.                                                                                                                |
 
 ## Funkcje
 
-- Wyszukiwarka adresów, ulic, miejscowości, gmin, powiatów, województw i obiektów fizjograficznych (rzeki, jeziora, szczyty) oraz osobna wyszukiwarka działek z listami województw, powiatów, gmin i obrębów. Źródła: geokoder UUG, indeks pełnotekstowy geoportalu (miejscowości i obiekty z PRNG, miasta przed wsiami), listy PRG z cache serwera. Jednostki są pokazywane z obrysem z PRG (uogólnionym, kilkadziesiąt KB), a obiekty fizjograficzne jako punkty, bo PRNG nie ma ich obrysów: rzeka to szereg punktów wzdłuż biegu.
-- Podkłady: ortofotomapa, mapa BDOO + BDOT10k (domyślna na komputerze), mapa uproszczona (domyślna na telefonie), mapa terenu, skany, brak podkładu.
-- Warstwy „Najpopularniejsze”: ewidencja gruntów i budynków, plany miejscowe i ogólne, studium, ceny transakcyjne, uzbrojenie terenu, BDOT500, adresy i ulice, granice PRG, z wyborem pojedynczych warstw i przezroczystości.
-- Wszystkie warstwy geoportal.gov.pl (ok. 430) w 13 tematach, z wyszukiwarką. Warstwy, których nie da się u nas pokazać (token, blokada, typ usługi), są w swoim temacie wyszarzone, z wyjaśnieniem przyczyny.
-- Informacje o klikniętym miejscu (GetFeatureInfo), link do raportu o działce z geoportal.gov.pl (dane ewidencyjne, mapy, eksport do PDF) oraz data i wielkość piksela zdjęcia lotniczego w tym miejscu ze skorowidzów ortofotomap, z linkiem do pobrania arkusza GeoTIFF.
-- Pomiar odległości i powierzchni (geodezyjnie, na elipsoidzie) i współrzędne kursora w PL-1992 oraz WGS 84.
-- Wydruk w skali 1:500–1:2 500 000 na A4 lub A3 z tytułem, legendą i źródłami, także jako PDF przez okno drukowania przeglądarki. Obszar wydruku jest zaznaczony ramką na mapie, a legenda obejmuje tylko warstwy, które serwer narysuje w tej skali.
-- Kopiowanie linku do bieżącego widoku (środek, skala, podkład, włączone warstwy).
-- Formularz zgłaszania błędów wysyłany e-mailem do administratora.
-- Interfejs po polsku i angielsku, z przełącznikiem języka; kolejne języki dodaje się plikami w konfiguracji.
-- Dostępność WCAG 2.1 AA: obsługa klawiaturą, czytniki ekranu, tryb ciemny, ograniczenie ruchu, przełączniki wielkości tekstu i wysokiego kontrastu, deklaracja dostępności.
+- Usługi WMS, WMTS, ArcGIS REST i kafle XYZ, w dowolnym układzie współrzędnych zdefiniowanym w konfiguracji. Obrazy są pobierane w układzie mapy, więc przeglądarka niczego nie przelicza.
+- Podkłady składane z kilku usług zależnie od skali, warstwy tematyczne z wyborem pojedynczych podwarstw, przezroczystością i wyszukiwarką warstw.
+- Informacje o klikniętym miejscu (GetFeatureInfo, ArcGIS identify) przez serwer pośredniczący.
+- Wyszukiwarka do wyboru: usługi GUGiK, Nominatim (OpenStreetMap) albo żadna; współrzędne rozpoznawane zawsze.
+- Pomiar odległości i powierzchni na elipsoidzie, współrzędne kursora w układzie mapy i w WGS 84.
+- Wydruk w skali na A4 lub A3 z tytułem, legendą i źródłami, także do PDF przez okno drukowania przeglądarki.
+- Link do bieżącego widoku, formularz zgłaszania błędów wysyłany e-mailem.
+- Interfejs po polsku i angielsku z przełącznikiem języka; kolejne języki, treści w Markdown i skórki (kolory) dodaje się plikami w konfiguracji.
+- Warstwy zmienne w czasie opisane w konfiguracji (wymiar TIME usługi albo seria edycji).
+- Dostępność WCAG 2.1 AA: klawiatura, czytniki ekranu, tryb ciemny, ograniczenie ruchu, powiększenie tekstu i wysoki kontrast.
 
-## Uruchomienie
+## Wymagania
 
-Wymagany Node.js 22.18 lub nowszy (serwer to TypeScript uruchamiany bezpośrednio przez Node, bez transpilacji).
+- Node.js 22.18 lub nowszy (serwer to TypeScript uruchamiany bezpośrednio przez Node, bez transpilacji), albo Docker z Compose.
+- Usługi mapowe dostępne po https (obrazy wczytuje przeglądarka, a strona i jej Content Security Policy dopuszczają tylko https).
+- Do wdrożenia publicznego: domena wskazująca na serwer i otwarte porty 80 i 443 (TCP) oraz 443 (UDP, HTTP/3).
+
+## Szybki start
 
 ```bash
+git clone https://github.com/envirosolutionspl/minigeoportal.git
+cd minigeoportal
 npm install
-npm run dev
+npm run dev                            # wdrożenie z config/
+CONFIG_DIR=examples/osm npm run dev    # inne wdrożenie
 ```
 
-Aplikacja: http://localhost:5173, API: http://localhost:8787. Front i API można też uruchomić osobno: `npm run dev:web` i `npm run dev:api`.
+`npm run dev` uruchamia aplikację (Vite, port 5173) i API (port 8787); oba przeładowują się po zmianach, także po zmianie konfiguracji.
 
-Odświeżenie danych serwera: metadanych usług (GetCapabilities) z kolejnością rysowania warstw odczytaną z konfiguracji geoportal.gov.pl (moduł „Geoportal Krajowy”; plik jest tylko czytany wzorcem, nigdy wykonywany, a gdy brakuje w nim którejś warstwy, zostaje kolejność z `config/layers.yaml`) oraz katalogu wszystkich warstw geoportal.gov.pl (`server/data/catalog/catalog.json`, poza repozytorium; ok. 1–2 min, każda usługa jest sprawdzana). Pojedynczy serwer buduje katalog sam w tle przy pierwszym starcie; polecenie warto uruchamiać raz dziennie:
+## Własne wdrożenie krok po kroku
+
+### 1. Katalog konfiguracji
+
+Skopiuj przykład i nadaj mu własną nazwę:
 
 ```bash
-npm run update
+cp -r examples/osm moja-mapa
 ```
 
-Kontenery: `compose.yaml` uruchamia Caddy (automatyczny HTTPS, HTTP/2 i HTTP/3), kilka replik aplikacji na wspólnym wolumenie danych i jeden proces odświeżający dane raz dziennie:
+Struktura katalogu (pliki oznaczone `*` są wymagane):
+
+```
+moja-mapa/
+  app.yaml *                    nazwa, domena, kontakt, języki, wyszukiwarka, moduły, formularz zgłoszeń
+  map.yaml *                    układ współrzędnych, skale, widok startowy, usługi kafli, podkłady
+  layers.yaml *                 tematy, warstwy nad podkładem, kolejność rysowania
+  content/welcome.<język>.md    okno powitalne (gdy app.yaml wskazuje content.welcome)
+  content/accessibility.<język>.md   deklaracja dostępności (gdy wskazuje content.accessibility)
+  i18n/<język>.yaml             zmienione napisy interfejsu albo nowy język
+  skins/<nazwa>/skin.css        własne kolory (gdy app.yaml wskazuje skin)
+  seed/capabilities.json        metadane usług na start, przed pierwszym npm run update
+```
+
+### 2. app.yaml
+
+```yaml
+id: moja-mapa # małe litery, cyfry, myślniki; przedrostek danych w przeglądarce
+name: Mapa gminy # albo { pl: Mapa gminy, en: Municipal map }
+title: 'Mapa gminy: działki i plany'
+description: Mapa z danymi gminy.
+domain: mapa.example.org # drukowane na mapach
+contact: kontakt@example.org
+author: { name: Urząd Gminy, url: https://example.org }
+locales: { default: pl, available: [pl, en] }
+report:
+  categories:
+    - { id: mapa, label: Mapa lub warstwy }
+    - { id: inne, label: Inne }
+search:
+  provider: nominatim # gugik | nominatim | none
+  parcel: false # wyszukiwarka działek (moduł gugik)
+```
+
+### 3. map.yaml
+
+```yaml
+projection:
+  code: EPSG:3857 # układ kafli OpenStreetMap; PL-1992 itp. z polem proj4 (zob. config/map.yaml)
+  name: Web Mercator # nazwa na pasku współrzędnych i wydrukach
+  axisOrientation: enu # neu, gdy EPSG podaje najpierw northing (np. PL-1992)
+  extent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34]
+zoom:
+  # Mianowniki skal poziomów przybliżenia, od największego (tu poziomy 5–19 siatki kafli).
+  scales:
+    [
+      17471320.7509,
+      8735660.3754,
+      4367830.1877,
+      2183915.0939,
+      1091957.5469,
+      545978.7735,
+      272989.3867,
+      136494.6934,
+      68247.3467,
+      34123.6733,
+      17061.8367,
+      8530.9183,
+      4265.4592,
+      2132.7296,
+      1066.3648,
+    ]
+view:
+  center: [2338455, 6842147]
+  zoom: 5 # numer poziomu z zoom.scales
+  home: [2310000, 6820000, 2370000, 6870000]
+  homeLabel: Cała gmina
+  base: osm
+attribution: '© [OpenStreetMap](https://www.openstreetmap.org/copyright)'
+tileServices:
+  - { id: osm, kind: xyz, url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', maxZoom: 19 }
+baseMaps:
+  - { id: osm, title: Mapa, description: OpenStreetMap, sources: [{ service: osm }] }
+```
+
+Usługi WMS, WMTS i ArcGIS muszą udostępniać mapę w układzie z `projection.code`; aplikacja niczego nie przelicza w przeglądarce. Wdrożenie w PL-1992 z usługami WMTS: `config/map.yaml`.
+
+### 4. layers.yaml
+
+```yaml
+topics:
+  - { id: planowanie, title: Planowanie }
+overlays:
+  - id: mpzp
+    kind: wms # wms | wmts | rest
+    url: https://wms.example.org/mpzp
+    title: Plany miejscowe
+    description: Miejscowe plany zagospodarowania przestrzennego.
+    topic: planowanie
+    starter: true # w grupie „Najpopularniejsze”
+    sublayers:
+      - { name: przeznaczenie, title: Przeznaczenie terenu, default: true }
+```
+
+### 5. Sprawdzenie i uruchomienie
 
 ```bash
-DOMAIN=example.org docker compose up -d --build
+npm run config:check moja-mapa        # błędy z plikiem, wierszem i kolumną
+CONFIG_DIR=moja-mapa npm run dev
 ```
 
-Jakość: `npm run check` uruchamia kontrolę typów, ESLint (reguły TypeScript, React hooks, dostępności), Prettier (`npm run format` poprawia formatowanie) i testy.
+Opis każdego pola: [docs/pl/konfiguracja.md](docs/pl/konfiguracja.md); treści i języki: [docs/pl/tresci-i-jezyki.md](docs/pl/tresci-i-jezyki.md); skórki: [docs/pl/skorki.md](docs/pl/skorki.md); wyszukiwarka i moduł GUGiK: [docs/pl/wyszukiwarka-i-moduly.md](docs/pl/wyszukiwarka-i-moduly.md); warstwy zmienne w czasie: [docs/pl/warstwy-czasowe.md](docs/pl/warstwy-czasowe.md).
 
-Testy (Vitest): `npm test`, w trybie ciągłym `npm run test:watch`. Testy leżą obok kodu: `server/*.test.ts` działają w Node i sprawdzają walidację, filtr przekierowań, limity, słowniki, parser capabilities, formularz zgłoszeń i trasy API; `src/**/*.test.ts(x)` działają w jsdom i sprawdzają parser odpowiedzi, wyszukiwarkę, stan mapy, adres URL, konfigurację, pomiar, wydruk i komponenty. `src/ui/a11y.test.tsx` sprawdza komponenty regułami WCAG 2.1 A/AA biblioteki axe-core. Kontrastu nie da się sprawdzić w jsdom: kolory z palety mają co najmniej 4,5:1 w obu motywach (tekst pomocniczy 5,4:1, akcent 6,2:1, tryb ciemny 6:1). Każda nowa funkcja lub poprawka ma mieć test w tym samym commicie.
+## Wdrożenie produkcyjne
 
-Produkcja: `npm run build` (buduje aplikację i zapisuje skompresowane kopie `.br`/`.gz`), potem `NODE_ENV=production npm start` serwuje aplikację i API.
+### Docker Compose (zalecane)
 
-Konfiguracja w zmiennych środowiskowych albo w pliku `.env` (wzór: `.env.example`; pliku `.env` nie dodaje się do repozytorium):
+1. Na serwerze sklonuj repozytorium i umieść w nim katalog konfiguracji.
+2. W `compose.yaml` zamień montowany katalog `./config` na swój (w usługach `app` i `updater`): `- ./moja-mapa:/app/config:ro`.
+3. Utwórz `.env` obok `compose.yaml` (wzór: `.env.example`), co najmniej z ustawieniami poczty, jeśli formularz zgłoszeń ma działać.
+4. Uruchom:
 
-- `PORT` (8787), `HOST` (`0.0.0.0` w produkcji, `127.0.0.1` poza nią; za reverse proxy zostaw `127.0.0.1`).
-- `TRUSTED_PROXY=1`, gdy przed serwerem stoi reverse proxy dopisujące adres klienta na końcu `X-Forwarded-For` (limity zapytań liczą się wtedy per adres klienta; wpisy wcześniejsze, które mógł dopisać sam klient, są ignorowane).
-- `SHARED_DATA=1`, gdy kilka instancji dzieli `DATA_DIR`: dane zapisuje tylko `npm run update`, a każda instancja wczytuje je ponownie w ciągu minuty od zmiany.
-- `CONFIG_DIR`, katalog z konfiguracją wdrożenia (`app.yaml`, `map.yaml`, `layers.yaml`; domyślnie `config`).
-- `APP_ORIGIN`, publiczny adres aplikacji; zgłoszenia mogą zawierać tylko link do niej.
-- `DATA_DIR`, katalog na cache serwera (domyślnie `server/data`).
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `REPORT_FROM`, `REPORT_TO`: serwer poczty i adresat zgłoszeń błędów. Bez `SMTP_HOST` i `REPORT_TO` formularz jest wyłączony.
+```bash
+DOMAIN=mapa.example.org docker compose up -d --build
+docker compose up -d --scale app=3     # więcej replik aplikacji
+docker compose logs -f app             # logi
+```
+
+Co uruchamia `compose.yaml`:
+
+| Usługa    | Rola                                                                                                                                                                  |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `caddy`   | Wejście z internetu: certyfikat dla `DOMAIN`, HTTP/2 i HTTP/3, porty 80, 443 i 443/UDP. Rozdziela ruch między repliki, jeden odwiedzający zawsze trafia do tej samej. |
+| `app`     | Aplikacja i API (port 8787 w sieci Compose, niedostępny z zewnątrz), domyślnie 2 repliki z `SHARED_DATA=1` i `TRUSTED_PROXY=1`.                                       |
+| `updater` | Ten sam obraz; uruchamia `npm run update` przy starcie i potem co 24 godziny. Repliki wczytują nowe dane w ciągu minuty.                                              |
+
+Wolumeny: `data` (dane serwera, `/data` w kontenerach), `caddy-data` i `caddy-config` (certyfikaty Caddy). Konfiguracja jest montowana tylko do odczytu; po jej zmianie wystarczy `docker compose restart app updater`.
+
+### Jeden serwer bez Dockera
+
+```bash
+npm ci
+npm run build
+NODE_ENV=production HOST=127.0.0.1 TRUSTED_PROXY=1 \
+  CONFIG_DIR=/etc/minigeoportal DATA_DIR=/var/lib/minigeoportal \
+  APP_ORIGIN=https://mapa.example.org npm start
+```
+
+Przed serwerem postaw reverse proxy z HTTPS, np. Caddy:
+
+```
+mapa.example.org {
+	reverse_proxy 127.0.0.1:8787
+}
+```
+
+i odświeżaj dane raz dziennie, np. przez cron:
+
+```
+0 4 * * * cd /srv/minigeoportal && CONFIG_DIR=/etc/minigeoportal DATA_DIR=/var/lib/minigeoportal npm run update
+```
+
+Serwer jako usługę systemową uruchamia się dowolnym menedżerem (systemd, pm2); na SIGTERM kończy trwające zapytania i zamyka się.
+
+## Parametry (zmienne środowiskowe)
+
+Ustawia się je w środowisku albo w pliku `.env` w katalogu aplikacji (wzór: `.env.example`; plik `.env` nie trafia do repozytorium).
+
+| Zmienna                                 | Domyślnie                                   | Znaczenie                                                                                                                        |
+| --------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `CONFIG_DIR`                            | `config`                                    | Katalog konfiguracji wdrożenia.                                                                                                  |
+| `DATA_DIR`                              | `server/data`                               | Katalog danych serwera (zob. niżej). Musi być zapisywalny.                                                                       |
+| `PORT`                                  | `8787`                                      | Port serwera.                                                                                                                    |
+| `HOST`                                  | `0.0.0.0` w produkcji, `127.0.0.1` poza nią | Adres nasłuchu. Za proxy na tej samej maszynie: `127.0.0.1`.                                                                     |
+| `NODE_ENV`                              |                                             | `production`: serwer udostępnia też zbudowaną aplikację z `dist/`.                                                               |
+| `APP_ORIGIN`                            |                                             | Publiczny adres aplikacji, np. `https://mapa.example.org`. Zgłoszenia mogą zawierać link tylko do niego; wymagany w produkcji.   |
+| `TRUSTED_PROXY`                         |                                             | `1` za reverse proxy dopisującym adres klienta do `X-Forwarded-For`; limity zapytań liczą się wtedy dla każdego klienta.         |
+| `SHARED_DATA`                           |                                             | `1`, gdy kilka instancji dzieli `DATA_DIR`: dane zapisuje tylko `npm run update`, instancje wczytują je ponownie w ciągu minuty. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | `587`, STARTTLS                             | Serwer poczty dla formularza zgłoszeń (`SMTP_SECURE=true` dla portu 465).                                                        |
+| `SMTP_USER`, `SMTP_PASS`                |                                             | Logowanie do serwera poczty. Tylko w `.env` lub w środowisku, nigdy w konfiguracji.                                              |
+| `REPORT_FROM`, `REPORT_TO`              |                                             | Nadawca i adresat zgłoszeń. Bez `SMTP_HOST` i `REPORT_TO` formularz jest wyłączony.                                              |
+| `API_PORT`                              | `8787`                                      | Tylko przy pracy nad aplikacją: gdzie serwer Vite znajduje API.                                                                  |
+
+## Ścieżki i pliki
+
+| Ścieżka                               | Zawartość                                                                                  |
+| ------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `<CONFIG_DIR>/`                       | Konfiguracja wdrożenia (zob. wyżej).                                                       |
+| `<CONFIG_DIR>/seed/capabilities.json` | Metadane usług na start, gdy `DATA_DIR` jest pusty (opcjonalnie).                          |
+| `<DATA_DIR>/capabilities.json`        | Metadane usług z ich GetCapabilities: zakresy skal, legendy, formaty informacji o miejscu. |
+| `<DATA_DIR>/catalog/catalog.json`     | Katalog warstw geoportal.gov.pl (moduł `gugik`).                                           |
+| `<DATA_DIR>/dict/`                    | Słowniki wyszukiwarki działek: województwa, powiaty, gminy, obręby (moduł `gugik`).        |
+| `dist/`                               | Zbudowana aplikacja (`npm run build`), ze skompresowanymi kopiami `.br` i `.gz`.           |
+| `skins/`, `i18n/`                     | Skórki i napisy interfejsu dołączone do aplikacji.                                         |
+
+## Polecenia
+
+| Polecenie                        | Działanie                                                                                                        |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`                    | Praca nad aplikacją: aplikacja i API z przeładowaniem po zmianach.                                               |
+| `npm run build`                  | Budowa aplikacji do `dist/`.                                                                                     |
+| `npm start`                      | Serwer (z `NODE_ENV=production` także aplikacja).                                                                |
+| `npm run update`                 | Odświeżenie danych serwera: metadanych usług i, z modułem `gugik`, katalogu warstw geoportalu (minuta lub dwie). |
+| `npm run config:check [katalog]` | Sprawdzenie konfiguracji bez uruchamiania serwera.                                                               |
+| `npm run check`                  | Kontrola typów, ESLint, Prettier i testy.                                                                        |
+| `npm test`                       | Same testy (Vitest).                                                                                             |
+
+Punkty kontrolne serwera: `GET /api/health` (stan i data metadanych), `GET /api/config` (konfiguracja przekazywana aplikacji).
 
 ## Architektura
 
-- `src/` aplikacja: React 19, TypeScript, OpenLayers 10 z widokiem w układzie z konfiguracji (domyślnie EPSG:2180), Tailwind CSS.
-- `config/` konfiguracja wdrożenia w YAML (`app.yaml`, `map.yaml`, `layers.yaml`): nazwa, układ współrzędnych, skale, podkłady, warstwy, wyszukiwarka i moduły. Serwer sprawdza ją przy starcie (błąd podaje plik, wiersz i kolumnę) i przekazuje aplikacji w stronie (`server/html.ts`, `src/config/runtime.ts`).
-- `server/modules/gugik/` i `src/modules/gugik/` opcjonalna integracja z geoportal.gov.pl: katalog warstw, kolejność rysowania, słowniki wyszukiwarki działek, skorowidz ortofotomapy, wyszukiwarka GUGiK, raport o działce.
-- `server/` lekki backend (Hono): cache metadanych usług, katalog warstw geoportal.gov.pl, słowniki do wyszukiwarki działek (województwa, powiaty, gminy, obręby) z cache na dysku, pośrednik GetFeatureInfo i wysyłka zgłoszeń błędów. Bez bazy danych.
-- Katalog warstw (`server/modules/gugik/geoportalConfig.ts`, `server/modules/gugik/catalog.ts`): serwer czyta konfigurację aplikacji geoportal.gov.pl (plik główny i 10 modułów tematycznych), rozwija grupy, przypisuje warstwy do tematów, usuwa duplikaty i sprawdza każdą usługę (WMS i WMTS przez GetCapabilities, ArcGIS REST przez opis usługi), zapisując jej metadane. Rysujemy tylko to, co serwer podaje w układzie PL-1992 (EPSG:2180), więc mapa nigdy nie przelicza obrazów w przeglądarce: WMS i dynamiczne mapy ArcGIS jako jeden obraz na widok, WMTS i kafle ArcGIS na siatce opisanej przez serwer. Warstwy dodane lub usunięte w geoportalu, zmienione adresy i metadane trafiają do nas przy odświeżeniu, bez zmian w kodzie. Gdy konfiguracji nie da się odczytać, zostaje poprzedni katalog; usługa, która chwilowo nie odpowiada, zachowuje ostatnie metadane. Aplikacja pobiera listę (ok. 14 KB po kompresji) przy otwarciu panelu warstw, a definicję warstwy dopiero przy jej włączeniu lub rozwinięciu listy podwarstw (pojedyncze podwarstwy można wybrać przed włączeniem całej usługi). Warstwy mapy powstają przy pierwszym włączeniu. Warstwy z `config/layers.yaml` zostają jako „kuracja”: polskie opisy i podwarstwy dla warstw z grupy „Najpopularniejsze”, połączone z katalogiem identyfikatorem warstwy geoportalu (`catalogId`).
-- Wydruk działa w całości w przeglądarce (`src/map/print.ts`): mapa jest na chwilę renderowana w arkuszu w skali wydruku i drukowana mechanizmem przeglądarki. Edytor wydruku geoportal.gov.pl przyjmuje model mapy, ale renderuje go serwer wydruku dostępny tylko z tokenem GUGiK, więc nie da się go użyć z zewnętrznej aplikacji.
-- Raport o działce to strona geoportal.gov.pl (`imap/parcelInfo`) otwierana dla współrzędnych klikniętego miejsca.
-- `public/thumbs/` miniatury podkładów: po jednym kaflu z każdej usługi, zmniejszonym do 128 px.
-- `scripts/precompress.ts` kompresja zbudowanych plików po `vite build`.
+- `src/`: aplikacja w React 19, TypeScript i OpenLayers 10, style w Tailwind CSS. Konfigurację dostaje w samej stronie (`src/config/runtime.ts`), bez dodatkowego zapytania.
+- `server/`: lekki serwer (Hono) bez bazy danych: konfiguracja (`server/config/`), cache metadanych usług, pośrednik zapytań o punkt, wyszukiwarka Nominatim, wysyłka zgłoszeń.
+- `server/modules/gugik/` i `src/modules/gugik/`: opcjonalna integracja z geoportal.gov.pl: katalog wszystkich warstw geoportalu budowany z jego konfiguracji i sprawdzany usługa po usłudze, kolejność rysowania, słowniki wyszukiwarki działek, skorowidz ortofotomapy, wyszukiwarka GUGiK, link do raportu o działce.
+- `i18n/`: napisy interfejsu (pl, en); `skins/`: skórki dołączone do aplikacji.
+- `Dockerfile`, `compose.yaml`, `deploy/caddy/`: kontenery.
 
-## Bezpieczeństwo API
+## Jakość
 
-API nie ma kont ani danych użytkowników. Zabezpieczenia:
+`npm run check` uruchamia kontrolę typów, ESLint (reguły TypeScript, React hooks, dostępności), Prettier i testy (Vitest): serwerowe w Node, aplikacji w jsdom, w tym reguły WCAG biblioteki axe-core, kontrast każdej skórki, kompletność tłumaczeń i opis każdego pola konfiguracji w dokumentacji. Każda zmiana ma mieć test w tym samym commicie.
 
-- Adresy usług z katalogu pochodzą z zewnętrznej konfiguracji, więc serwer przed każdym połączeniem (GetCapabilities, GetFeatureInfo, każde przekierowanie) sprawdza, że to http(s) na porcie 80, 443, 8080 lub 8443, a nazwa hosta wskazuje wyłącznie adresy publiczne. Nie da się nim sięgnąć do sieci wewnętrznej.
-- `/api/catalog` i `/api/catalog/:id` zwracają dane z cache, odświeżane tylko poleceniem `npm run update`. Opis usług i katalog mają nagłówek ETag, więc przeglądarka przy każdym otwarciu sprawdza aktualność, a niezmienione dane kosztują odpowiedź 304 bez treści.
-- `/api/featureinfo/:service` przyjmuje tylko usługi z konfiguracji lub z katalogu (te, które przy ostatnim sprawdzeniu działały), a każdy parametr jest walidowany i budowany na nowo (warstwy ze znanej listy, BBOX liczbowy, rozmiary do 4096 px, do 50 obiektów). Przekierowania usług GUGiK są śledzone po stronie serwera tylko na publiczne hosty (adresy rozwiązywane i sprawdzane względem sieci prywatnych) na portach 80, 443, 8080 i 8443. Odpowiedź jest czytana do 1 MB z jednym limitem czasu na cały łańcuch i zwracana jako zwykły tekst.
-- `/api/dict/szukaj?q=` szuka jednostek w liście całego kraju zapisanej w cache (trzy zapytania do PRG raz na 30 dni); nazwa ma do 60 liter, spacji, kropek i myślników, inne zapytania dostają pustą listę bez pytania usługi źródłowej.
-- Limity zapytań na adres klienta: słowniki 30 na raz i 60 na minutę, informacje o miejscu 40 i 60, skorowidz ortofotomapy 10 i 30, zgłoszenia 3 i 6 na godzinę; jednocześnie trwają najwyżej 24 zapytania do usług źródłowych. Odpowiedzi API są kompresowane.
-- `/api/dict/...` przyjmuje kod tylko wtedy, gdy występuje na liście nadrzędnej (powiat musi istnieć w województwie itd.), więc cache na dysku nie rośnie od zmyślonych identyfikatorów. Puste odpowiedzi nie trafiają na dysk.
-- Limity zapytań per adres (token bucket w pamięci) na słownikach i GetFeatureInfo, limit równoległych zapytań do usług źródłowych.
-- `POST /api/report` przyjmuje JSON do 16 KB: rodzaj ze stałej listy, opis 10–3000 znaków bez znaków sterujących, opcjonalny e-mail (sprawdzany, trafia tylko do `Reply-To`) i link wyłącznie do tej aplikacji. Temat wiadomości powstaje z rodzaju, a treść jest zwykłym tekstem. Ukryte pole odsiewa boty, a limit to 3 zgłoszenia na raz i 6 na godzinę z jednego adresu. Dane logowania SMTP są tylko w `.env` na serwerze.
-- `/api/orto?x=&y=` przyjmuje tylko punkt w granicach Polski (EPSG:2180) i pyta skorowidze ortofotomap GUGiK o ten punkt. Usługa odpowiada stroną HTML z rekordami w JavaScript; serwer wyciąga z niej pola wzorcem (nigdy jej nie wykonuje) i przepuszcza tylko daty, piksel, kolor, godło i linki do opendata.geoportal.gov.pl.
-- Wydruk nie ma punktu końcowego na serwerze: obraz składa przeglądarka użytkownika z tych samych kafli, które widzi na ekranie.
-- Nagłówki: Content Security Policy (skrypty tylko własne, obrazy map z dowolnego hosta https, połączenia tylko do usług GUGiK), `frame-ancestors 'none'`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`.
-- Błędy usług źródłowych są logowane na serwerze, a klient dostaje jedno ogólne zdanie.
+## Bezpieczeństwo
+
+API nie ma kont ani danych użytkowników.
+
+- Serwer łączy się z adresami usług tylko po sprawdzeniu, że to http(s) na typowym porcie, a host wskazuje adresy publiczne (także przy każdym przekierowaniu), więc nie da się nim sięgnąć do sieci wewnętrznej.
+- Zapytania o punkt przyjmują tylko usługi z konfiguracji lub z katalogu, a każdy parametr jest sprawdzany i budowany na nowo; odpowiedzi są czytane z limitem rozmiaru i czasu.
+- Limity zapytań na adres klienta i limit równoległych połączeń do usług źródłowych; wyszukiwarka Nominatim wysyła najwyżej jedno zapytanie na sekundę.
+- Konfiguracja nie może zawierać sekretów (klucze wyglądające na hasła i tokeny są odrzucane), a treści Markdown nie mogą wstawić HTML ani skryptów.
+- Nagłówki: Content Security Policy budowana z konfiguracji, `frame-ancestors 'none'`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`.
 
 ## Dane
 
-Wszystkie dane pochodzą z usług sieciowych Głównego Urzędu Geodezji i Kartografii oraz serwerów starostw i gmin, z którymi te usługi się łączą. Aplikacja pobiera je na bieżąco i nie przechowuje ich. Źródło: geoportal.gov.pl. Informacje mają charakter poglądowy i nie są dokumentem urzędowym.
+Aplikacja pobiera dane na bieżąco z usług wskazanych w konfiguracji i ich nie przechowuje. Za dane odpowiadają ich wydawcy; informacje mają charakter poglądowy.

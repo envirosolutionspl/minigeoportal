@@ -5,8 +5,8 @@ A deployment is a directory with three YAML files: `app.yaml`, `map.yaml` and `l
 **Texts.** Every field marked _text_ is either one string or one string per language:
 
 ```yaml
-title: Prosty Geoportal
-title: { pl: Prosty Geoportal, en: Simple Geoportal }
+title: Mapa gminy
+title: { pl: Mapa gminy, en: Municipal map }
 ```
 
 A language that has no text of its own gets the text of the default language.

@@ -1,6 +1,6 @@
-# Prosty Geoportal: overview
+# MiniGeoportal: overview
 
-Prosty Geoportal shows public map services (WMS, WMTS, ArcGIS REST, XYZ tiles) in a map that is quick to load and easy to use for people who do not work with maps. It runs as one small Node server that serves the app and a thin API; there is no database.
+MiniGeoportal shows public map services (WMS, WMTS, ArcGIS REST, XYZ tiles) in a map that is quick to load and easy to use for people who do not work with maps. It runs as one small Node server that serves the app and a thin API; there is no database.
 
 Everything that makes a deployment its own lives in a **configuration directory**:
 
@@ -17,7 +17,7 @@ config/
 
 The repository ships two deployments:
 
-- `config/`: the default one, prostygeoportal.pl, on the services of the Polish Head Office of Geodesy and Cartography (GUGiK) in PL-1992 (EPSG:2180), with the `gugik` module.
+- `config/`: Prosty Geoportal (prostygeoportal.pl), on the services of the Polish Head Office of Geodesy and Cartography (GUGiK) in PL-1992 (EPSG:2180), with the `gugik` module.
 - `examples/osm/`: OpenStreetMap tiles in Web Mercator (EPSG:3857), the Nominatim search and one WMS overlay, without any GUGiK service.
 
 Run the example:

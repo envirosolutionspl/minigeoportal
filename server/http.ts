@@ -193,7 +193,10 @@ export function rateKey(c: Context): string {
   const first = head ? head.split(':') : [];
   const last = tail ? tail.split(':') : [];
   const groups = [...first, ...Array<string>(8 - first.length - last.length).fill('0'), ...last];
-  return `${groups.slice(0, 4).map((g) => g.padStart(4, '0')).join(':')}::/64`;
+  return `${groups
+    .slice(0, 4)
+    .map((g) => g.padStart(4, '0'))
+    .join(':')}::/64`;
 }
 
 /**

@@ -28,7 +28,11 @@ describe('parseFeatureInfo', () => {
       { label: 'Identyfikator działki', value: '141708_2.0021.22/1' },
       { label: 'Numer działki', value: '22/1' },
       { label: 'Pole pow. w ewidencji gruntów (ha)', value: '0.2200' },
-      { label: 'Informacje dodatkowe o działce', value: 'Pobierz raport', href: 'https://uldk.gugik.gov.pl/dzinfo.php?dzialka=141708_2.0021.22/1&print' },
+      {
+        label: 'Informacje dodatkowe o działce',
+        value: 'Pobierz raport',
+        href: 'https://uldk.gugik.gov.pl/dzinfo.php?dzialka=141708_2.0021.22/1&print',
+      },
     ]);
   });
 
@@ -48,30 +52,52 @@ describe('parseFeatureInfo', () => {
 
   it('reads key/value tables and skips rows without a value', () => {
     expect(parseFeatureInfo(KV_HTML, 'text/html')).toEqual([
-      { title: undefined, fields: [{ label: 'Numer', value: '12/3' }, { label: 'Powierzchnia', value: '0.12 ha' }] },
+      {
+        title: undefined,
+        fields: [
+          { label: 'Numer', value: '12/3' },
+          { label: 'Powierzchnia', value: '0.12 ha' },
+        ],
+      },
     ]);
   });
 
   it('reads generic GML by grouping text leaves under their feature', () => {
     const gml = `<wfs:FeatureCollection xmlns:wfs="http://www.opengis.net/wfs" xmlns:gml="http://www.opengis.net/gml" xmlns:ms="http://mapserver.gis.umn.edu/mapserver"><gml:featureMember><ms:dzialki_feature><ms:TRAN_CENA_BRUTTO>250000</ms:TRAN_CENA_BRUTTO><ms:DOK_DATA>2021-05-20</ms:DOK_DATA><gml:boundedBy><gml:Box>1 2 3 4</gml:Box></gml:boundedBy></ms:dzialki_feature></gml:featureMember></wfs:FeatureCollection>`;
     expect(parseFeatureInfo(gml, 'application/vnd.ogc.gml')).toEqual([
-      { title: 'dzialki', fields: [{ label: 'TRAN CENA BRUTTO', value: '250000' }, { label: 'DOK DATA', value: '2021-05-20' }] },
+      {
+        title: 'dzialki',
+        fields: [
+          { label: 'TRAN CENA BRUTTO', value: '250000' },
+          { label: 'DOK DATA', value: '2021-05-20' },
+        ],
+      },
     ]);
   });
 
   it('treats empty bodies, unpublished layers and pages without tables as "no data"', () => {
     expect(parseFeatureInfo('', 'text/html')).toEqual([]);
-    expect(parseFeatureInfo('<ServiceExceptionReport><ServiceException code="LayerNotDefined">msWMS: Invalid layer(s)</ServiceException></ServiceExceptionReport>', 'text/xml')).toEqual([]);
+    expect(
+      parseFeatureInfo(
+        '<ServiceExceptionReport><ServiceException code="LayerNotDefined">msWMS: Invalid layer(s)</ServiceException></ServiceExceptionReport>',
+        'text/xml',
+      ),
+    ).toEqual([]);
     expect(parseFeatureInfo('<html><body><h1>Dane o planach</h1><p>wybierz warstwę</p></body></html>', 'text/html')).toEqual([]);
     expect(parseFeatureInfo('<GETFEATUREINFO>\n\n</GETFEATUREINFO>', 'text/xml')).toEqual([]);
   });
 
   it('reports a real service exception as an error', () => {
-    expect(() => parseFeatureInfo('<ServiceExceptionReport><ServiceException>Internal error</ServiceException></ServiceExceptionReport>', 'text/xml')).toThrow();
+    expect(() =>
+      parseFeatureInfo('<ServiceExceptionReport><ServiceException>Internal error</ServiceException></ServiceExceptionReport>', 'text/xml'),
+    ).toThrow();
   });
 
   it('never carries markup into values', () => {
-    const [record] = parseFeatureInfo('<table><tr><th>Opis</th><td><b>bold</b> <script>alert(1)</script>text</td></tr></table>', 'text/html');
+    const [record] = parseFeatureInfo(
+      '<table><tr><th>Opis</th><td><b>bold</b> <script>alert(1)</script>text</td></tr></table>',
+      'text/html',
+    );
     expect(record.fields[0].value).toBe('bold text');
   });
 });
@@ -89,9 +115,19 @@ describe('queryLayers', () => {
 describe('fetchFeatureInfo', () => {
   it('asks the proxy with the layers it was given and the preferred format', async () => {
     await withCapabilities();
-    const { calls } = stubFetch([['/api/capabilities', {}], ['/api/featureinfo/kieg', KIEG_XML, { headers: { 'X-Upstream-Content-Type': 'text/xml' } }]]);
+    const { calls } = stubFetch([
+      ['/api/capabilities', {}],
+      ['/api/featureinfo/kieg', KIEG_XML, { headers: { 'X-Upstream-Content-Type': 'text/xml' } }],
+    ]);
     const kieg = OVERLAY_BY_ID.get('kieg')!;
-    const records = await fetchFeatureInfo(kieg, createOverlayLayer(kieg), [656849, 482462], 0.5, ['dzialki'], new AbortController().signal);
+    const records = await fetchFeatureInfo(
+      kieg,
+      createOverlayLayer(kieg),
+      [656849, 482462],
+      0.5,
+      ['dzialki'],
+      new AbortController().signal,
+    );
     const url = new URL(calls.at(-1)!, 'http://localhost');
     expect(url.pathname).toBe('/api/featureinfo/kieg');
     expect(url.searchParams.get('QUERY_LAYERS')).toBe('dzialki');
@@ -105,14 +141,31 @@ describe('fetchFeatureInfo', () => {
     await withCapabilities();
     stubFetch([['/api/featureinfo/', 'busy', { status: 503 }]]);
     const kieg = OVERLAY_BY_ID.get('kieg')!;
-    await expect(fetchFeatureInfo(kieg, createOverlayLayer(kieg), [1, 2], 1, ['dzialki'], new AbortController().signal)).rejects.toThrow('HTTP 503');
+    await expect(fetchFeatureInfo(kieg, createOverlayLayer(kieg), [1, 2], 1, ['dzialki'], new AbortController().signal)).rejects.toThrow(
+      'HTTP 503',
+    );
   });
 });
 
 describe('WMTS and ArcGIS layers', () => {
   const base = OVERLAY_BY_ID.get('kieg')!;
-  const topo: Overlay = { ...base, id: 'msTopo', kind: 'wmts', url: 'https://gugik.example/wmts', sublayers: [{ name: 'MAPA', title: 'Mapa' }] };
-  const gleby: Overlay = { ...base, id: 'msGleby', kind: 'rest', url: 'https://gugik.example/gleby/MapServer', sublayers: [{ name: '2', title: 'Kontury' }, { name: '1', title: 'Zasięg' }] };
+  const topo: Overlay = {
+    ...base,
+    id: 'msTopo',
+    kind: 'wmts',
+    url: 'https://gugik.example/wmts',
+    sublayers: [{ name: 'MAPA', title: 'Mapa' }],
+  };
+  const gleby: Overlay = {
+    ...base,
+    id: 'msGleby',
+    kind: 'rest',
+    url: 'https://gugik.example/gleby/MapServer',
+    sublayers: [
+      { name: '2', title: 'Kontury' },
+      { name: '1', title: 'Zasięg' },
+    ],
+  };
   const cache: Overlay = { ...gleby, id: 'msCache', sublayers: [{ name: 'tiles', title: 'Mapa' }] };
   const layers = {
     '0': { title: 'Odkrywki', queryable: true, maxScale: 50000 },
@@ -121,7 +174,12 @@ describe('WMTS and ArcGIS layers', () => {
     '3': { title: 'Grupa', queryable: false, group: true },
   };
   // Resolution 100 m: one 512-pixel tile is 51 200 m wide.
-  const matrixSet = { id: 'EPSG:2180', origin: [100000, 850000] as [number, number], tileSize: 512, matrices: [{ id: 'EPSG:2180:0', scale: 100 / OGC_PIXEL, width: 20, height: 20 }] };
+  const matrixSet = {
+    id: 'EPSG:2180',
+    origin: [100000, 850000] as [number, number],
+    tileSize: 512,
+    matrices: [{ id: 'EPSG:2180:0', scale: 100 / OGC_PIXEL, width: 20, height: 20 }],
+  };
 
   it('queries a WMTS only when it lists formats, and an ArcGIS tile cache in all its layers in scale', () => {
     registerMeta('msTopo', { kind: 'wmts', fetchedAt: 'x', title: 'T', layer: 'MAPA', matrixSet });
@@ -131,37 +189,82 @@ describe('WMTS and ArcGIS layers', () => {
 
     registerMeta('msGleby', { kind: 'rest', fetchedAt: 'x', title: 'G', layers });
     expect(queryLayers(gleby, ['2', '1'], 5000)).toEqual(['2']);
-    registerMeta('msCache', { kind: 'rest', fetchedAt: 'x', title: 'G', layers, tiles: { origin: [100000, 850000], tileSize: 512, resolutions: [100] } });
+    registerMeta('msCache', {
+      kind: 'rest',
+      fetchedAt: 'x',
+      title: 'G',
+      layers,
+      tiles: { origin: [100000, 850000], tileSize: 512, resolutions: [100] },
+    });
     expect(queryLayers(cache, ['tiles'], 5000)).toEqual(['0', '2']);
   });
 
   it('names the tile and pixel for a WMTS and a small window around the point for ArcGIS', async () => {
-    registerMeta('msTopo', { kind: 'wmts', fetchedAt: 'x', title: 'T', layer: 'MAPA', infoFormats: ['text/xml; subtype=gml/3.2', 'text/html'], matrixSet });
+    registerMeta('msTopo', {
+      kind: 'wmts',
+      fetchedAt: 'x',
+      title: 'T',
+      layer: 'MAPA',
+      infoFormats: ['text/xml; subtype=gml/3.2', 'text/html'],
+      matrixSet,
+    });
     const { calls } = stubFetch([['/api/featureinfo/', '<html></html>']]);
     const signal = new AbortController().signal;
     await fetchFeatureInfo(topo, createOverlayLayer(topo), [100000 + 51200 + 1050, 850000 - 51200 - 2050], 100, ['MAPA'], signal);
     const tile = new URL(calls.at(-1)!, 'http://localhost').searchParams;
-    expect(Object.fromEntries(tile)).toEqual({ TILEMATRIX: 'EPSG:2180:0', TILECOL: '1', TILEROW: '1', I: '10', J: '20', INFOFORMAT: 'text/html' });
+    expect(Object.fromEntries(tile)).toEqual({
+      TILEMATRIX: 'EPSG:2180:0',
+      TILECOL: '1',
+      TILEROW: '1',
+      I: '10',
+      J: '20',
+      INFOFORMAT: 'text/html',
+    });
 
     registerMeta('msGleby', { kind: 'rest', fetchedAt: 'x', title: 'G', layers });
     await fetchFeatureInfo(gleby, createOverlayLayer(gleby), [560000, 420000], 2, ['2'], signal);
     const point = new URL(calls.at(-1)!, 'http://localhost').searchParams;
-    expect(Object.fromEntries(point)).toEqual({ QUERY_LAYERS: '2', BBOX: '559900,419900,560100,420100', WIDTH: '100', HEIGHT: '100', I: '50', J: '50' });
+    expect(Object.fromEntries(point)).toEqual({
+      QUERY_LAYERS: '2',
+      BBOX: '559900,419900,560100,420100',
+      WIDTH: '100',
+      HEIGHT: '100',
+      I: '50',
+      J: '50',
+    });
   });
 
   it('reads ArcGIS identify results and WMTS tables without technical fields', () => {
     const identify = JSON.stringify({
-      results: [{ layerId: 2, layerName: 'KONTURY_GLEBOWE', attributes: { OBJECTID: '1', SYS_ID: '9', 'SHAPE.AREA': '1,5', Shape: 'Polygon', UWAGI: 'Null', TYPPODTYP: 'Bw', KOMPLEKS: '7' } }],
+      results: [
+        {
+          layerId: 2,
+          layerName: 'KONTURY_GLEBOWE',
+          attributes: { OBJECTID: '1', SYS_ID: '9', 'SHAPE.AREA': '1,5', Shape: 'Polygon', UWAGI: 'Null', TYPPODTYP: 'Bw', KOMPLEKS: '7' },
+        },
+      ],
     });
     expect(parseFeatureInfo(identify, 'application/json')).toEqual([
-      { title: 'KONTURY_GLEBOWE', fields: [{ label: 'TYPPODTYP', value: 'Bw' }, { label: 'KOMPLEKS', value: '7' }] },
+      {
+        title: 'KONTURY_GLEBOWE',
+        fields: [
+          { label: 'TYPPODTYP', value: 'Bw' },
+          { label: 'KOMPLEKS', value: '7' },
+        ],
+      },
     ]);
     expect(() => parseFeatureInfo('{"error":{"code":400}}', 'text/plain')).toThrow('Serwer odrzucił zapytanie');
     const sheet = (category: string, name: string) =>
       `<h3>warstwa: <b>Arkusze</b></h3><table><tr><th>SHAPE</th><td>Polygon</td></tr><tr><th>LOWPS</th><td>0,8</td></tr><tr><th>CATEGORY</th><td>${category}</td></tr><tr><th>SERIA</th><td>TOPO_10_1992</td></tr><tr><th>NAME</th><td>${name}</td></tr></table>`;
     const wmts = `<html><body>${sheet('Primary', 'N-34-139-B-c-3')}${sheet('Overview', 'Ov_i281')}</body></html>`;
     expect(parseFeatureInfo(wmts, 'text/html')).toEqual([
-      { title: 'Arkusze', fields: [{ label: 'SERIA', value: 'TOPO_10_1992' }, { label: 'NAME', value: 'N-34-139-B-c-3' }] },
+      {
+        title: 'Arkusze',
+        fields: [
+          { label: 'SERIA', value: 'TOPO_10_1992' },
+          { label: 'NAME', value: 'N-34-139-B-c-3' },
+        ],
+      },
     ]);
   });
 });

@@ -206,12 +206,18 @@ async function nature(query: string, signal: AbortSignal): Promise<SearchHit[]> 
     const center = points[Math.floor(points.length / 2)];
     return [{ rank, hit: { kind: 'nature' as const, label: name, detail: f.properties.RODZAJOBIEKTU, center, wkt } }];
   });
-  const top = hits.sort((a, b) => a.rank - b.rank).slice(0, MAX_NATURE).map((h) => h.hit);
+  const top = hits
+    .sort((a, b) => a.rank - b.rank)
+    .slice(0, MAX_NATURE)
+    .map((h) => h.hit);
   // Where each object is, so that the many "Czarny Staw" lakes can be told apart. Rivers and
   // other objects drawn with many points cross many municipalities, so they get none.
   const codes = await Promise.all(top.map((h) => (h.wkt ? undefined : communeAt(h.center, signal).catch(() => undefined))));
   signal.throwIfAborted();
-  const names = await unitNames(codes.filter((c): c is string => Boolean(c)), signal);
+  const names = await unitNames(
+    codes.filter((c): c is string => Boolean(c)),
+    signal,
+  );
   return top.map((h, i) => {
     const code = codes[i];
     const u = code ? names.get(code) : undefined;
@@ -290,13 +296,12 @@ async function uldkRows(params: Record<string, string>, signal: AbortSignal): Pr
 
 /** Parcels by full id or "precinct name number"; several hits when precinct names repeat. */
 export async function findParcels(query: string, signal: AbortSignal): Promise<SearchHit[]> {
-  const rows = await uldkRows(
-    { request: 'GetParcelByIdOrNr', id: query, result: 'id,commune,region,parcel,geom_wkt' },
-    signal,
-  );
+  const rows = await uldkRows({ request: 'GetParcelByIdOrNr', id: query, result: 'id,commune,region,parcel,geom_wkt' }, signal);
   return rows.flatMap(([id, commune, region, parcel, wkt]) => {
     if (!wkt) return [];
-    return [{ kind: 'parcel' as const, label: `Działka ${parcel}`, detail: `obręb ${region}, gm. ${commune} · ${id}`, wkt: stripSrid(wkt) }];
+    return [
+      { kind: 'parcel' as const, label: `Działka ${parcel}`, detail: `obręb ${region}, gm. ${commune} · ${id}`, wkt: stripSrid(wkt) },
+    ];
   });
 }
 
@@ -331,7 +336,10 @@ export async function search(query: string, signal: AbortSignal): Promise<Search
     ...others.filter((h) => !exact(h)),
   ].slice(0, MAX_HITS);
   signal.throwIfAborted();
-  const names = await unitNames(merged.flatMap((h) => (h.teryt && !h.detail?.includes('woj.') ? [h.teryt] : [])), signal);
+  const names = await unitNames(
+    merged.flatMap((h) => (h.teryt && !h.detail?.includes('woj.') ? [h.teryt] : [])),
+    signal,
+  );
   return merged.map((h) => withUnits(h, names));
 }
 
@@ -352,9 +360,6 @@ export async function placeOutline(hit: SearchHit, signal: AbortSignal): Promise
 
 /** Outline of the building at a point (an address), from the land register via ULDK. */
 export async function buildingAt(center: [number, number], signal: AbortSignal): Promise<string | undefined> {
-  const [row] = await uldkRows(
-    { request: 'GetBuildingByXY', xy: `${center[0]},${center[1]},2180`, result: 'geom_wkt' },
-    signal,
-  );
+  const [row] = await uldkRows({ request: 'GetBuildingByXY', xy: `${center[0]},${center[1]},2180`, result: 'geom_wkt' }, signal);
   return row?.[0] ? stripSrid(row[0]) : undefined;
 }

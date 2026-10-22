@@ -45,7 +45,13 @@ body,
 #root {
   height: 100%;
   margin: 0;
-  font-family: 'Figtree Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    'Figtree Variable',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -447,4 +453,3 @@ html[data-contrast='high'] .ol-attribution:not(.ol-collapsed),
 html[data-contrast='high'] .ol-scale-line {
   background: #000000;
 }
-

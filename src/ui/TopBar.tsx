@@ -1,5 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
-import { Building2, Home, Info, Landmark, Layers, Link2, LocateFixed, Mountain, Printer, Route, Ruler, Search, SquareDashed, X, type LucideIcon } from 'lucide-react';
+import {
+  Building2,
+  Home,
+  Info,
+  Landmark,
+  Layers,
+  Link2,
+  LocateFixed,
+  Mountain,
+  Printer,
+  Route,
+  Ruler,
+  Search,
+  SquareDashed,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import { fromLonLat } from 'ol/proj';
 import { buildingAt, placeOutline, search, unitOutline, type HitKind, type SearchHit } from '@/services/geocoder';
 import { useMapStore } from '@/state/store';
@@ -72,7 +88,9 @@ export function TopBar() {
         if (controller.signal.aborted) return;
         setHits(found);
         setActive(-1);
-        setAnnounce(found.length ? `Wyników: ${found.length}. Strzałki w dół i w górę wybierają, Enter pokazuje na mapie.` : 'Brak wyników.');
+        setAnnounce(
+          found.length ? `Wyników: ${found.length}. Strzałki w dół i w górę wybierają, Enter pokazuje na mapie.` : 'Brak wyników.',
+        );
         setOpen(true);
       } catch (e) {
         if (!(e instanceof DOMException && e.name === 'AbortError')) setHits([]);
@@ -222,6 +240,8 @@ export function TopBar() {
           {hits.map((h, i) => {
             const Icon = ICON[h.kind];
             return (
+              // Keyboard choice happens in the combobox input (arrows and Enter), as the pattern requires.
+              // eslint-disable-next-line jsx-a11y/click-events-have-key-events
               <li
                 key={`${i}-${h.label}-${h.detail ?? ''}`}
                 id={`search-hit-${i}`}
@@ -265,7 +285,10 @@ export function TopBar() {
         <IconButton label="Kopiuj link do tego widoku mapy" onClick={() => void copyLink()}>
           <Link2 className="h-5 w-5" />
         </IconButton>
-        <IconButton label="Drukuj mapę" active={tool === 'print'} onClick={() => {
+        <IconButton
+          label="Drukuj mapę"
+          active={tool === 'print'}
+          onClick={() => {
             // The print panel takes the place panel's spot on the left.
             useInfoStore.getState().close();
             if (tool === 'print') setTool('none');

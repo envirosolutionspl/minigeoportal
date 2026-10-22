@@ -16,7 +16,10 @@ const UUG = {
 beforeEach(() => {
   clearUnitNames();
   useMapStore.setState({ focus: null, tool: 'none' });
-  stubFetch([['services.gugik.gov.pl/uug', UUG], ['/api/dict/jednostki', {}]]);
+  stubFetch([
+    ['services.gugik.gov.pl/uug', UUG],
+    ['/api/dict/jednostki', {}],
+  ]);
 });
 
 const type = async (text: string) => {
@@ -67,12 +70,20 @@ describe('copy link', () => {
   it('copies a link to this view with the base map and the layers that are on', async () => {
     const writeText = vi.fn(async () => {});
     vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
-    useMapStore.setState({ center: [656849.4, 482462.6], zoom: 13, base: 'orto', overlays: ['kieg', 'kiut'], sublayers: { kiut: ['przewod_gazowy'] } });
+    useMapStore.setState({
+      center: [656849.4, 482462.6],
+      zoom: 13,
+      base: 'orto',
+      overlays: ['kieg', 'kiut'],
+      sublayers: { kiut: ['przewod_gazowy'] },
+    });
     render(<TopBar />);
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Kopiuj link do tego widoku mapy' }));
     });
-    expect(writeText).toHaveBeenCalledWith(`${location.origin}${location.pathname}?x=656849&y=482463&z=13.0&b=orto&l=kieg,kiut.przewod_gazowy`);
+    expect(writeText).toHaveBeenCalledWith(
+      `${location.origin}${location.pathname}?x=656849&y=482463&z=13.0&b=orto&l=kieg,kiut.przewod_gazowy`,
+    );
     expect(screen.getByText('Skopiowano link do tego widoku mapy.')).toBeTruthy();
   });
 
@@ -82,14 +93,16 @@ describe('copy link', () => {
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Kopiuj link do tego widoku mapy' }));
     });
-    expect(screen.getByText(new RegExp(`^${location.origin.replace(/[.:/]/g, '\$&')}.*\?x=`))).toBeTruthy();
+    expect(screen.getByText(new RegExp(`^${location.origin.replace(/[.:/]/g, '\\$&')}.*\\?x=`))).toBeTruthy();
   });
 });
 
 describe('map tools', () => {
   it('lists the tools from layers at the top to help at the bottom', () => {
     const { container } = render(<TopBar />);
-    const labels = [...container.querySelectorAll('.map-tools > button, .map-tools > div > button')].map((b) => b.getAttribute('aria-label'));
+    const labels = [...container.querySelectorAll('.map-tools > button, .map-tools > div > button')].map((b) =>
+      b.getAttribute('aria-label'),
+    );
     expect(labels).toEqual([
       'Warstwy',
       'Moja lokalizacja',

@@ -4,7 +4,10 @@ import { stubFetch } from '@/test/helpers';
 
 describe('dictionary', () => {
   it('builds the URL without a trailing slash for the top level and remembers answers', async () => {
-    const { calls } = stubFetch([['/api/dict/wojewodztwa', [{ id: '14', name: 'mazowieckie' }]], ['/api/dict/powiaty/14', [{ id: '1417', name: 'otwocki' }]]]);
+    const { calls } = stubFetch([
+      ['/api/dict/wojewodztwa', [{ id: '14', name: 'mazowieckie' }]],
+      ['/api/dict/powiaty/14', [{ id: '1417', name: 'otwocki' }]],
+    ]);
     expect(await dictionary('wojewodztwa')).toEqual([{ id: '14', name: 'mazowieckie' }]);
     expect(await dictionary('wojewodztwa')).toHaveLength(1);
     expect(await dictionary('powiaty', '14')).toEqual([{ id: '1417', name: 'otwocki' }]);
@@ -44,7 +47,10 @@ describe('parcelInPrecinct', () => {
   it('falls back to the precinct name and keeps only hits from that precinct', async () => {
     stubFetch([
       ['id=141708_2.0021.22%2F1', '-1 brak wyników'],
-      ['id=Wi%C4%85zowna+Gminna+22%2F1', `2\n141708_2.0021.AR_1.22/1|Wiązowna|Wiązowna Gminna|22/1|SRID=2180;POINT(0 0)\n020101_1.0001.22/1|Inna|Wiązowna Gminna|22/1|SRID=2180;POINT(1 1)\n`],
+      [
+        'id=Wi%C4%85zowna+Gminna+22%2F1',
+        `2\n141708_2.0021.AR_1.22/1|Wiązowna|Wiązowna Gminna|22/1|SRID=2180;POINT(0 0)\n020101_1.0001.22/1|Inna|Wiązowna Gminna|22/1|SRID=2180;POINT(1 1)\n`,
+      ],
     ]);
     const hits = await parcelInPrecinct(precinct, '22/1', new AbortController().signal);
     expect(hits).toHaveLength(1);

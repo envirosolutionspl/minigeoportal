@@ -57,7 +57,9 @@ describe('orthoAt', () => {
       vi.fn(async (url: string) => {
         calls.push(url);
         if (url.includes('GetCapabilities')) {
-          return new Response('<Name>SkorowidzeOrtofotomapy2027</Name><Name>SkorowidzeOrtofotomapyZasiegi2027</Name><Name>SkorowidzeOrtofotomapyStarsze</Name>');
+          return new Response(
+            '<Name>SkorowidzeOrtofotomapy2027</Name><Name>SkorowidzeOrtofotomapyZasiegi2027</Name><Name>SkorowidzeOrtofotomapyStarsze</Name>',
+          );
         }
         return new Response(PAGE);
       }),

@@ -29,7 +29,8 @@ const HIDDEN = /^(id|fid|gid|objectid|esri_oid|sys_id|shape([._].*)?|gdb_id|id_p
  * Fields of an ArcGIS mosaic of scanned sheets (topographic maps, aerial photos): pixel sizes,
  * centres and who edited the record. The sheet name, series and date stay.
  */
-const MOSAIC = /^(minps|maxps|lowps|highps|centerx|centery|category|tag|groupname|productname|zorder|edytowal|utworzyl|data_edycji|data_utworzenia)$/i;
+const MOSAIC =
+  /^(minps|maxps|lowps|highps|centerx|centery|category|tag|groupname|productname|zorder|edytowal|utworzyl|data_edycji|data_utworzenia)$/i;
 /** ArcGIS writes an empty attribute as the word Null. */
 const EMPTY = /^(null|<null>)?$/i;
 const SERVICE_ERROR = /ServiceException/;
@@ -56,7 +57,13 @@ export function queryLayers(def: Overlay, selected: string[], scale: number): st
 const WMTS_FORMATS = ['text/html', 'text/xml', 'text/plain'];
 
 /** Parameters of the query for the clicked point, in the form the proxy checks for each kind. */
-function queryParams(def: Overlay, layer: OverlayLayer, coordinate: number[], resolution: number, layers: string[]): URLSearchParams | undefined {
+function queryParams(
+  def: Overlay,
+  layer: OverlayLayer,
+  coordinate: number[],
+  resolution: number,
+  layers: string[],
+): URLSearchParams | undefined {
   const source = layer.getSource();
   if (source instanceof ImageWMS) {
     const url = source.getFeatureInfoUrl(coordinate, resolution, 'EPSG:2180', {
@@ -189,7 +196,11 @@ function parseHtml(doc: Document): InfoRecord[] {
       // Column table: one record per data row.
       for (const row of rows.slice(1)) {
         const cells = [...row.querySelectorAll('td')];
-        push(records, title, cells.map((td, i) => field(header[i]?.textContent ?? '', td)));
+        push(
+          records,
+          title,
+          cells.map((td, i) => field(header[i]?.textContent ?? '', td)),
+        );
       }
     } else {
       // Key/value table: two cells per row.
@@ -213,7 +224,11 @@ function parseXml(doc: Document): InfoRecord[] {
   if (attrLayers.length > 0) {
     for (const layer of attrLayers) {
       const attrs = [...layer.getElementsByTagName('Attribute')];
-      push(records, undefined, attrs.map((a) => field(a.getAttribute('Name') ?? '', a.textContent ?? '')));
+      push(
+        records,
+        undefined,
+        attrs.map((a) => field(a.getAttribute('Name') ?? '', a.textContent ?? '')),
+      );
     }
     return records;
   }
@@ -258,7 +273,11 @@ function parseIdentify(response: IdentifyResponse): InfoRecord[] {
   if (response.error) throw new Error('Serwer odrzucił zapytanie');
   const records: InfoRecord[] = [];
   for (const r of response.results ?? []) {
-    push(records, r.layerName, Object.entries(r.attributes ?? {}).map(([label, value]) => field(label, String(value ?? ''))));
+    push(
+      records,
+      r.layerName,
+      Object.entries(r.attributes ?? {}).map(([label, value]) => field(label, String(value ?? ''))),
+    );
   }
   return records;
 }

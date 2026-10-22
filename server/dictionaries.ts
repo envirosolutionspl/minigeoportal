@@ -138,9 +138,7 @@ export function voivodeships(): Promise<DictEntry[]> {
 export async function counties(voivodeship: string): Promise<DictEntry[]> {
   if (!/^\d{2}$/.test(voivodeship)) throw new RequestError('Invalid voivodeship');
   await ensureKnown(voivodeships(), voivodeship, 'voivodeship');
-  return cached(`pow-${voivodeship}`, async () =>
-    (await prg(1, voivodeship)).map((r) => ({ id: r.teryt, name: r.nazwa })).sort(byName),
-  );
+  return cached(`pow-${voivodeship}`, async () => (await prg(1, voivodeship)).map((r) => ({ id: r.teryt, name: r.nazwa })).sort(byName));
 }
 
 /**
@@ -152,20 +150,44 @@ const CITY_DISTRICTS: Record<string, { city: string; districts: [string, string]
   '1465011': {
     city: 'Warszawa',
     districts: [
-      ['146502_8', 'Bemowo'], ['146503_8', 'Białołęka'], ['146504_8', 'Bielany'], ['146505_8', 'Mokotów'],
-      ['146506_8', 'Ochota'], ['146507_8', 'Praga-Południe'], ['146508_8', 'Praga-Północ'], ['146509_8', 'Rembertów'],
-      ['146510_8', 'Śródmieście'], ['146511_8', 'Targówek'], ['146512_8', 'Ursus'], ['146513_8', 'Ursynów'],
-      ['146514_8', 'Wawer'], ['146515_8', 'Wesoła'], ['146516_8', 'Wilanów'], ['146517_8', 'Włochy'],
-      ['146518_8', 'Wola'], ['146519_8', 'Żoliborz'],
+      ['146502_8', 'Bemowo'],
+      ['146503_8', 'Białołęka'],
+      ['146504_8', 'Bielany'],
+      ['146505_8', 'Mokotów'],
+      ['146506_8', 'Ochota'],
+      ['146507_8', 'Praga-Południe'],
+      ['146508_8', 'Praga-Północ'],
+      ['146509_8', 'Rembertów'],
+      ['146510_8', 'Śródmieście'],
+      ['146511_8', 'Targówek'],
+      ['146512_8', 'Ursus'],
+      ['146513_8', 'Ursynów'],
+      ['146514_8', 'Wawer'],
+      ['146515_8', 'Wesoła'],
+      ['146516_8', 'Wilanów'],
+      ['146517_8', 'Włochy'],
+      ['146518_8', 'Wola'],
+      ['146519_8', 'Żoliborz'],
     ],
   },
   '1261011': {
     city: 'Kraków',
-    districts: [['126102_9', 'Krowodrza'], ['126103_9', 'Nowa Huta'], ['126104_9', 'Podgórze'], ['126105_9', 'Śródmieście']],
+    districts: [
+      ['126102_9', 'Krowodrza'],
+      ['126103_9', 'Nowa Huta'],
+      ['126104_9', 'Podgórze'],
+      ['126105_9', 'Śródmieście'],
+    ],
   },
   '1061011': {
     city: 'Łódź',
-    districts: [['106102_9', 'Bałuty'], ['106103_9', 'Górna'], ['106104_9', 'Polesie'], ['106105_9', 'Śródmieście'], ['106106_9', 'Widzew']],
+    districts: [
+      ['106102_9', 'Bałuty'],
+      ['106103_9', 'Górna'],
+      ['106104_9', 'Polesie'],
+      ['106105_9', 'Śródmieście'],
+      ['106106_9', 'Widzew'],
+    ],
   },
 };
 
@@ -192,7 +214,10 @@ export async function precincts(commune: string): Promise<DictEntry[]> {
   return cached(`obr-${commune}`, async () => {
     const q = new URLSearchParams({ request: 'GetRegionById', id: commune, result: 'teryt,region' });
     const res = await fetchFixed(`${ULDK}?${q}`, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-    const [status, ...rows] = new TextDecoder().decode(await readLimited(res, MAX_BYTES)).trim().split('\n');
+    const [status, ...rows] = new TextDecoder()
+      .decode(await readLimited(res, MAX_BYTES))
+      .trim()
+      .split('\n');
     if (status.startsWith('-1')) return [];
     if (!status.startsWith('0')) throw new Error('ULDK error status');
     return rows
@@ -202,8 +227,6 @@ export async function precincts(commune: string): Promise<DictEntry[]> {
       .sort((a, b) => a.name.localeCompare(b.name, 'pl', { numeric: true }));
   });
 }
-
-
 
 const MAX_UNIT_CODES = 20;
 
@@ -231,9 +254,6 @@ export async function unitNames(codes: string[]): Promise<Record<string, UnitNam
   return out;
 }
 
-
-
-
 const LEVEL_ORDER: UnitLevel[] = ['woj', 'pow', 'gm'];
 /** "powiat otwocki", "gm. Wiązowna": a leading word limits the search to one level. */
 const LEVEL_WORDS: [RegExp, UnitLevel][] = [
@@ -243,8 +263,7 @@ const LEVEL_WORDS: [RegExp, UnitLevel][] = [
 ];
 const MAX_UNIT_HITS = 8;
 
-const allCounties = () =>
-  cached('pow-all', async () => (await prg(1, '')).map((r) => ({ id: r.teryt, name: r.nazwa })));
+const allCounties = () => cached('pow-all', async () => (await prg(1, '')).map((r) => ({ id: r.teryt, name: r.nazwa })));
 const allCommunes = () =>
   cached('gmi-all', async () => (await prg(0, '')).filter((r) => /^\d{7}$/.test(r.teryt)).map((r) => ({ id: r.teryt, name: r.nazwa })));
 

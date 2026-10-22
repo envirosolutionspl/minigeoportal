@@ -26,7 +26,10 @@ function stubHops(hops: (() => Response)[]) {
   return calls;
 }
 const redirect = (location: string) => () => new Response(null, { status: 302, headers: { location } });
-const ok = (body: string, type = 'text/xml') => () => new Response(body, { status: 200, headers: { 'content-type': type } });
+const ok =
+  (body: string, type = 'text/xml') =>
+  () =>
+    new Response(body, { status: 200, headers: { 'content-type': type } });
 
 describe('featureInfo validation', () => {
   it.each([
@@ -157,7 +160,11 @@ describe('WMTS and ArcGIS queries', () => {
       infoFormats: new Set(['text/html']),
     },
   };
-  const REST = { kind: 'rest' as const, url: 'https://mapy.geoportal.gov.pl/gprest/services/MapaGlebowoRolnicza/MapServer/', layers: new Set(['0', '2']) };
+  const REST = {
+    kind: 'rest' as const,
+    url: 'https://mapy.geoportal.gov.pl/gprest/services/MapaGlebowoRolnicza/MapServer/',
+    layers: new Set(['0', '2']),
+  };
   const lookup = (id: string) => (id === 'msTopo' ? WMTS : id === 'msGleby' ? REST : undefined);
   const TILE = 'TILEMATRIX=EPSG:2180:9&TILEROW=120&TILECOL=88&I=10&J=511&INFOFORMAT=text/html';
 
@@ -200,6 +207,8 @@ describe('WMTS and ArcGIS queries', () => {
     expect(url.searchParams.get('layers')).toBe('visible:2,0');
     expect(url.searchParams.get('sr')).toBe('2180');
     expect(url.searchParams.get('imageDisplay')).toBe('100,100,96');
-    await expect(featureInfo('msGleby', query('QUERY_LAYERS=1&BBOX=0,0,1,1&WIDTH=1&HEIGHT=1&I=0&J=0'), lookup)).rejects.toThrow('Invalid QUERY_LAYERS');
+    await expect(featureInfo('msGleby', query('QUERY_LAYERS=1&BBOX=0,0,1,1&WIDTH=1&HEIGHT=1&I=0&J=0'), lookup)).rejects.toThrow(
+      'Invalid QUERY_LAYERS',
+    );
   });
 });

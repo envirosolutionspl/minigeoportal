@@ -95,7 +95,9 @@ export function LayerCatalog() {
   const others = useMemo(
     () =>
       entries
-        .filter((e) => !e.curated && (topic === null || e.topic === topic) && (q.length === 0 || q.every((w) => texts.get(e.id)?.includes(w))))
+        .filter(
+          (e) => !e.curated && (topic === null || e.topic === topic) && (q.length === 0 || q.every((w) => texts.get(e.id)?.includes(w))),
+        )
         .sort(byAvailability),
     [entries, texts, q, topic],
   );
@@ -124,7 +126,12 @@ export function LayerCatalog() {
             className="w-full bg-transparent text-sm outline-none placeholder:text-[var(--muted)]"
           />
           {query && (
-            <button type="button" onClick={() => setQuery('')} aria-label="Wyczyść wyszukiwanie" className="rounded-full p-1 hover:bg-[var(--hover)]">
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              aria-label="Wyczyść wyszukiwanie"
+              className="rounded-full p-1 hover:bg-[var(--hover)]"
+            >
               <X className="h-4 w-4" />
             </button>
           )}
@@ -166,7 +173,12 @@ export function LayerCatalog() {
             </Group>
             <Group title="Wszystkie warstwy">
               {(Object.keys(TOPICS) as Topic[]).map((t) => (
-                <TopicSection key={t} topic={t} own={results.filter((r) => !r.s.starter && r.s.topic === t).map((r) => r.s)} entries={others.filter((e) => e.topic === t)} />
+                <TopicSection
+                  key={t}
+                  topic={t}
+                  own={results.filter((r) => !r.s.starter && r.s.topic === t).map((r) => r.s)}
+                  entries={others.filter((e) => e.topic === t)}
+                />
               ))}
             </Group>
           </>
@@ -246,7 +258,11 @@ function CatalogList({ entries }: { entries: CatalogIndexEntry[] }) {
         <CatalogItem key={e.id} entry={e} />
       ))}
       {entries.length > shown && (
-        <button type="button" onClick={() => setShown(shown + PAGE)} className="min-h-9 rounded-xl px-3 text-left text-xs text-[var(--accent)] hover:bg-[var(--hover)]">
+        <button
+          type="button"
+          onClick={() => setShown(shown + PAGE)}
+          className="min-h-9 rounded-xl px-3 text-left text-xs text-[var(--accent)] hover:bg-[var(--hover)]"
+        >
           Pokaż więcej ({entries.length - shown})
         </button>
       )}

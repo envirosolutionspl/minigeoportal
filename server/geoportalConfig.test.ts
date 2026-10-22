@@ -64,7 +64,12 @@ describe('geoportal configuration parser', () => {
     expect(Object.keys(byId)).toEqual(['groupPlanowanie', 'msMPZP', 'msPodkl', 'msHttp', 'msTopo65']);
     // A plain list of visible layers stands for sublayers, so only that layer is drawn.
     expect(byId.msTopo65.sublayers).toEqual([{ name: 'Raster_10_1965', title: 'Raster_10_1965' }]);
-    expect(byId.groupPlanowanie).toEqual({ id: 'groupPlanowanie', label: 'Pomocnicze dane planistyczne', type: 'group', children: ['msMPZP'] });
+    expect(byId.groupPlanowanie).toEqual({
+      id: 'groupPlanowanie',
+      label: 'Pomocnicze dane planistyczne',
+      type: 'group',
+      children: ['msMPZP'],
+    });
     expect(byId.msMPZP).toMatchObject({
       type: 'wms',
       url: 'https://mapy.geoportal.gov.pl/wss/ext/KIMPZP',

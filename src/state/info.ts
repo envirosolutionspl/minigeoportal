@@ -1,10 +1,7 @@
 import { create } from 'zustand';
 import type { InfoRecord } from '@/services/featureinfo';
 
-export type InfoResult =
-  | { status: 'loading' }
-  | { status: 'done'; records: InfoRecord[] }
-  | { status: 'error' };
+export type InfoResult = { status: 'loading' } | { status: 'done'; records: InfoRecord[] } | { status: 'error' };
 
 interface InfoQuery {
   /** EPSG:2180 [easting, northing]. */
@@ -30,9 +27,7 @@ export const useInfoStore = create<InfoStore>((set) => ({
   // Ignores answers that arrive after the user clicked somewhere else.
   resolve: (coordinate, id, result) =>
     set((s) =>
-      s.query && s.query.coordinate === coordinate
-        ? { query: { ...s.query, results: { ...s.query.results, [id]: result } } }
-        : {},
+      s.query && s.query.coordinate === coordinate ? { query: { ...s.query, results: { ...s.query.results, [id]: result } } } : {},
     ),
   close: () => set({ query: null }),
 }));

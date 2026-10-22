@@ -151,6 +151,8 @@ export function MapView() {
       <div
         ref={container}
         id="map"
+        // The map is interactive (OpenLayers reads keys and the pointer), so it takes focus.
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
         tabIndex={0}
         role="region"
         aria-label="Mapa"

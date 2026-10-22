@@ -44,7 +44,14 @@ describe('attachPrint', () => {
 
   it('renders into the sheet at the print scale, prints, then puts the map back', () => {
     let rendered: (() => void) | undefined;
-    const view = { getCenter: vi.fn(() => [1, 2]), getResolution: vi.fn(() => 10), setCenter: vi.fn(), setResolution: vi.fn(), on: vi.fn(), un: vi.fn() };
+    const view = {
+      getCenter: vi.fn(() => [1, 2]),
+      getResolution: vi.fn(() => 10),
+      setCenter: vi.fn(),
+      setResolution: vi.fn(),
+      on: vi.fn(),
+      un: vi.fn(),
+    };
     const home = document.getElementById('home')!;
     const map = {
       getView: () => view,
@@ -90,8 +97,19 @@ describe('attachPrint', () => {
 describe('print preview', () => {
   it('outlines the printed area at the centre while the print tool is on', () => {
     // OpenLayers watches the map size; jsdom has no ResizeObserver.
-    vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
-    useMapStore.setState({ tool: 'none', printRequest: null, printSettings: { paper: 'A4', orientation: 'landscape', scale: 10000, title: '' } });
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    useMapStore.setState({
+      tool: 'none',
+      printRequest: null,
+      printSettings: { paper: 'A4', orientation: 'landscape', scale: 10000, title: '' },
+    });
     const map = new OlMap({ view: new View({ projection: EPSG2180, center: [500000, 500000], resolution: 10 }) });
     map.setSize([1000, 800]);
     const detach = attachPrint(map);

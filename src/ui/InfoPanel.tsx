@@ -31,9 +31,7 @@ export function InfoPanel() {
         <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-[var(--highlight)]" />
         <div className="min-w-0 flex-1">
           <h2 className="text-base font-semibold">Informacje o miejscu</h2>
-          <p className="text-xs text-[var(--muted)]">
-            {formatCoordinate(query.coordinate)}
-          </p>
+          <p className="text-xs text-[var(--muted)]">{formatCoordinate(query.coordinate)}</p>
           <a
             href={parcelReportUrl(query.coordinate)}
             target="_blank"
@@ -107,9 +105,7 @@ function ServiceResult({ id, result }: { id: string; result: InfoResult | undefi
           </a>
         </p>
       )}
-      {result.status === 'done' && result.records.length === 0 && (
-        <p className="text-sm text-[var(--muted)]">Brak danych w tym miejscu.</p>
-      )}
+      {result.status === 'done' && result.records.length === 0 && <p className="text-sm text-[var(--muted)]">Brak danych w tym miejscu.</p>}
       {result.status === 'done' && result.records.map((r, i) => <RecordView key={i} record={r} />)}
     </div>
   );
@@ -172,7 +168,11 @@ function OrthoPhoto({ coordinate }: { coordinate: [number, number] }) {
           {latest.download && (
             <>
               {' · '}
-              <a href={latest.download} className="inline-flex items-center gap-1 text-[var(--accent)] underline underline-offset-2" download>
+              <a
+                href={latest.download}
+                className="inline-flex items-center gap-1 text-[var(--accent)] underline underline-offset-2"
+                download
+              >
                 <Download className="h-3 w-3" aria-hidden="true" />
                 pobierz arkusz {latest.sheet} (GeoTIFF{latest.sizeMb ? `, ${latest.sizeMb.toLocaleString('pl-PL')} MB` : ''})
               </a>

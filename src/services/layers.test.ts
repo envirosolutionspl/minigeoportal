@@ -51,14 +51,37 @@ describe('createOverlayLayer', () => {
       layer: 'MAPA TOPOGRAFICZNA',
       format: 'image/jpeg',
       style: 'default',
-      matrixSet: { id: 'EPSG:2180', origin: [100000, 850000], tileSize: 512, matrices: [{ id: 'EPSG:2180:0', scale: 30238155.7, width: 1, height: 1 }] },
+      matrixSet: {
+        id: 'EPSG:2180',
+        origin: [100000, 850000],
+        tileSize: 512,
+        matrices: [{ id: 'EPSG:2180:0', scale: 30238155.7, width: 1, height: 1 }],
+      },
     });
-    const topo = createOverlayLayer({ ...base, id: 'msTopo', kind: 'wmts', url: 'https://gugik.example/wmts', sublayers: [] }).getSource() as WMTS;
+    const topo = createOverlayLayer({
+      ...base,
+      id: 'msTopo',
+      kind: 'wmts',
+      url: 'https://gugik.example/wmts',
+      sublayers: [],
+    }).getSource() as WMTS;
     expect(topo).toBeInstanceOf(WMTS);
     expect([topo.getLayer(), topo.getMatrixSet(), topo.getFormat()]).toEqual(['MAPA TOPOGRAFICZNA', 'EPSG:2180', 'image/jpeg']);
 
-    registerMeta('msCache', { kind: 'rest', fetchedAt: 'x', title: 'Cache', layers: {}, tiles: { origin: [100000, 850000], tileSize: 512, resolutions: [100, 50] } });
-    const cache = createOverlayLayer({ ...base, id: 'msCache', kind: 'rest', url: 'https://gugik.example/MapServer/', sublayers: [] }).getSource() as XYZ;
+    registerMeta('msCache', {
+      kind: 'rest',
+      fetchedAt: 'x',
+      title: 'Cache',
+      layers: {},
+      tiles: { origin: [100000, 850000], tileSize: 512, resolutions: [100, 50] },
+    });
+    const cache = createOverlayLayer({
+      ...base,
+      id: 'msCache',
+      kind: 'rest',
+      url: 'https://gugik.example/MapServer/',
+      sublayers: [],
+    }).getSource() as XYZ;
     expect(cache.getTileUrlFunction()([1, 2, 3], 1, EPSG2180)).toBe('https://gugik.example/MapServer/tile/1/3/2');
 
     registerMeta('msGleby', { kind: 'rest', fetchedAt: 'x', title: 'Gleby', layers: { '2': { title: 'Kontury', queryable: false } } });

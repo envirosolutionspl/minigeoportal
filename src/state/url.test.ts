@@ -34,7 +34,13 @@ describe('writeUrl', () => {
   it('writes the state after a short delay, rounding coordinates and keeping commas readable', () => {
     vi.useFakeTimers();
     setSearch('');
-    writeUrl({ center: [637000.6, 486000.2], zoom: 12.345, base: 'orto', overlays: ['kieg', 'kiut'], sublayers: { kiut: ['przewod_gazowy'] } });
+    writeUrl({
+      center: [637000.6, 486000.2],
+      zoom: 12.345,
+      base: 'orto',
+      overlays: ['kieg', 'kiut'],
+      sublayers: { kiut: ['przewod_gazowy'] },
+    });
     expect(window.location.search).toBe('');
     vi.advanceTimersByTime(300);
     expect(window.location.search).toBe('?x=637001&y=486000&z=12.3&b=orto&l=kieg,kiut.przewod_gazowy');
@@ -43,7 +49,13 @@ describe('writeUrl', () => {
 
   it('round-trips through readUrl', () => {
     vi.useFakeTimers();
-    const state = { center: [500000, 465000] as [number, number], zoom: 3, base: 'teren', overlays: ['rcn'], sublayers: { rcn: ['dzialki'] } };
+    const state = {
+      center: [500000, 465000] as [number, number],
+      zoom: 3,
+      base: 'teren',
+      overlays: ['rcn'],
+      sublayers: { rcn: ['dzialki'] },
+    };
     writeUrl(state);
     vi.advanceTimersByTime(300);
     expect(readUrl()).toEqual(state);

@@ -40,6 +40,8 @@ Katalog wszystkich warstw geoportal.gov.pl (`server/data/catalog/catalog.json`, 
 npm run catalog
 ```
 
+Jakość: `npm run check` uruchamia kontrolę typów, ESLint (reguły TypeScript, React hooks, dostępności), Prettier (`npm run format` poprawia formatowanie) i testy.
+
 Testy (Vitest): `npm test`, w trybie ciągłym `npm run test:watch`. Testy leżą obok kodu: `server/*.test.ts` działają w Node i sprawdzają walidację, filtr przekierowań, limity, słowniki, parser capabilities, formularz zgłoszeń i trasy API; `src/**/*.test.ts(x)` działają w jsdom i sprawdzają parser odpowiedzi, wyszukiwarkę, stan mapy, adres URL, rejestr usług, pomiar, wydruk i komponenty. `src/ui/a11y.test.tsx` sprawdza komponenty regułami WCAG 2.1 A/AA biblioteki axe-core. Kontrastu nie da się sprawdzić w jsdom: kolory z palety mają co najmniej 4,5:1 w obu motywach (tekst pomocniczy 5,4:1, akcent 6,2:1, tryb ciemny 6:1). Każda nowa funkcja lub poprawka ma mieć test w tym samym commicie.
 
 Produkcja: `npm run build` (buduje aplikację i zapisuje skompresowane kopie `.br`/`.gz`), potem `NODE_ENV=production npm start` serwuje aplikację i API.

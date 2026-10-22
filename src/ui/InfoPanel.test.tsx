@@ -16,13 +16,28 @@ describe('InfoPanel', () => {
   it('says when the aerial photo was taken and links its sheet, on the photo base map only', async () => {
     useMapStore.setState({ base: 'orto' });
     const { calls } = stubFetch([
-      ['/api/orto', { latest: { date: '2025-04-27', pixel: 0.05, color: 'RGB', sheet: 'N-34-138-B-d-2-4', download: 'https://opendata.geoportal.gov.pl/o/a.tif', sizeMb: 1026 }, archived: 23 }],
+      [
+        '/api/orto',
+        {
+          latest: {
+            date: '2025-04-27',
+            pixel: 0.05,
+            color: 'RGB',
+            sheet: 'N-34-138-B-d-2-4',
+            download: 'https://opendata.geoportal.gov.pl/o/a.tif',
+            sizeMb: 1026,
+          },
+          archived: 23,
+        },
+      ],
     ]);
     useInfoStore.getState().start(point, []);
     render(<InfoPanel />);
     expect(await screen.findByText('27.04.2025')).toBeTruthy();
     expect(screen.getByText('5 cm')).toBeTruthy();
-    expect((screen.getByRole('link', { name: /pobierz arkusz N-34-138-B-d-2-4/ }) as HTMLAnchorElement).href).toBe('https://opendata.geoportal.gov.pl/o/a.tif');
+    expect((screen.getByRole('link', { name: /pobierz arkusz N-34-138-B-d-2-4/ }) as HTMLAnchorElement).href).toBe(
+      'https://opendata.geoportal.gov.pl/o/a.tif',
+    );
 
     // On a drawn map the line goes and the backend is not asked again.
     const asked = calls.length;
@@ -31,7 +46,6 @@ describe('InfoPanel', () => {
     act(() => useInfoStore.getState().start([656849, 482000], []));
     expect(calls.length).toBe(asked);
   });
-
 
   it('renders nothing without a query', () => {
     render(<InfoPanel />);
@@ -56,7 +70,18 @@ describe('InfoPanel', () => {
   it('renders records with links, empty answers and errors', () => {
     const store = useInfoStore.getState();
     store.start(point, ['kieg', 'kimpzp', 'rcn']);
-    store.resolve(point, 'kieg', { status: 'done', records: [{ title: 'Działka', fields: [{ label: 'Numer', value: '22/1' }, { label: 'Raport', value: 'Pobierz', href: 'https://x/r' }] }] });
+    store.resolve(point, 'kieg', {
+      status: 'done',
+      records: [
+        {
+          title: 'Działka',
+          fields: [
+            { label: 'Numer', value: '22/1' },
+            { label: 'Raport', value: 'Pobierz', href: 'https://x/r' },
+          ],
+        },
+      ],
+    });
     store.resolve(point, 'kimpzp', { status: 'done', records: [] });
     store.resolve(point, 'rcn', { status: 'error' });
     render(<InfoPanel />);

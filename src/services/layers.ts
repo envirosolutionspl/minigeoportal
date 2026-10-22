@@ -34,10 +34,7 @@ function gridOf(set: WmtsMeta['matrixSet']): WMTSTileGrid {
 }
 
 /** One tile service of a base map, drawn in the given resolution range. */
-export function createTileLayer(
-  def: TileService,
-  range: { minResolution?: number; maxResolution?: number } = {},
-): TileLayer<WMTS> {
+export function createTileLayer(def: TileService, range: { minResolution?: number; maxResolution?: number } = {}): TileLayer<WMTS> {
   const source = new WMTS({
     url: def.url,
     layer: def.layer,

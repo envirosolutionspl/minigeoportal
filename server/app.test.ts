@@ -48,7 +48,9 @@ describe('routes', () => {
 
   it('refreshes only from loopback with the custom header', async () => {
     expect((await app.request('/api/capabilities/refresh', { method: 'POST' }, local)).status).toBe(403);
-    expect((await app.request('/api/capabilities/refresh', { method: 'POST', headers: { 'x-refresh': 'capabilities' } }, remote)).status).toBe(403);
+    expect(
+      (await app.request('/api/capabilities/refresh', { method: 'POST', headers: { 'x-refresh': 'capabilities' } }, remote)).status,
+    ).toBe(403);
     const ok = await app.request('/api/capabilities/refresh', { method: 'POST', headers: { 'x-refresh': 'capabilities' } }, local);
     expect(ok.status).toBe(200);
     expect(refresh).toHaveBeenCalledOnce();
@@ -56,7 +58,10 @@ describe('routes', () => {
   });
 
   it('maps dictionary errors: 400 for client mistakes, 502 with a generic text for upstream failures', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('boom', { status: 503 })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('boom', { status: 503 })),
+    );
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const invalid = await app.request('/api/dict/powiaty/xx', {}, remote);
     expect(invalid.status).toBe(400);
@@ -68,7 +73,10 @@ describe('routes', () => {
 
   it('rate limits the dictionaries per client', async () => {
     const client = { incoming: { socket: { remoteAddress: '198.51.100.7', remoteFamily: 'IPv4', remotePort: 1 } } };
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('boom', { status: 503 })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('boom', { status: 503 })),
+    );
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     const statuses = [];
     for (let i = 0; i < 3; i++) statuses.push((await app.request('/api/dict/wojewodztwa', {}, client)).status);
@@ -76,7 +84,10 @@ describe('routes', () => {
   });
 
   it('names units for the geocoder and validates the codes', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('boom', { status: 503 })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('boom', { status: 503 })),
+    );
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     const client = { incoming: { socket: { remoteAddress: '198.51.100.8', remoteFamily: 'IPv4', remotePort: 1 } } };
     expect((await app.request('/api/dict/jednostki?teryt=abc', {}, client)).status).toBe(400);
@@ -100,7 +111,10 @@ describe('routes', () => {
   });
 
   it('returns feature info as plain text with the upstream type in a header', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('<a>x</a>', { headers: { 'content-type': 'text/xml' } })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('<a>x</a>', { headers: { 'content-type': 'text/xml' } })),
+    );
     const res = await app.request(
       '/api/featureinfo/kieg?QUERY_LAYERS=dzialki&BBOX=1,2,3,4&WIDTH=10&HEIGHT=10&I=1&J=1&INFO_FORMAT=text/xml',
       {},
@@ -111,7 +125,9 @@ describe('routes', () => {
     expect(res.headers.get('x-upstream-content-type')).toBe('text/xml');
     expect(res.headers.get('cache-control')).toBe('no-store');
     expect(await res.text()).toBe('<a>x</a>');
-    expect((await app.request('/api/featureinfo/kieg?QUERY_LAYERS=foo&BBOX=1,2,3,4&WIDTH=1&HEIGHT=1&I=0&J=0', {}, remote)).status).toBe(400);
+    expect((await app.request('/api/featureinfo/kieg?QUERY_LAYERS=foo&BBOX=1,2,3,4&WIDTH=1&HEIGHT=1&I=0&J=0', {}, remote)).status).toBe(
+      400,
+    );
   });
 });
 
@@ -119,11 +135,46 @@ describe('catalog routes', () => {
   const CATALOG = {
     generatedAt: 'built',
     entries: [
-      { id: 'msZabytki', title: 'Zabytki', path: ['NID'], modules: ['GK'], topic: 'zabytki' as const, kind: 'wms' as const, url: 'https://nid.example/wms', order: 3, status: 'ok' as const, checked: 'x', sublayers: [{ name: 'monuments', title: 'Zabytki' }] },
-      { id: 'msCLC', title: 'Corine', path: [], modules: ['OS'], topic: 'srodowisko' as const, kind: 'wms' as const, url: 'https://gios.example/clc', order: 4, status: 'refused' as const, detail: 'HTTP 403', checked: 'x' },
+      {
+        id: 'msZabytki',
+        title: 'Zabytki',
+        path: ['NID'],
+        modules: ['GK'],
+        topic: 'zabytki' as const,
+        kind: 'wms' as const,
+        url: 'https://nid.example/wms',
+        order: 3,
+        status: 'ok' as const,
+        checked: 'x',
+        sublayers: [{ name: 'monuments', title: 'Zabytki' }],
+      },
+      {
+        id: 'msCLC',
+        title: 'Corine',
+        path: [],
+        modules: ['OS'],
+        topic: 'srodowisko' as const,
+        kind: 'wms' as const,
+        url: 'https://gios.example/clc',
+        order: 4,
+        status: 'refused' as const,
+        detail: 'HTTP 403',
+        checked: 'x',
+      },
     ],
     services: {
-      'https://nid.example/wms': { url: 'https://nid.example/wms', status: 'ok' as const, checked: 'x', meta: { kind: 'wms' as const, fetchedAt: 'x', title: 'NID', infoFormats: ['text/xml'], layers: { monuments: { title: 'Zabytki', queryable: true } } } },
+      'https://nid.example/wms': {
+        url: 'https://nid.example/wms',
+        status: 'ok' as const,
+        checked: 'x',
+        meta: {
+          kind: 'wms' as const,
+          fetchedAt: 'x',
+          title: 'NID',
+          infoFormats: ['text/xml'],
+          layers: { monuments: { title: 'Zabytki', queryable: true } },
+        },
+      },
     },
   };
   const client = { incoming: { socket: { remoteAddress: '198.51.100.20', remoteFamily: 'IPv4', remotePort: 1 } } };
@@ -141,9 +192,14 @@ describe('catalog routes', () => {
     const body = (await list.json()) as { entries: Record<string, unknown>[] };
     expect(body.entries.map((e) => e.id)).toEqual(['msZabytki', 'msCLC']);
     expect(body.entries[0].url).toBeUndefined();
-    expect((await withCatalog.request('/api/catalog', { headers: { 'if-none-match': list.headers.get('etag')! } }, client)).status).toBe(304);
+    expect((await withCatalog.request('/api/catalog', { headers: { 'if-none-match': list.headers.get('etag')! } }, client)).status).toBe(
+      304,
+    );
 
-    const one = (await (await withCatalog.request('/api/catalog/msZabytki', {}, client)).json()) as { entry: { url: string }; meta: { title: string } };
+    const one = (await (await withCatalog.request('/api/catalog/msZabytki', {}, client)).json()) as {
+      entry: { url: string };
+      meta: { title: string };
+    };
     expect(one.entry.url).toBe('https://nid.example/wms');
     expect(one.meta.title).toBe('NID');
     expect((await withCatalog.request('/api/catalog/msNope', {}, client)).status).toBe(404);
@@ -152,7 +208,11 @@ describe('catalog routes', () => {
   it('serves layers whose geoportal id has Polish letters', async () => {
     const { createApp } = await import('./app.ts');
     const polish = { ...CATALOG, entries: [{ ...CATALOG.entries[0], id: 'msWyłozeniaModernizacja' }] };
-    const res = await createApp({ cache: CACHE, refresh, catalog: () => polish }).request(`/api/catalog/${encodeURIComponent('msWyłozeniaModernizacja')}`, {}, client);
+    const res = await createApp({ cache: CACHE, refresh, catalog: () => polish }).request(
+      `/api/catalog/${encodeURIComponent('msWyłozeniaModernizacja')}`,
+      {},
+      client,
+    );
     expect(res.status).toBe(200);
     expect(res.headers.get('etag')).toMatch(/^"[ -~]+"$/);
   });
@@ -173,7 +233,9 @@ describe('catalog routes', () => {
     const refreshCatalog = vi.fn(async () => CATALOG);
     const withCatalog = createApp({ cache: CACHE, refresh, catalog: () => CATALOG, refreshCatalog });
     expect((await withCatalog.request('/api/catalog/refresh', { method: 'POST' }, local)).status).toBe(403);
-    expect((await withCatalog.request('/api/catalog/refresh', { method: 'POST', headers: { 'x-refresh': 'catalog' } }, remote)).status).toBe(403);
+    expect(
+      (await withCatalog.request('/api/catalog/refresh', { method: 'POST', headers: { 'x-refresh': 'catalog' } }, remote)).status,
+    ).toBe(403);
     const ok = await withCatalog.request('/api/catalog/refresh', { method: 'POST', headers: { 'x-refresh': 'catalog' } }, local);
     expect(await ok.json()).toEqual({ generatedAt: 'built', layers: 2 });
   });

@@ -64,7 +64,10 @@ describe('overlayOrder', () => {
   });
 
   it('follows a changed order', () => {
-    const swapped = CONFIG.replace("{ layerId: 'msKIUT', visible: true },\n        { layerId: 'msKIEG', visible: true },", "{ layerId: 'msKIEG', visible: true },\n        { layerId: 'msKIUT', visible: true },");
+    const swapped = CONFIG.replace(
+      "{ layerId: 'msKIUT', visible: true },\n        { layerId: 'msKIEG', visible: true },",
+      "{ layerId: 'msKIEG', visible: true },\n        { layerId: 'msKIUT', visible: true },",
+    );
     expect(overlayOrder(swapped)).toEqual(['suikzp', 'kimpzp', 'pog', 'kibdot', 'kieg', 'kiut', 'rcn', 'kina', 'prg']);
   });
 

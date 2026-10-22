@@ -11,7 +11,6 @@ import { APP_NAME } from '../src/services/brand.ts';
  * category, the sender's address goes to Reply-To, and nothing from the form is rendered as HTML.
  */
 
-
 export interface Report {
   category: Category;
   message: string;
@@ -27,6 +26,7 @@ export interface Mailer {
 const EMAIL = /^[^\s@<>()",;:]{1,64}@[^\s@<>()",;:]+\.[^\s@<>()",;:]{2,}$/;
 
 /** Control characters except line breaks and tabs. */
+// eslint-disable-next-line no-control-regex -- the control characters are the point here
 const clean = (s: string) => s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').trim();
 
 /**

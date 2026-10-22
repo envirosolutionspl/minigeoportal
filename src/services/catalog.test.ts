@@ -41,7 +41,13 @@ describe('catalogSublayers', () => {
   });
 
   it('skips sublayers the service no longer has, and keeps groups only when there is nothing else', () => {
-    const configured = { ...ENTRY, sublayers: [{ name: 'gone', title: 'Usunięta' }, { name: 'monuments', title: 'Zabytki' }] };
+    const configured = {
+      ...ENTRY,
+      sublayers: [
+        { name: 'gone', title: 'Usunięta' },
+        { name: 'monuments', title: 'Zabytki' },
+      ],
+    };
     expect(catalogSublayers(configured, META).map((l) => l.name)).toEqual(['monuments']);
     const onlyGone = { ...ENTRY, sublayers: [{ name: 'gone', title: 'Usunięta' }] };
     expect(catalogSublayers(onlyGone, META).map((l) => l.name)).toEqual(['monuments']);
@@ -62,7 +68,13 @@ describe('loadCatalogLayer', () => {
     const { calls } = stubFetch([['/api/catalog/msZabytki', { entry: ENTRY, meta: META }]]);
     const [a, b] = await Promise.all([loadCatalogLayer('msZabytki'), loadCatalogLayer('msZabytki')]);
     expect(a).toBe(b);
-    expect(a).toMatchObject({ id: 'msZabytki', title: 'Rejestr zabytków', description: 'Dane innych instytucji › NID', topic: 'zabytki', url: 'https://nid.example/wms' });
+    expect(a).toMatchObject({
+      id: 'msZabytki',
+      title: 'Rejestr zabytków',
+      description: 'Dane innych instytucji › NID',
+      topic: 'zabytki',
+      url: 'https://nid.example/wms',
+    });
     expect(calls).toEqual(['/api/catalog/msZabytki']);
     expect(overlayDef('msZabytki')).toBe(a);
     expect(layerMeta('msZabytki', 'monuments')?.maxScale).toBe(50000);

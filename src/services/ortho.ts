@@ -27,8 +27,7 @@ export async function orthoAt([x, y]: [number, number], signal: AbortSignal): Pr
 }
 
 /** "5 cm", "25 cm", "1 m". */
-export const pixelText = (metres: number) =>
-  metres < 1 ? `${Math.round(metres * 100)} cm` : `${metres.toLocaleString('pl-PL')} m`;
+export const pixelText = (metres: number) => (metres < 1 ? `${Math.round(metres * 100)} cm` : `${metres.toLocaleString('pl-PL')} m`);
 
 /** "2025-04-27" → "27.04.2025". */
 export const dateText = (iso: string) => iso.split('-').reverse().join('.');

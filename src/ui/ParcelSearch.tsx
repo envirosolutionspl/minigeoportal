@@ -155,13 +155,7 @@ export function ParcelSearch({ onClose }: { onClose(): void }) {
           disabled={!choice.woj}
           onChange={(v) => set({ pow: v, gmi: undefined, obr: undefined })}
         />
-        <Select
-          label="Gmina"
-          value={choice.gmi}
-          state={gmi}
-          disabled={!choice.pow}
-          onChange={(v) => set({ gmi: v, obr: undefined })}
-        />
+        <Select label="Gmina" value={choice.gmi} state={gmi} disabled={!choice.pow} onChange={(v) => set({ gmi: v, obr: undefined })} />
         <Select label="Obręb" value={choice.obr} state={obr} disabled={!choice.gmi} onChange={(v) => set({ obr: v })} />
         <label className="col-span-2 flex flex-col gap-1 text-xs text-[var(--muted)]">
           Numer działki

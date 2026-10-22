@@ -4,7 +4,6 @@ import { registerMeta } from './meta';
 import { catalogSublayers } from './catalogSublayers';
 import type { CatalogEntry, CatalogIndex, CatalogIndexEntry, CatalogMeta } from './catalogTypes';
 
-
 /**
  * Layers of geoportal.gov.pl beyond our own registry, from the server's catalog. The list
  * arrives when the layer panel is first opened; a layer's definition (sublayers, scale limits,
@@ -84,7 +83,10 @@ export function loadCatalogLayer(id: string): Promise<Overlay | undefined> {
           sublayers: catalogSublayers(entry, meta),
         };
         if (def.sublayers.length === 0) return undefined;
-        useCatalog.setState((s) => ({ defs: new Map(s.defs).set(def.id, def), byId: s.byId.has(entry.id) ? s.byId : new Map(s.byId).set(entry.id, entry) }));
+        useCatalog.setState((s) => ({
+          defs: new Map(s.defs).set(def.id, def),
+          byId: s.byId.has(entry.id) ? s.byId : new Map(s.byId).set(entry.id, entry),
+        }));
         return def;
       })
       .catch(() => undefined)

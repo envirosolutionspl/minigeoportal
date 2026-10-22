@@ -32,8 +32,18 @@ function stubUpstream(routes: Record<string, () => Response>) {
 const json = (body: unknown) => () => new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } });
 const text = (body: string) => () => new Response(body);
 
-const VOIVODESHIPS = json(prgRows([['14', 'mazowieckie'], ['12', 'małopolskie']]));
-const COUNTIES_14 = json(prgRows([['1417', 'otwocki'], ['1465', 'Warszawa']]));
+const VOIVODESHIPS = json(
+  prgRows([
+    ['14', 'mazowieckie'],
+    ['12', 'małopolskie'],
+  ]),
+);
+const COUNTIES_14 = json(
+  prgRows([
+    ['1417', 'otwocki'],
+    ['1465', 'Warszawa'],
+  ]),
+);
 
 beforeEach(() => stubUpstream({ '/2/query': VOIVODESHIPS, '/1/query': COUNTIES_14 }));
 
@@ -70,7 +80,16 @@ describe('communes', () => {
     expect(warsaw).toHaveLength(18);
     expect(warsaw[0]).toEqual({ id: '146502_8', name: 'Warszawa-Bemowo' });
 
-    stubUpstream({ '/2/query': VOIVODESHIPS, '/1/query': COUNTIES_14, '/0/query': json(prgRows([['1417082', 'Wiązowna'], ['1417021', 'Otwock']])) });
+    stubUpstream({
+      '/2/query': VOIVODESHIPS,
+      '/1/query': COUNTIES_14,
+      '/0/query': json(
+        prgRows([
+          ['1417082', 'Wiązowna'],
+          ['1417021', 'Otwock'],
+        ]),
+      ),
+    });
     expect(await dict.communes('1417')).toEqual([
       { id: '141702_1', name: 'Otwock' },
       { id: '141708_2', name: 'Wiązowna' },
@@ -95,13 +114,27 @@ describe('precincts', () => {
 
   it('serves the stale copy when ULDK fails, and does not write empty answers to disk', async () => {
     // First: cached by the previous test. ULDK now fails: the list still comes back.
-    stubUpstream({ '/2/query': VOIVODESHIPS, '/1/query': COUNTIES_14, '/0/query': json(prgRows([['1417082', 'Wiązowna'], ['1417021', 'Otwock']])) });
+    stubUpstream({
+      '/2/query': VOIVODESHIPS,
+      '/1/query': COUNTIES_14,
+      '/0/query': json(
+        prgRows([
+          ['1417082', 'Wiązowna'],
+          ['1417021', 'Otwock'],
+        ]),
+      ),
+    });
     expect((await dict.precincts('141708_2')).length).toBe(3);
 
     stubUpstream({
       '/2/query': VOIVODESHIPS,
       '/1/query': COUNTIES_14,
-      '/0/query': json(prgRows([['1417082', 'Wiązowna'], ['1417021', 'Otwock']])),
+      '/0/query': json(
+        prgRows([
+          ['1417082', 'Wiązowna'],
+          ['1417021', 'Otwock'],
+        ]),
+      ),
       'uldk.gugik.gov.pl': text('-1 brak wyników'),
     });
     expect(await dict.precincts('141702_1')).toEqual([]);
@@ -113,7 +146,16 @@ describe('precincts', () => {
 
 describe('unitNames', () => {
   it('names the units of municipality codes and skips unknown ones', async () => {
-    stubUpstream({ '/2/query': VOIVODESHIPS, '/1/query': COUNTIES_14, '/0/query': json(prgRows([['1417082', 'Wiązowna'], ['1417021', 'Otwock']])) });
+    stubUpstream({
+      '/2/query': VOIVODESHIPS,
+      '/1/query': COUNTIES_14,
+      '/0/query': json(
+        prgRows([
+          ['1417082', 'Wiązowna'],
+          ['1417021', 'Otwock'],
+        ]),
+      ),
+    });
     const names = await dict.unitNames(['141708', '141702', '141708', '999999']);
     expect(names).toEqual({
       '141708': { voivodeship: 'mazowieckie', county: 'otwocki', commune: 'Wiązowna' },
@@ -150,8 +192,21 @@ describe('PRG paging', () => {
 });
 
 describe('findUnits', () => {
-  const ALL_COUNTIES = json(prgRows([['1417', 'otwocki'], ['1261', 'Kraków'], ['1206', 'krakowski']]));
-  const ALL_COMMUNES = json(prgRows([['1417082', 'Wiązowna'], ['1417011', 'Otwock'], ['1261011', 'Kraków'], ['1206032', 'Krzeszowice']]));
+  const ALL_COUNTIES = json(
+    prgRows([
+      ['1417', 'otwocki'],
+      ['1261', 'Kraków'],
+      ['1206', 'krakowski'],
+    ]),
+  );
+  const ALL_COMMUNES = json(
+    prgRows([
+      ['1417082', 'Wiązowna'],
+      ['1417011', 'Otwock'],
+      ['1261011', 'Kraków'],
+      ['1206032', 'Krzeszowice'],
+    ]),
+  );
   beforeEach(() => stubUpstream({ '/2/query': VOIVODESHIPS, '/1/query': ALL_COUNTIES, '/0/query': ALL_COMMUNES }));
 
   it('finds units of every level by the start of the name, exact names first', async () => {

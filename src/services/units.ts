@@ -30,7 +30,9 @@ export async function unitNames(codes: string[], signal?: AbortSignal): Promise<
   if (missing.length > 0) {
     try {
       const timeout = AbortSignal.timeout(4000);
-      const res = await fetch(`/api/dict/jednostki?teryt=${missing.join(',')}`, { signal: signal ? AbortSignal.any([signal, timeout]) : timeout });
+      const res = await fetch(`/api/dict/jednostki?teryt=${missing.join(',')}`, {
+        signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
+      });
       if (res.ok) {
         for (const [code, names] of Object.entries((await res.json()) as Record<string, UnitNames>)) known.set(code, names);
       }

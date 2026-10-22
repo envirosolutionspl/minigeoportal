@@ -68,7 +68,8 @@ export function attachMeasure(map: Map): () => void {
         const text = measure(geometry);
         if (!current || !text) return;
         current.element.textContent = text;
-        const at = geometry instanceof Polygon ? geometry.getInteriorPoint().getCoordinates() : (geometry as LineString).getLastCoordinate();
+        const at =
+          geometry instanceof Polygon ? geometry.getInteriorPoint().getCoordinates() : (geometry as LineString).getLastCoordinate();
         current.overlay.setPosition(at);
       });
     });

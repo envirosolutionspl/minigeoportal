@@ -54,7 +54,10 @@ export function attachFeatureInfo(map: Map, overlays: () => { def: Overlay; laye
 
     const coordinate: [number, number] = [evt.coordinate[0], evt.coordinate[1]];
     const info = useInfoStore.getState();
-    info.start(coordinate, targets.map((t) => t.def.id));
+    info.start(
+      coordinate,
+      targets.map((t) => t.def.id),
+    );
     showMarker(coordinate);
     if (s.panel === 'catalog' && window.innerWidth < 640) s.setPanel('none');
 

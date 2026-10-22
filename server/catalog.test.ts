@@ -54,7 +54,14 @@ describe('catalogEntries', () => {
     const entries = mod.catalogEntries(config());
     expect(entries.map((e) => e.id)).toEqual(['msMPZP', 'msStudium', 'msRest', 'msZabytki', 'msCLC']);
     const mpzp = entries[0];
-    expect(mpzp).toMatchObject({ path: ['Pomocnicze dane planistyczne'], modules: ['Geoportal Krajowy'], topic: 'planowanie', kind: 'wms', order: 0, curated: 'kimpzp' });
+    expect(mpzp).toMatchObject({
+      path: ['Pomocnicze dane planistyczne'],
+      modules: ['Geoportal Krajowy'],
+      topic: 'planowanie',
+      kind: 'wms',
+      order: 0,
+      curated: 'kimpzp',
+    });
     const zabytki = entries.find((e) => e.id === 'msZabytki')!;
     expect(zabytki.path).toEqual(['Dane innych instytucji', 'Narodowy Instytut Dziedzictwa']);
     expect(zabytki.modules).toEqual(['Geoportal Krajowy', 'Ochrona środowiska']);
@@ -72,7 +79,13 @@ describe('catalogEntries', () => {
 
   it('lists the same name on the same service once, with or without a sublayer', () => {
     const twice = config();
-    twice.services.set('msZabytkiNieruchome', { id: 'msZabytkiNieruchome', label: 'Rejestr Zabytków', type: 'wms', url: 'https://nid.example/wms', sublayers: [{ name: 'nieruchome', title: 'Nieruchome' }] });
+    twice.services.set('msZabytkiNieruchome', {
+      id: 'msZabytkiNieruchome',
+      label: 'Rejestr Zabytków',
+      type: 'wms',
+      url: 'https://nid.example/wms',
+      sublayers: [{ name: 'nieruchome', title: 'Nieruchome' }],
+    });
     twice.modules.push({ id: 'modulTur', label: 'Turystyka', layers: ['msZabytkiNieruchome'] });
     const entries = mod.catalogEntries(twice);
     expect(entries.filter((e) => e.url === 'https://nid.example/wms').map((e) => e.id)).toEqual(['msZabytki']);
@@ -81,15 +94,59 @@ describe('catalogEntries', () => {
   it('keeps different sublayers of one service apart even under one name, and only the new of an old and new version', () => {
     const sozo = config();
     const url = 'https://gugik.example/sozo';
-    sozo.services.set('msSozoArch', { id: 'msSozoArch', label: 'Mapy sozologiczne', type: 'wms', url, sublayers: [{ name: 'Mapy', title: 'Mapy' }] });
-    sozo.services.set('msSkorowidzeSozo', { id: 'msSkorowidzeSozo', label: 'Mapy sozologiczne', type: 'wms', url, sublayers: [{ name: 'Skorowidze', title: 'Skorowidze' }] });
-    sozo.services.set('msSkorowidzeSozo_new', { id: 'msSkorowidzeSozo_new', label: 'Mapy sozologiczne', type: 'wms', url: 'https://gugik.example/sozo2', sublayers: [{ name: 'Skorowidze', title: 'Skorowidze' }] });
-    sozo.services.set('groupSkor', { id: 'groupSkor', label: 'Skorowidze', type: 'group', children: ['msSkorowidzeSozo', 'msSkorowidzeSozo_new'] });
-    sozo.services.set('msSozoRaster', { id: 'msSozoRaster', label: 'Mapy sozologiczne', type: 'wms', url: 'https://gugik.example/sozo-raster' });
-    sozo.services.set('msSozoNajnowsze', { id: 'msSozoNajnowsze', label: 'Mapy sozologiczne', type: 'wms', url: 'https://gugik.example/sozo3', sublayers: [{ name: 'M', title: 'Najnowsze mapy sozologiczne' }] });
-    sozo.services.set('groupArch', { id: 'groupArch', label: 'Dane archiwalne', type: 'group', children: ['msSozoRaster', 'msSozoNajnowsze'] });
+    sozo.services.set('msSozoArch', {
+      id: 'msSozoArch',
+      label: 'Mapy sozologiczne',
+      type: 'wms',
+      url,
+      sublayers: [{ name: 'Mapy', title: 'Mapy' }],
+    });
+    sozo.services.set('msSkorowidzeSozo', {
+      id: 'msSkorowidzeSozo',
+      label: 'Mapy sozologiczne',
+      type: 'wms',
+      url,
+      sublayers: [{ name: 'Skorowidze', title: 'Skorowidze' }],
+    });
+    sozo.services.set('msSkorowidzeSozo_new', {
+      id: 'msSkorowidzeSozo_new',
+      label: 'Mapy sozologiczne',
+      type: 'wms',
+      url: 'https://gugik.example/sozo2',
+      sublayers: [{ name: 'Skorowidze', title: 'Skorowidze' }],
+    });
+    sozo.services.set('groupSkor', {
+      id: 'groupSkor',
+      label: 'Skorowidze',
+      type: 'group',
+      children: ['msSkorowidzeSozo', 'msSkorowidzeSozo_new'],
+    });
+    sozo.services.set('msSozoRaster', {
+      id: 'msSozoRaster',
+      label: 'Mapy sozologiczne',
+      type: 'wms',
+      url: 'https://gugik.example/sozo-raster',
+    });
+    sozo.services.set('msSozoNajnowsze', {
+      id: 'msSozoNajnowsze',
+      label: 'Mapy sozologiczne',
+      type: 'wms',
+      url: 'https://gugik.example/sozo3',
+      sublayers: [{ name: 'M', title: 'Najnowsze mapy sozologiczne' }],
+    });
+    sozo.services.set('groupArch', {
+      id: 'groupArch',
+      label: 'Dane archiwalne',
+      type: 'group',
+      children: ['msSozoRaster', 'msSozoNajnowsze'],
+    });
     sozo.modules.push({ id: 'modulGiK', label: 'Geodezja', layers: ['msSozoArch', 'groupSkor', 'groupArch'] });
-    expect(mod.catalogEntries(sozo).filter((e) => e.title === 'Mapy sozologiczne').map((e) => e.id)).toEqual(['msSozoArch', 'msSkorowidzeSozo_new', 'msSozoNajnowsze']);
+    expect(
+      mod
+        .catalogEntries(sozo)
+        .filter((e) => e.title === 'Mapy sozologiczne')
+        .map((e) => e.id),
+    ).toEqual(['msSozoArch', 'msSkorowidzeSozo_new', 'msSozoNajnowsze']);
   });
 
   it('puts maps of downloadable data in a group of their own', () => {
@@ -121,7 +178,8 @@ describe('buildCatalog', () => {
       vi.fn(async (url: string) => {
         calls.push(url);
         if (url.startsWith('https://gios.example')) return new Response('no', { status: 403 });
-        if (url.startsWith('https://gugik.example/rest')) return new Response('<h1>Unauthorized.</h1><p>Token Require</p>', { status: 401 });
+        if (url.startsWith('https://gugik.example/rest'))
+          return new Response('<h1>Unauthorized.</h1><p>Token Require</p>', { status: 401 });
         return new Response(CAPS(url.includes('nid') ? 'zabytki' : 'plany'));
       }),
     );
@@ -139,7 +197,12 @@ describe('buildCatalog', () => {
     expect(calls.filter((u) => u.includes('GetCapabilities'))).toHaveLength(4);
 
     // The heritage server goes silent: still listed, marked down, metadata kept for when it returns.
-    vi.stubGlobal('fetch', vi.fn(async (url: string) => (url.startsWith('https://nid.example') ? Promise.reject(new Error('timeout')) : new Response(CAPS('plany')))));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) =>
+        url.startsWith('https://nid.example') ? Promise.reject(new Error('timeout')) : new Response(CAPS('plany')),
+      ),
+    );
     const second = await mod.buildCatalog(first, log);
     expect(second.entries.find((e) => e.id === 'msZabytki')?.status).toBe('down');
     expect(second.services['https://nid.example/wms'].meta).toMatchObject({ layers: { zabytki: {} } });
@@ -147,7 +210,12 @@ describe('buildCatalog', () => {
     // The geoportal drops a layer and adds one: the catalog follows.
     const changed = config();
     changed.modules[1].layers = ['groupPlan'];
-    changed.services.set('groupPlan', { id: 'groupPlan', label: 'Pomocnicze dane planistyczne', type: 'group', children: ['msMPZP', 'msPOG'] });
+    changed.services.set('groupPlan', {
+      id: 'groupPlan',
+      label: 'Pomocnicze dane planistyczne',
+      type: 'group',
+      children: ['msMPZP', 'msPOG'],
+    });
     changed.services.set('msPOG', { id: 'msPOG', label: 'Plany ogólne', type: 'wms', url: 'https://gugik.example/pog' });
     spy.mockResolvedValue(changed);
     const third = await mod.buildCatalog(second, log);
@@ -164,11 +232,34 @@ describe('buildCatalog', () => {
   it('writes the catalog atomically and reads it back; the index leaves out what loads per layer', async () => {
     const catalog = {
       generatedAt: 'x',
-      entries: [{ id: 'a', title: 'A', path: [], modules: ['M'], topic: 'inne' as const, kind: 'wms' as const, url: 'https://a', order: 0, status: 'ok' as const, checked: 'x', sublayers: [{ name: 'n', title: 't' }] }],
+      entries: [
+        {
+          id: 'a',
+          title: 'A',
+          path: [],
+          modules: ['M'],
+          topic: 'inne' as const,
+          kind: 'wms' as const,
+          url: 'https://a',
+          order: 0,
+          status: 'ok' as const,
+          checked: 'x',
+          sublayers: [{ name: 'n', title: 't' }],
+        },
+      ],
       services: {},
     };
     await mod.writeCatalog(catalog);
     expect(await mod.readCatalog()).toEqual(catalog);
-    expect(mod.catalogIndex(catalog).entries[0]).toEqual({ id: 'a', title: 'A', path: [], topic: 'inne', kind: 'wms', order: 0, status: 'ok', checked: 'x' });
+    expect(mod.catalogIndex(catalog).entries[0]).toEqual({
+      id: 'a',
+      title: 'A',
+      path: [],
+      topic: 'inne',
+      kind: 'wms',
+      order: 0,
+      status: 'ok',
+      checked: 'x',
+    });
   });
 });

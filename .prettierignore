@@ -1,0 +1,5 @@
+dist/
+node_modules/
+server/data/
+package-lock.json
+docs/research/data/

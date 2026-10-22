@@ -3,15 +3,7 @@ import { fetchPublic, readLimited, serviceUrl } from './http.ts';
 import { fetchDrawOrder } from './drawOrder.ts';
 import { errorMessage } from './config.ts';
 import { OVERLAYS, TILE_SERVICES } from '../src/services/registry.ts';
-import type {
-  CapabilitiesCache,
-  RestMeta,
-  ServiceMeta,
-  TileMatrixMeta,
-  WmsLayerMeta,
-  WmsMeta,
-  WmtsMeta,
-} from '../src/services/meta.ts';
+import type { CapabilitiesCache, RestMeta, ServiceMeta, TileMatrixMeta, WmsLayerMeta, WmsMeta, WmtsMeta } from '../src/services/meta.ts';
 
 const ARRAYS = new Set(['Layer', 'Format', 'InfoFormat', 'Style', 'LegendURL', 'TileMatrixSet', 'TileMatrix', 'TileMatrixSetLink']);
 /** Tile formats in order of preference; WMTS also lists text formats for GetFeatureInfo. */
@@ -34,8 +26,7 @@ const text = (v: unknown): string | undefined => {
   if (v && typeof v === 'object' && '#text' in v) return text((v as Node)['#text']);
   return undefined;
 };
-const texts = (v: unknown): string[] =>
-  (Array.isArray(v) ? v : [v]).map(text).filter((t): t is string => t !== undefined);
+const texts = (v: unknown): string[] => (Array.isArray(v) ? v : [v]).map(text).filter((t): t is string => t !== undefined);
 const num = (v: unknown): number | undefined => {
   const n = Number(text(v));
   return Number.isFinite(n) ? n : undefined;
@@ -114,7 +105,8 @@ export async function wmtsCapabilities(url: string, layer?: string): Promise<Wmt
   if (!found) throw new Error(`Layer ${layer ?? ''} not found`);
   const linked = new Set(list(found.TileMatrixSetLink).flatMap((l) => texts(l.TileMatrixSet)));
   const set = list(contents.TileMatrixSet).find(
-    (s) => (linked.size === 0 || linked.has(text(s.Identifier) ?? '')) && /EPSG:+2180$/.test(text(s.SupportedCRS) ?? text(s.Identifier) ?? ''),
+    (s) =>
+      (linked.size === 0 || linked.has(text(s.Identifier) ?? '')) && /EPSG:+2180$/.test(text(s.SupportedCRS) ?? text(s.Identifier) ?? ''),
   );
   if (!set) throw new Error('Unsupported: no EPSG:2180 tile matrix set');
   const matrices = list(set.TileMatrix);
@@ -136,14 +128,12 @@ export async function wmtsCapabilities(url: string, layer?: string): Promise<Wmt
       id: text(set.Identifier) ?? '',
       origin: [east, north],
       tileSize: num(matrices[0].TileWidth) ?? 512,
-      matrices: matrices.map(
-        (m): TileMatrixMeta => ({
-          id: text(m.Identifier) ?? '',
-          scale: num(m.ScaleDenominator) ?? 0,
-          width: num(m.MatrixWidth) ?? 0,
-          height: num(m.MatrixHeight) ?? 0,
-        }),
-      ),
+      matrices: matrices.map((m): TileMatrixMeta => ({
+        id: text(m.Identifier) ?? '',
+        scale: num(m.ScaleDenominator) ?? 0,
+        width: num(m.MatrixWidth) ?? 0,
+        height: num(m.MatrixHeight) ?? 0,
+      })),
     },
   };
 }

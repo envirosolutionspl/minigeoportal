@@ -178,6 +178,7 @@ export async function fetchGeoportalConfig(): Promise<GeoportalConfig> {
   // Parts may redefine a service; the main file is read last so it wins, as in the application.
   for (const src of [...parts, main]) for (const s of parseServices(src, prefixes)) services.set(s.id, s);
   const modules = parts.map(parseModule).filter((m): m is ConfigModule => Boolean(m));
-  if (services.size < 50 || modules.length === 0) throw new Error(`Unexpected configuration: ${services.size} services, ${modules.length} modules`);
+  if (services.size < 50 || modules.length === 0)
+    throw new Error(`Unexpected configuration: ${services.size} services, ${modules.length} modules`);
   return { services, modules };
 }

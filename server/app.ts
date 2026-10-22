@@ -120,7 +120,10 @@ export function createApp({ cache, refresh, mailer, origin, catalog, refreshCata
     }
   };
   app.use('/api/dict/*', rateLimit(...(limits?.dict ?? [30, 60])));
-  app.get('/api/dict/wojewodztwa', dictionary(() => voivodeships()));
+  app.get(
+    '/api/dict/wojewodztwa',
+    dictionary(() => voivodeships()),
+  );
   app.get('/api/dict/powiaty/:parent', dictionary(counties));
   app.get('/api/dict/gminy/:parent', dictionary(communes));
   app.get('/api/dict/obreby/:parent', dictionary(precincts));
@@ -149,7 +152,9 @@ export function createApp({ cache, refresh, mailer, origin, catalog, refreshCata
   app.use('/api/featureinfo/*', rateLimit(...(limits?.featureInfo ?? [40, 60])));
   app.get('/api/featureinfo/:service', async (c) => {
     try {
-      const result = await upstream(() => featureInfo(c.req.param('service'), new URL(c.req.url).searchParams, queryTarget, c.req.raw.signal));
+      const result = await upstream(() =>
+        featureInfo(c.req.param('service'), new URL(c.req.url).searchParams, queryTarget, c.req.raw.signal),
+      );
       if (!result) return c.text('Serwer jest zajęty, spróbuj za chwilę.', 503);
       // Upstream markup is returned as plain text and parsed by the app; it is never rendered as a page.
       c.header('Content-Type', 'text/plain; charset=utf-8');
@@ -177,11 +182,21 @@ export function createApp({ cache, refresh, mailer, origin, catalog, refreshCata
     if (meta?.kind === 'wmts') {
       const { layer, style = 'default', format = 'image/png', infoFormats = [], matrixSet } = meta;
       if (!layer || infoFormats.length === 0) return undefined;
-      const wmts = { layer, style, format, matrixSet: matrixSet.id, matrices: new Set(matrixSet.matrices.map((m) => m.id)), tileSize: matrixSet.tileSize, infoFormats: new Set(infoFormats) };
+      const wmts = {
+        layer,
+        style,
+        format,
+        matrixSet: matrixSet.id,
+        matrices: new Set(matrixSet.matrices.map((m) => m.id)),
+        tileSize: matrixSet.tileSize,
+        infoFormats: new Set(infoFormats),
+      };
       return { kind: 'wmts', url: entry.url, layers: new Set([layer]), wmts };
     }
     if (meta?.kind === 'rest') {
-      const queryable = Object.entries(meta.layers).filter(([, l]) => l.queryable).map(([id]) => id);
+      const queryable = Object.entries(meta.layers)
+        .filter(([, l]) => l.queryable)
+        .map(([id]) => id);
       return { kind: 'rest', url: entry.url, layers: new Set(queryable) };
     }
     if (entry.kind !== 'wms') return undefined;
@@ -202,7 +217,10 @@ export function createApp({ cache, refresh, mailer, origin, catalog, refreshCata
     const current = catalog?.();
     const entry = current?.entries.find((e) => e.id === c.req.param('id'));
     if (!current || !entry) return c.text('Not found', 404);
-    return revalidated(c, `${current.generatedAt}-${encodeURIComponent(entry.id)}`, () => ({ entry, meta: current.services[serviceKey(entry)]?.meta }));
+    return revalidated(c, `${current.generatedAt}-${encodeURIComponent(entry.id)}`, () => ({
+      entry,
+      meta: current.services[serviceKey(entry)]?.meta,
+    }));
   });
   app.post('/api/catalog/refresh', async (c) => {
     if (!refreshCatalog || !isLoopback(c) || c.req.header('x-refresh') !== 'catalog') return c.text('Forbidden', 403);

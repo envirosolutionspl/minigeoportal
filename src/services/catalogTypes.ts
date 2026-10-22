@@ -52,4 +52,3 @@ export interface CatalogIndex {
   generatedAt: string;
   entries: CatalogIndexEntry[];
 }
-

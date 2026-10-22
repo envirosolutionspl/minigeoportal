@@ -11,9 +11,12 @@ import { useMapStore } from '@/state/store';
 export function BasemapSwitcher() {
   const base = useMapStore((m) => m.base);
   const setBase = useMapStore((m) => m.setBase);
-  const lastMap = useRef(base === 'orto' ? 'mapa' : base);
-  if (base !== 'orto') lastMap.current = base;
-  const target = BASE_MAPS.find((b) => b.id === (base === 'orto' ? lastMap.current : 'orto'))!;
+  // The map to go back to from the photos: the last one that was not the photos.
+  const [lastMap, setLastMap] = useState(base === 'orto' ? 'mapa' : base);
+  useEffect(() => {
+    if (base !== 'orto') setLastMap(base);
+  }, [base]);
+  const target = BASE_MAPS.find((b) => b.id === (base === 'orto' ? lastMap : 'orto'))!;
 
   /** Opened with the touch button. */
   const [open, setOpen] = useState(false);

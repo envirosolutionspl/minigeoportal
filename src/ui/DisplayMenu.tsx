@@ -23,7 +23,10 @@ interface Display {
 function load(): Display {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as Partial<Display>;
-    return { textSize: ([0, 1, 2] as const).includes(saved.textSize as TextSize) ? (saved.textSize as TextSize) : 0, contrast: saved.contrast === true };
+    return {
+      textSize: ([0, 1, 2] as const).includes(saved.textSize as TextSize) ? (saved.textSize as TextSize) : 0,
+      contrast: saved.contrast === true,
+    };
   } catch {
     return { textSize: 0, contrast: false };
   }
@@ -112,14 +115,30 @@ export function DisplayMenu() {
             <p className="mb-1.5 font-medium">Wielkość tekstu</p>
             <div className="flex gap-2">
               {SIZES.map(({ size, label, name }) => (
-                <button key={size} type="button" aria-pressed={textSize === size} aria-label={name} title={name} onClick={() => set({ textSize: size })} className={option(textSize === size)}>
+                <button
+                  key={size}
+                  type="button"
+                  aria-pressed={textSize === size}
+                  aria-label={name}
+                  title={name}
+                  onClick={() => set({ textSize: size })}
+                  className={option(textSize === size)}
+                >
                   {label}
                 </button>
               ))}
             </div>
           </div>
-          <button type="button" aria-pressed={contrast} onClick={() => set({ contrast: !contrast })} className={`${option(contrast)} w-full gap-2`}>
-            <span aria-hidden="true" className="flex h-5 w-5 items-center justify-center rounded-full bg-black text-xs text-[#ffff00] ring-1 ring-[#ffff00]">
+          <button
+            type="button"
+            aria-pressed={contrast}
+            onClick={() => set({ contrast: !contrast })}
+            className={`${option(contrast)} w-full gap-2`}
+          >
+            <span
+              aria-hidden="true"
+              className="flex h-5 w-5 items-center justify-center rounded-full bg-black text-xs text-[#ffff00] ring-1 ring-[#ffff00]"
+            >
               A
             </span>
             Wysoki kontrast

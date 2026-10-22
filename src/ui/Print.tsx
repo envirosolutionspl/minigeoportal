@@ -43,7 +43,8 @@ export function PrintPanel() {
     requestPrint({ ...settings, title: settings.title.trim() });
   };
 
-  const field = 'w-full rounded-xl bg-[var(--field)] px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]';
+  const field =
+    'w-full rounded-xl bg-[var(--field)] px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]';
   const choice = (checked: boolean) =>
     `flex min-h-9 flex-1 cursor-pointer items-center justify-center rounded-xl px-3 text-sm ring-1 ring-[var(--hover)] has-focus-visible:ring-2 has-focus-visible:ring-[var(--accent)] ${
       checked ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'hover:bg-[var(--hover)]'
@@ -65,9 +66,7 @@ export function PrintPanel() {
             <X className="h-5 w-5" />
           </button>
         </header>
-        <p className="text-xs text-[var(--muted)]">
-          Pomarańczowa ramka na mapie pokazuje obszar wydruku. Przesuń mapę, aby go ustawić.
-        </p>
+        <p className="text-xs text-[var(--muted)]">Pomarańczowa ramka na mapie pokazuje obszar wydruku. Przesuń mapę, aby go ustawić.</p>
         <label className="block">
           <span className="mb-1 block font-medium">Tytuł (opcjonalnie)</span>
           <input ref={title} value={settings.title} onChange={(e) => set({ title: e.target.value })} maxLength={120} className={field} />
@@ -77,7 +76,14 @@ export function PrintPanel() {
           <div className="flex gap-2">
             {(['A4', 'A3'] as const).map((p) => (
               <label key={p} className={choice(settings.paper === p)}>
-                <input type="radio" name="paper" value={p} checked={settings.paper === p} onChange={() => set({ paper: p })} className="sr-only" />
+                <input
+                  type="radio"
+                  name="paper"
+                  value={p}
+                  checked={settings.paper === p}
+                  onChange={() => set({ paper: p })}
+                  className="sr-only"
+                />
                 {p}
               </label>
             ))}
@@ -117,15 +123,18 @@ export function PrintPanel() {
           </select>
         </label>
         <p className="text-xs text-[var(--muted)]">
-          Aby zapisać plik, wybierz w oknie drukowania „Zapisz jako PDF”. Skala zgadza się przy druku bez dopasowania do
-          strony (100%).
+          Aby zapisać plik, wybierz w oknie drukowania „Zapisz jako PDF”. Skala zgadza się przy druku bez dopasowania do strony (100%).
         </p>
         <button
           type="submit"
           disabled={printing}
           className="inline-flex items-center gap-2 rounded-2xl bg-[var(--accent)] px-5 py-2.5 font-semibold text-[var(--on-accent)] disabled:opacity-60"
         >
-          {printing ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Printer className="h-4 w-4" aria-hidden="true" />}
+          {printing ? (
+            <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <Printer className="h-4 w-4" aria-hidden="true" />
+          )}
           {printing ? 'Przygotowuję wydruk…' : 'Drukuj'}
         </button>
         <p role="status" className="sr-only">
@@ -189,7 +198,8 @@ export function PrintSheet() {
       {request && (
         <footer className="print-footer">
           <p>
-            <strong>Skala {scaleText(request.scale)}</strong> · {new Date().toLocaleDateString('pl-PL')} · środek: {center && formatCoordinate(center)}
+            <strong>Skala {scaleText(request.scale)}</strong> · {new Date().toLocaleDateString('pl-PL')} · środek:{' '}
+            {center && formatCoordinate(center)}
           </p>
           <p>
             Podkład: {BASE_MAPS.find((b) => b.id === base)?.title ?? 'brak'}
@@ -206,8 +216,8 @@ export function PrintSheet() {
             </div>
           )}
           <p className="print-note">
-            Dane: GUGiK (geoportal.gov.pl), starostwa powiatowe i gminy. Mapa poglądowa, nie jest dokumentem urzędowym.
-            Układ współrzędnych PL-1992 (EPSG:2180).
+            Dane: GUGiK (geoportal.gov.pl), starostwa powiatowe i gminy. Mapa poglądowa, nie jest dokumentem urzędowym. Układ współrzędnych
+            PL-1992 (EPSG:2180).
           </p>
         </footer>
       )}

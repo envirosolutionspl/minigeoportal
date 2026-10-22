@@ -17,7 +17,9 @@ describe('loadCapabilities', () => {
 
   it('exposes layer, tile and error metadata once loaded', async () => {
     await withCapabilities();
-    expect(layerMeta('kieg', 'dzialki')).toEqual(CAPABILITIES.services.kieg.kind === 'wms' ? CAPABILITIES.services.kieg.layers.dzialki : null);
+    expect(layerMeta('kieg', 'dzialki')).toEqual(
+      CAPABILITIES.services.kieg.kind === 'wms' ? CAPABILITIES.services.kieg.layers.dzialki : null,
+    );
     expect(wmtsMeta('orto')?.matrixSet.matrices).toHaveLength(3);
     expect(wmtsMeta('kieg')).toBeUndefined();
     expect(serviceError('kiut')).toBe('HTTP 403');

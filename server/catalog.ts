@@ -50,16 +50,31 @@ const MAIN_MODULE = 'modulGK';
  */
 const TOPIC_RULES: [Topic, RegExp][] = [
   ['archiwalne', /archiwal|historycz|pastmaps|_19[4-9]\d|\b19[4-9]\d\b|bdoo 2015/],
-  ['zagrozenia', /powodz|zagroz|ostrzez|susz|wezbran|halas|osuwisk|podtop|azbest|awari|kryzys|imisyjn|emisyjn|meteo|prognoz|opad|wiatr|temperatur|cisnieni|zachmurzen|wilgotn|irradianc|skazen|promieniotw|iceye|synoptyczn|schron/],
+  [
+    'zagrozenia',
+    /powodz|zagroz|ostrzez|susz|wezbran|halas|osuwisk|podtop|azbest|awari|kryzys|imisyjn|emisyjn|meteo|prognoz|opad|wiatr|temperatur|cisnieni|zachmurzen|wilgotn|irradianc|skazen|promieniotw|iceye|synoptyczn|schron/,
+  ],
   ['zabytki', /zabyt|unesco|pomnik|turyst|szlak|jaskin|dziedzict|rowerow|kajak|narciar|schronisk/],
   ['ceny', /\bcen[ay]?\b|rcn|transakc|rynek nieruchomosci|sprzedanych lokali/],
   ['planowanie', /plan|studium|urbanist|zagospodarowan|krajobrazow|turbin|rezerwac|zakazy inwestycyjne|port polska/],
-  ['uzbrojenie', /uzbrojen|gesut|kiut|elektroenerget|sieci przesyl|kolej|przejazd|gazociag|wodociag|kilometraz|\bdrog|autostrad|pikietaz|eipa|ladowania|infrastruktura komunikac/],
+  [
+    'uzbrojenie',
+    /uzbrojen|gesut|kiut|elektroenerget|sieci przesyl|kolej|przejazd|gazociag|wodociag|kilometraz|\bdrog|autostrad|pikietaz|eipa|ladowania|infrastruktura komunikac/,
+  ],
   ['dzialki', /ewidencj|egib|dzialk|budyn|bdot500|kibdot|grunty skarbu|lpis|kowr|nieruchomosci amw|zasob kzn|modernizac|wlasnos/],
   ['granice', /granic|\bprg\b|adres|ulic|administracyjn|jednostk|wybory|obwod|rejon/],
-  ['geodezja', /osnow|uklad|siatk|sekcj|asg|geodezyj|pzgik|informatyzac|portal|monitoring|skorowidz|sprawozdan|pobrani|evrf|kron|aerotriangul|mozaikowan|zasieg/],
-  ['srodowisko', /przyrod|natura|siedlisk|gatun|\blas|lesn|gleb|\bwod|hydro|geolog|zloz|ochron|powietrz|klimat|energi|geoterm|gios|gdos|clc|corine|sozolog|wegetac|wysp[ay] ciepla/],
-  ['teren', /orto|zdjec|nmt|nmpt|lidar|wysokos|hipsometr|cieniow|rzezb|szczyt|sentinel|satelit|bdoo|bdot10k|topograf|ogolnogeogr|pokrycia terenu|intensywnosc|3d|batymetr/],
+  [
+    'geodezja',
+    /osnow|uklad|siatk|sekcj|asg|geodezyj|pzgik|informatyzac|portal|monitoring|skorowidz|sprawozdan|pobrani|evrf|kron|aerotriangul|mozaikowan|zasieg/,
+  ],
+  [
+    'srodowisko',
+    /przyrod|natura|siedlisk|gatun|\blas|lesn|gleb|\bwod|hydro|geolog|zloz|ochron|powietrz|klimat|energi|geoterm|gios|gdos|clc|corine|sozolog|wegetac|wysp[ay] ciepla/,
+  ],
+  [
+    'teren',
+    /orto|zdjec|nmt|nmpt|lidar|wysokos|hipsometr|cieniow|rzezb|szczyt|sentinel|satelit|bdoo|bdot10k|topograf|ogolnogeogr|pokrycia terenu|intensywnosc|3d|batymetr/,
+  ],
 ];
 
 export function topicOf(title: string, path: string[]): Topic {
@@ -155,7 +170,10 @@ export function failureStatus(error: unknown): { status: CatalogStatus; detail: 
 const capabilities = (e: Pick<CatalogEntry, 'kind' | 'url' | 'layer'>): Promise<CatalogMeta> =>
   e.kind === 'wms' ? wmsCapabilities(e.url) : e.kind === 'wmts' ? wmtsCapabilities(e.url, e.layer) : arcgisCapabilities(e.url);
 
-async function checkService(e: Pick<CatalogEntry, 'kind' | 'url' | 'layer'>, previous: CatalogService | undefined): Promise<CatalogService> {
+async function checkService(
+  e: Pick<CatalogEntry, 'kind' | 'url' | 'layer'>,
+  previous: CatalogService | undefined,
+): Promise<CatalogService> {
   const { url } = e;
   const checked = new Date().toISOString();
   try {

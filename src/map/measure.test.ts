@@ -8,12 +8,31 @@ const plain = (s?: string) => s?.replace(/\s/g, ' ');
 
 describe('measure', () => {
   it('measures a line geodesically, close to its PL-1992 length', () => {
-    expect(measure(new LineString([[600000, 500000], [601000, 500000]]))).toMatch(/^99\d,\d m$/);
+    expect(
+      measure(
+        new LineString([
+          [600000, 500000],
+          [601000, 500000],
+        ]),
+      ),
+    ).toMatch(/^99\d,\d m$/);
   });
 
   it('gives the area and perimeter of a polygon', () => {
     // About 100 m × 100 m.
-    const text = plain(measure(new Polygon([[[600000, 500000], [600100, 500000], [600100, 500100], [600000, 500100], [600000, 500000]]])));
+    const text = plain(
+      measure(
+        new Polygon([
+          [
+            [600000, 500000],
+            [600100, 500000],
+            [600100, 500100],
+            [600000, 500100],
+            [600000, 500000],
+          ],
+        ]),
+      ),
+    );
     expect(text).toMatch(/^(99\d\d|1\d \d{3}) m²|^1(,\d+)? ha/);
     expect(text).toMatch(/obwód 39\d,\d m|obwód 400,\d m/);
   });

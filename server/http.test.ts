@@ -3,7 +3,17 @@ import { Hono } from 'hono';
 
 vi.mock('node:dns/promises', () => ({ lookup: vi.fn() }));
 import { lookup } from 'node:dns/promises';
-import { clientAddress, concurrencyGate, fetchPublic, isLoopback, isPublicHost, publicWebUrl, rateLimit, readLimited, serviceUrl } from './http.ts';
+import {
+  clientAddress,
+  concurrencyGate,
+  fetchPublic,
+  isLoopback,
+  isPublicHost,
+  publicWebUrl,
+  rateLimit,
+  readLimited,
+  serviceUrl,
+} from './http.ts';
 
 const resolveTo = (addresses: string[]) =>
   vi.mocked(lookup).mockResolvedValue(addresses.map((address) => ({ address, family: address.includes(':') ? 6 : 4 })) as never);
@@ -35,12 +45,22 @@ describe('readLimited', () => {
 });
 
 describe('isPublicHost', () => {
-  it.each(['127.0.0.1', '10.1.2.3', '172.16.0.1', '192.168.1.1', '169.254.169.254', '100.64.0.1', '0.0.0.0', '::1', '[::1]', 'fc00::1', 'fe80::1', '::ffff:127.0.0.1'])(
-    'blocks the private literal %s',
-    async (host) => {
-      expect(await isPublicHost(host)).toBe(false);
-    },
-  );
+  it.each([
+    '127.0.0.1',
+    '10.1.2.3',
+    '172.16.0.1',
+    '192.168.1.1',
+    '169.254.169.254',
+    '100.64.0.1',
+    '0.0.0.0',
+    '::1',
+    '[::1]',
+    'fc00::1',
+    'fe80::1',
+    '::ffff:127.0.0.1',
+  ])('blocks the private literal %s', async (host) => {
+    expect(await isPublicHost(host)).toBe(false);
+  });
 
   it('allows a public literal', async () => {
     expect(await isPublicHost('8.8.8.8')).toBe(true);
@@ -133,7 +153,9 @@ describe('serviceUrl', () => {
   it('adds request parameters to addresses with their own parameters or a bare question mark', () => {
     expect(serviceUrl('https://a.example/wms', { SERVICE: 'WMS' })).toBe('https://a.example/wms?SERVICE=WMS');
     expect(serviceUrl('https://a.example/wms?', { SERVICE: 'WMS' })).toBe('https://a.example/wms?SERVICE=WMS');
-    expect(serviceUrl('https://a.example/mapserv?map=/srv/x.map', { SERVICE: 'WMS' })).toBe('https://a.example/mapserv?map=%2Fsrv%2Fx.map&SERVICE=WMS');
+    expect(serviceUrl('https://a.example/mapserv?map=/srv/x.map', { SERVICE: 'WMS' })).toBe(
+      'https://a.example/mapserv?map=%2Fsrv%2Fx.map&SERVICE=WMS',
+    );
   });
 
   it('replaces parameters of the same name whatever their case', () => {
@@ -162,7 +184,9 @@ describe('publicWebUrl and fetchPublic', () => {
       'fetch',
       vi.fn(async (url: string) => {
         calls.push(url);
-        return url.includes('a.example') ? new Response(null, { status: 302, headers: { location: 'https://inside.example/x' } }) : new Response('x');
+        return url.includes('a.example')
+          ? new Response(null, { status: 302, headers: { location: 'https://inside.example/x' } })
+          : new Response('x');
       }),
     );
     await expect(fetchPublic('https://a.example/caps')).rejects.toThrow('Redirect chain rejected');

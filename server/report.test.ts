@@ -54,7 +54,15 @@ describe('POST /api/report', () => {
   const CACHE: CapabilitiesCache = { generatedAt: 'x', services: {} };
   const remote = { incoming: { socket: { remoteAddress: '203.0.113.9', remoteFamily: 'IPv4', remotePort: 1 } } };
   const post = (app: ReturnType<typeof createApp>, body: unknown, headers: Record<string, string> = {}) =>
-    app.request('/api/report', { method: 'POST', body: typeof body === 'string' ? body : JSON.stringify(body), headers: { 'content-type': 'application/json', ...headers } }, remote);
+    app.request(
+      '/api/report',
+      {
+        method: 'POST',
+        body: typeof body === 'string' ? body : JSON.stringify(body),
+        headers: { 'content-type': 'application/json', ...headers },
+      },
+      remote,
+    );
 
   it('sends a valid report and says whether the form is on', async () => {
     const send = vi.fn<Mailer['send']>(async () => {});
@@ -66,7 +74,16 @@ describe('POST /api/report', () => {
   });
 
   it('answers 400 for invalid input, 503 when off, 502 when mail fails, 413 for big bodies', async () => {
-    const failing = createApp({ cache: CACHE, refresh: async () => CACHE, mailer: { send: async () => { throw new Error('smtp down'); } }, origin: ORIGIN });
+    const failing = createApp({
+      cache: CACHE,
+      refresh: async () => CACHE,
+      mailer: {
+        send: async () => {
+          throw new Error('smtp down');
+        },
+      },
+      origin: ORIGIN,
+    });
     expect((await post(failing, { ...valid, category: 'x' })).status).toBe(400);
     expect((await post(failing, 'not json')).status).toBe(400);
     vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -74,13 +91,24 @@ describe('POST /api/report', () => {
     const off = createApp({ cache: CACHE, refresh: async () => CACHE });
     expect((await post(off, valid)).status).toBe(503);
     expect(await (await off.request('/api/report', {}, remote)).json()).toEqual({ enabled: false });
-    const big = createApp({ cache: CACHE, refresh: async () => CACHE, mailer: { send: async () => {} }, limits: { dict: [1, 1], featureInfo: [1, 1], report: [10, 60] } });
+    const big = createApp({
+      cache: CACHE,
+      refresh: async () => CACHE,
+      mailer: { send: async () => {} },
+      limits: { dict: [1, 1], featureInfo: [1, 1], report: [10, 60] },
+    });
     expect((await post(big, { ...valid, message: 'x'.repeat(20000) })).status).toBe(413);
   });
 
   it('limits reports per visitor', async () => {
     const send = vi.fn<Mailer['send']>(async () => {});
-    const app = createApp({ cache: CACHE, refresh: async () => CACHE, mailer: { send }, origin: ORIGIN, limits: { dict: [1, 1], featureInfo: [1, 1], report: [2, 0.1] } });
+    const app = createApp({
+      cache: CACHE,
+      refresh: async () => CACHE,
+      mailer: { send },
+      origin: ORIGIN,
+      limits: { dict: [1, 1], featureInfo: [1, 1], report: [2, 0.1] },
+    });
     expect((await post(app, valid)).status).toBe(200);
     expect((await post(app, valid)).status).toBe(200);
     expect((await post(app, valid)).status).toBe(429);

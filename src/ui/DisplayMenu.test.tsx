@@ -32,7 +32,10 @@ describe('DisplayMenu', () => {
   it('closes with Escape and has no WCAG rule violations', async () => {
     const { container } = render(<DisplayMenu />);
     fireEvent.click(screen.getByRole('button', { name: /Ułatwienia/ }));
-    const result = await axe.run(container, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa'] }, rules: { 'color-contrast': { enabled: false } } });
+    const result = await axe.run(container, {
+      runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa'] },
+      rules: { 'color-contrast': { enabled: false } },
+    });
     expect(result.violations.map((v) => v.id)).toEqual([]);
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('group', { name: 'Ułatwienia' })).toBeNull();

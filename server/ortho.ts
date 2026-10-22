@@ -11,14 +11,18 @@ export type { OrthoInfo };
 
 const INDEX = 'https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/SkorowidzeWgAktualnosci';
 /** Sheet layers per year, newest first; the service adds a layer each year, so the list is read from it. */
-const FALLBACK_LAYERS = ['SkorowidzeOrtofotomapy2026', 'SkorowidzeOrtofotomapy2025', 'SkorowidzeOrtofotomapy2024', 'SkorowidzeOrtofotomapyStarsze'];
+const FALLBACK_LAYERS = [
+  'SkorowidzeOrtofotomapy2026',
+  'SkorowidzeOrtofotomapy2025',
+  'SkorowidzeOrtofotomapy2024',
+  'SkorowidzeOrtofotomapyStarsze',
+];
 const LAYERS_TTL_MS = 24 * 3600 * 1000;
 const TIMEOUT_MS = 10000;
 const MAX_BYTES = 1_000_000;
 /** EPSG:2180 extent of Poland with a margin. */
 const BOUNDS = { minX: 100000, maxX: 900000, minY: 100000, maxY: 850000 };
 const DOWNLOAD_HOST = 'opendata.geoportal.gov.pl';
-
 
 /** After a failed read the fallback list is used, and the index is asked again after this long. */
 const RETRY_AFTER_FAILURE_MS = 10 * 60000;
@@ -76,9 +80,7 @@ export function parseIndex(html: string): OrthoSheet[] {
 
 /** The photo shown on the map: newest in natural colour, the sharpest of that day. */
 export function latestPhoto(sheets: OrthoSheet[]): OrthoSheet | undefined {
-  return sheets
-    .filter((s) => s.color === 'RGB')
-    .sort((a, b) => b.date.localeCompare(a.date) || a.pixel - b.pixel)[0];
+  return sheets.filter((s) => s.color === 'RGB').sort((a, b) => b.date.localeCompare(a.date) || a.pixel - b.pixel)[0];
 }
 
 /** Aerial photo at a point of Poland (PL-1992); a point outside it is a RequestError. */

@@ -25,10 +25,48 @@ const section = (name: RegExp) =>
 const CATALOG = {
   generatedAt: 'x',
   entries: [
-    { id: 'msKIEG', title: 'Ewidencja gruntów i budynków', path: [], topic: 'dzialki', kind: 'wms', order: 0, status: 'ok', checked: '2026-10-22T08:00:00Z', curated: 'kieg' },
-    { id: 'msZabytki', title: 'Rejestr zabytków nieruchomych', path: ['Dane innych instytucji', 'Narodowy Instytut Dziedzictwa'], topic: 'zabytki', kind: 'wms', order: 5, status: 'ok', checked: '2026-10-22T08:00:00Z' },
-    { id: 'msCLC', title: 'Corine Land Cover 2018', path: ['GIOŚ'], topic: 'srodowisko', kind: 'wms', order: 6, status: 'refused', detail: 'HTTP 403', checked: '2026-10-22T08:00:00Z' },
-    { id: 'msEGM', title: 'EuroGlobalMap', path: [], topic: 'teren', kind: 'rest', order: 7, status: 'unsupported', checked: '2026-10-22T08:00:00Z' },
+    {
+      id: 'msKIEG',
+      title: 'Ewidencja gruntów i budynków',
+      path: [],
+      topic: 'dzialki',
+      kind: 'wms',
+      order: 0,
+      status: 'ok',
+      checked: '2026-10-22T08:00:00Z',
+      curated: 'kieg',
+    },
+    {
+      id: 'msZabytki',
+      title: 'Rejestr zabytków nieruchomych',
+      path: ['Dane innych instytucji', 'Narodowy Instytut Dziedzictwa'],
+      topic: 'zabytki',
+      kind: 'wms',
+      order: 5,
+      status: 'ok',
+      checked: '2026-10-22T08:00:00Z',
+    },
+    {
+      id: 'msCLC',
+      title: 'Corine Land Cover 2018',
+      path: ['GIOŚ'],
+      topic: 'srodowisko',
+      kind: 'wms',
+      order: 6,
+      status: 'refused',
+      detail: 'HTTP 403',
+      checked: '2026-10-22T08:00:00Z',
+    },
+    {
+      id: 'msEGM',
+      title: 'EuroGlobalMap',
+      path: [],
+      topic: 'teren',
+      kind: 'rest',
+      order: 7,
+      status: 'unsupported',
+      checked: '2026-10-22T08:00:00Z',
+    },
   ],
 };
 
@@ -71,7 +109,13 @@ describe('LayerCatalog', () => {
   it('lets one sublayer of a big geoportal layer be chosen before switching it on', async () => {
     const big = { ...CATALOG, entries: CATALOG.entries.map((e) => (e.id === 'msZabytki' ? { ...e, parts: 2 } : e)) };
     const entry = { ...big.entries[1], modules: [], url: 'https://nid.example/wms' };
-    const meta = { kind: 'wms', fetchedAt: 'x', title: 'NID', infoFormats: [], layers: { nieruchome: { title: 'Nieruchome', queryable: true }, ruchome: { title: 'Ruchome', queryable: true } } };
+    const meta = {
+      kind: 'wms',
+      fetchedAt: 'x',
+      title: 'NID',
+      infoFormats: [],
+      layers: { nieruchome: { title: 'Nieruchome', queryable: true }, ruchome: { title: 'Ruchome', queryable: true } },
+    };
     stubFetch([
       ['/api/catalog/msZabytki', { entry, meta }],
       ['/api/catalog', big],

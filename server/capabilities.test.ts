@@ -45,7 +45,10 @@ const WMTS = `<?xml version="1.0"?>
 </Capabilities>`;
 
 function stub(answer: (url: string) => Response) {
-  vi.stubGlobal('fetch', vi.fn(async (url: string) => answer(url)));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string) => answer(url)),
+  );
 }
 
 describe('buildCache', () => {
@@ -72,7 +75,11 @@ describe('buildCache', () => {
   });
 
   it('records an error per failed service and keeps the previous good entry', async () => {
-    stub((url) => (url.includes('KrajowaIntegracjaEwidencjiGruntow') ? new Response('nope', { status: 503 }) : new Response(url.includes('WMTS') ? WMTS : WMS)));
+    stub((url) =>
+      url.includes('KrajowaIntegracjaEwidencjiGruntow')
+        ? new Response('nope', { status: 503 })
+        : new Response(url.includes('WMTS') ? WMTS : WMS),
+    );
     const previous: CapabilitiesCache = {
       generatedAt: 'earlier',
       services: { kieg: { kind: 'wms', fetchedAt: 'earlier', title: 'Old KIEG', infoFormats: [], layers: {} } },
@@ -95,7 +102,9 @@ describe('buildCache', () => {
     expect(cache.drawOrder).toEqual(['suikzp', 'kimpzp', 'pog', 'kibdot', 'kieg', 'kiut', 'rcn', 'kina', 'prg']);
 
     vi.spyOn(console, 'warn').mockImplementation(() => {});
-    stub((url) => (url.includes('part_GeoportalKrajowy') ? new Response('gone', { status: 404 }) : new Response(url.includes('WMTS') ? WMTS : WMS)));
+    stub((url) =>
+      url.includes('part_GeoportalKrajowy') ? new Response('gone', { status: 404 }) : new Response(url.includes('WMTS') ? WMTS : WMS),
+    );
     expect((await buildCache(cache)).drawOrder).toEqual(cache.drawOrder);
     expect((await buildCache()).drawOrder).toBeUndefined();
   });
@@ -124,7 +133,9 @@ describe('catalog services', () => {
     const meta = await wmtsCapabilities('https://iung.example/gwc/service/wmts', 'Susza:gleby');
     expect(meta).toMatchObject({ layer: 'Susza:gleby', format: 'image/png', style: 'susza', infoFormats: ['text/html'] });
     expect(meta.matrixSet).toMatchObject({ id: 'EPSG:2180v1', origin: [144693.3, 908411.0], tileSize: 512 });
-    await expect(wmtsCapabilities('https://iung.example/gwc/service/wmts', 'common:drogi')).rejects.toThrow('Unsupported: no EPSG:2180 tile matrix set');
+    await expect(wmtsCapabilities('https://iung.example/gwc/service/wmts', 'common:drogi')).rejects.toThrow(
+      'Unsupported: no EPSG:2180 tile matrix set',
+    );
   });
 
   it('reads the layers and tile cache of an ArcGIS map service and recognises a token request', async () => {
@@ -133,7 +144,12 @@ describe('catalog services', () => {
       capabilities: 'Map,Query,Data',
       spatialReference: { wkid: 2180 },
       singleFusedMapCache: true,
-      tileInfo: { rows: 512, origin: { x: 100000, y: 850000 }, spatialReference: { wkid: 2180 }, lods: [{ resolution: 100 }, { resolution: 50 }] },
+      tileInfo: {
+        rows: 512,
+        origin: { x: 100000, y: 850000 },
+        spatialReference: { wkid: 2180 },
+        lods: [{ resolution: 100 }, { resolution: 50 }],
+      },
       layers: [
         { id: 0, name: 'Gleby', minScale: 0, maxScale: 0, subLayerIds: [1] },
         { id: 1, name: 'Kontury', minScale: 50000, maxScale: 500, subLayerIds: null },
@@ -141,7 +157,10 @@ describe('catalog services', () => {
     };
     stub(() => Response.json(info));
     const meta = await arcgisCapabilities('https://gugik.example/MapServer/');
-    expect(meta.layers).toEqual({ '0': { title: 'Gleby', queryable: false, group: true }, '1': { title: 'Kontury', queryable: true, maxScale: 50000, minScale: 500 } });
+    expect(meta.layers).toEqual({
+      '0': { title: 'Gleby', queryable: false, group: true },
+      '1': { title: 'Kontury', queryable: true, maxScale: 50000, minScale: 500 },
+    });
     expect(meta.tiles).toEqual({ origin: [100000, 850000], tileSize: 512, resolutions: [100, 50] });
 
     stub(() => Response.json({ ...info, spatialReference: { wkid: 102100, latestWkid: 3857 } }));

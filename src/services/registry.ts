@@ -102,8 +102,7 @@ export interface Overlay {
   opacity?: number;
 }
 
-export const GUGIK_ATTRIBUTION =
-  'Dane: <a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">GUGiK, geoportal.gov.pl</a>';
+export const GUGIK_ATTRIBUTION = 'Dane: <a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">GUGiK, geoportal.gov.pl</a>';
 /** The same content on geoportal.gov.pl, offered when a service is unavailable here. */
 export const GEOPORTAL_MAP = 'https://mapy.geoportal.gov.pl/imap/Imgp_2.html';
 
@@ -122,11 +121,35 @@ const INTEGRACJA = 'https://integracja.gugik.gov.pl/cgi-bin/';
 const EXT = 'https://mapy.geoportal.gov.pl/wss/ext/';
 
 export const TILE_SERVICES: TileService[] = [
-  { id: 'orto', kind: 'wmts', url: `${PZGIK}ORTO/WMTS/StandardResolution`, layer: 'ORTOFOTOMAPA', format: 'image/jpeg', firstLevel: 0, levels: 17 },
+  {
+    id: 'orto',
+    kind: 'wmts',
+    url: `${PZGIK}ORTO/WMTS/StandardResolution`,
+    layer: 'ORTOFOTOMAPA',
+    format: 'image/jpeg',
+    firstLevel: 0,
+    levels: 17,
+  },
   { id: 'bdoo', kind: 'wmts', url: `${PZGIK}BDOO/WMTS/aktualne`, layer: 'BDOO', format: 'image/png', firstLevel: 2, levels: 13 },
   { id: 'bdot10k', kind: 'wmts', url: `${WMTS_GUEST}BDOT10k`, layer: 'BDOT10k', format: 'image/png', firstLevel: 2, levels: 13 },
-  { id: 'relief', kind: 'wmts', url: `${PZGIK}NMT/GRID1/WMTS/HypsometryAndShadedRelief`, layer: 'HipsoCien', format: 'image/jpeg', firstLevel: 2, levels: 13 },
-  { id: 'g2mobile', kind: 'wmts', url: `${WMTS_GUEST}G2_MOBILE_500`, layer: 'G2_MOBILE_500', format: 'image/png', firstLevel: 0, levels: 16 },
+  {
+    id: 'relief',
+    kind: 'wmts',
+    url: `${PZGIK}NMT/GRID1/WMTS/HypsometryAndShadedRelief`,
+    layer: 'HipsoCien',
+    format: 'image/jpeg',
+    firstLevel: 2,
+    levels: 13,
+  },
+  {
+    id: 'g2mobile',
+    kind: 'wmts',
+    url: `${WMTS_GUEST}G2_MOBILE_500`,
+    layer: 'G2_MOBILE_500',
+    format: 'image/png',
+    firstLevel: 0,
+    levels: 16,
+  },
   { id: 'topo', kind: 'wmts', url: `${WMTS_GUEST}TOPO`, layer: 'MAPA TOPOGRAFICZNA', format: 'image/jpeg', firstLevel: 2, levels: 13 },
 ];
 

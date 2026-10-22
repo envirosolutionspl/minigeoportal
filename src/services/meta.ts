@@ -34,6 +34,10 @@ export interface WmtsMeta {
   kind: 'wmts';
   fetchedAt: string;
   title: string;
+  /** Layer, image format and style to request; registry services name their own. */
+  layer?: string;
+  format?: string;
+  style?: string;
   matrixSet: {
     id: string;
     /** Top-left corner as [easting, northing]. */
@@ -43,13 +47,29 @@ export interface WmtsMeta {
   };
 }
 
+/** An ArcGIS REST map service (MapServer) in EPSG:2180. */
+export interface RestMeta {
+  kind: 'rest';
+  fetchedAt: string;
+  title: string;
+  /** Layers by numeric id, with scale limits translated to the WMS sense. */
+  layers: Record<string, WmsLayerMeta>;
+  /** Tile cache of the whole service, drawn instead of images made on demand. */
+  tiles?: {
+    /** Top-left corner as [easting, northing]. */
+    origin: [number, number];
+    tileSize: number;
+    resolutions: number[];
+  };
+}
+
 export interface MetaError {
   kind: 'error';
   fetchedAt: string;
   error: string;
 }
 
-export type ServiceMeta = WmsMeta | WmtsMeta | MetaError;
+export type ServiceMeta = WmsMeta | WmtsMeta | RestMeta | MetaError;
 
 export interface CapabilitiesCache {
   generatedAt: string;
@@ -77,7 +97,7 @@ export async function loadCapabilities(): Promise<void> {
 }
 
 /** Metadata of a catalog layer, loaded when it is switched on (see catalog.ts). */
-export function registerMeta(id: string, meta: WmsMeta): void {
+export function registerMeta(id: string, meta: ServiceMeta): void {
   cache ??= { generatedAt: '', services: {} };
   cache.services[id] = meta;
 }
@@ -97,8 +117,13 @@ export function wmtsMeta(id: string): WmtsMeta | undefined {
   return m?.kind === 'wmts' ? m : undefined;
 }
 
+export function restMeta(id: string): RestMeta | undefined {
+  const m = cache?.services[id];
+  return m?.kind === 'rest' ? m : undefined;
+}
+
 export function layerMeta(id: string, name: string): WmsLayerMeta | undefined {
-  return wmsMeta(id)?.layers[name];
+  return (wmsMeta(id) ?? restMeta(id))?.layers[name];
 }
 
 /** Error text when GUGiK did not answer the metadata request for the service. */

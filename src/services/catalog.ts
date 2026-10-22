@@ -1,7 +1,10 @@
 import { create } from 'zustand';
 import { OVERLAY_BY_ID, type Overlay } from './registry';
-import { registerMeta, type WmsMeta } from './meta';
-import type { CatalogEntry, CatalogIndex, CatalogIndexEntry } from './catalogTypes';
+import { registerMeta } from './meta';
+import { catalogSublayers } from './catalogSublayers';
+import type { CatalogEntry, CatalogIndex, CatalogIndexEntry, CatalogMeta } from './catalogTypes';
+
+export { catalogSublayers };
 
 /**
  * Layers of geoportal.gov.pl beyond our own registry, from the server's catalog. The list
@@ -54,20 +57,6 @@ export function overlayDef(id: string): Overlay | undefined {
  */
 export const CATALOG_ID = /^\p{L}[\p{L}\p{N}_-]{1,80}$/u;
 
-/**
- * Sublayers of a catalog layer: those the geoportal configuration names that the service still
- * has, or else its named layers that are not groups. All are switched on, as in the geoportal.
- */
-export function catalogSublayers(entry: CatalogEntry, meta: WmsMeta | undefined): Overlay['sublayers'] {
-  const layers = meta?.layers ?? {};
-  const known = (name: string) => !meta || name in layers;
-  const configured = (entry.sublayers ?? []).filter((l) => known(l.name));
-  if (configured.length) return configured.map((l) => ({ ...l, default: true }));
-  const named = Object.entries(layers);
-  const leaves = named.filter(([, l]) => !l.group);
-  return (leaves.length ? leaves : named).map(([name, l]) => ({ name, title: l.title, default: true }));
-}
-
 const pending = new Map<string, Promise<Overlay | undefined>>();
 
 /** Definition of a catalog layer: fetched once, with its metadata added to the metadata cache. */
@@ -80,13 +69,13 @@ export function loadCatalogLayer(id: string): Promise<Overlay | undefined> {
     request = fetch(`/api/catalog/${encodeURIComponent(id)}`)
       .then(async (res) => {
         if (!res.ok) return undefined;
-        const { entry, meta } = (await res.json()) as { entry: CatalogEntry; meta?: WmsMeta };
-        if (entry.kind !== 'wms' || entry.status !== 'ok') return undefined;
+        const { entry, meta } = (await res.json()) as { entry: CatalogEntry; meta?: CatalogMeta };
+        if (entry.status !== 'ok') return undefined;
         if (meta) registerMeta(entry.id, meta);
         const def: Overlay = {
           id: entry.id,
           geoportalId: entry.id,
-          kind: 'wms',
+          kind: entry.kind,
           title: entry.title,
           description: entry.path.join(' › '),
           topic: entry.topic,

@@ -4,7 +4,7 @@ import { GEOPORTAL_MAP, OVERLAYS, TOPICS, selectedSublayers, type Overlay, type 
 import { layerMeta, serviceError, visibleAtScale } from '@/services/meta';
 import { normalize } from '@/services/text';
 import { statusOf, useStatusStore, type ServiceStatus } from '@/services/status';
-import { useCatalog } from '@/services/catalog';
+import { loadCatalogLayer, useCatalog } from '@/services/catalog';
 import type { CatalogIndexEntry, CatalogStatus } from '@/services/catalogTypes';
 import { overlayOpacity, useMapStore } from '@/state/store';
 
@@ -242,16 +242,22 @@ function CatalogList({ entries }: { entries: CatalogIndexEntry[] }) {
 }
 
 /**
- * A layer of the geoportal catalog. Once switched on, its definition loads and it behaves like
- * our own layers (sublayers, opacity). Layers we cannot show stay in their topic, greyed out.
+ * A layer of the geoportal catalog. Once switched on or unfolded, its definition loads and it
+ * behaves like our own layers: sublayers can be chosen before it is switched on, as a whole
+ * service can be too much at once. Layers we cannot show stay in their topic, greyed out.
  */
 function CatalogItem({ entry }: { entry: CatalogIndexEntry }) {
   const def = useCatalog((c) => c.defs.get(entry.id));
   const failed = useCatalog((c) => c.failed.has(entry.id));
   const active = useMapStore((m) => m.overlays.includes(entry.id));
   const toggle = useMapStore((m) => m.toggleOverlay);
-  if (def) return <OverlayItem s={def} hits={[]} />;
+  const [expanded, setExpanded] = useState(false);
+  if (def) return <OverlayItem s={def} hits={[]} startOpen={expanded} />;
   const available = entry.status === 'ok';
+  const expand = () => {
+    if (!expanded) void loadCatalogLayer(entry.id);
+    setExpanded(!expanded);
+  };
   const checkedOn = entry.checked.slice(0, 10).split('-').reverse().join('.');
 
   return (
@@ -269,12 +275,23 @@ function CatalogItem({ entry }: { entry: CatalogIndexEntry }) {
         <label htmlFor={`gp-${entry.id}`} className={`min-w-0 flex-1 ${available ? 'cursor-pointer' : ''}`}>
           <span className="block text-sm font-medium">{entry.title}</span>
           {entry.path.length > 0 && <span className="block text-xs text-[var(--muted)]">{entry.path.join(' › ')}</span>}
-          {active && !failed && (
+          {(active || expanded) && !failed && (
             <span className="mt-1 flex items-center gap-1.5 text-xs text-[var(--muted)]">
-              <LoaderCircle className="h-3 w-3 animate-spin" aria-hidden="true" /> Wczytuję warstwę…
+              <LoaderCircle className="h-3 w-3 animate-spin" aria-hidden="true" /> {active ? 'Wczytuję warstwę…' : 'Wczytuję podwarstwy…'}
             </span>
           )}
         </label>
+        {available && (entry.parts ?? 0) > 1 && (
+          <button
+            type="button"
+            onClick={expand}
+            aria-expanded={expanded}
+            aria-label={`Warstwy usługi: ${entry.title}`}
+            className="rounded-full p-1 text-[var(--muted)] hover:bg-[var(--hover)]"
+          >
+            <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+          </button>
+        )}
       </div>
       {!available && <Why status={entry.status as Exclude<CatalogStatus, 'ok'>} detail={entry.detail} checked={checkedOn} />}
       {available && failed && (
@@ -333,13 +350,13 @@ function StatusDot({ status }: { status: ServiceStatus }) {
   );
 }
 
-function OverlayItem({ s, hits }: { s: Overlay; hits: string[] }) {
+function OverlayItem({ s, hits, startOpen = false }: { s: Overlay; hits: string[]; startOpen?: boolean }) {
   const active = useMapStore((m) => m.overlays.includes(s.id));
   const toggle = useMapStore((m) => m.toggleOverlay);
   const opacity = useMapStore((m) => overlayOpacity(s.id, m.opacity));
   const setOpacity = useMapStore((m) => m.setOpacity);
   const status = useStatusStore((st) => statusOf(st.status, s.id));
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(startOpen);
   const blocked = status === 'blocked';
   const open = expanded || hits.length > 0;
 
@@ -380,7 +397,8 @@ function OverlayItem({ s, hits }: { s: Overlay; hits: string[] }) {
       )}
 
       {open && s.sublayers.length > 1 && (
-        <ul className="mt-2 ml-7 flex flex-col gap-1">
+        // Services with dozens of layers scroll within their own box.
+        <ul className={`mt-2 ml-7 flex flex-col gap-1 ${s.sublayers.length > 12 ? 'max-h-80 overflow-y-auto pr-1' : ''}`}>
           {s.sublayers.map((l) => (
             <SublayerRow key={l.name} s={s} l={l} highlighted={hits.includes(l.name)} disabled={blocked} />
           ))}

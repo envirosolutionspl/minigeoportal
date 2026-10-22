@@ -1,12 +1,15 @@
 import TileLayer from 'ol/layer/Tile';
 import ImageLayer from 'ol/layer/Image';
 import WMTS from 'ol/source/WMTS';
+import XYZ from 'ol/source/XYZ';
 import ImageWMS from 'ol/source/ImageWMS';
+import ImageArcGISRest from 'ol/source/ImageArcGISRest';
+import TileGrid from 'ol/tilegrid/TileGrid';
 import WMTSTileGrid from 'ol/tilegrid/WMTS';
 import { EPSG2180, OGC_PIXEL, gugikWmtsGrid } from '@/map/projection';
 import { GUGIK_ATTRIBUTION, OVERLAY_BY_ID, type Overlay, type TileService } from './registry';
 import { useCatalog } from './catalog';
-import { cachedDrawOrder, layerMeta, wmtsMeta } from './meta';
+import { cachedDrawOrder, layerMeta, restMeta, wmtsMeta, type WmtsMeta } from './meta';
 import { useStatusStore } from './status';
 
 const report = (id: string, ok: boolean) => useStatusStore.getState().reportLoad(id, ok);
@@ -17,7 +20,10 @@ const report = (id: string, ok: boolean) => useStatusStore.getState().reportLoad
  */
 function tileGrid(def: TileService): WMTSTileGrid {
   const set = wmtsMeta(def.id)?.matrixSet;
-  if (!set) return gugikWmtsGrid(def.firstLevel, def.levels);
+  return set ? gridOf(set) : gugikWmtsGrid(def.firstLevel, def.levels);
+}
+
+function gridOf(set: WmtsMeta['matrixSet']): WMTSTileGrid {
   return new WMTSTileGrid({
     origin: set.origin,
     tileSize: set.tileSize,
@@ -35,7 +41,7 @@ export function createTileLayer(
   const source = new WMTS({
     url: def.url,
     layer: def.layer,
-    matrixSet: 'EPSG:2180',
+    matrixSet: wmtsMeta(def.id)?.matrixSet.id ?? 'EPSG:2180',
     format: def.format,
     style: 'default',
     projection: EPSG2180,
@@ -87,31 +93,69 @@ export const drawIndex = (id: string) => {
   return below + 0.5 + entry.order / 1e5;
 };
 
+export type OverlayLayer = ImageLayer<ImageWMS | ImageArcGISRest> | TileLayer<WMTS | XYZ>;
+
 /**
- * Dynamic WMS as one image per view: GUGiK integration services render on demand,
- * and a single 1920x1080 image arrives faster than the ~12 tiles covering the same area.
+ * Map layer of an overlay. A dynamic WMS or ArcGIS map service is drawn as one image per view:
+ * GUGiK integration services render on demand, and a single 1920x1080 image arrives faster
+ * than the ~12 tiles covering the same area. A WMTS or an ArcGIS tile cache is drawn as tiles.
  *
  * Loaded as plain images, without CORS: integration services redirect to county and city
  * servers, and a CORS request that follows a cross-origin redirect is sent with
  * `Origin: null`, which some of them reject (e.g. Warsaw answers 403), while others send no
  * CORS headers at all. The app never reads overlay pixels, so CORS is not needed here.
  */
-export function createOverlayLayer(def: Overlay): ImageLayer<ImageWMS> {
-  const source = new ImageWMS({
-    url: def.url,
-    params: { LAYERS: '', FORMAT: 'image/png', TRANSPARENT: true, VERSION: '1.3.0' },
-    projection: EPSG2180,
-    ratio: 1.25,
-    attributions: GUGIK_ATTRIBUTION,
-  });
+export function createOverlayLayer(def: Overlay): OverlayLayer {
+  const options = { visible: false, opacity: def.opacity ?? 1, zIndex: 10 + drawIndex(def.id) };
+  const tiles = tileSource(def);
+  if (tiles) {
+    tiles.on('tileloadend', () => report(def.id, true));
+    tiles.on('tileloaderror', () => report(def.id, false));
+    return new TileLayer({ source: tiles, ...options });
+  }
+  const image = { url: def.url, projection: EPSG2180, ratio: 1.25, attributions: GUGIK_ATTRIBUTION };
+  const source =
+    def.kind === 'rest'
+      ? new ImageArcGISRest({ ...image, params: { LAYERS: 'show:', FORMAT: 'png32', TRANSPARENT: true } })
+      : new ImageWMS({ ...image, params: { LAYERS: '', FORMAT: 'image/png', TRANSPARENT: true, VERSION: '1.3.0' } });
   source.on('imageloadend', () => report(def.id, true));
   source.on('imageloaderror', () => report(def.id, false));
-  return new ImageLayer({
-    source,
-    visible: false,
-    opacity: def.opacity ?? 1,
-    zIndex: 10 + drawIndex(def.id),
-  });
+  return new ImageLayer({ source, ...options });
+}
+
+/** Tiles of a catalog WMTS or ArcGIS tile cache, on the grid its server described. */
+function tileSource(def: Overlay): WMTS | XYZ | undefined {
+  const common = { projection: EPSG2180, attributions: GUGIK_ATTRIBUTION, wrapX: false };
+  const wmts = def.kind === 'wmts' ? wmtsMeta(def.id) : undefined;
+  if (wmts) {
+    return new WMTS({
+      ...common,
+      url: def.url,
+      layer: wmts.layer ?? def.sublayers[0]?.name ?? '',
+      matrixSet: wmts.matrixSet.id,
+      format: wmts.format ?? 'image/png',
+      style: wmts.style ?? 'default',
+      tileGrid: gridOf(wmts.matrixSet),
+    });
+  }
+  const cache = def.kind === 'rest' ? restMeta(def.id)?.tiles : undefined;
+  if (cache) {
+    return new XYZ({
+      ...common,
+      url: `${def.url.replace(/\/+$/, '')}/tile/{z}/{y}/{x}`,
+      tileGrid: new TileGrid({ origin: cache.origin, resolutions: cache.resolutions, tileSize: cache.tileSize }),
+    });
+  }
+  return undefined;
+}
+
+/** Asks the server for the chosen sublayers; tiles are one picture and have none to choose. */
+export function showSublayers(layer: OverlayLayer, names: string[]): void {
+  const source = layer.getSource();
+  const value = source instanceof ImageArcGISRest ? `show:${names.join(',')}` : names.join(',');
+  if ((source instanceof ImageWMS || source instanceof ImageArcGISRest) && source.getParams().LAYERS !== value) {
+    source.updateParams({ LAYERS: value });
+  }
 }
 
 /**

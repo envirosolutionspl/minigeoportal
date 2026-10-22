@@ -4,6 +4,7 @@ import { fetchDrawOrder } from './drawOrder.ts';
 import { OVERLAYS, TILE_SERVICES, type Overlay, type TileService } from '../src/services/registry.ts';
 import type {
   CapabilitiesCache,
+  RestMeta,
   ServiceMeta,
   TileMatrixMeta,
   WmsLayerMeta,
@@ -12,6 +13,8 @@ import type {
 } from '../src/services/meta.ts';
 
 const ARRAYS = new Set(['Layer', 'Format', 'Style', 'LegendURL', 'TileMatrixSet', 'TileMatrix', 'TileMatrixSetLink']);
+/** Tile formats in order of preference; WMTS also lists text formats for GetFeatureInfo. */
+const TILE_FORMATS = ['image/png', 'image/png8', 'image/jpeg'];
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -86,22 +89,39 @@ export async function wmsCapabilities(url: string, fallbackTitle = ''): Promise<
   };
 }
 
-async function wmts(def: TileService): Promise<WmtsMeta> {
-  const root = node((await fetchXml(`${def.url}?SERVICE=WMTS&REQUEST=GetCapabilities&VERSION=1.0.0`)).Capabilities);
+const wmts = (def: TileService) => wmtsCapabilities(def.url, def.layer);
+
+/**
+ * Layer, image format, style and EPSG:2180 tile grid of a WMTS, from its GetCapabilities.
+ * Without a layer name the first layer of the service is taken.
+ */
+export async function wmtsCapabilities(url: string, layer?: string): Promise<WmtsMeta> {
+  const root = node((await fetchXml(serviceUrl(url, { SERVICE: 'WMTS', REQUEST: 'GetCapabilities', VERSION: '1.0.0' }))).Capabilities);
   const contents = node(root.Contents);
-  if (!list(contents.Layer).some((l) => text(l.Identifier) === def.layer)) throw new Error(`Layer ${def.layer} not found`);
-  const set = list(contents.TileMatrixSet).find((s) => text(s.Identifier) === 'EPSG:2180');
-  if (!set) throw new Error('No EPSG:2180 tile matrix set');
+  const layers = list(contents.Layer);
+  const found = layer === undefined ? layers[0] : layers.find((l) => text(l.Identifier) === layer);
+  if (!found) throw new Error(`Layer ${layer ?? ''} not found`);
+  const linked = new Set(list(found.TileMatrixSetLink).flatMap((l) => texts(l.TileMatrixSet)));
+  const set = list(contents.TileMatrixSet).find(
+    (s) => (linked.size === 0 || linked.has(text(s.Identifier) ?? '')) && /EPSG:+2180$/.test(text(s.SupportedCRS) ?? text(s.Identifier) ?? ''),
+  );
+  if (!set) throw new Error('Unsupported: no EPSG:2180 tile matrix set');
   const matrices = list(set.TileMatrix);
   if (matrices.length === 0) throw new Error('Empty tile matrix set');
   // EPSG:2180 lists the top-left corner as northing, easting.
   const [north, east] = (text(matrices[0].TopLeftCorner) ?? '').split(/\s+/).map(Number);
+  const formats = texts(found.Format);
+  const styles = list(found.Style);
+  const style = styles.find((st) => st['@isDefault'] === 'true') ?? styles[0];
   return {
     kind: 'wmts',
     fetchedAt: new Date().toISOString(),
-    title: text(node(root.ServiceIdentification).Title) ?? def.layer,
+    title: text(node(root.ServiceIdentification).Title) ?? text(found.Identifier) ?? '',
+    layer: text(found.Identifier),
+    format: TILE_FORMATS.find((f) => formats.includes(f)) ?? formats.find((f) => f.startsWith('image/')) ?? 'image/png',
+    style: text(style?.Identifier) ?? 'default',
     matrixSet: {
-      id: 'EPSG:2180',
+      id: text(set.Identifier) ?? '',
       origin: [east, north],
       tileSize: num(matrices[0].TileWidth) ?? 512,
       matrices: matrices.map(
@@ -113,6 +133,59 @@ async function wmts(def: TileService): Promise<WmtsMeta> {
         }),
       ),
     },
+  };
+}
+
+interface ArcgisInfo {
+  error?: { code?: number };
+  mapName?: string;
+  documentInfo?: { Title?: string };
+  spatialReference?: { wkid?: number; latestWkid?: number };
+  singleFusedMapCache?: boolean;
+  tileInfo?: {
+    rows: number;
+    origin: { x: number; y: number };
+    spatialReference?: { wkid?: number; latestWkid?: number };
+    lods: { resolution: number }[];
+  };
+  layers?: { id: number; name: string; minScale?: number; maxScale?: number; subLayerIds?: number[] | null }[];
+}
+
+const wkid = (sr?: { wkid?: number; latestWkid?: number }) => sr?.latestWkid ?? sr?.wkid;
+
+/**
+ * Layers and tile cache of an ArcGIS REST map service, from its description (?f=json).
+ * ArcGIS asks for a token with HTTP 401 and a page, or with error 499 in the JSON.
+ */
+export async function arcgisCapabilities(url: string): Promise<RestMeta> {
+  const res = await fetchPublic(serviceUrl(url.replace(/\/+$/, ''), { f: 'json' }), { signal: AbortSignal.timeout(TIMEOUT_MS) });
+  const body = new TextDecoder().decode(await readLimited(res, MAX_BYTES));
+  if (!res.ok) throw new Error(res.status === 401 && /token/i.test(body) ? 'HTTP 499' : `HTTP ${res.status}`);
+  const info = JSON.parse(body) as ArcgisInfo;
+  if (info.error) throw new Error(`HTTP ${info.error.code ?? 500}`);
+  if (wkid(info.spatialReference) !== 2180) throw new Error(`Unsupported: EPSG:${wkid(info.spatialReference)}`);
+  const layers: Record<string, WmsLayerMeta> = {};
+  // ArcGIS minScale is the most zoomed-out scale, the WMS MaxScaleDenominator, and the reverse.
+  for (const l of info.layers ?? []) {
+    layers[String(l.id)] = {
+      title: l.name,
+      queryable: false,
+      ...(l.minScale ? { maxScale: l.minScale } : {}),
+      ...(l.maxScale ? { minScale: l.maxScale } : {}),
+      ...(l.subLayerIds?.length ? { group: true } : {}),
+    };
+  }
+  const t = info.tileInfo;
+  const tiles =
+    info.singleFusedMapCache && t && wkid(t.spatialReference) === 2180
+      ? { origin: [t.origin.x, t.origin.y] as [number, number], tileSize: t.rows, resolutions: t.lods.map((l) => l.resolution) }
+      : undefined;
+  return {
+    kind: 'rest',
+    fetchedAt: new Date().toISOString(),
+    title: info.documentInfo?.Title || info.mapName || '',
+    layers,
+    ...(tiles ? { tiles } : {}),
   };
 }
 

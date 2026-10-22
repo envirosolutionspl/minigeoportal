@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type WMTSTileGrid from 'ol/tilegrid/WMTS';
-import { GUGIK_RESOLUTIONS, OGC_PIXEL } from '@/map/projection';
+import WMTS from 'ol/source/WMTS';
+import XYZ from 'ol/source/XYZ';
+import ImageWMS from 'ol/source/ImageWMS';
+import ImageArcGISRest from 'ol/source/ImageArcGISRest';
+import { EPSG2180, GUGIK_RESOLUTIONS, OGC_PIXEL } from '@/map/projection';
 import { OVERLAYS, OVERLAY_BY_ID, TILE_SERVICE_BY_ID } from './registry';
-import { DRAW_ORDER, createOverlayLayer, createTileLayer, resolutionRange } from './layers';
+import { DRAW_ORDER, createOverlayLayer, createTileLayer, resolutionRange, showSublayers } from './layers';
+import { registerMeta } from './meta';
 import { CAPABILITIES, withCapabilities } from '@/test/helpers';
 
 describe('createTileLayer', () => {
@@ -30,9 +35,37 @@ describe('createTileLayer', () => {
 describe('createOverlayLayer', () => {
   it('asks for one transparent PNG per view in EPSG:2180', () => {
     const kieg = createOverlayLayer(OVERLAY_BY_ID.get('kieg')!);
-    expect(kieg.getSource()!.getParams()).toMatchObject({ FORMAT: 'image/png', TRANSPARENT: true, VERSION: '1.3.0' });
+    expect((kieg.getSource() as ImageWMS).getParams()).toMatchObject({ FORMAT: 'image/png', TRANSPARENT: true, VERSION: '1.3.0' });
     expect(kieg.getOpacity()).toBe(1);
     expect(createOverlayLayer(OVERLAY_BY_ID.get('kimpzp')!).getOpacity()).toBe(0.8);
+    showSublayers(kieg, ['dzialki', 'budynki']);
+    expect((kieg.getSource() as ImageWMS).getParams().LAYERS).toBe('dzialki,budynki');
+  });
+
+  it('draws a catalog WMTS and ArcGIS tile cache as tiles, and an ArcGIS map as images of the chosen layers', () => {
+    const base = OVERLAY_BY_ID.get('kieg')!;
+    registerMeta('msTopo', {
+      kind: 'wmts',
+      fetchedAt: 'x',
+      title: 'Topo',
+      layer: 'MAPA TOPOGRAFICZNA',
+      format: 'image/jpeg',
+      style: 'default',
+      matrixSet: { id: 'EPSG:2180', origin: [100000, 850000], tileSize: 512, matrices: [{ id: 'EPSG:2180:0', scale: 30238155.7, width: 1, height: 1 }] },
+    });
+    const topo = createOverlayLayer({ ...base, id: 'msTopo', kind: 'wmts', url: 'https://gugik.example/wmts', sublayers: [] }).getSource() as WMTS;
+    expect(topo).toBeInstanceOf(WMTS);
+    expect([topo.getLayer(), topo.getMatrixSet(), topo.getFormat()]).toEqual(['MAPA TOPOGRAFICZNA', 'EPSG:2180', 'image/jpeg']);
+
+    registerMeta('msCache', { kind: 'rest', fetchedAt: 'x', title: 'Cache', layers: {}, tiles: { origin: [100000, 850000], tileSize: 512, resolutions: [100, 50] } });
+    const cache = createOverlayLayer({ ...base, id: 'msCache', kind: 'rest', url: 'https://gugik.example/MapServer/', sublayers: [] }).getSource() as XYZ;
+    expect(cache.getTileUrlFunction()([1, 2, 3], 1, EPSG2180)).toBe('https://gugik.example/MapServer/tile/1/3/2');
+
+    registerMeta('msGleby', { kind: 'rest', fetchedAt: 'x', title: 'Gleby', layers: { '2': { title: 'Kontury', queryable: false } } });
+    const gleby = createOverlayLayer({ ...base, id: 'msGleby', kind: 'rest', url: 'https://gugik.example/gleby/MapServer', sublayers: [] });
+    showSublayers(gleby, ['2', '0']);
+    expect(gleby.getSource()).toBeInstanceOf(ImageArcGISRest);
+    expect((gleby.getSource() as ImageArcGISRest).getParams().LAYERS).toBe('show:2,0');
   });
 });
 

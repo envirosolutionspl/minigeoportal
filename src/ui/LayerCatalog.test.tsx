@@ -68,6 +68,22 @@ describe('LayerCatalog', () => {
     expect(screen.getByText('Wczytuję warstwę…')).toBeTruthy();
   });
 
+  it('lets one sublayer of a big geoportal layer be chosen before switching it on', async () => {
+    const big = { ...CATALOG, entries: CATALOG.entries.map((e) => (e.id === 'msZabytki' ? { ...e, parts: 2 } : e)) };
+    const entry = { ...big.entries[1], modules: [], url: 'https://nid.example/wms' };
+    const meta = { kind: 'wms', fetchedAt: 'x', title: 'NID', infoFormats: [], layers: { nieruchome: { title: 'Nieruchome', queryable: true }, ruchome: { title: 'Ruchome', queryable: true } } };
+    stubFetch([
+      ['/api/catalog/msZabytki', { entry, meta }],
+      ['/api/catalog', big],
+    ]);
+    render(<LayerCatalog />);
+    fireEvent.click(await section(/Zabytki i turystyka/));
+    fireEvent.click(screen.getByRole('button', { name: 'Warstwy usługi: Rejestr zabytków nieruchomych' }));
+    fireEvent.click(await screen.findByLabelText('Rejestr zabytków nieruchomych: Ruchome'));
+    expect(useMapStore.getState().overlays).toContain('msZabytki');
+    expect(useMapStore.getState().sublayers.msZabytki).toEqual(['ruchome']);
+  });
+
   it('says when the full list is still being prepared', async () => {
     stubFetch([['/api/catalog', 'w przygotowaniu', { status: 503 }]]);
     render(<LayerCatalog />);

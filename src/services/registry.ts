@@ -85,7 +85,8 @@ export interface BaseMap {
 /** Overlay: dynamic WMS rendered as one image per view. */
 export interface Overlay {
   id: string;
-  kind: 'wms';
+  /** Our own layers are WMS; the catalog adds WMTS and ArcGIS REST map services. */
+  kind: 'wms' | 'wmts' | 'rest';
   title: string;
   description: string;
   topic: Topic;

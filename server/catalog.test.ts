@@ -77,6 +77,7 @@ describe('failureStatus', () => {
     expect(mod.failureStatus(new Error('HTTP 403'))).toEqual({ status: 'refused', detail: 'HTTP 403' });
     const cert = Object.assign(new TypeError('fetch failed'), { cause: { code: 'CERT_HAS_EXPIRED' } });
     expect(mod.failureStatus(cert)).toEqual({ status: 'down', detail: 'CERT_HAS_EXPIRED' });
+    expect(mod.failureStatus(new Error('Unsupported: EPSG:3857'))).toEqual({ status: 'unsupported', detail: 'EPSG:3857' });
   });
 });
 
@@ -93,6 +94,7 @@ describe('buildCatalog', () => {
       vi.fn(async (url: string) => {
         calls.push(url);
         if (url.startsWith('https://gios.example')) return new Response('no', { status: 403 });
+        if (url.startsWith('https://gugik.example/rest')) return new Response('<h1>Unauthorized.</h1><p>Token Require</p>', { status: 401 });
         return new Response(CAPS(url.includes('nid') ? 'zabytki' : 'plany'));
       }),
     );
@@ -101,19 +103,19 @@ describe('buildCatalog', () => {
     expect(first.entries.map((e) => [e.id, e.status])).toEqual([
       ['msMPZP', 'ok'],
       ['msStudium', 'ok'],
-      ['msRest', 'unsupported'],
+      ['msRest', 'token'],
       ['msZabytki', 'ok'],
       ['msCLC', 'refused'],
     ]);
     expect(first.entries.find((e) => e.id === 'msCLC')?.detail).toBe('HTTP 403');
-    expect(first.services['https://nid.example/wms'].meta?.layers.zabytki).toBeDefined();
+    expect(first.services['https://nid.example/wms'].meta).toMatchObject({ layers: { zabytki: {} } });
     expect(calls.filter((u) => u.includes('GetCapabilities'))).toHaveLength(4);
 
     // The heritage server goes silent: still listed, marked down, metadata kept for when it returns.
     vi.stubGlobal('fetch', vi.fn(async (url: string) => (url.startsWith('https://nid.example') ? Promise.reject(new Error('timeout')) : new Response(CAPS('plany')))));
     const second = await mod.buildCatalog(first, log);
     expect(second.entries.find((e) => e.id === 'msZabytki')?.status).toBe('down');
-    expect(second.services['https://nid.example/wms'].meta?.layers.zabytki).toBeDefined();
+    expect(second.services['https://nid.example/wms'].meta).toMatchObject({ layers: { zabytki: {} } });
 
     // The geoportal drops a layer and adds one: the catalog follows.
     const changed = config();

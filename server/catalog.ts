@@ -2,17 +2,18 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { OVERLAYS, type Topic } from '../src/services/registry.ts';
-import type { WmsMeta } from '../src/services/meta.ts';
-import type { CatalogEntry, CatalogIndex, CatalogStatus } from '../src/services/catalogTypes.ts';
+import type { CatalogEntry, CatalogIndex, CatalogMeta, CatalogStatus } from '../src/services/catalogTypes.ts';
+import { catalogSublayers } from '../src/services/catalogSublayers.ts';
 import { normalize } from '../src/services/text.ts';
-import { wmsCapabilities } from './capabilities.ts';
+import { arcgisCapabilities, wmsCapabilities, wmtsCapabilities } from './capabilities.ts';
 import { fetchGeoportalConfig, type ConfigService, type GeoportalConfig } from './geoportalConfig.ts';
 
 /**
  * Catalog of every layer of geoportal.gov.pl, kept on disk and rebuilt on demand.
  *
  * The list, the groups, the drawing order and the sublayers come from the geoportal
- * configuration; each WMS is checked with GetCapabilities, which also gives its metadata.
+ * configuration; each service is checked with GetCapabilities (WMS, WMTS) or its description
+ * (ArcGIS REST), which also gives its metadata.
  * Layers added or removed in the geoportal appear or disappear here at the next refresh;
  * metadata follow the services. When the configuration cannot be read the previous catalog
  * stays, and a service that does not answer keeps its last known metadata.
@@ -24,15 +25,18 @@ export interface CatalogService {
   /** What the server answered, e.g. "HTTP 403". */
   detail?: string;
   checked: string;
-  meta?: WmsMeta;
+  meta?: CatalogMeta;
 }
 
 export interface Catalog {
   generatedAt: string;
   entries: CatalogEntry[];
-  /** Per service URL: availability and metadata. */
+  /** Per service (see serviceKey): availability and metadata. */
   services: Record<string, CatalogService>;
 }
+
+/** A WMTS serves several tile layers under one address, each with its own grid. */
+export const serviceKey = (e: Pick<CatalogEntry, 'url' | 'layer'>) => (e.layer ? `${e.url} ${e.layer}` : e.url);
 
 const CATALOG_FILE = process.env.CATALOG_FILE ?? resolve(dirname(fileURLToPath(import.meta.url)), 'data', 'catalog', 'catalog.json');
 /** Services checked at once: the geoportal servers are shared with everyone. */
@@ -84,7 +88,7 @@ export function catalogEntries(config: GeoportalConfig): Omit<CatalogEntry, 'sta
       return;
     }
     if (!s.url || s.type === 'basemap') return;
-    const key = `${s.url.replace(/\?$/, '')} ${(s.sublayers ?? []).map((l) => l.name).join(',')}`;
+    const key = `${s.url.replace(/\?$/, '')} ${s.layer ?? ''} ${(s.sublayers ?? []).map((l) => l.name).join(',')}`;
     const known = out.get(id) ?? sameLayer.get(key);
     if (known) {
       if (!known.modules.includes(module)) known.modules.push(module);
@@ -112,6 +116,7 @@ function entryFor(s: ConfigService, path: string[], module: string, order: numbe
     order,
     ...(s.sublayers ? { sublayers: s.sublayers } : {}),
     ...(s.featureInfoFormat ? { infoFormat: s.featureInfoFormat } : {}),
+    ...(kind === 'wmts' && s.layer ? { layer: s.layer } : {}),
     ...(CURATED.has(s.id) ? { curated: CURATED.get(s.id) } : {}),
   };
 }
@@ -121,21 +126,26 @@ export function failureStatus(error: unknown): { status: CatalogStatus; detail: 
   const message = error instanceof Error ? error.message : String(error);
   const code = (error as { cause?: { code?: string } })?.cause?.code;
   if (/HTTP 499/.test(message)) return { status: 'token', detail: 'HTTP 499: Token Required' };
+  if (/^Unsupported: /.test(message)) return { status: 'unsupported', detail: message.slice('Unsupported: '.length) };
   if (/HTTP 40[13]/.test(message)) return { status: 'refused', detail: message };
   return { status: 'down', detail: code ?? message.slice(0, 120) };
 }
 
-async function checkService(url: string, previous: CatalogService | undefined): Promise<CatalogService> {
+const capabilities = (e: Pick<CatalogEntry, 'kind' | 'url' | 'layer'>): Promise<CatalogMeta> =>
+  e.kind === 'wms' ? wmsCapabilities(e.url) : e.kind === 'wmts' ? wmtsCapabilities(e.url, e.layer) : arcgisCapabilities(e.url);
+
+async function checkService(e: Pick<CatalogEntry, 'kind' | 'url' | 'layer'>, previous: CatalogService | undefined): Promise<CatalogService> {
+  const { url } = e;
   const checked = new Date().toISOString();
   try {
     // One more try for a server that is slow at the moment rather than refusing.
-    const meta = await wmsCapabilities(url).catch((e: unknown) => {
-      if (failureStatus(e).status !== 'down') throw e;
-      return wmsCapabilities(url);
+    const meta = await capabilities(e).catch((err: unknown) => {
+      if (failureStatus(err).status !== 'down') throw err;
+      return capabilities(e);
     });
     return { url, status: 'ok', checked, meta };
-  } catch (e) {
-    const { status, detail } = failureStatus(e);
+  } catch (err) {
+    const { status, detail } = failureStatus(err);
     // A server that is down now keeps its last metadata, so it works again when it returns.
     return { url, status, detail, checked, ...(previous?.meta ? { meta: previous.meta } : {}) };
   }
@@ -168,13 +178,12 @@ export async function buildCatalog(previous?: Catalog, log: (line: string) => vo
     throw e;
   }
   const entries = catalogEntries(config);
-  const urls = [...new Set(entries.filter((e) => e.kind === 'wms').map((e) => e.url))];
-  const checked = await mapLimited(urls, CONCURRENCY, (url) => checkService(url, previous?.services[url]));
-  const services = Object.fromEntries(checked.map((c) => [c.url, c]));
+  const unique = [...new Map(entries.map((e) => [serviceKey(e), e])).entries()];
+  const checked = await mapLimited(unique, CONCURRENCY, async ([key, e]) => [key, await checkService(e, previous?.services[key])] as const);
+  const services = Object.fromEntries(checked);
   const now = new Date().toISOString();
   const full = entries.map((e): CatalogEntry => {
-    if (e.kind !== 'wms') return { ...e, status: 'unsupported', checked: now };
-    const s = services[e.url];
+    const s = services[serviceKey(e)];
     return { ...e, status: s.status, ...(s.detail ? { detail: s.detail } : {}), checked: s.checked };
   });
   if (previous) {
@@ -187,11 +196,15 @@ export async function buildCatalog(previous?: Catalog, log: (line: string) => vo
   return { generatedAt: now, entries: full, services };
 }
 
-/** What the app gets first: the list, without addresses, sublayers and metadata. */
+/** What the app gets first: the list, without addresses and metadata, with sublayer counts. */
 export function catalogIndex(catalog: Catalog): CatalogIndex {
   return {
     generatedAt: catalog.generatedAt,
-    entries: catalog.entries.map(({ url: _u, sublayers: _s, infoFormat: _i, modules: _m, ...rest }) => rest),
+    entries: catalog.entries.map((e) => {
+      const { url: _u, sublayers: _s, infoFormat: _i, modules: _m, layer: _l, ...rest } = e;
+      const parts = e.status === 'ok' ? catalogSublayers(e, catalog.services[serviceKey(e)]?.meta).length : 0;
+      return parts > 1 ? { ...rest, parts } : rest;
+    }),
   };
 }
 

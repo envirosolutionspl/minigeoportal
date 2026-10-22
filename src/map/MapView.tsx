@@ -7,9 +7,7 @@ import { duration } from './motion';
 import { EPSG2180, GUGIK_RESOLUTIONS, OGC_PIXEL, POLAND_EXTENT } from './projection';
 import { BASE_MAPS, TILE_SERVICE_BY_ID, selectedSublayers, type Overlay } from '@/services/registry';
 import { loadCatalogLayer, overlayDef } from '@/services/catalog';
-import type ImageLayer from 'ol/layer/Image';
-import type ImageWMS from 'ol/source/ImageWMS';
-import { createOverlayLayer, createTileLayer, resolutionRange } from '@/services/layers';
+import { createOverlayLayer, createTileLayer, resolutionRange, showSublayers, type OverlayLayer } from '@/services/layers';
 import { hasInitialView, overlayOpacity, useMapStore } from '@/state/store';
 import { attachFeatureInfo } from './featureInfoClick';
 import { attachFocus } from './focus';
@@ -41,7 +39,7 @@ export function MapView() {
      * Overlay layers are made when first switched on, not upfront: the catalog has hundreds of
      * layers. They stay on the map, hidden, when switched off.
      */
-    const overlays = new globalThis.Map<string, { def: Overlay; layer: ImageLayer<ImageWMS> }>();
+    const overlays = new globalThis.Map<string, { def: Overlay; layer: OverlayLayer }>();
 
     const view = new View({
       projection: EPSG2180,
@@ -93,9 +91,7 @@ export function MapView() {
         const visible = s.overlays.includes(def.id) && names.length > 0;
         layer.setVisible(visible);
         if (!visible) continue;
-        const source = layer.getSource()!;
-        const layersParam = names.join(',');
-        if (source.getParams().LAYERS !== layersParam) source.updateParams({ LAYERS: layersParam });
+        showSublayers(layer, names);
         const range = resolutionRange(def, names);
         layer.setMinResolution(range.min);
         layer.setMaxResolution(range.max);

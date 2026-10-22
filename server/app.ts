@@ -3,7 +3,7 @@ import { bodyLimit } from 'hono/body-limit';
 import { secureHeaders } from 'hono/secure-headers';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
 import { featureInfo, registryTarget, type QueryTarget } from './featureinfo.ts';
-import { catalogIndex, type Catalog } from './catalog.ts';
+import { catalogIndex, serviceKey, type Catalog } from './catalog.ts';
 import { communes, counties, findUnits, precincts, unitNames, voivodeships, type DictEntry } from './dictionaries.ts';
 import { RequestError, concurrencyGate, isLoopback, rateLimit } from './http.ts';
 import { parseReport, type Mailer } from './report.ts';
@@ -164,8 +164,9 @@ export function createApp({ cache, refresh, mailer, origin, catalog, refreshCata
     const current = catalog?.();
     const entry = current?.entries.find((e) => e.id === id);
     if (!current || !entry || entry.kind !== 'wms' || entry.status !== 'ok') return undefined;
-    const meta = current.services[entry.url]?.meta;
-    return { url: entry.url, layers: new Set([...Object.keys(meta?.layers ?? {}), ...(entry.sublayers ?? []).map((l) => l.name)]) };
+    const meta = current.services[serviceKey(entry)]?.meta;
+    const named = meta?.kind === 'wms' ? Object.keys(meta.layers) : [];
+    return { url: entry.url, layers: new Set([...named, ...(entry.sublayers ?? []).map((l) => l.name)]) };
   };
 
   /** Every layer of geoportal.gov.pl with its topic and availability; metadata come per layer. */
@@ -178,7 +179,7 @@ export function createApp({ cache, refresh, mailer, origin, catalog, refreshCata
     const current = catalog?.();
     const entry = current?.entries.find((e) => e.id === c.req.param('id'));
     if (!current || !entry) return c.text('Not found', 404);
-    return revalidated(c, `${current.generatedAt}-${encodeURIComponent(entry.id)}`, () => ({ entry, meta: current.services[entry.url]?.meta }));
+    return revalidated(c, `${current.generatedAt}-${encodeURIComponent(entry.id)}`, () => ({ entry, meta: current.services[serviceKey(entry)]?.meta }));
   });
   app.post('/api/catalog/refresh', async (c) => {
     if (!refreshCatalog || !isLoopback(c) || c.req.header('x-refresh') !== 'catalog') return c.text('Forbidden', 403);

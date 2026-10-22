@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 // Upstream hosts resolve to a public address, so the address check lets them through.
 vi.mock('node:dns/promises', () => ({ lookup: vi.fn(async () => [{ address: '203.0.113.10', family: 4 }]) }));
-import { buildCache } from './capabilities.ts';
+import { arcgisCapabilities, buildCache, wmtsCapabilities } from './capabilities.ts';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
 
 const WMS = `<?xml version="1.0"?>
@@ -104,5 +104,50 @@ describe('buildCache', () => {
     stub((url) => new Response(url.includes('WMTS') ? WMTS.replace('ORTOFOTOMAPA', 'INNA') : WMS));
     const cache = await buildCache();
     expect(cache.services.orto).toMatchObject({ kind: 'error', error: 'Layer ORTOFOTOMAPA not found' });
+  });
+});
+
+describe('catalog services', () => {
+  const matrix = (id: string) =>
+    `<TileMatrix><ows:Identifier>${id}:0</ows:Identifier><ScaleDenominator>5458804.2</ScaleDenominator><TopLeftCorner>908411.0 144693.3</TopLeftCorner><TileWidth>512</TileWidth><TileHeight>512</TileHeight><MatrixWidth>2</MatrixWidth><MatrixHeight>1</MatrixHeight></TileMatrix>`;
+  const GWC = `<Capabilities xmlns="http://www.opengis.net/wmts/1.0" xmlns:ows="http://www.opengis.net/ows/1.1"><Contents>
+    <Layer><ows:Identifier>Susza:gleby</ows:Identifier><Style isDefault="true"><ows:Identifier>susza</ows:Identifier></Style>
+      <Format>text/xml</Format><Format>image/jpeg</Format><Format>image/png</Format>
+      <TileMatrixSetLink><TileMatrixSet>EPSG:3857</TileMatrixSet></TileMatrixSetLink><TileMatrixSetLink><TileMatrixSet>EPSG:2180v1</TileMatrixSet></TileMatrixSetLink></Layer>
+    <Layer><ows:Identifier>common:drogi</ows:Identifier><TileMatrixSetLink><TileMatrixSet>EPSG:3857</TileMatrixSet></TileMatrixSetLink></Layer>
+    <TileMatrixSet><ows:Identifier>EPSG:3857</ows:Identifier><ows:SupportedCRS>urn:ogc:def:crs:EPSG::3857</ows:SupportedCRS>${matrix('EPSG:3857')}</TileMatrixSet>
+    <TileMatrixSet><ows:Identifier>EPSG:2180v1</ows:Identifier><ows:SupportedCRS>urn:ogc:def:crs:EPSG::2180</ows:SupportedCRS>${matrix('EPSG:2180v1')}</TileMatrixSet>
+  </Contents></Capabilities>`;
+
+  it('takes the named WMTS layer with its EPSG:2180 grid, an image format and the default style', async () => {
+    stub(() => new Response(GWC));
+    const meta = await wmtsCapabilities('https://iung.example/gwc/service/wmts', 'Susza:gleby');
+    expect(meta).toMatchObject({ layer: 'Susza:gleby', format: 'image/png', style: 'susza' });
+    expect(meta.matrixSet).toMatchObject({ id: 'EPSG:2180v1', origin: [144693.3, 908411.0], tileSize: 512 });
+    await expect(wmtsCapabilities('https://iung.example/gwc/service/wmts', 'common:drogi')).rejects.toThrow('Unsupported: no EPSG:2180 tile matrix set');
+  });
+
+  it('reads the layers and tile cache of an ArcGIS map service and recognises a token request', async () => {
+    const info = {
+      mapName: 'Gleby',
+      spatialReference: { wkid: 2180 },
+      singleFusedMapCache: true,
+      tileInfo: { rows: 512, origin: { x: 100000, y: 850000 }, spatialReference: { wkid: 2180 }, lods: [{ resolution: 100 }, { resolution: 50 }] },
+      layers: [
+        { id: 0, name: 'Gleby', minScale: 0, maxScale: 0, subLayerIds: [1] },
+        { id: 1, name: 'Kontury', minScale: 50000, maxScale: 500, subLayerIds: null },
+      ],
+    };
+    stub(() => Response.json(info));
+    const meta = await arcgisCapabilities('https://gugik.example/MapServer/');
+    expect(meta.layers).toEqual({ '0': { title: 'Gleby', queryable: false, group: true }, '1': { title: 'Kontury', queryable: false, maxScale: 50000, minScale: 500 } });
+    expect(meta.tiles).toEqual({ origin: [100000, 850000], tileSize: 512, resolutions: [100, 50] });
+
+    stub(() => Response.json({ ...info, spatialReference: { wkid: 102100, latestWkid: 3857 } }));
+    await expect(arcgisCapabilities('https://gugik.example/MapServer')).rejects.toThrow('Unsupported: EPSG:3857');
+    stub(() => new Response('<h1>Unauthorized.</h1><p>Token Require</p>', { status: 401 }));
+    await expect(arcgisCapabilities('https://gugik.example/MapServer')).rejects.toThrow('HTTP 499');
+    stub(() => Response.json({ error: { code: 499, message: 'Token Required' } }));
+    await expect(arcgisCapabilities('https://gugik.example/MapServer')).rejects.toThrow('HTTP 499');
   });
 });

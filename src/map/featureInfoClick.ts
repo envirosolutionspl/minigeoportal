@@ -1,6 +1,5 @@
 import type Map from 'ol/Map';
-import type ImageLayer from 'ol/layer/Image';
-import type ImageWMS from 'ol/source/ImageWMS';
+import ImageWMS from 'ol/source/ImageWMS';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import Feature from 'ol/Feature';
@@ -8,6 +7,7 @@ import Point from 'ol/geom/Point';
 import { Circle, Fill, Stroke, Style } from 'ol/style';
 import { OGC_PIXEL } from './projection';
 import { selectedSublayers, type Overlay } from '@/services/registry';
+import type { OverlayLayer } from '@/services/layers';
 import { fetchFeatureInfo, queryLayers } from '@/services/featureinfo';
 import { useInfoStore } from '@/state/info';
 import { useMapStore } from '@/state/store';
@@ -20,7 +20,7 @@ const MARKER = new Style({
  * Map click queries every active overlay at that point and marks the spot. With the keyboard,
  * Enter on the focused map asks about the map centre (marked by a crosshair while focused).
  */
-export function attachFeatureInfo(map: Map, overlays: () => { def: Overlay; layer: ImageLayer<ImageWMS> }[]): () => void {
+export function attachFeatureInfo(map: Map, overlays: () => { def: Overlay; layer: OverlayLayer }[]): () => void {
   const marker = new Feature<Point>();
   marker.setStyle(MARKER);
   const markerLayer = new VectorLayer({ source: new VectorSource<Feature<Point>>(), zIndex: 100 });
@@ -47,8 +47,12 @@ export function attachFeatureInfo(map: Map, overlays: () => { def: Overlay; laye
 
     const s = useMapStore.getState();
     const scale = resolution / OGC_PIXEL;
+    // Only WMS answers GetFeatureInfo; tiles and ArcGIS maps are drawn without it.
     const targets = overlays()
-      .filter(({ def }) => s.overlays.includes(def.id))
+      .flatMap(({ def, layer }) => {
+        const source = layer.getSource();
+        return s.overlays.includes(def.id) && source instanceof ImageWMS ? [{ def, source }] : [];
+      })
       .map((o) => ({ ...o, layers: queryLayers(o.def, selectedSublayers(o.def, s.sublayers), scale) }))
       .filter((t) => t.layers.length > 0);
 
@@ -59,7 +63,7 @@ export function attachFeatureInfo(map: Map, overlays: () => { def: Overlay; laye
     if (s.panel === 'catalog' && window.innerWidth < 640) s.setPanel('none');
 
     for (const t of targets) {
-      fetchFeatureInfo(t.def, t.layer.getSource()!, coordinate, resolution, t.layers, signal)
+      fetchFeatureInfo(t.def, t.source, coordinate, resolution, t.layers, signal)
         .then((records) => info.resolve(coordinate, t.def.id, { status: 'done', records }))
         .catch((e: unknown) => {
           if (signal.aborted) return;

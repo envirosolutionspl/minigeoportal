@@ -115,6 +115,11 @@ export function LayerCatalog() {
             placeholder="Szukaj warstwy: woda, gaz, plan, zabytki…"
             className="w-full bg-transparent text-sm outline-none placeholder:text-[var(--muted)]"
           />
+          {query && (
+            <button type="button" onClick={() => setQuery('')} aria-label="Wyczyść wyszukiwanie" className="rounded-full p-1 hover:bg-[var(--hover)]">
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </label>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {(Object.keys(TOPICS) as Topic[]).map((t) => (
@@ -444,7 +449,10 @@ function SublayerRow({ s, l, highlighted, disabled }: { s: Overlay; l: SubLayer;
           aria-label={`${s.title}: ${l.title}`}
           className="h-3.5 w-3.5 shrink-0 accent-[var(--accent)]"
         />
-        <span className={outOfScale ? 'text-[var(--muted)]' : ''}>{l.title}</span>
+        {/* Greyed while the server does not draw it at this scale; the hint says from which scale it does. */}
+        <span className={outOfScale ? 'text-[var(--muted)]' : ''} title={outOfScale ? `${hint}. Teraz niewidoczne.` : undefined}>
+          {l.title}
+        </span>
       </label>
       {checked && outOfScale && (
         // Outside the label, so a click next to it cannot switch the layer off.

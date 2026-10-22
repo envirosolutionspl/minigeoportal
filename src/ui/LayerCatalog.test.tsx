@@ -100,6 +100,16 @@ describe('LayerCatalog', () => {
     expect(screen.getByLabelText('Ewidencja gruntów i budynków')).toBeTruthy();
   });
 
+  it('clears the layer search with one click', () => {
+    render(<LayerCatalog />);
+    expect(screen.queryByRole('button', { name: 'Wyczyść wyszukiwanie' })).toBeNull();
+    const search = screen.getByPlaceholderText(/Szukaj warstwy/) as HTMLInputElement;
+    fireEvent.change(search, { target: { value: 'kanalizacja' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Wyczyść wyszukiwanie' }));
+    expect(search.value).toBe('');
+    expect(screen.getByText('Najpopularniejsze')).toBeTruthy();
+  });
+
   it('filters by topic chip', () => {
     render(<LayerCatalog />);
     fireEvent.click(screen.getByRole('button', { name: 'Ceny' }));
@@ -121,6 +131,8 @@ describe('LayerCatalog', () => {
   it('offers to zoom in for a checked sublayer outside its scale, without toggling it', () => {
     render(<LayerCatalog />);
     fireEvent.click(screen.getByRole('button', { name: 'Warstwy usługi: Ewidencja gruntów i budynków' }));
+    // A sublayer the server does not draw at this scale is greyed, and says why on hover.
+    expect(screen.getByTitle('Widoczne od skali 1:10000. Teraz niewidoczne.').textContent).toBe('Działki');
     const zoom = screen.getByTitle('Widoczne od skali 1:10000');
     // Outside the checkbox label: a click next to the button cannot switch the layer off.
     expect(zoom.closest('label')).toBeNull();

@@ -1,0 +1,16 @@
+# Only what the image is built from; everything else (local notes, editor files, secrets, caches) stays out.
+*
+!package.json
+!package-lock.json
+!index.html
+!tsconfig.json
+!vite.config.ts
+!vitest.config.ts
+!public
+!src
+!server
+!shared
+!config
+!scripts
+server/data/dict
+server/data/catalog

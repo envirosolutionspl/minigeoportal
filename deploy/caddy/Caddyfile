@@ -1,0 +1,20 @@
+# Caddy in front of the app: certificates, HTTP/2 and HTTP/3 (UDP 443) without further settings.
+# DOMAIN comes from compose.yaml; with localhost Caddy uses its own local certificate.
+
+{$DOMAIN} {
+	# Requests to the app are small (bug reports up to 16 KB); larger bodies stop here.
+	request_body {
+		max_size 64KB
+	}
+
+	reverse_proxy {
+		# Every replica of the app, as Docker's DNS lists them. One visitor stays with one
+		# replica, so the rate limits counted there apply to the visitor as a whole.
+		dynamic a app 8787 {
+			refresh 10s
+		}
+		lb_policy client_ip_hash
+		health_uri /api/health
+		health_interval 15s
+	}
+}

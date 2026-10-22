@@ -10,15 +10,14 @@
     "dev:api": "node --env-file-if-exists=.env --watch-path=server --watch-path=src/services --watch-path=shared --watch-path=config server/index.ts",
     "build": "tsc -b && vite build && node scripts/precompress.ts",
     "start": "node --env-file-if-exists=.env server/index.ts",
-    "capabilities": "node --env-file-if-exists=.env server/refresh.ts",
+    "update": "node --env-file-if-exists=.env server/update.ts",
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "format": "prettier --write --ignore-path .gitignore --ignore-path .prettierignore --ignore-path .git/info/exclude .",
     "format:check": "prettier --check --ignore-path .gitignore --ignore-path .prettierignore --ignore-path .git/info/exclude .",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm test",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "catalog": "node --env-file-if-exists=.env server/refreshCatalog.ts"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@fontsource-variable/figtree": "^5.3.0",

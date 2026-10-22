@@ -32,14 +32,12 @@ import { connectSources, type Site } from './html.ts';
 interface AppOptions {
   /** The deployment's configuration (config/), per language. */
   site: Site;
-  cache: CapabilitiesCache;
-  refresh(): Promise<CapabilitiesCache>;
+  /** Service metadata as last read; `npm run update` refreshes them (index.ts reads them again). */
+  cache: () => CapabilitiesCache;
   /** Sends bug reports; without it the report form answers 503. */
   mailer?: Mailer;
   /** The geoportal layer catalog as last built; undefined while the first build runs. */
   catalog?: () => Catalog | undefined;
-  /** Rebuilds the catalog (loopback only, like the capabilities refresh). */
-  refreshCatalog?: () => Promise<Catalog>;
   /** Public address of the app; links in reports must point here. Defaults to the request's Origin. */
   origin?: string;
   /** Overridable in tests so bursts can be exercised quickly. */
@@ -52,8 +50,7 @@ interface AppOptions {
   };
 }
 
-export function createApp({ site, cache, refresh, mailer, origin, catalog, refreshCatalog, limits }: AppOptions): Hono {
-  let current = cache;
+export function createApp({ site, cache, mailer, origin, catalog, limits }: AppOptions): Hono {
   const overlays = new Map(site.defaults.layers.overlays.map((o) => [o.id, o]));
   const gugik = site.defaults.modules.gugik;
   const app = new Hono();
@@ -89,7 +86,7 @@ export function createApp({ site, cache, refresh, mailer, origin, catalog, refre
     return c.json(site.client(site.locale(c.req.query('lang'), c.req.header('accept-language'))));
   });
 
-  app.get('/api/health', (c) => c.json({ ok: true, capabilitiesGeneratedAt: current.generatedAt }));
+  app.get('/api/health', (c) => c.json({ ok: true, capabilitiesGeneratedAt: cache().generatedAt }));
 
   /**
    * Answers that change only when the server refreshes its caches: the browser keeps them but
@@ -104,21 +101,9 @@ export function createApp({ site, cache, refresh, mailer, origin, catalog, refre
     return c.json(body());
   };
 
-  app.get('/api/capabilities', (c) => revalidated(c, current.generatedAt, () => current));
-
-  /**
-   * Rebuilds the cache on demand, only from the machine the server runs on. The custom header
-   * keeps a page in a local browser from triggering it. A scheduled refresh is still to be designed.
-   */
-  let refreshing: Promise<CapabilitiesCache> | undefined;
-  app.post('/api/capabilities/refresh', async (c) => {
-    if (!isLoopback(c) || c.req.header('x-refresh') !== 'capabilities') return c.text('Forbidden', 403);
-    // One rebuild at a time; a second call while it runs waits for the same result.
-    refreshing ??= refresh().finally(() => {
-      refreshing = undefined;
-    });
-    current = await refreshing;
-    return c.json({ generatedAt: current.generatedAt });
+  app.get('/api/capabilities', (c) => {
+    const current = cache();
+    return revalidated(c, current.generatedAt, () => current);
   });
 
   /** Upstream errors are logged here and reported to the client in one generic sentence. */
@@ -249,11 +234,6 @@ export function createApp({ site, cache, refresh, mailer, origin, catalog, refre
         entry,
         meta: current.services[serviceKey(entry)]?.meta,
       }));
-    });
-    app.post('/api/catalog/refresh', async (c) => {
-      if (!refreshCatalog || !isLoopback(c) || c.req.header('x-refresh') !== 'catalog') return c.text('Forbidden', 403);
-      const built = await refreshCatalog();
-      return c.json({ generatedAt: built.generatedAt, layers: built.entries.length });
     });
   }
 

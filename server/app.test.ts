@@ -18,13 +18,11 @@ const remote = { incoming: { socket: { remoteAddress: '203.0.113.5', remoteFamil
 
 let dir: string;
 let app: Hono;
-let refresh: ReturnType<typeof vi.fn<() => Promise<CapabilitiesCache>>>;
 beforeAll(async () => {
   dir = await mkdtemp(join(tmpdir(), 'app-'));
   process.env.DICT_CACHE_DIR = dir;
   const { createApp } = await import('./app.ts');
-  refresh = vi.fn<() => Promise<CapabilitiesCache>>(async () => ({ ...CACHE, generatedAt: 'refreshed' }));
-  app = createApp({ site, cache: CACHE, refresh, limits: { dict: [2, 60], featureInfo: [40, 60] } });
+  app = createApp({ site, cache: () => CACHE, limits: { dict: [2, 60], featureInfo: [40, 60] } });
 });
 afterAll(() => rm(dir, { recursive: true, force: true }));
 
@@ -35,7 +33,7 @@ describe('routes', () => {
       ...site.config,
       app: { ...site.config.app, modules: {}, search: { ...site.config.app.search, provider: 'none', parcel: false } },
     });
-    const bare = createApp({ site: plain, cache: CACHE, refresh, catalog: () => undefined });
+    const bare = createApp({ site: plain, cache: () => CACHE, catalog: () => undefined });
     for (const path of ['/api/catalog', '/api/dict/wojewodztwa', '/api/orto?x=1&y=1']) {
       expect((await bare.request(path, {}, remote)).status).toBe(404);
     }
@@ -55,7 +53,7 @@ describe('routes', () => {
     };
     const fetch = vi.fn(async () => new Response(JSON.stringify([row])));
     vi.stubGlobal('fetch', fetch);
-    const res = await createApp({ site: osm, cache: CACHE, refresh }).request('/api/search?q=Krak%C3%B3w&lang=pl', {}, remote);
+    const res = await createApp({ site: osm, cache: () => CACHE }).request('/api/search?q=Krak%C3%B3w&lang=pl', {}, remote);
     expect(await res.json()).toEqual([
       { label: 'Kraków, Polska', point: [19.94, 50.06], bbox: [19.79, 49.97, 20.22, 50.13], type: 'city' },
     ]);
@@ -91,15 +89,13 @@ describe('routes', () => {
     expect((await app.request('/api/health', { method: 'DELETE' }, remote)).status).toBe(404);
   });
 
-  it('refreshes only from loopback with the custom header', async () => {
-    expect((await app.request('/api/capabilities/refresh', { method: 'POST' }, local)).status).toBe(403);
-    expect(
-      (await app.request('/api/capabilities/refresh', { method: 'POST', headers: { 'x-refresh': 'capabilities' } }, remote)).status,
-    ).toBe(403);
-    const ok = await app.request('/api/capabilities/refresh', { method: 'POST', headers: { 'x-refresh': 'capabilities' } }, local);
-    expect(ok.status).toBe(200);
-    expect(refresh).toHaveBeenCalledOnce();
-    expect(await (await app.request('/api/health', {}, remote)).json()).toMatchObject({ capabilitiesGeneratedAt: 'refreshed' });
+  it('serves the metadata as last read, so an update reaches the app without a restart', async () => {
+    const { createApp } = await import('./app.ts');
+    let current = CACHE;
+    const following = createApp({ site, cache: () => current });
+    current = { ...CACHE, generatedAt: 'updated' };
+    expect(await (await following.request('/api/health', {}, remote)).json()).toMatchObject({ capabilitiesGeneratedAt: 'updated' });
+    expect((await following.request('/api/capabilities/refresh', { method: 'POST' }, local)).status).toBe(404);
   });
 
   it('maps dictionary errors: 400 for client mistakes, 502 with a generic text for upstream failures', async () => {
@@ -226,13 +222,13 @@ describe('catalog routes', () => {
 
   it('answers 503 while the first catalog is being built', async () => {
     const { createApp } = await import('./app.ts');
-    const building = createApp({ site, cache: CACHE, refresh, catalog: () => undefined });
+    const building = createApp({ site, cache: () => CACHE, catalog: () => undefined });
     expect((await building.request('/api/catalog', {}, client)).status).toBe(503);
   });
 
   it('lists the layers without addresses and gives one layer with its metadata, revalidated by ETag', async () => {
     const { createApp } = await import('./app.ts');
-    const withCatalog = createApp({ site, cache: CACHE, refresh, catalog: () => CATALOG });
+    const withCatalog = createApp({ site, cache: () => CACHE, catalog: () => CATALOG });
     const list = await withCatalog.request('/api/catalog', {}, client);
     const body = (await list.json()) as { entries: Record<string, unknown>[] };
     expect(body.entries.map((e) => e.id)).toEqual(['msZabytki', 'msCLC']);
@@ -253,7 +249,7 @@ describe('catalog routes', () => {
   it('serves layers whose geoportal id has Polish letters', async () => {
     const { createApp } = await import('./app.ts');
     const polish = { ...CATALOG, entries: [{ ...CATALOG.entries[0], id: 'msWyłozeniaModernizacja' }] };
-    const res = await createApp({ site, cache: CACHE, refresh, catalog: () => polish }).request(
+    const res = await createApp({ site, cache: () => CACHE, catalog: () => polish }).request(
       `/api/catalog/${encodeURIComponent('msWyłozeniaModernizacja')}`,
       {},
       client,
@@ -264,24 +260,12 @@ describe('catalog routes', () => {
 
   it('queries available catalog layers through the proxy and refuses unavailable ones', async () => {
     const { createApp } = await import('./app.ts');
-    const withCatalog = createApp({ site, cache: CACHE, refresh, catalog: () => CATALOG });
+    const withCatalog = createApp({ site, cache: () => CACHE, catalog: () => CATALOG });
     const fetchMock = vi.fn(async (_url: string) => new Response('<a/>', { headers: { 'content-type': 'text/xml' } }));
     vi.stubGlobal('fetch', fetchMock);
     const q = 'QUERY_LAYERS=monuments&BBOX=1,2,3,4&WIDTH=10&HEIGHT=10&I=1&J=1&INFO_FORMAT=text/xml';
     expect((await withCatalog.request(`/api/featureinfo/msZabytki?${q}`, {}, client)).status).toBe(200);
     expect(String(fetchMock.mock.calls[0][0])).toContain('https://nid.example/wms?');
     expect((await withCatalog.request(`/api/featureinfo/msCLC?${q}`, {}, client)).status).toBe(400);
-  });
-
-  it('rebuilds the catalog only from the server machine with the header', async () => {
-    const { createApp } = await import('./app.ts');
-    const refreshCatalog = vi.fn(async () => CATALOG);
-    const withCatalog = createApp({ site, cache: CACHE, refresh, catalog: () => CATALOG, refreshCatalog });
-    expect((await withCatalog.request('/api/catalog/refresh', { method: 'POST' }, local)).status).toBe(403);
-    expect(
-      (await withCatalog.request('/api/catalog/refresh', { method: 'POST', headers: { 'x-refresh': 'catalog' } }, remote)).status,
-    ).toBe(403);
-    const ok = await withCatalog.request('/api/catalog/refresh', { method: 'POST', headers: { 'x-refresh': 'catalog' } }, local);
-    expect(await ok.json()).toEqual({ generatedAt: 'built', layers: 2 });
   });
 });

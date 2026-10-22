@@ -16,6 +16,11 @@ export const config = {
   origin: process.env.APP_ORIGIN,
   /** The deployment's configuration files (app.yaml, map.yaml, layers.yaml). */
   configDir: process.env.CONFIG_DIR ?? 'config',
+  /**
+   * Several instances share the data directory (SHARED_DATA=1): only `npm run update` writes the
+   * caches, and every instance reads them again when they change.
+   */
+  sharedData: process.env.SHARED_DATA === '1',
 };
 
 /** Files the server keeps between starts (caches), under server/data unless moved by DATA_DIR. */

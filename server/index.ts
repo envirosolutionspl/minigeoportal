@@ -5,51 +5,58 @@ import { compress } from 'hono/compress';
 import { etag } from 'hono/etag';
 import type { Context } from 'hono';
 import { createApp } from './app.ts';
-import { readCache, refreshCache } from './cache.ts';
+import { CACHE_FILE, readCache, refreshCache } from './cache.ts';
 import { mailerFromEnv } from './report.ts';
-import { buildCatalog, readCatalog, writeCatalog, type Catalog } from './modules/gugik/catalog.ts';
+import { CATALOG_FILE, buildCatalog, readCatalog, writeCatalog, type Catalog } from './modules/gugik/catalog.ts';
 import { config, errorMessage, production } from './config.ts';
 import { loadConfig } from './config/load.ts';
 import { createSite, renderPage } from './html.ts';
+import { follow } from './files.ts';
+import type { CapabilitiesCache } from '../src/services/meta.ts';
 
 /** Starts the API; in production it also serves the built app from ./dist. Settings: config.ts. */
 
 /** A configuration with problems stops the server here, with every problem listed. */
 const site = createSite(loadConfig(config.configDir));
-const overlays = site.defaults.layers.overlays;
+const withCatalog = site.defaults.modules.gugik?.catalog === true;
+
+let capabilities: CapabilitiesCache = (await readCache()) ?? (await refreshCache(site.defaults));
 
 /**
- * The geoportal layer catalog (gugik module): read from disk, or built in the background on the
- * first start (a minute or two: every service is checked), so the server answers at once and the
- * app works on its own layers meanwhile.
+ * The geoportal layer catalog (gugik module): read from disk. A single instance builds it in the
+ * background on its first start (a minute or two: every service is checked), so it answers at
+ * once and the app works on its own layers meanwhile; shared instances wait for the updater.
  */
-const withCatalog = site.defaults.modules.gugik?.catalog === true;
 let catalog: Catalog | undefined = withCatalog ? await readCatalog() : undefined;
-let building: Promise<Catalog> | undefined;
-const refreshCatalog = () => {
-  building ??= buildCatalog(overlays, catalog)
+if (withCatalog && !catalog && !config.sharedData) {
+  buildCatalog(site.defaults.layers.overlays)
     .then(async (built) => {
       catalog = built;
       await writeCatalog(built);
-      return built;
     })
-    .finally(() => {
-      building = undefined;
+    .catch((e: unknown) => console.warn(`catalog: ${errorMessage(e)}`));
+}
+
+// With a shared data directory the updater writes the caches; this instance reads them again.
+if (config.sharedData) {
+  await follow(CACHE_FILE, async () => {
+    capabilities = (await readCache()) ?? capabilities;
+  });
+  if (withCatalog) {
+    await follow(CATALOG_FILE, async () => {
+      catalog = (await readCatalog()) ?? catalog;
     });
-  return building;
-};
-if (withCatalog && !catalog) refreshCatalog().catch((e: unknown) => console.warn(`catalog: ${errorMessage(e)}`));
+  }
+}
 
 const mailer = mailerFromEnv(site.defaults);
 if (!mailer) console.log('Bug reports off: set SMTP_HOST and REPORT_TO to turn them on.');
-const refresh = () => refreshCache(site.defaults);
 const app = createApp({
   site,
-  cache: (await readCache()) ?? (await refresh()),
-  refresh,
+  cache: () => capabilities,
   mailer,
   origin: config.origin,
-  ...(withCatalog ? { catalog: () => catalog, refreshCatalog } : {}),
+  ...(withCatalog ? { catalog: () => catalog } : {}),
 });
 
 if (production) {
@@ -73,6 +80,14 @@ if (production) {
   app.get('*', compress(), etag(), page);
 }
 
-serve({ fetch: app.fetch, port: config.port, hostname: config.host }, (info) => {
+const server = serve({ fetch: app.fetch, port: config.port, hostname: config.host }, (info) => {
   console.log(`API on http://${info.address}:${info.port}`);
 });
+
+// A container stops with SIGTERM: requests in progress finish, new ones go to other instances.
+for (const signal of ['SIGTERM', 'SIGINT'] as const) {
+  process.once(signal, () => {
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(0), 10000).unref();
+  });
+}

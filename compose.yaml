@@ -1,0 +1,59 @@
+# The app behind Caddy: automatic HTTPS, HTTP/2 and HTTP/3, several replicas of the app and one
+# updater that refreshes the shared data once a day. Start:
+#   DOMAIN=example.org docker compose up -d --build
+# More replicas: docker compose up -d --scale app=4
+# Own configuration: mount a directory with app.yaml, map.yaml and layers.yaml at /app/config
+# (see docs/), e.g. replace ./config below with ./my-config.
+
+services:
+  app:
+    build: .
+    image: prosty-geoportal
+    init: true
+    restart: unless-stopped
+    environment:
+      TRUSTED_PROXY: '1'
+      SHARED_DATA: '1'
+      APP_ORIGIN: https://${DOMAIN:-localhost}
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - data:/data
+      - ./config:/app/config:ro
+    deploy:
+      replicas: 2
+
+  updater:
+    image: prosty-geoportal
+    init: true
+    restart: unless-stopped
+    environment:
+      SHARED_DATA: '1'
+    volumes:
+      - data:/data
+      - ./config:/app/config:ro
+    # Once at start, then every day; the replicas pick the new data up within a minute.
+    command: ['sh', '-c', 'while true; do node server/update.ts; sleep 86400; done']
+    healthcheck:
+      disable: true
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [app]
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp' # HTTP/3
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  data:
+  caddy-data:
+  caddy-config:

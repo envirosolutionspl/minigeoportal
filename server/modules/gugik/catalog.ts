@@ -1,5 +1,4 @@
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { readFile } from 'node:fs/promises';
 import type { Overlay } from '../../../shared/config.ts';
 import type { CatalogEntry, CatalogIndex, CatalogMeta, CatalogStatus } from '../../../src/services/catalogTypes.ts';
 import { catalogSublayers } from '../../../src/services/catalogSublayers.ts';
@@ -7,6 +6,7 @@ import { normalize } from '../../../src/services/text.ts';
 import { PL1992, serviceCapabilities } from '../../capabilities.ts';
 import { fetchGeoportalConfig, type ConfigService, type GeoportalConfig } from './geoportalConfig.ts';
 import { dataPath, errorMessage } from '../../config.ts';
+import { writeAtomic } from '../../files.ts';
 
 /**
  * Catalog of every layer of geoportal.gov.pl, kept on disk and rebuilt on demand.
@@ -38,7 +38,7 @@ export interface Catalog {
 /** A WMTS serves several tile layers under one address, each with its own grid. */
 export const serviceKey = (e: Pick<CatalogEntry, 'url' | 'layer'>) => (e.layer ? `${e.url} ${e.layer}` : e.url);
 
-const CATALOG_FILE = process.env.CATALOG_FILE ?? dataPath('catalog', 'catalog.json');
+export const CATALOG_FILE = process.env.CATALOG_FILE ?? dataPath('catalog', 'catalog.json');
 /** Services checked at once: the geoportal servers are shared with everyone. */
 const CONCURRENCY = 6;
 /** The main module first, so layers take their groups from where most people know them. */
@@ -280,8 +280,5 @@ export async function readCatalog(): Promise<Catalog | undefined> {
 }
 
 export async function writeCatalog(catalog: Catalog): Promise<void> {
-  await mkdir(dirname(CATALOG_FILE), { recursive: true });
-  // Written next to the target and renamed, so a crash never leaves half a file.
-  await writeFile(`${CATALOG_FILE}.tmp`, JSON.stringify(catalog));
-  await rename(`${CATALOG_FILE}.tmp`, CATALOG_FILE);
+  await writeAtomic(CATALOG_FILE, JSON.stringify(catalog));
 }

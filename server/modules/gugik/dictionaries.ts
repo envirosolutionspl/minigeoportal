@@ -1,7 +1,8 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { RequestError, fetchFixed, readLimited } from '../../http.ts';
 import { dataPath } from '../../config.ts';
+import { writeAtomic } from '../../files.ts';
 import { normalize } from '../../../src/services/text.ts';
 import type { DictEntry } from '../../../src/services/dictionaries.ts';
 import type { UnitHit, UnitLevel, UnitNames } from '../../../src/services/units.ts';
@@ -55,8 +56,7 @@ function loadOnce(key: string, load: () => Promise<DictEntry[]>): Promise<DictEn
       .then(async (entries) => {
         memory.set(key, { fetchedAt: Date.now(), entries });
         if (entries.length > 0) {
-          await mkdir(CACHE_DIR, { recursive: true });
-          await writeFile(fileFor(key), JSON.stringify(memory.get(key)));
+          await writeAtomic(fileFor(key), JSON.stringify(memory.get(key)));
         }
         return entries;
       })

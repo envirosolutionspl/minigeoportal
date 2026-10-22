@@ -67,7 +67,7 @@ describe('POST /api/report', () => {
 
   it('sends a valid report and says whether the form is on', async () => {
     const send = vi.fn<Mailer['send']>(async () => {});
-    const app = createApp({ site, cache: CACHE, refresh: async () => CACHE, mailer: { send }, origin: ORIGIN });
+    const app = createApp({ site, cache: () => CACHE, mailer: { send }, origin: ORIGIN });
     expect(await (await app.request('/api/report', {}, remote)).json()).toEqual({ enabled: true });
     const res = await post(app, valid, { 'user-agent': 'Test' });
     expect(res.status).toBe(200);
@@ -77,8 +77,7 @@ describe('POST /api/report', () => {
   it('answers 400 for invalid input, 503 when off, 502 when mail fails, 413 for big bodies', async () => {
     const failing = createApp({
       site,
-      cache: CACHE,
-      refresh: async () => CACHE,
+      cache: () => CACHE,
       mailer: {
         send: async () => {
           throw new Error('smtp down');
@@ -90,13 +89,12 @@ describe('POST /api/report', () => {
     expect((await post(failing, 'not json')).status).toBe(400);
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     expect((await post(failing, valid)).status).toBe(502);
-    const off = createApp({ site, cache: CACHE, refresh: async () => CACHE });
+    const off = createApp({ site, cache: () => CACHE });
     expect((await post(off, valid)).status).toBe(503);
     expect(await (await off.request('/api/report', {}, remote)).json()).toEqual({ enabled: false });
     const big = createApp({
       site,
-      cache: CACHE,
-      refresh: async () => CACHE,
+      cache: () => CACHE,
       mailer: { send: async () => {} },
       limits: { dict: [1, 1], featureInfo: [1, 1], report: [10, 60] },
     });
@@ -107,8 +105,7 @@ describe('POST /api/report', () => {
     const send = vi.fn<Mailer['send']>(async () => {});
     const app = createApp({
       site,
-      cache: CACHE,
-      refresh: async () => CACHE,
+      cache: () => CACHE,
       mailer: { send },
       origin: ORIGIN,
       limits: { dict: [1, 1], featureInfo: [1, 1], report: [2, 0.1] },

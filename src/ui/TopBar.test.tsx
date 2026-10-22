@@ -85,3 +85,19 @@ describe('copy link', () => {
     expect(screen.getByText(new RegExp(`^${location.origin.replace(/[.:/]/g, '\$&')}.*\?x=`))).toBeTruthy();
   });
 });
+
+describe('map tools', () => {
+  it('lists the tools from layers at the top to help at the bottom', () => {
+    const { container } = render(<TopBar />);
+    const labels = [...container.querySelectorAll('.map-tools > button, .map-tools > div > button')].map((b) => b.getAttribute('aria-label'));
+    expect(labels).toEqual([
+      'Warstwy',
+      'Moja lokalizacja',
+      'Pomiar odległości i powierzchni',
+      'Kopiuj link do tego widoku mapy',
+      'Drukuj mapę',
+      'Ułatwienia: wielkość tekstu i kontrast',
+      'O serwisie',
+    ]);
+  });
+});

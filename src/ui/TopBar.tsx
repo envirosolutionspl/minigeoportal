@@ -243,18 +243,20 @@ export function TopBar() {
         </p>
       </div>
 
-      {/* On phones the buttons form a column under the search bar, leaving it the full width. */}
       {/* One column on every screen, under the search bar on phones, so the tools never change shape. */}
+      {/* Most used first: layers, then working on the map, sharing, and help at the bottom. */}
       <div className="map-tools pointer-events-auto absolute top-[4.25rem] right-3 flex flex-col gap-2 sm:top-4 sm:right-4">
-        <DisplayMenu />
-        <IconButton label="O serwisie" onClick={() => openWelcome(true)}>
-          <Info className="h-5 w-5" />
+        <IconButton label="Warstwy" active={panel === 'catalog'} onClick={() => setPanel(panel === 'catalog' ? 'none' : 'catalog')}>
+          <Layers className="h-5 w-5" />
         </IconButton>
         <IconButton label="Moja lokalizacja" onClick={locate}>
           <LocateFixed className="h-5 w-5" />
         </IconButton>
         <IconButton label="Pomiar odległości i powierzchni" active={measuring} onClick={() => setTool(measuring ? 'none' : 'measure-line')}>
           <Ruler className="h-5 w-5" />
+        </IconButton>
+        <IconButton label="Kopiuj link do tego widoku mapy" onClick={() => void copyLink()}>
+          <Link2 className="h-5 w-5" />
         </IconButton>
         <IconButton label="Drukuj mapę" active={tool === 'print'} onClick={() => {
             // The print panel takes the place panel's spot on the left.
@@ -265,11 +267,9 @@ export function TopBar() {
         >
           <Printer className="h-5 w-5" />
         </IconButton>
-        <IconButton label="Kopiuj link do tego widoku mapy" onClick={() => void copyLink()}>
-          <Link2 className="h-5 w-5" />
-        </IconButton>
-        <IconButton label="Warstwy" active={panel === 'catalog'} onClick={() => setPanel(panel === 'catalog' ? 'none' : 'catalog')}>
-          <Layers className="h-5 w-5" />
+        <DisplayMenu />
+        <IconButton label="O serwisie" onClick={() => openWelcome(true)}>
+          <Info className="h-5 w-5" />
         </IconButton>
       </div>
       <p

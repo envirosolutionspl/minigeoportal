@@ -73,7 +73,7 @@ export function WelcomeDialog() {
             <h1 id="welcome-title" className="text-xl font-bold tracking-tight">
               {APP_NAME}
             </h1>
-            <p className="text-sm text-[var(--muted)]">Działki, plany i zdjęcia lotnicze w jednym miejscu</p>
+            <p className="text-sm text-[var(--muted)]">Dane z geoportal.gov.pl – prościej i szybciej</p>
           </div>
         </header>
 
@@ -81,9 +81,30 @@ export function WelcomeDialog() {
           <section>
             <h2 className="mb-1 font-semibold">Po co jest ten serwis</h2>
             <p>
-              {APP_NAME} pomaga szybko sprawdzić działkę: jej granice i numer, przeznaczenie w planie miejscowym lub
-              ogólnym, ceny transakcyjne w okolicy, uzbrojenie terenu i ortofotomapę. Wpisz adres albo kliknij mapę,
-              aby zobaczyć informacje o miejscu. Bez logowania i bez opłat.
+              {APP_NAME} pokazuje te same publiczne dane co krajowy geoportal.gov.pl, ale w formie przyjaznej dla
+              osób, które nie zajmują się mapami zawodowo. Wpisz adres, miejscowość albo numer działki i kliknij mapę.
+              Zobaczysz granice i numer działki, przeznaczenie w planie miejscowym lub ogólnym, ceny transakcyjne w
+              okolicy, uzbrojenie terenu i zdjęcia lotnicze. Bez logowania i bez opłat, na komputerze i na telefonie.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="mb-1 font-semibold">Skąd ten pomysł</h2>
+            <p>
+              Serwis powstał w odpowiedzi na głosy użytkowników geoportal.gov.pl, z którego co roku korzysta ponad 9 mln
+              osób. W opiniach i na forach najczęściej powtarza się, że:
+            </p>
+            <ul className="mt-1 list-disc space-y-0.5 pl-5">
+              <li>trudno się w nim odnaleźć i nie wiadomo, co kliknąć,</li>
+              <li>granice działek widać dopiero po dużym przybliżeniu, a numery są słabo czytelne,</li>
+              <li>żeby znaleźć działkę, trzeba znać obręb albo jej identyfikator,</li>
+              <li>plany miejscowe i ceny transakcyjne są rozrzucone po osobnych modułach,</li>
+              <li>aplikacja mobilna często nie wczytuje map.</li>
+            </ul>
+            <p className="mt-2">
+              Dlatego tutaj masz jedną mapę zamiast modułów i wyszukiwarkę, która rozumie zwykły adres. Najpotrzebniejsze
+              warstwy są pod ręką, a ponad 400 pozostałych z geoportal.gov.pl czeka w katalogu z prostym podziałem na
+              tematy. Mapa wczytuje się kilka razy szybciej niż oficjalna.
             </p>
           </section>
 
@@ -94,7 +115,7 @@ export function WelcomeDialog() {
               <a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener" className="text-[var(--accent)] underline">
                 geoportal.gov.pl
               </a>
-              ) oraz serwerów starostw i gmin, z którymi te usługi się łączą. Mapa pobiera je na bieżąco i niczego nie
+              ) oraz serwerów starostw, gmin i innych instytucji, z którymi te usługi się łączą. Mapa pobiera je na bieżąco i niczego nie
               zmienia ani nie przechowuje. Aktualność danych zależy od urzędu, który je prowadzi.
             </p>
           </section>

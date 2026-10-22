@@ -44,7 +44,7 @@ view:
   zoom: 3 # index into zoom.scales
   # The whole country: first visit and the "whole area" button.
   home: [170000, 130000, 870000, 800000]
-  homeLabel: Cała Polska
+  homeLabel: { pl: 'Cała Polska', en: 'All of Poland' }
   base: mapa
   baseMobile: prosta # the simplified map loads fastest on mobile connections
   overlays: [kieg]
@@ -100,14 +100,18 @@ tileServices:
 # BDOO is drawn above 1:70 000 and BDOT10k below, where neither has much detail.
 baseMaps:
   - id: orto
-    title: Zdjęcia
-    description: Ortofotomapa
+    title: { pl: 'Zdjęcia', en: 'Photos' }
+    description: { pl: 'Ortofotomapa', en: 'Orthophoto map' }
     thumb: /thumbs/orto.jpg
     sources:
       - service: orto
   - id: mapa
-    title: Mapa
-    description: Mapa ogólnogeograficzna BDOO, po przybliżeniu topograficzna BDOT10k
+    title: { pl: 'Mapa', en: 'Map' }
+    description:
+      {
+        pl: 'Mapa ogólnogeograficzna BDOO, po przybliżeniu topograficzna BDOT10k',
+        en: 'General geographic map BDOO, topographic BDOT10k when zoomed in',
+      }
     thumb: /thumbs/mapa.jpg
     sources:
       - service: bdoo
@@ -115,24 +119,24 @@ baseMaps:
       - service: bdot10k
         maxScale: 70000
   - id: teren
-    title: Teren
-    description: 'Rzeźba terenu: wysokości i cieniowanie z NMT'
+    title: { pl: 'Teren', en: 'Terrain' }
+    description: { pl: 'Rzeźba terenu: wysokości i cieniowanie z NMT', en: 'Relief: heights and shading from the terrain model' }
     thumb: /thumbs/teren.jpg
     sources:
       - service: relief
   - id: prosta
-    title: Prosta
-    description: Uproszczona mapa, szybka na telefonie
+    title: { pl: 'Prosta', en: 'Simple' }
+    description: { pl: 'Uproszczona mapa, szybka na telefonie', en: 'A simplified map, fast on phones' }
     thumb: /thumbs/prosta.jpg
     sources:
       - service: g2mobile
   - id: skany
-    title: Skany
-    description: Skany map topograficznych
+    title: { pl: 'Skany', en: 'Scans' }
+    description: { pl: 'Skany map topograficznych', en: 'Scans of topographic maps' }
     thumb: /thumbs/skany.jpg
     sources:
       - service: topo
   - id: brak
-    title: Brak
-    description: Bez podkładu mapowego
+    title: { pl: 'Brak', en: 'None' }
+    description: { pl: 'Bez podkładu mapowego', en: 'No base map' }
     sources: []

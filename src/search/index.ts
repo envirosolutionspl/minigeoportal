@@ -1,4 +1,5 @@
 import { config } from '@/config/runtime';
+import { t } from '@/i18n';
 import { gugikSearch } from '@/modules/gugik/search';
 import { parseCoordinates } from './coordinates';
 import { nominatimSearch } from './nominatim';
@@ -9,8 +10,8 @@ export type { HitKind, SearchHit, SearchProvider } from './provider';
 /** Without a provider the box still finds coordinates. */
 const coordinatesOnly: SearchProvider = {
   instant: true,
-  placeholder: 'Współrzędne, np. 52,2318 21,0067',
-  label: 'Szukaj według współrzędnych',
+  placeholder: t('search.coordinates.placeholder'),
+  label: t('search.coordinates.label'),
   search: async () => [],
 };
 

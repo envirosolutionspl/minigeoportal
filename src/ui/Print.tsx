@@ -7,6 +7,7 @@ import { useMapStore } from '@/state/store';
 import { formatCoordinate, scaleText } from '@/map/format';
 import { PRINT_SCALES, SHEET_VARS, printLayout, serverScale, type PrintOptions } from '@/map/print';
 import { APP_DOMAIN, APP_NAME } from './Brand';
+import { locale, t } from '@/i18n';
 
 /**
  * Print settings, beside the map rather than over it: the map shows the printed area and can
@@ -60,19 +61,24 @@ export function PrintPanel() {
         <header className="flex items-center gap-2">
           <Printer className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
           <h2 id={`${id}-title`} className="flex-1 text-base font-semibold">
-            Drukuj mapę
+            {t('print.title')}
           </h2>
-          <button type="button" onClick={() => setTool('none')} aria-label="Zamknij" className="rounded-full p-2 hover:bg-[var(--hover)]">
+          <button
+            type="button"
+            onClick={() => setTool('none')}
+            aria-label={t('common.close')}
+            className="rounded-full p-2 hover:bg-[var(--hover)]"
+          >
             <X className="h-5 w-5" />
           </button>
         </header>
-        <p className="text-xs text-[var(--muted)]">Pomarańczowa ramka na mapie pokazuje obszar wydruku. Przesuń mapę, aby go ustawić.</p>
+        <p className="text-xs text-[var(--muted)]">{t('print.frameHint')}</p>
         <label className="block">
-          <span className="mb-1 block font-medium">Tytuł (opcjonalnie)</span>
+          <span className="mb-1 block font-medium">{t('print.titleField')}</span>
           <input ref={title} value={settings.title} onChange={(e) => set({ title: e.target.value })} maxLength={120} className={field} />
         </label>
         <fieldset>
-          <legend className="mb-1 font-medium">Format</legend>
+          <legend className="mb-1 font-medium">{t('print.paper')}</legend>
           <div className="flex gap-2">
             {(['A4', 'A3'] as const).map((p) => (
               <label key={p} className={choice(settings.paper === p)}>
@@ -90,12 +96,12 @@ export function PrintPanel() {
           </div>
         </fieldset>
         <fieldset>
-          <legend className="mb-1 font-medium">Orientacja</legend>
+          <legend className="mb-1 font-medium">{t('print.orientation')}</legend>
           <div className="flex gap-2">
             {(
               [
-                ['landscape', 'Pozioma'],
-                ['portrait', 'Pionowa'],
+                ['landscape', t('print.landscape')],
+                ['portrait', t('print.portrait')],
               ] as const
             ).map(([o, label]) => (
               <label key={o} className={choice(settings.orientation === o)}>
@@ -113,7 +119,7 @@ export function PrintPanel() {
           </div>
         </fieldset>
         <label className="block">
-          <span className="mb-1 block font-medium">Skala</span>
+          <span className="mb-1 block font-medium">{t('print.scale')}</span>
           <select value={settings.scale} onChange={(e) => set({ scale: Number(e.target.value) })} className={field}>
             {PRINT_SCALES.map((s) => (
               <option key={s} value={s}>
@@ -122,9 +128,7 @@ export function PrintPanel() {
             ))}
           </select>
         </label>
-        <p className="text-xs text-[var(--muted)]">
-          Aby zapisać plik, wybierz w oknie drukowania „Zapisz jako PDF”. Skala zgadza się przy druku bez dopasowania do strony (100%).
-        </p>
+        <p className="text-xs text-[var(--muted)]">{t('print.pdfHint')}</p>
         <button
           type="submit"
           disabled={printing}
@@ -135,10 +139,10 @@ export function PrintPanel() {
           ) : (
             <Printer className="h-4 w-4" aria-hidden="true" />
           )}
-          {printing ? 'Przygotowuję wydruk…' : 'Drukuj'}
+          {printing ? t('print.preparing') : t('print.print')}
         </button>
         <p role="status" className="sr-only">
-          {printing ? 'Przygotowuję wydruk, wczytuję mapę.' : ''}
+          {printing ? t('print.preparingStatus') : ''}
         </p>
       </form>
     </section>
@@ -187,24 +191,24 @@ export function PrintSheet() {
   return (
     <div id="print-sheet" aria-hidden="true" style={SHEET_VARS}>
       <header className="print-header">
-        <strong>{request?.title || 'Mapa'}</strong>
+        <strong>{request?.title || t('print.defaultTitle')}</strong>
         <span>
           {APP_NAME} · {APP_DOMAIN}
         </span>
       </header>
       <div className="print-frame" style={layout ? ({ '--print-zoom': layout.zoom } as React.CSSProperties) : undefined}>
         <div id="print-map" />
-        <span className="print-source">Warstwy mapy: geoportal.gov.pl (GUGiK)</span>
+        <span className="print-source">{t('print.source')}</span>
       </div>
       {request && (
         <footer className="print-footer">
           <p>
-            <strong>Skala {scaleText(request.scale)}</strong> · {new Date().toLocaleDateString('pl-PL')} · środek:{' '}
-            {center && formatCoordinate(center)}
+            <strong>{t('print.scaleLine', { scale: scaleText(request.scale) })}</strong> · {new Date().toLocaleDateString(locale())} ·{' '}
+            {t('print.center')} {center && formatCoordinate(center)}
           </p>
           <p>
-            Podkład: {config.map.baseMaps.find((b) => b.id === base)?.title ?? 'brak'}
-            {layers.length > 0 && ` · Warstwy: ${layers.map(({ def }) => def.title).join(', ')}`}
+            {t('print.base', { title: config.map.baseMaps.find((b) => b.id === base)?.title ?? t('print.noBase') })}
+            {layers.length > 0 && ` · ${t('print.layers', { titles: layers.map(({ def }) => def.title).join(', ') })}`}
           </p>
           {legends.length > 0 && (
             <div className="print-legend">
@@ -216,11 +220,7 @@ export function PrintSheet() {
               ))}
             </div>
           )}
-          <p className="print-note">
-            Źródło warstw mapy: geoportal.gov.pl (Główny Urząd Geodezji i Kartografii) oraz udostępniane przez niego usługi starostw, gmin i
-            innych instytucji. Mapa poglądowa, nie jest dokumentem urzędowym. Układ współrzędnych {config.map.projection.name} (
-            {config.map.projection.code}).
-          </p>
+          <p className="print-note">{t('print.note', { system: config.map.projection.name, code: config.map.projection.code })}</p>
         </footer>
       )}
     </div>

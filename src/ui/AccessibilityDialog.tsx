@@ -2,6 +2,7 @@ import { useId } from 'react';
 import { create } from 'zustand';
 import { X } from 'lucide-react';
 import { config } from '@/config/runtime';
+import { t } from '@/i18n';
 import { Content, type ContentAction } from './Content';
 import { useWelcome } from './WelcomeDialog';
 import { useReport } from './ReportDialog';
@@ -42,9 +43,14 @@ export function AccessibilityDialog() {
         <div className="max-h-[85dvh] overflow-y-auto p-6 text-sm leading-relaxed sm:p-8">
           <header className="mb-4 flex items-start gap-3">
             <h2 id={`${id}-title`} className="flex-1 text-xl font-bold">
-              Deklaracja dostępności
+              {t('accessibility.title')}
             </h2>
-            <button type="button" onClick={() => setOpen(false)} aria-label="Zamknij" className="rounded-full p-2 hover:bg-[var(--hover)]">
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              aria-label={t('common.close')}
+              className="rounded-full p-2 hover:bg-[var(--hover)]"
+            >
               <X className="h-5 w-5" />
             </button>
           </header>

@@ -1,0 +1,226 @@
+# Texts of the interface in Polish, the reference set of keys: every other language has the same.
+# A deployment changes single texts in i18n/pl.yaml of its configuration directory.
+# {name} is filled in by the app; texts per number use the forms one, few, many, other.
+
+common:
+  close: Zamknij
+  loading: Wczytywanie…
+
+app:
+  skipLinks: Szybkie przejścia
+  skipToMap: Przejdź do mapy
+  skipToSearch: Przejdź do wyszukiwarki
+
+brand:
+  madeBy: Stworzone przez
+
+map:
+  title: Mapa
+  keys: Strzałki przesuwają mapę, plus i minus zmieniają skalę, Enter pokazuje informacje o miejscu w środku mapy.
+  zoomIn: Przybliż
+  zoomOut: Oddal
+  scale: Skala
+  scaleHint: 'Skala przybliżona: na ekranie zależy od wielkości piksela monitora'
+
+tools:
+  layers: Warstwy
+  locate: Moja lokalizacja
+  measure: Pomiar odległości i powierzchni
+  link: Kopiuj link do tego widoku mapy
+  linkCopied: Skopiowano link do tego widoku mapy.
+  print: Drukuj mapę
+  about: O serwisie
+
+search:
+  home: '{app}: pokaż cały obszar mapy'
+  clear: Wyczyść
+  list: Wyniki wyszukiwania
+  busy: Szukam…
+  none: Brak wyników.
+  results: 'Wyników: {count}. Strzałki w dół i w górę wybierają, Enter pokazuje na mapie.'
+  parcel: Znajdź działkę po numerze i obrębie
+  parcelShort: Działka
+  parcelHit: Działka {number}
+  gugik:
+    placeholder: Adres, miejscowość, działka…
+    label: Szukaj adresu, miejscowości lub działki
+  nominatim:
+    placeholder: Adres lub miejsce, Enter wyszukuje
+    label: Szukaj adresu lub miejsca
+    credit: 'Wyszukiwanie: © OpenStreetMap'
+  coordinates:
+    placeholder: Współrzędne, np. 52,2318 21,0067
+    label: Szukaj według współrzędnych
+
+parcel:
+  title: Znajdź działkę
+  panel: Wyszukiwanie działki
+  found: Znaleziona działka
+  change: Zmień
+  clearAndClose: Wyczyść i zamknij
+  voivodeship: Województwo
+  county: Powiat
+  commune: Gmina
+  precinct: Obręb
+  number: Numer działki
+  numberPlaceholder: np. 22/1
+  search: Szukaj działki
+  notFound: Nie znaleziono działki {number} w obrębie {precinct}. Sprawdź numer, także zapis z ukośnikiem.
+  error: Usługa działek GUGiK nie odpowiada. Spróbuj ponownie za chwilę.
+  several:
+    one: Znaleziono {count} działkę o tym numerze. Wybierz ją.
+    few: Znaleziono {count} działki o tym numerze. Wybierz jedną.
+    many: Znaleziono {count} działek o tym numerze. Wybierz jedną.
+    other: Znaleziono {count} działki o tym numerze. Wybierz jedną.
+  choose: Wybierz
+  listFailed: Nie wczytano listy
+  retry: Ponów
+  retryList: 'Ponów: {label}'
+
+layers:
+  title: Warstwy
+  panel: Katalog warstw
+  search: Szukaj warstwy
+  searchPlaceholder: 'Szukaj warstwy: woda, gaz, plan, zabytki…'
+  clearSearch: Wyczyść wyszukiwanie
+  onlyActive: Tylko włączone ({count})
+  activeGroup: Włączone warstwy
+  results: Wyniki
+  noneActive: Żadna warstwa nie jest włączona.
+  noneFound: Brak warstw dla tego filtru.
+  popular: Najpopularniejsze
+  all: Wszystkie warstwy
+  catalogLoading: Wczytuję listę warstw geoportal.gov.pl…
+  catalogPreparing: Lista wszystkich warstw geoportal.gov.pl jest w przygotowaniu. Spróbuj za kilka minut.
+  catalogError: Nie udało się wczytać listy warstw geoportal.gov.pl. Warstwy powyżej działają.
+  available: '{available} dostępnych z {count}'
+  availableShort: '{available} z {count}'
+  more: Pokaż więcej ({count})
+  loadingLayer: Wczytuję warstwę…
+  loadingSublayers: Wczytuję podwarstwy…
+  serviceLayers: 'Warstwy usługi: {title}'
+  failed: Nie udało się wczytać tej warstwy. Spróbuj później
+  failedFallback: albo zobacz ją w
+  fallbackName: geoportal.gov.pl
+  whyDegraded: Dlaczego dane się nie wczytują?
+  whyBlocked: Niedostępna u nas. Dlaczego?
+  serverAnswer: 'Odpowiedź serwera: {detail}.'
+  checked: Sprawdzono {date}.
+  seeFallback: Zobacz w {name}
+  opacity: 'Przezroczystość: {title}'
+  visibleFrom: Widoczne od skali {scale}
+  visibleTo: Widoczne do skali {scale}
+  hiddenNow: '{hint}. Teraz niewidoczne.'
+  zoomIn: przybliż
+  zoomOut: oddal
+  zoomInTo: Przybliż mapę do warstwy {title}. {hint}
+  zoomOutTo: Oddal mapę do warstwy {title}. {hint}
+  status:
+    unknown: Jeszcze nie wczytywana
+    ok: Dostępna
+    blocked: Niedostępna u nas
+    down: Usługa nie odpowiada
+    degraded: Część danych nie ładuje się w tym miejscu
+  why:
+    token: Usługa wymaga tokenu, który GUGiK wydaje tylko aplikacji geoportal.gov.pl.
+    refused: Serwer tej usługi odrzuca zapytania spoza geoportal.gov.pl.
+    down: Serwer usługi nie odpowiadał przy ostatnim sprawdzeniu. Sprawdzimy go ponownie przy kolejnym odświeżeniu listy warstw.
+    unsupported: Usługa nie podaje mapy w układzie {system} ({code}), a tylko w nim rysujemy, żeby mapa była szybka.
+    degraded: Usługa kieruje do serwera powiatu lub gminy, który w tym miejscu nie odpowiada albo odrzuca zapytania.
+
+basemaps:
+  title: Podkłady
+  all: Wszystkie podkłady
+  one: 'Podkład: {title}'
+  switchTo: 'Przełącz podkład na: {title}'
+
+info:
+  title: Informacje o miejscu
+  parcelReport: Raport o działce
+  parcelReportHint: (geoportal.gov.pl, otwiera się w nowej karcie)
+  loading: Wczytuję informacje o miejscu…
+  ready: Informacje o miejscu są gotowe.
+  noLayers: Włącz warstwę, na przykład ewidencję gruntów albo plan miejscowy, aby zobaczyć informacje o tym miejscu.
+  openLayers: Otwórz warstwy
+  reportPlace: 'Miejsce: {place}'
+  report: Coś nie działa? Zgłoś błąd
+  error: Nie udało się pobrać danych. Serwer usługi nie odpowiada albo odrzucił zapytanie.
+  checkFallback: Sprawdź w {name}
+  empty: Brak danych w tym miejscu.
+  open: Otwórz
+  photoFrom: Ortofotomapa ze zdjęcia z
+  pixel: piksel
+  downloadSheet: pobierz arkusz {sheet}
+  photoLoading: Sprawdzam datę zdjęcia lotniczego…
+
+measure:
+  title: Pomiar
+  distance: Odległość
+  area: Powierzchnia
+  clear: Wyczyść
+  end: Zakończ pomiar
+  hint: Klikaj kolejne punkty na mapie. Dwuklik kończy pomiar, Esc anuluje rysowany kształt.
+  result: 'Wynik: {result}'
+  perimeter: obwód {length}
+
+print:
+  title: Drukuj mapę
+  frameHint: Pomarańczowa ramka na mapie pokazuje obszar wydruku. Przesuń mapę, aby go ustawić.
+  titleField: Tytuł (opcjonalnie)
+  paper: Format
+  orientation: Orientacja
+  landscape: Pozioma
+  portrait: Pionowa
+  scale: Skala
+  pdfHint: Aby zapisać plik, wybierz w oknie drukowania „Zapisz jako PDF”. Skala zgadza się przy druku bez dopasowania do strony (100%).
+  preparing: Przygotowuję wydruk…
+  preparingStatus: Przygotowuję wydruk, wczytuję mapę.
+  print: Drukuj
+  defaultTitle: Mapa
+  source: 'Warstwy mapy: geoportal.gov.pl (GUGiK)'
+  scaleLine: Skala {scale}
+  center: 'środek:'
+  base: 'Podkład: {title}'
+  noBase: brak
+  layers: 'Warstwy: {titles}'
+  note: 'Źródło warstw mapy: geoportal.gov.pl (Główny Urząd Geodezji i Kartografii) oraz udostępniane przez niego usługi starostw, gmin i innych instytucji. Mapa poglądowa, nie jest dokumentem urzędowym. Układ współrzędnych {system} ({code}).'
+
+report:
+  title: Zgłoś błąd w serwisie
+  sent: Dziękujemy. Zgłoszenie trafiło do administratora serwisu.
+  off: Formularz zgłoszeń jest chwilowo niedostępny. Spróbuj ponownie później.
+  intro: Opisz, co nie działa w serwisie. Błędy w samych danych (np. granice działek) zgłasza się urzędowi, który je prowadzi.
+  category: Czego dotyczy
+  message: Opis problemu
+  atLeast: Co najmniej {count} znaków.
+  length: '{length} z {count} znaków.'
+  email: E-mail do odpowiedzi (opcjonalnie)
+  attachView: Dołącz adres bieżącego widoku mapy, aby łatwiej odtworzyć problem.
+  privacy: Zgłoszenie wysyłamy e-mailem do administratora serwisu razem z nazwą przeglądarki. Adres e-mail podaj tylko, jeśli chcesz otrzymać odpowiedź; używamy go wyłącznie w tym celu.
+  send: Wyślij zgłoszenie
+  failed: Nie udało się wysłać zgłoszenia.
+  offline: Brak połączenia z serwerem. Spróbuj ponownie.
+  invalid: Zgłoszenie ma nieprawidłowe dane. Sprawdź opis i adres e-mail.
+  tooLong: Zgłoszenie jest za długie.
+  tooMany: Wysłano zbyt wiele zgłoszeń. Spróbuj ponownie później.
+  error:
+    category: Wybierz rodzaj zgłoszenia.
+    message: Opis powinien mieć od 10 do 3000 znaków.
+    email: Nieprawidłowy adres e-mail.
+
+display:
+  button: 'Ułatwienia: wielkość tekstu i kontrast'
+  menu: Ułatwienia
+  textSize: Wielkość tekstu
+  textNormal: Tekst standardowy
+  textLarger: Tekst większy
+  textLargest: Tekst największy
+  contrast: Wysoki kontrast
+  language: Język
+
+accessibility:
+  title: Deklaracja dostępności
+
+welcome:
+  dontShow: Nie pokazuj ponownie
+  start: Przejdź do mapy

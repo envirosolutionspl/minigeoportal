@@ -24,6 +24,7 @@ COPY shared ./shared
 COPY src ./src
 COPY config ./config
 COPY skins ./skins
+COPY i18n ./i18n
 COPY --from=build /app/dist ./dist
 RUN mkdir /data && chown node:node /data
 USER node

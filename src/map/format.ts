@@ -4,14 +4,14 @@ import { PROJECTION } from './projection';
 
 /** Polish number formats for coordinates and measurements. */
 
-const int = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 });
-const one = new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-const two = new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const four = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 4 });
+const int = new Intl.NumberFormat(config.locale, { maximumFractionDigits: 0 });
+const one = new Intl.NumberFormat(config.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const two = new Intl.NumberFormat(config.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const four = new Intl.NumberFormat(config.locale, { maximumFractionDigits: 4 });
 
 /** Scale denominator as shown to people: 1:10 000. */
 export const scaleText = (scale: number) => `1:${int.format(scale)}`;
-const deg = new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 5, maximumFractionDigits: 5 });
+const deg = new Intl.NumberFormat(config.locale, { minimumFractionDigits: 5, maximumFractionDigits: 5 });
 
 const SYSTEM = config.map.projection.name;
 /** In a north-east system (PL-1992) X is the northing, as surveyors write it; otherwise the easting. */

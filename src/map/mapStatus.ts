@@ -1,6 +1,7 @@
 import Control from 'ol/control/Control';
 import type MapEvent from 'ol/MapEvent';
 import { resolutionToScale } from './projection';
+import { t } from '@/i18n';
 import { scaleText } from './format';
 
 /**
@@ -28,9 +29,9 @@ export class MapStatus extends Control {
     super({ element });
     const group = document.createElement('span');
     group.className = 'mp-system mp-scale';
-    group.title = 'Skala przybliżona: na ekranie zależy od wielkości piksela monitora';
+    group.title = t('map.scaleHint');
     const label = document.createElement('b');
-    label.textContent = 'Skala';
+    label.textContent = t('map.scale');
     group.append(label, this.scale);
     element.append(group);
   }

@@ -1,0 +1,225 @@
+# Texts of the interface in English, with the same keys as i18n/pl.yaml.
+# A deployment changes single texts in i18n/en.yaml of its configuration directory.
+
+common:
+  close: Close
+  loading: Loading…
+
+app:
+  skipLinks: Skip links
+  skipToMap: Skip to the map
+  skipToSearch: Skip to the search
+
+brand:
+  madeBy: Made by
+
+map:
+  title: Map
+  keys: Arrow keys move the map, plus and minus change the scale, Enter shows information about the place in the middle of the map.
+  zoomIn: Zoom in
+  zoomOut: Zoom out
+  scale: Scale
+  scaleHint: 'Approximate scale: on screen it depends on the pixel size of the monitor'
+
+tools:
+  layers: Layers
+  locate: My location
+  measure: Measure distance and area
+  link: Copy a link to this map view
+  linkCopied: Link to this map view copied.
+  print: Print the map
+  about: About
+
+search:
+  home: '{app}: show the whole map area'
+  clear: Clear
+  list: Search results
+  busy: Searching…
+  none: No results.
+  results:
+    one: '{count} result. Arrow keys down and up choose, Enter shows it on the map.'
+    other: '{count} results. Arrow keys down and up choose, Enter shows it on the map.'
+  parcel: Find a parcel by its number and precinct
+  parcelShort: Parcel
+  parcelHit: Parcel {number}
+  gugik:
+    placeholder: Address, town, parcel…
+    label: Search for an address, town or parcel
+  nominatim:
+    placeholder: Address or place, Enter searches
+    label: Search for an address or place
+    credit: 'Search: © OpenStreetMap'
+  coordinates:
+    placeholder: Coordinates, e.g. 52.2318 21.0067
+    label: Search by coordinates
+
+parcel:
+  title: Find a parcel
+  panel: Parcel search
+  found: Parcel found
+  change: Change
+  clearAndClose: Clear and close
+  voivodeship: Voivodeship
+  county: County
+  commune: Municipality
+  precinct: Precinct
+  number: Parcel number
+  numberPlaceholder: e.g. 22/1
+  search: Find the parcel
+  notFound: Parcel {number} was not found in precinct {precinct}. Check the number, including how it is written with a slash.
+  error: The GUGiK parcel service does not answer. Try again in a moment.
+  several:
+    one: '{count} parcel with this number found. Choose it.'
+    other: '{count} parcels with this number found. Choose one.'
+  choose: Choose
+  listFailed: List not loaded
+  retry: Retry
+  retryList: 'Retry: {label}'
+
+layers:
+  title: Layers
+  panel: Layer catalog
+  search: Search for a layer
+  searchPlaceholder: 'Search for a layer: water, gas, plan, monuments…'
+  clearSearch: Clear the search
+  onlyActive: Only switched on ({count})
+  activeGroup: Layers switched on
+  results: Results
+  noneActive: No layer is switched on.
+  noneFound: No layers match this filter.
+  popular: Most popular
+  all: All layers
+  catalogLoading: Loading the list of geoportal.gov.pl layers…
+  catalogPreparing: The list of all geoportal.gov.pl layers is being prepared. Try again in a few minutes.
+  catalogError: The list of geoportal.gov.pl layers could not be loaded. The layers above work.
+  available: '{available} of {count} available'
+  availableShort: '{available} of {count}'
+  more: Show more ({count})
+  loadingLayer: Loading the layer…
+  loadingSublayers: Loading the sublayers…
+  serviceLayers: 'Layers of the service: {title}'
+  failed: This layer could not be loaded. Try again later
+  failedFallback: or see it on
+  fallbackName: geoportal.gov.pl
+  whyDegraded: Why does the data not load?
+  whyBlocked: Not available here. Why?
+  serverAnswer: 'Server answer: {detail}.'
+  checked: Checked on {date}.
+  seeFallback: See it on {name}
+  opacity: 'Opacity: {title}'
+  visibleFrom: Visible from scale {scale}
+  visibleTo: Visible up to scale {scale}
+  hiddenNow: '{hint}. Not visible now.'
+  zoomIn: zoom in
+  zoomOut: zoom out
+  zoomInTo: Zoom in to the layer {title}. {hint}
+  zoomOutTo: Zoom out to the layer {title}. {hint}
+  status:
+    unknown: Not loaded yet
+    ok: Available
+    blocked: Not available here
+    down: The service does not answer
+    degraded: Part of the data does not load here
+  why:
+    token: The service needs a token that GUGiK issues only to the geoportal.gov.pl application.
+    refused: The server of this service refuses requests from outside geoportal.gov.pl.
+    down: The server of the service did not answer at the last check. It will be checked again at the next refresh of the layer list.
+    unsupported: The service does not give its map in {system} ({code}), the only system the map draws in, which keeps it fast.
+    degraded: The service forwards to a county or municipal server that does not answer here or refuses the requests.
+
+basemaps:
+  title: Base maps
+  all: All base maps
+  one: 'Base map: {title}'
+  switchTo: 'Switch the base map to: {title}'
+
+info:
+  title: About this place
+  parcelReport: Parcel report
+  parcelReportHint: (geoportal.gov.pl, opens in a new tab)
+  loading: Loading information about the place…
+  ready: Information about the place is ready.
+  noLayers: Switch on a layer, for example the land register or a local plan, to see information about this place.
+  openLayers: Open the layers
+  reportPlace: 'Place: {place}'
+  report: Something wrong? Report a problem
+  error: The data could not be loaded. The server of the service does not answer or refused the request.
+  checkFallback: Check on {name}
+  empty: No data at this place.
+  open: Open
+  photoFrom: Orthophoto map from a photo of
+  pixel: pixel
+  downloadSheet: download sheet {sheet}
+  photoLoading: Checking the date of the aerial photo…
+
+measure:
+  title: Measurement
+  distance: Distance
+  area: Area
+  clear: Clear
+  end: End the measurement
+  hint: Click the next points on the map. A double click ends the measurement, Esc cancels the shape being drawn.
+  result: 'Result: {result}'
+  perimeter: perimeter {length}
+
+print:
+  title: Print the map
+  frameHint: The orange frame on the map shows the printed area. Move the map to set it.
+  titleField: Title (optional)
+  paper: Paper
+  orientation: Orientation
+  landscape: Landscape
+  portrait: Portrait
+  scale: Scale
+  pdfHint: To save a file, choose “Save as PDF” in the print window. The scale is right when printing without fitting to the page (100%).
+  preparing: Preparing the print…
+  preparingStatus: Preparing the print, loading the map.
+  print: Print
+  defaultTitle: Map
+  source: 'Map layers: geoportal.gov.pl (GUGiK)'
+  scaleLine: Scale {scale}
+  center: 'centre:'
+  base: 'Base map: {title}'
+  noBase: none
+  layers: 'Layers: {titles}'
+  note: 'Source of the map layers: geoportal.gov.pl (Head Office of Geodesy and Cartography) and the services of counties, municipalities and other institutions it publishes. An overview map, not an official document. Coordinate system {system} ({code}).'
+
+report:
+  title: Report a problem
+  sent: Thank you. The report has reached the administrator of the service.
+  off: The report form is not available at the moment. Try again later.
+  intro: Describe what does not work in the service. Mistakes in the data itself (e.g. parcel boundaries) are reported to the office that keeps it.
+  category: What it is about
+  message: Description of the problem
+  atLeast: At least {count} characters.
+  length: '{length} of {count} characters.'
+  email: E-mail for a reply (optional)
+  attachView: Attach the address of the current map view, to make the problem easier to reproduce.
+  privacy: The report goes by e-mail to the administrator of the service together with the name of your browser. Give an e-mail address only if you want a reply; it is used for nothing else.
+  send: Send the report
+  failed: The report could not be sent.
+  offline: No connection to the server. Try again.
+  invalid: The report has invalid data. Check the description and the e-mail address.
+  tooLong: The report is too long.
+  tooMany: Too many reports were sent. Try again later.
+  error:
+    category: Choose what the report is about.
+    message: The description should have 10 to 3000 characters.
+    email: Invalid e-mail address.
+
+display:
+  button: 'Display: text size and contrast'
+  menu: Display
+  textSize: Text size
+  textNormal: Standard text
+  textLarger: Larger text
+  textLargest: Largest text
+  contrast: High contrast
+  language: Language
+
+accessibility:
+  title: Accessibility statement
+
+welcome:
+  dontShow: Do not show again
+  start: Go to the map

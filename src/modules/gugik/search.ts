@@ -1,4 +1,5 @@
 import type { SearchHit, SearchProvider } from '@/search/provider';
+import { t } from '@/i18n';
 import { buildingAt, placeOutline, search, unitOutline } from './geocoder';
 
 const OUTLINE_TIMEOUT_MS = 2500;
@@ -8,8 +9,8 @@ const UNIT_TIMEOUT_MS = 8000;
 /** Addresses, places, units, physiographic objects and parcels from the GUGiK services, as people type. */
 export const gugikSearch: SearchProvider = {
   instant: true,
-  placeholder: 'Adres, miejscowość, działka…',
-  label: 'Szukaj adresu, miejscowości lub działki',
+  placeholder: t('search.gugik.placeholder'),
+  label: t('search.gugik.label'),
   search,
   /**
    * Places and addresses come as points; their outline (town boundary, building) is looked up

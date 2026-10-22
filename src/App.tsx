@@ -11,6 +11,7 @@ import { PrintPanel, PrintSheet } from './ui/Print';
 import { AccessibilityDialog } from './ui/AccessibilityDialog';
 import { useInfoStore } from './state/info';
 import { AuthorCredit } from './ui/Brand';
+import { t } from '@/i18n';
 import { useMapStore } from './state/store';
 
 export default function App() {
@@ -33,9 +34,9 @@ export default function App() {
 
   return (
     <div data-panel={panel} className="relative h-dvh w-full overflow-hidden">
-      <nav aria-label="Szybkie przejścia" className="skip-links">
-        <a href="#map">Przejdź do mapy</a>
-        <a href="#search">Przejdź do wyszukiwarki</a>
+      <nav aria-label={t('app.skipLinks')} className="skip-links">
+        <a href="#map">{t('app.skipToMap')}</a>
+        <a href="#search">{t('app.skipToSearch')}</a>
       </nav>
       <MapView />
       <TopBar />

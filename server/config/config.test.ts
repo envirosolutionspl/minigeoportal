@@ -31,7 +31,8 @@ describe('default configuration', () => {
   const config = clientConfig(loadConfig('config'), 'pl');
 
   it('stays what the app was built with (any change shows up here)', () => {
-    expect(config).toMatchSnapshot();
+    // Texts of the interface have their own tests (i18n.test.ts).
+    expect({ ...config, messages: undefined }).toMatchSnapshot();
   });
 
   it('keeps the first view, the search and the modules', () => {
@@ -44,6 +45,20 @@ describe('default configuration', () => {
     expect(config.map.view.home).toEqual([170000, 130000, 870000, 800000]);
     expect(config.search).toEqual({ provider: 'gugik', parcel: true });
     expect(config.modules.gugik).toEqual({ catalog: true, drawOrder: true, ortho: true, parcelReport: true });
+  });
+});
+
+describe('default configuration in English', () => {
+  const en = clientConfig(loadConfig('config'), 'en');
+
+  it('gives every text in English, the interface and the Markdown too', () => {
+    expect(en.app).toMatchObject({ name: 'Prosty Geoportal', tagline: 'Data from geoportal.gov.pl, simpler and faster' });
+    expect(en.layers.overlays.find((o) => o.id === 'kieg')).toMatchObject({ title: 'Land and building register' });
+    expect(en.layers.overlays.find((o) => o.id === 'kieg')?.keywords).toContain('parcels');
+    expect(en.map.view.homeLabel).toBe('All of Poland');
+    expect(en.report.categories[0].label).toBe('Map or layers');
+    expect(en.content.welcome).toContain('<h2>What this service is for</h2>');
+    expect(en.messages['common.close']).toBe('Close');
   });
 });
 

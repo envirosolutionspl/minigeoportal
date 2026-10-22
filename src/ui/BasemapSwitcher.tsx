@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Ban, ChevronUp } from 'lucide-react';
 import { config, type BaseMap } from '@/config/runtime';
+import { t } from '@/i18n';
 import { useMapStore } from '@/state/store';
 
 /**
@@ -61,13 +62,19 @@ export function BasemapSwitcher() {
       }}
       className="group pointer-events-auto absolute bottom-9 left-3 z-20 flex items-end gap-2 sm:bottom-10 sm:left-4"
     >
-      <Thumb ref={toggle} def={target} size="lg" label={`Przełącz podkład na: ${target.title}`} onClick={() => setBase(target.id)} />
+      <Thumb
+        ref={toggle}
+        def={target}
+        size="lg"
+        label={t('basemaps.switchTo', { title: target.title })}
+        onClick={() => setBase(target.id)}
+      />
       <button
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={shown}
         aria-controls="basemap-list"
-        aria-label="Wszystkie podkłady"
+        aria-label={t('basemaps.all')}
         className="-ml-1 flex h-9 w-9 items-center justify-center self-center rounded-full bg-[var(--surface)] text-[var(--accent)] shadow-lg ring-1 ring-black/5 [@media(hover:hover)]:hidden"
       >
         <ChevronUp className={`h-5 w-5 transition ${shown ? 'rotate-90' : '-rotate-90'}`} aria-hidden="true" />
@@ -75,7 +82,7 @@ export function BasemapSwitcher() {
       <div
         id="basemap-list"
         role="group"
-        aria-label="Podkłady"
+        aria-label={t('basemaps.title')}
         className={`${shown ? 'flex' : 'hidden'} gap-2 rounded-2xl bg-[var(--surface)] p-2 shadow-lg ring-1 ring-black/5 [@media(hover:hover)]:group-hover:flex`}
       >
         {/* The thumbnail's own base map is one click away, so the list leaves it out. */}
@@ -126,7 +133,7 @@ function Thumb({
       type="button"
       onClick={onClick}
       aria-pressed={size === 'sm' ? active : undefined}
-      aria-label={name ?? `Podkład: ${def.title}`}
+      aria-label={name ?? t('basemaps.one', { title: def.title })}
       title={def.description}
       className={`relative shrink-0 overflow-hidden bg-[var(--map-bg)] transition ${box} ${
         active ? 'ring-[var(--accent)]' : size === 'sm' ? 'ring-transparent hover:ring-[var(--hover)]' : ''

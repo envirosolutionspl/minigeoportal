@@ -5,6 +5,7 @@ import { dictionary, parcelInPrecinct, type DictEntry, type DictLevel } from '@/
 import type { SearchHit } from '@/search/provider';
 import { useMapStore } from '@/state/store';
 import { zoomForScale } from '@/map/projection';
+import { t } from '@/i18n';
 
 /** Parcel ids zoom closer than other objects: a parcel is small. */
 export const PARCEL_SCALE = 500;
@@ -79,7 +80,7 @@ export function ParcelSearch({ onClose }: { onClose(): void }) {
   if (shown) {
     return (
       <section
-        aria-label="Znaleziona działka"
+        aria-label={t('parcel.found')}
         className="absolute inset-x-0 mt-2 flex items-center gap-3 rounded-2xl bg-[var(--surface)] px-4 py-3 shadow-lg ring-1 ring-black/5"
       >
         <SquareDashed className="h-5 w-5 shrink-0 text-[var(--highlight)]" />
@@ -92,7 +93,7 @@ export function ParcelSearch({ onClose }: { onClose(): void }) {
           onClick={() => setShown(null)}
           className="rounded-xl px-2.5 py-1.5 text-sm text-[var(--accent)] hover:bg-[var(--hover)]"
         >
-          Zmień
+          {t('parcel.change')}
         </button>
         <button
           type="button"
@@ -100,7 +101,7 @@ export function ParcelSearch({ onClose }: { onClose(): void }) {
             clearFocus();
             onClose();
           }}
-          aria-label="Wyczyść i zamknij"
+          aria-label={t('parcel.clearAndClose')}
           className="rounded-full p-1.5 hover:bg-[var(--hover)]"
         >
           <X className="h-4 w-4" />
@@ -125,13 +126,13 @@ export function ParcelSearch({ onClose }: { onClose(): void }) {
 
   return (
     <section
-      aria-label="Wyszukiwanie działki"
+      aria-label={t('parcel.panel')}
       className="absolute inset-x-0 mt-2 rounded-2xl bg-[var(--surface)] p-4 shadow-lg ring-1 ring-black/5"
     >
       <header className="mb-3 flex items-center gap-2">
         <SquareDashed className="h-5 w-5 text-[var(--accent)]" />
-        <h2 className="flex-1 text-sm font-semibold">Znajdź działkę</h2>
-        <button type="button" onClick={onClose} aria-label="Zamknij" className="rounded-full p-1.5 hover:bg-[var(--hover)]">
+        <h2 className="flex-1 text-sm font-semibold">{t('parcel.title')}</h2>
+        <button type="button" onClick={onClose} aria-label={t('common.close')} className="rounded-full p-1.5 hover:bg-[var(--hover)]">
           <X className="h-4 w-4" />
         </button>
       </header>
@@ -144,26 +145,32 @@ export function ParcelSearch({ onClose }: { onClose(): void }) {
         }}
       >
         <Select
-          label="Województwo"
+          label={t('parcel.voivodeship')}
           value={choice.woj}
           state={woj}
           onChange={(v) => set({ woj: v, pow: undefined, gmi: undefined, obr: undefined })}
         />
         <Select
-          label="Powiat"
+          label={t('parcel.county')}
           value={choice.pow}
           state={pow}
           disabled={!choice.woj}
           onChange={(v) => set({ pow: v, gmi: undefined, obr: undefined })}
         />
-        <Select label="Gmina" value={choice.gmi} state={gmi} disabled={!choice.pow} onChange={(v) => set({ gmi: v, obr: undefined })} />
-        <Select label="Obręb" value={choice.obr} state={obr} disabled={!choice.gmi} onChange={(v) => set({ obr: v })} />
+        <Select
+          label={t('parcel.commune')}
+          value={choice.gmi}
+          state={gmi}
+          disabled={!choice.pow}
+          onChange={(v) => set({ gmi: v, obr: undefined })}
+        />
+        <Select label={t('parcel.precinct')} value={choice.obr} state={obr} disabled={!choice.gmi} onChange={(v) => set({ obr: v })} />
         <label className="col-span-2 flex flex-col gap-1 text-xs text-[var(--muted)]">
-          Numer działki
+          {t('parcel.number')}
           <input
             value={choice.number}
             onChange={(e) => set({ number: e.target.value })}
-            placeholder="np. 22/1"
+            placeholder={t('parcel.numberPlaceholder')}
             inputMode="text"
             autoComplete="off"
             className="rounded-xl bg-[var(--field)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--accent)]"
@@ -175,20 +182,18 @@ export function ParcelSearch({ onClose }: { onClose(): void }) {
           className="col-span-2 flex items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-[var(--on-accent)] transition enabled:hover:brightness-110 disabled:opacity-40"
         >
           {status === 'busy' && <LoaderCircle className="h-4 w-4 animate-spin" />}
-          Szukaj działki
+          {t('parcel.search')}
         </button>
       </form>
 
       <div role="status">
         {status === 'none' && (
           <p className="mt-3 text-sm text-[var(--muted)]">
-            Nie znaleziono działki {choice.number} w obrębie {precinct?.name}. Sprawdź numer, także zapis z ukośnikiem.
+            {t('parcel.notFound', { number: choice.number, precinct: precinct?.name ?? '' })}
           </p>
         )}
-        {status === 'error' && (
-          <p className="mt-3 text-sm text-[var(--muted)]">Usługa działek GUGiK nie odpowiada. Spróbuj ponownie za chwilę.</p>
-        )}
-        {hits.length > 1 && <p className="sr-only">Znaleziono {hits.length} działki o tym numerze. Wybierz jedną.</p>}
+        {status === 'error' && <p className="mt-3 text-sm text-[var(--muted)]">{t('parcel.error')}</p>}
+        {hits.length > 1 && <p className="sr-only">{t('parcel.several', { count: hits.length })}</p>}
       </div>
       {hits.length > 1 && (
         <ul className="mt-3 flex flex-col gap-1">
@@ -224,7 +229,7 @@ function Select({
   disabled?: boolean;
   onChange(value: string): void;
 }) {
-  const placeholder = state.loading ? 'Wczytywanie…' : state.error ? 'Nie wczytano listy' : 'Wybierz';
+  const placeholder = state.loading ? t('common.loading') : state.error ? t('parcel.listFailed') : t('parcel.choose');
   return (
     <label className="flex min-w-0 flex-col gap-1 text-xs text-[var(--muted)]">
       <span className="flex items-center justify-between">
@@ -232,8 +237,13 @@ function Select({
         {state.error && (
           // Outside the label's control: a button inside a label would also toggle the field.
           <span role="presentation" className="contents">
-            <button type="button" onClick={state.retry} aria-label={`Ponów: ${label}`} className="text-[var(--accent)] underline">
-              Ponów
+            <button
+              type="button"
+              onClick={state.retry}
+              aria-label={t('parcel.retryList', { label })}
+              className="text-[var(--accent)] underline"
+            >
+              {t('parcel.retry')}
             </button>
           </span>
         )}

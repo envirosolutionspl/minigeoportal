@@ -1,3 +1,5 @@
+import type { Context } from 'hono';
+import { getCookie } from 'hono/cookie';
 import type { ClientConfig } from '../shared/config.ts';
 import { clientConfig } from './config/client.ts';
 import { escapeHtml } from './config/markdown.ts';
@@ -8,9 +10,13 @@ import type { AppConfig } from './config/schema.ts';
  * JSON, so the app starts without waiting for one more request; /api/config gives the same.
  */
 
-/** The visitor's language: ?lang=, then the browser's preferences, then the default. */
-export function pickLocale(available: string[], fallback: string, query?: string, acceptLanguage?: string): string {
-  if (query && available.includes(query)) return query;
+/**
+ * The visitor's language: the one chosen (?lang=, then the cookie the language switch sets),
+ * then the browser's preferences, then the default.
+ */
+export function pickLocale(available: string[], fallback: string, chosen: (string | undefined)[] = [], acceptLanguage?: string): string {
+  const own = chosen.find((l) => l && available.includes(l));
+  if (own) return own;
   for (const part of (acceptLanguage ?? '').split(',')) {
     const tag = part.split(';')[0].trim().toLowerCase();
     const match = available.find((l) => l.toLowerCase() === tag) ?? available.find((l) => l.toLowerCase() === tag.split('-')[0]);
@@ -82,7 +88,9 @@ export function createSite(config: AppConfig) {
     /** In the default language: what the server itself uses (layers it may query, mail texts). */
     defaults: clients.get(fallback)!,
     multilingual: available.length > 1,
-    locale: (query?: string, acceptLanguage?: string) => pickLocale(available, fallback, query, acceptLanguage),
+    /** The language of a request: ?lang=, the lang cookie, Accept-Language. */
+    locale: (c?: Context) =>
+      pickLocale(available, fallback, c ? [c.req.query('lang'), getCookie(c, 'lang')] : [], c?.req.header('accept-language')),
     client: (locale: string) => clients.get(locale) ?? clients.get(fallback)!,
   };
 }

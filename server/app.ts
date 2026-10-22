@@ -83,7 +83,7 @@ export function createApp({ site, cache, mailer, origin, catalog, limits }: AppO
   app.get('/api/config', etag(), (c) => {
     c.header('Cache-Control', 'no-cache');
     if (site.multilingual) c.header('Vary', 'Accept-Language');
-    return c.json(site.client(site.locale(c.req.query('lang'), c.req.header('accept-language'))));
+    return c.json(site.client(site.locale(c)));
   });
 
   app.get('/api/health', (c) => c.json({ ok: true, capabilitiesGeneratedAt: cache().generatedAt }));
@@ -262,7 +262,7 @@ export function createApp({ site, cache, mailer, origin, catalog, limits }: AppO
       const q = c.req.query('q') ?? '';
       if (q.trim().length < 3) return c.json([]);
       try {
-        const hits = await places(q, site.locale(c.req.query('lang')));
+        const hits = await places(q, site.locale(c));
         if (!hits) return c.text('Wyszukiwarka jest zajęta, spróbuj za chwilę.', 503);
         c.header('Cache-Control', 'public, max-age=86400');
         return c.json(hits);
@@ -293,7 +293,8 @@ export function createApp({ site, cache, mailer, origin, catalog, limits }: AppO
         if (report) await mailer.send(report, { userAgent: c.req.header('user-agent') });
         return c.json({ ok: true });
       } catch (e) {
-        if (e instanceof RequestError) return c.text(e.message, 400);
+        // The message for people reading the API, the code for the form, which translates it.
+        if (e instanceof RequestError) return c.json({ error: e.code ?? 'invalid', message: e.message }, 400);
         console.warn(`report: ${errorMessage(e)}`);
         return c.text('Nie udało się wysłać zgłoszenia. Spróbuj ponownie później.', 502);
       }

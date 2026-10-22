@@ -3,6 +3,7 @@ import { PROJECTION } from '@/map/projection';
 import { unitNames, type UnitNames, type UnitLevel } from '@/services/units';
 import { normalize } from '@/services/text';
 import type { HitKind, SearchHit } from '@/search/provider';
+import { t } from '@/i18n';
 
 /**
  * Search across GUGiK services: addresses, streets and exact place names from the universal
@@ -281,7 +282,12 @@ export async function findParcels(query: string, signal: AbortSignal): Promise<S
   return rows.flatMap(([id, commune, region, parcel, wkt]) => {
     if (!wkt) return [];
     return [
-      { kind: 'parcel' as const, label: `Działka ${parcel}`, detail: `obręb ${region}, gm. ${commune} · ${id}`, wkt: stripSrid(wkt) },
+      {
+        kind: 'parcel' as const,
+        label: t('search.parcelHit', { number: parcel }),
+        detail: `obręb ${region}, gm. ${commune} · ${id}`,
+        wkt: stripSrid(wkt),
+      },
     ];
   });
 }

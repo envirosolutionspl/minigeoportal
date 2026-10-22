@@ -15,6 +15,7 @@ import { attachMeasure } from './measure';
 import { attachPrint } from './print';
 import { MapStatus } from './mapStatus';
 import { coordinateBar } from './format';
+import { t } from '@/i18n';
 
 export function MapView() {
   const container = useRef<HTMLDivElement>(null);
@@ -61,7 +62,7 @@ export function MapView() {
       controls: defaultControls({
         attributionOptions: { collapsible: false },
         rotate: false,
-        zoomOptions: { duration: duration(250), zoomInTipLabel: 'Przybliż', zoomOutTipLabel: 'Oddal' },
+        zoomOptions: { duration: duration(250), zoomInTipLabel: t('map.zoomIn'), zoomOutTipLabel: t('map.zoomOut') },
       }).extend([
         new ScaleLine({ units: 'metric' }),
         new ZoomToExtent({ extent: HOME_EXTENT, label: wholeCountryIcon(), tipLabel: config.map.view.homeLabel }),
@@ -163,12 +164,12 @@ export function MapView() {
         // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
         tabIndex={0}
         role="region"
-        aria-label="Mapa"
+        aria-label={t('map.title')}
         aria-describedby="map-keys"
         className="absolute inset-0 bg-[var(--map-bg)]"
       />
       <p id="map-keys" className="sr-only">
-        Strzałki przesuwają mapę, plus i minus zmieniają skalę, Enter pokazuje informacje o miejscu w środku mapy.
+        {t('map.keys')}
       </p>
     </>
   );

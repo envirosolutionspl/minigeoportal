@@ -1,6 +1,7 @@
 import logoUrl from '@/assets/envirosolutions.svg';
 
 import { config } from '@/config/runtime';
+import { t } from '@/i18n';
 
 export const APP_NAME = config.app.name;
 export const APP_DOMAIN = config.app.domain;
@@ -29,17 +30,22 @@ export function BrandMark({ className = 'h-7 w-7' }: { className?: string }) {
   );
 }
 
+const LEAD = APP_NAME.split(' ').slice(0, -1).join(' ');
+const LAST = APP_NAME.split(' ').slice(-1)[0];
+
 export function Wordmark() {
   return (
     <span className="text-[15px] leading-none tracking-tight whitespace-nowrap">
-      <span className="font-medium">Prosty</span> <span className="font-bold text-[var(--accent)]">Geoportal</span>
+      {/* The last word of the name in the accent colour, as in the logo: Prosty Geoportal. */}
+      {LEAD && <span className="font-medium">{LEAD} </span>}
+      <span className="font-bold text-[var(--accent)]">{LAST}</span>
     </span>
   );
 }
 
 /** Logo of the author, on a light background as the brand book requires. */
 export function AuthorLogo({ className = 'h-7' }: { className?: string }) {
-  return <img src={logoUrl} alt="EnviroSolutions" className={className} />;
+  return <img src={logoUrl} alt={config.app.author.name} className={className} />;
 }
 
 export function AuthorCredit() {
@@ -49,9 +55,9 @@ export function AuthorCredit() {
       target="_blank"
       rel="noopener"
       className="author-credit pointer-events-auto absolute right-3 bottom-7 z-20 flex items-center gap-1 rounded-xl bg-white/95 py-0.5 pr-1 pl-2.5 text-[10px] text-[#444444] shadow-md ring-1 ring-black/5 sm:right-4 sm:bottom-8"
-      title="EnviroSolutions: systemy i narzędzia OpenSource GIS"
+      title={config.app.author.name}
     >
-      Stworzone przez
+      {t('brand.madeBy')}
       {/* The logo keeps its colours on a white plate, also in high contrast. */}
       <span className="author-logo -my-1 rounded-lg bg-white">
         <AuthorLogo className="h-8" />

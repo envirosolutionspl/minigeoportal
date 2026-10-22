@@ -101,6 +101,9 @@ export interface Topic {
 
 export type Extent = [number, number, number, number];
 
+/** A text of the interface, or its forms per number by Intl.PluralRules category (one, few, many, other). */
+export type Message = string | Record<string, string>;
+
 export interface ClientConfig {
   app: {
     id: string;
@@ -119,6 +122,8 @@ export interface ClientConfig {
   content: { welcome?: string; accessibility?: string };
   locale: string;
   locales: string[];
+  /** Texts of the interface in `locale`, by dotted key (i18n/<lang>.yaml). */
+  messages: Record<string, Message>;
   map: {
     projection: {
       code: string;

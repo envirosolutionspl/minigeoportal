@@ -20,6 +20,7 @@ import {
 import { fromLonLat } from 'ol/proj';
 import { searchProvider, type HitKind, type SearchHit } from '@/search';
 import { config } from '@/config/runtime';
+import { t } from '@/i18n';
 import { useMapStore } from '@/state/store';
 import { useInfoStore } from '@/state/info';
 import { openPrint } from '@/map/print';
@@ -84,7 +85,7 @@ export function TopBar() {
       if (controller.signal.aborted) return;
       setHits(found);
       setActive(-1);
-      setAnnounce(found.length ? `Wyników: ${found.length}. Strzałki w dół i w górę wybierają, Enter pokazuje na mapie.` : 'Brak wyników.');
+      setAnnounce(found.length ? t('search.results', { count: found.length }) : t('search.none'));
       setOpen(true);
     } catch (e) {
       if (!(e instanceof DOMException && e.name === 'AbortError')) setHits([]);
@@ -148,7 +149,7 @@ export function TopBar() {
     const link = linkFor(useMapStore.getState());
     try {
       await navigator.clipboard.writeText(link);
-      setCopied('Skopiowano link do tego widoku mapy.');
+      setCopied(t('tools.linkCopied'));
     } catch {
       // No clipboard access (e.g. an insecure page): the link is shown to copy by hand.
       setCopied(link);
@@ -174,8 +175,8 @@ export function TopBar() {
           <button
             type="button"
             onClick={goHome}
-            title="Cała Polska"
-            aria-label={`${APP_NAME}: pokaż całą Polskę`}
+            title={config.map.view.homeLabel}
+            aria-label={t('search.home', { app: APP_NAME })}
             className="flex shrink-0 items-center gap-2 rounded-xl py-0.5 pr-2 pl-0.5 hover:bg-[var(--hover)]"
           >
             <BrandMark />
@@ -219,7 +220,7 @@ export function TopBar() {
             className="h-8 w-full bg-transparent text-base outline-none placeholder:text-[var(--muted)] sm:text-sm"
           />
           {query && (
-            <button type="button" onClick={clear} aria-label="Wyczyść" className="rounded-full p-1 hover:bg-[var(--hover)]">
+            <button type="button" onClick={clear} aria-label={t('search.clear')} className="rounded-full p-1 hover:bg-[var(--hover)]">
               <X className="h-4 w-4" />
             </button>
           )}
@@ -228,14 +229,14 @@ export function TopBar() {
               type="button"
               onClick={() => setParcelOpen(!parcelOpen)}
               aria-expanded={parcelOpen}
-              title="Znajdź działkę po numerze i obrębie"
-              aria-label="Znajdź działkę po numerze i obrębie"
+              title={t('search.parcel')}
+              aria-label={t('search.parcel')}
               className={`flex shrink-0 items-center gap-1.5 rounded-xl px-2 py-1 text-sm transition ${
                 parcelOpen ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'text-[var(--accent)] hover:bg-[var(--hover)]'
               }`}
             >
               <SquareDashed className="h-4 w-4" />
-              <span className="hidden sm:inline">Działka</span>
+              <span className="hidden sm:inline">{t('search.parcelShort')}</span>
             </button>
           )}
         </div>
@@ -243,7 +244,7 @@ export function TopBar() {
         <ul
           id="search-results"
           role="listbox"
-          aria-label="Wyniki wyszukiwania"
+          aria-label={t('search.list')}
           hidden={!listOpen}
           className="absolute inset-x-0 mt-2 overflow-hidden rounded-2xl bg-[var(--surface)] py-1 shadow-lg ring-1 ring-black/5"
         >
@@ -271,7 +272,7 @@ export function TopBar() {
           })}
           {busy && hits.length === 0 && (
             <li role="presentation" className="px-4 py-2 text-sm text-[var(--muted)]">
-              Szukam…
+              {t('search.busy')}
             </li>
           )}
           {provider.credit && hits.length > 0 && (
@@ -290,20 +291,24 @@ export function TopBar() {
       {/* One column on every screen, under the search bar on phones, so the tools never change shape. */}
       {/* Most used first: layers, then working on the map, sharing, and help at the bottom. */}
       <div className="map-tools pointer-events-auto absolute top-[4.25rem] right-3 flex flex-col gap-2 sm:top-4 sm:right-4">
-        <IconButton label="Warstwy" active={panel === 'catalog'} onClick={() => setPanel(panel === 'catalog' ? 'none' : 'catalog')}>
+        <IconButton
+          label={t('tools.layers')}
+          active={panel === 'catalog'}
+          onClick={() => setPanel(panel === 'catalog' ? 'none' : 'catalog')}
+        >
           <Layers className="h-5 w-5" />
         </IconButton>
-        <IconButton label="Moja lokalizacja" onClick={locate}>
+        <IconButton label={t('tools.locate')} onClick={locate}>
           <LocateFixed className="h-5 w-5" />
         </IconButton>
-        <IconButton label="Pomiar odległości i powierzchni" active={measuring} onClick={() => setTool(measuring ? 'none' : 'measure-line')}>
+        <IconButton label={t('tools.measure')} active={measuring} onClick={() => setTool(measuring ? 'none' : 'measure-line')}>
           <Ruler className="h-5 w-5" />
         </IconButton>
-        <IconButton label="Kopiuj link do tego widoku mapy" onClick={() => void copyLink()}>
+        <IconButton label={t('tools.link')} onClick={() => void copyLink()}>
           <Link2 className="h-5 w-5" />
         </IconButton>
         <IconButton
-          label="Drukuj mapę"
+          label={t('tools.print')}
           active={tool === 'print'}
           onClick={() => {
             // The print panel takes the place panel's spot on the left.
@@ -315,7 +320,7 @@ export function TopBar() {
           <Printer className="h-5 w-5" />
         </IconButton>
         <DisplayMenu />
-        <IconButton label="O serwisie" onClick={() => openWelcome(true)}>
+        <IconButton label={t('tools.about')} onClick={() => openWelcome(true)}>
           <Info className="h-5 w-5" />
         </IconButton>
       </div>

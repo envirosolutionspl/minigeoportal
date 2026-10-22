@@ -3,7 +3,7 @@ import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { loadConfig } from './server/config/load.ts';
-import { createSite, renderPage } from './server/html.ts';
+import { createSite, pickLocale, renderPage } from './server/html.ts';
 
 /**
  * In development the page gets the configuration the way the server gives it (server/html.ts),
@@ -17,8 +17,9 @@ function configPage(): Plugin {
       order: 'pre',
       handler(html, { originalUrl }) {
         const site = createSite(loadConfig(process.env.CONFIG_DIR ?? 'config'));
-        const query = new URL(originalUrl ?? '/', 'http://localhost').searchParams.get('lang') ?? undefined;
-        return renderPage(html, site.client(site.locale(query)), site.config.skin);
+        const lang = new URL(originalUrl ?? '/', 'http://localhost').searchParams.get('lang') ?? undefined;
+        const { available, default: fallback } = site.config.app.locales;
+        return renderPage(html, site.client(pickLocale(available, fallback, [lang])), site.config.skin);
       },
     },
   };

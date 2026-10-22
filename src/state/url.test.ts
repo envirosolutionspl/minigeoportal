@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { readUrl, writeUrl } from './url';
+import { linkFor, readUrl, writeUrl } from './url';
 
 const setSearch = (search: string) => window.history.replaceState(null, '', `/${search}`);
 
@@ -44,6 +44,18 @@ describe('writeUrl', () => {
     expect(window.location.search).toBe('');
     vi.advanceTimersByTime(300);
     expect(window.location.search).toBe('?x=637001&y=486000&z=12.3&b=orto&l=kieg,kiut.przewod_gazowy');
+    vi.useRealTimers();
+  });
+
+  it('keeps a language chosen in the address, in the page and in shared links', () => {
+    vi.useFakeTimers();
+    setSearch('?lang=en');
+    const state = { center: [1, 2] as [number, number], zoom: 3, base: 'orto', overlays: [], sublayers: {} };
+    writeUrl(state);
+    vi.advanceTimersByTime(300);
+    expect(window.location.search).toBe('?x=1&y=2&z=3.0&b=orto&l=&lang=en');
+    expect(linkFor(state)).toMatch(/\?x=1&y=2&z=3\.0&b=orto&l=&lang=en$/);
+    setSearch('');
     vi.useRealTimers();
   });
 

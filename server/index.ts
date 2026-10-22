@@ -67,7 +67,7 @@ if (production) {
   const page = (c: Context) => {
     c.header('Cache-Control', 'no-cache');
     if (site.multilingual) c.header('Vary', 'Accept-Language');
-    return c.html(pages.get(site.locale(c.req.query('lang'), c.req.header('accept-language')))!);
+    return c.html(pages.get(site.locale(c))!);
   };
   app.get('/', compress(), etag(), page);
   app.get('/index.html', compress(), etag(), page);

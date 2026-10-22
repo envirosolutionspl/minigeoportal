@@ -16,10 +16,11 @@ const TEMPLATE = `<!doctype html>
 </html>`;
 
 describe('pickLocale', () => {
-  it('takes ?lang=, then the browser preferences, then the default', () => {
-    expect(pickLocale(['pl', 'en'], 'pl', 'en', 'pl')).toBe('en');
-    expect(pickLocale(['pl', 'en'], 'pl', 'de', 'de-DE,en-GB;q=0.8,pl;q=0.5')).toBe('en');
-    expect(pickLocale(['pl', 'en'], 'pl', undefined, 'fr')).toBe('pl');
+  it('takes ?lang=, then the cookie, then the browser preferences, then the default', () => {
+    expect(pickLocale(['pl', 'en'], 'pl', ['en'], 'pl')).toBe('en');
+    expect(pickLocale(['pl', 'en'], 'pl', [undefined, 'en'], 'pl')).toBe('en');
+    expect(pickLocale(['pl', 'en'], 'pl', ['de'], 'de-DE,en-GB;q=0.8,pl;q=0.5')).toBe('en');
+    expect(pickLocale(['pl', 'en'], 'pl', [], 'fr')).toBe('pl');
     expect(pickLocale(['pl'], 'pl')).toBe('pl');
   });
 });

@@ -5,6 +5,7 @@ import { useReport } from './ReportDialog';
 import { useAccessibility } from './AccessibilityDialog';
 import { Content, type ContentAction } from './Content';
 import { config } from '@/config/runtime';
+import { t } from '@/i18n';
 import { useModalDialog } from './useModalDialog';
 
 const STORAGE_KEY = `${config.app.storagePrefix}welcome.v1`;
@@ -87,7 +88,7 @@ export function WelcomeDialog() {
                 onChange={(e) => setHide(e.target.checked)}
                 className="h-4 w-4 accent-[var(--accent)]"
               />
-              Nie pokazuj ponownie
+              {t('welcome.dontShow')}
             </label>
             <button
               type="button"
@@ -97,14 +98,14 @@ export function WelcomeDialog() {
               autoFocus
               className="rounded-2xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-[var(--on-accent)] transition hover:brightness-110"
             >
-              Przejdź do mapy
+              {t('welcome.start')}
             </button>
           </footer>
 
           {/* Links and the author in one row, so the window fits a laptop screen without scrolling. */}
           <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-[var(--hover)] pt-2 text-sm sm:justify-between">
             <button type="button" onClick={() => act('report')} className="min-h-6 text-[var(--accent)] underline underline-offset-2">
-              Zgłoś błąd w serwisie
+              {t('report.title')}
             </button>
             {config.content.accessibility && (
               <button
@@ -112,11 +113,11 @@ export function WelcomeDialog() {
                 onClick={() => act('accessibility')}
                 className="min-h-6 text-[var(--accent)] underline underline-offset-2"
               >
-                Deklaracja dostępności
+                {t('accessibility.title')}
               </button>
             )}
             <a href={AUTHOR_URL} target="_blank" rel="noopener" className="flex items-center gap-2 text-xs text-[var(--muted)]">
-              Stworzone przez
+              {t('brand.madeBy')}
               <span className="rounded-lg bg-white px-1">
                 <AuthorLogo className="h-7" />
               </span>

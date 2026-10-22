@@ -553,6 +553,7 @@ exports[`default configuration > stays what the app was built with (any change s
   "locale": "pl",
   "locales": [
     "pl",
+    "en",
   ],
   "map": {
     "attribution": "Dane: <a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">GUGiK, geoportal.gov.pl</a>",
@@ -740,6 +741,7 @@ exports[`default configuration > stays what the app was built with (any change s
       "zoom": 3,
     },
   },
+  "messages": undefined,
   "modules": {
     "gugik": {
       "catalog": true,

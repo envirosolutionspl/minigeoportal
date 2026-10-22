@@ -51,6 +51,9 @@ function queryFor(state: UrlState): string {
   q.set('z', state.zoom.toFixed(1));
   q.set('b', state.base);
   q.set('l', state.overlays.map((id) => [id, ...(state.sublayers[id] ?? [])].join('.')).join(','));
+  // A language chosen in the address stays there (see the language switch in DisplayMenu).
+  const lang = new URLSearchParams(window.location.search).get('lang');
+  if (lang) q.set('lang', lang);
   return `?${q.toString().replace(/%2C/g, ',')}`;
 }
 

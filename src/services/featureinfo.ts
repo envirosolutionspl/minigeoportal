@@ -4,6 +4,7 @@ import type WMTSTileGrid from 'ol/tilegrid/WMTS';
 import type { Overlay } from '@/config/runtime';
 import { infoFormat, layerMeta, restMeta, wmtsMeta } from './meta';
 import { PROJECTION } from '@/map/projection';
+import { t } from '@/i18n';
 import type { OverlayLayer } from './layers';
 
 /**
@@ -153,7 +154,7 @@ function field(label: string, raw: string | Element): InfoField | null {
     const href = el.querySelector('a[href]')?.getAttribute('href') ?? '';
     const text = clean(el.textContent);
     if (EMPTY.test(text)) return null;
-    if (/^https?:/i.test(href)) return { label, value: text || 'Otwórz', href };
+    if (/^https?:/i.test(href)) return { label, value: text || t('info.open'), href };
     if (!text) return null;
     return /^https?:\/\/\S+$/i.test(text) ? { label, value: text, href: text } : { label, value: text };
   }

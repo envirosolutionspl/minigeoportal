@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { LineCounter, parseDocument, isMap, isSeq, type Document, type Node as YamlNode } from 'yaml';
 import type { ZodType } from 'zod';
 import { appSchema, layersSchema, mapSchema, type AppConfig } from './schema.ts';
+import { loadMessages } from './messages.ts';
 
 /**
  * Reads and checks the configuration directory. Every problem is reported with its file, line and
@@ -208,6 +209,7 @@ export function loadConfig(dir: string): AppConfig {
   crossCheck(app, map, layers, problems);
   const content = readContent(root, app, problems);
   const skin = readSkin(root, app, problems);
+  const messages = app.value ? loadMessages(root, app.value.locales, problems) : {};
   if (problems.length || !app.value || !map.value || !layers.value) throw new ConfigError(problems);
-  return { dir: root, app: app.value, map: map.value, layers: layers.value, content, skin };
+  return { dir: root, app: app.value, map: map.value, layers: layers.value, content, skin, messages };
 }

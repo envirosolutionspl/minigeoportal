@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { Message } from '../../shared/config.ts';
 
 /**
  * Schema of the configuration directory: app.yaml, map.yaml, layers.yaml. Unknown keys are errors,
@@ -197,4 +198,6 @@ export interface AppConfig {
   content: Partial<Record<keyof AppFile['content'], Record<string, string>>>;
   /** The stylesheet of the skin. */
   skin: string;
+  /** Texts of the interface per language, complete (server/config/messages.ts). */
+  messages: Record<string, Record<string, Message>>;
 }

@@ -5,8 +5,18 @@ import { getConnInfo } from '@hono/node-server/conninfo';
 
 /** Shared HTTP helpers: bounded upstream reads, private-network checks and rate limiting. */
 
-/** A client mistake (bad parameter, unknown code): answered with 400 and this message. */
-export class RequestError extends Error {}
+/**
+ * A client mistake (bad parameter, unknown code): answered with 400 and this message. `code`
+ * names the mistake for the app, which says it in the visitor's language.
+ */
+export class RequestError extends Error {
+  readonly code?: string;
+
+  constructor(message: string, code?: string) {
+    super(message);
+    this.code = code;
+  }
+}
 
 /** Reads at most `maxBytes` of a response body; a longer body is cut, not buffered. */
 export async function readLimited(res: Response, maxBytes: number): Promise<Uint8Array> {

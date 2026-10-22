@@ -5,8 +5,12 @@
 
 id: prostygeoportal # short id: prefix of browser storage, part of the server's User-Agent
 name: Prosty Geoportal
-title: 'Prosty Geoportal: działki, plany i ortofotomapa'
-description: 'Prosty Geoportal: szybkie sprawdzanie działki, planu miejscowego, cen transakcyjnych i ortofotomapy na danych GUGiK.'
+title:
+  pl: 'Prosty Geoportal: działki, plany i ortofotomapa'
+  en: 'Prosty Geoportal: parcels, plans and orthophoto map'
+description:
+  pl: 'Prosty Geoportal: szybkie sprawdzanie działki, planu miejscowego, cen transakcyjnych i ortofotomapy na danych GUGiK.'
+  en: 'Prosty Geoportal: a quick look at a parcel, its local plan, transaction prices and the orthophoto map, on GUGiK data.'
 domain: prostygeoportal.pl
 contact: office@envirosolutions.pl
 
@@ -14,7 +18,9 @@ author:
   name: EnviroSolutions
   url: https://envirosolutions.pl
 
-tagline: Dane z geoportal.gov.pl – prościej i szybciej
+tagline:
+  pl: Dane z geoportal.gov.pl – prościej i szybciej
+  en: Data from geoportal.gov.pl, simpler and faster
 
 # Texts in Markdown: content/welcome means content/welcome.pl.md (and welcome.en.md for English).
 # Links may lead to web and e-mail addresses or open the report form: [formularz](app:report).
@@ -24,7 +30,7 @@ content:
 
 locales:
   default: pl
-  available: [pl]
+  available: [pl, en]
 
 links:
   # Where to send people when a layer cannot be shown here.
@@ -34,15 +40,15 @@ report:
   # Kinds of problems people can choose in the bug report form.
   categories:
     - id: mapa
-      label: Mapa lub warstwy
+      label: { pl: 'Mapa lub warstwy', en: 'Map or layers' }
     - id: wyszukiwanie
-      label: Wyszukiwanie
+      label: { pl: 'Wyszukiwanie', en: 'Search' }
     - id: dzialki
-      label: Działki i informacje o miejscu
+      label: { pl: 'Działki i informacje o miejscu', en: 'Parcels and place information' }
     - id: dostepnosc
-      label: Dostępność
+      label: { pl: 'Dostępność', en: 'Accessibility' }
     - id: inne
-      label: Inne
+      label: { pl: 'Inne', en: 'Other' }
 
 search:
   # gugik: addresses, places, units and parcels from GUGiK services; nominatim: OpenStreetMap; none

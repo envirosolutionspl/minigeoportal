@@ -24,7 +24,7 @@ export function creditHtml(markdown: string): string {
   );
 }
 
-export function clientConfig({ app, map, layers, content }: AppConfig, locale: string): ClientConfig {
+export function clientConfig({ app, map, layers, content, messages }: AppConfig, locale: string): ClientConfig {
   const fallback = app.locales.default;
   const t = (value: Text) => textIn(value, locale, fallback);
   const keywords = (k: string[] | Record<string, string[]>) => (Array.isArray(k) ? k : (k[locale] ?? k[fallback] ?? []));
@@ -44,6 +44,7 @@ export function clientConfig({ app, map, layers, content }: AppConfig, locale: s
     content: Object.fromEntries(Object.entries(content).map(([name, texts]) => [name, renderMarkdown(texts[locale] ?? texts[fallback])])),
     locale,
     locales: app.locales.available,
+    messages: messages[locale],
     map: {
       projection: map.projection,
       scales: map.zoom.scales,

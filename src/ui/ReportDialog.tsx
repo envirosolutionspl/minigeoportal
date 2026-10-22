@@ -5,6 +5,7 @@ import { Bug, LoaderCircle, X } from 'lucide-react';
 import { config } from '@/config/runtime';
 import { EMAIL_MAX, MESSAGE } from '../../shared/report';
 import { useModalDialog } from './useModalDialog';
+import { t } from '@/i18n';
 
 const MIN = MESSAGE.min;
 const MAX = MESSAGE.max;
@@ -18,6 +19,16 @@ export const useReport = create<{ open: boolean; draft: string; openReport(draft
 }));
 
 type State = { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent' } | { kind: 'error'; message: string };
+
+/** What a refused report means, by the server's status code. */
+const REFUSAL: Record<number, string> = { 400: 'report.invalid', 413: 'report.tooLong', 429: 'report.tooMany', 503: 'report.off' };
+
+/** Key of the message for a refusal: the field the server names, else what its status means. */
+async function refusal(res: Response): Promise<string> {
+  const { error } = (await res.json().catch(() => ({}))) as { error?: string };
+  const key = `report.error.${error}`;
+  return error && t(key) !== key ? key : (REFUSAL[res.status] ?? 'report.failed');
+}
 
 /** Bug report form; the server sends it by e-mail to the administrator. */
 export function ReportDialog() {
@@ -55,10 +66,11 @@ export function ReportDialog() {
           website: form.get('website'),
         }),
       });
+      // The server explains a refusal in Polish; the form says it in the visitor's language.
       if (res.ok) setState({ kind: 'sent' });
-      else setState({ kind: 'error', message: (await res.text()) || 'Nie udało się wysłać zgłoszenia.' });
+      else setState({ kind: 'error', message: t(await refusal(res)) });
     } catch {
-      setState({ kind: 'error', message: 'Brak połączenia z serwerem. Spróbuj ponownie.' });
+      setState({ kind: 'error', message: t('report.offline') });
     }
   };
 
@@ -81,36 +93,33 @@ export function ReportDialog() {
           <header className="mb-4 flex items-center gap-3">
             <Bug className="h-6 w-6 text-[var(--accent)]" aria-hidden="true" />
             <h2 id={`${id}-title`} className="flex-1 text-lg font-bold">
-              Zgłoś błąd w serwisie
+              {t('report.title')}
             </h2>
-            <button type="button" onClick={close} aria-label="Zamknij" className="rounded-full p-2 hover:bg-[var(--hover)]">
+            <button type="button" onClick={close} aria-label={t('common.close')} className="rounded-full p-2 hover:bg-[var(--hover)]">
               <X className="h-5 w-5" />
             </button>
           </header>
 
           {state.kind === 'sent' ? (
             <div role="status" className="space-y-4 text-sm">
-              <p>Dziękujemy. Zgłoszenie trafiło do administratora serwisu.</p>
+              <p>{t('report.sent')}</p>
               <button
                 type="button"
                 onClick={close}
                 className="rounded-2xl bg-[var(--accent)] px-5 py-2.5 font-semibold text-[var(--on-accent)]"
               >
-                Zamknij
+                {t('common.close')}
               </button>
             </div>
           ) : enabled === false ? (
             <p role="status" className="text-sm">
-              Formularz zgłoszeń jest chwilowo niedostępny. Spróbuj ponownie później.
+              {t('report.off')}
             </p>
           ) : (
             <form onSubmit={submit} className="space-y-4 text-sm">
-              <p className="text-[var(--muted)]">
-                Opisz, co nie działa w Prostym Geoportalu. Błędy w samych danych (np. granice działek) zgłasza się urzędowi, który je
-                prowadzi.
-              </p>
+              <p className="text-[var(--muted)]">{t('report.intro')}</p>
               <label className="block">
-                <span className="mb-1 block font-medium">Czego dotyczy</span>
+                <span className="mb-1 block font-medium">{t('report.category')}</span>
                 <select name="category" required defaultValue="mapa" className={field}>
                   {config.report.categories.map(({ id: value, label }) => (
                     <option key={value} value={value}>
@@ -121,7 +130,7 @@ export function ReportDialog() {
               </label>
               <div>
                 <label htmlFor={`${id}-message`} className="mb-1 block font-medium">
-                  Opis problemu
+                  {t('report.message')}
                 </label>
                 <textarea
                   id={`${id}-message`}
@@ -136,16 +145,16 @@ export function ReportDialog() {
                   className={field}
                 />
                 <p id={`${id}-count`} className="mt-1 text-xs text-[var(--muted)]">
-                  {length < MIN ? `Co najmniej ${MIN} znaków.` : `${length} z ${MAX} znaków.`}
+                  {length < MIN ? t('report.atLeast', { count: MIN }) : t('report.length', { length, count: MAX })}
                 </p>
               </div>
               <label className="block">
-                <span className="mb-1 block font-medium">E-mail do odpowiedzi (opcjonalnie)</span>
+                <span className="mb-1 block font-medium">{t('report.email')}</span>
                 <input name="email" type="email" autoComplete="email" maxLength={EMAIL_MAX} className={field} />
               </label>
               <label className="flex cursor-pointer items-start gap-2">
                 <input name="attachView" type="checkbox" defaultChecked className="mt-0.5 h-4 w-4 accent-[var(--accent)]" />
-                <span>Dołącz adres bieżącego widoku mapy, aby łatwiej odtworzyć problem.</span>
+                <span>{t('report.attachView')}</span>
               </label>
               {/* Hidden from people; bots that fill it in are ignored by the server. */}
               <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
@@ -153,10 +162,7 @@ export function ReportDialog() {
                   Strona www <input name="website" type="text" tabIndex={-1} autoComplete="off" />
                 </label>
               </div>
-              <p className="text-xs text-[var(--muted)]">
-                Zgłoszenie wysyłamy e-mailem do administratora serwisu razem z nazwą przeglądarki. Adres e-mail podaj tylko, jeśli chcesz
-                otrzymać odpowiedź; używamy go wyłącznie w tym celu.
-              </p>
+              <p className="text-xs text-[var(--muted)]">{t('report.privacy')}</p>
               <div aria-live="polite" className="empty:hidden">
                 {state.kind === 'error' && (
                   <p className="rounded-xl bg-[var(--danger-soft)] px-3 py-2 text-[var(--danger)]">{state.message}</p>
@@ -168,7 +174,7 @@ export function ReportDialog() {
                 className="inline-flex items-center gap-2 rounded-2xl bg-[var(--accent)] px-5 py-2.5 font-semibold text-[var(--on-accent)] disabled:opacity-50"
               >
                 {state.kind === 'sending' && <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />}
-                Wyślij zgłoszenie
+                {t('report.send')}
               </button>
             </form>
           )}

@@ -9,14 +9,9 @@ import type { CatalogIndexEntry, CatalogStatus } from '@/services/catalogTypes';
 import { overlayOpacity, useMapStore } from '@/state/store';
 import { dateText } from '@/services/ortho';
 import { scaleText } from '@/map/format';
+import { locale, t } from '@/i18n';
 
-const STATUS_LABEL: Record<ServiceStatus, string> = {
-  unknown: 'Jeszcze nie wczytywana',
-  ok: 'Dostępna',
-  blocked: 'Niedostępna u nas',
-  down: 'Usługa nie odpowiada',
-  degraded: 'Część danych nie ładuje się w tym miejscu',
-};
+const STATUS_LABEL = (status: ServiceStatus) => t(`layers.status.${status}`);
 
 /** Brand book palette: clover for ok, amber and raspberry from the additional colours for problems. */
 const STATUS_DOT: Record<ServiceStatus, string> = {
@@ -28,15 +23,10 @@ const STATUS_DOT: Record<ServiceStatus, string> = {
 };
 
 /** Why a layer cannot be shown, in plain language, by the result of the last check. */
-const WHY: Record<Exclude<CatalogStatus, 'ok'> | 'degraded', string> = {
-  token: 'Usługa wymaga tokenu, który GUGiK wydaje tylko aplikacji geoportal.gov.pl.',
-  refused: 'Serwer tej usługi odrzuca zapytania spoza geoportal.gov.pl.',
-  down: 'Serwer usługi nie odpowiadał przy ostatnim sprawdzeniu. Sprawdzimy go ponownie przy kolejnym odświeżeniu listy warstw.',
-  unsupported: `Usługa nie podaje mapy w układzie ${config.map.projection.name} (${config.map.projection.code}), a tylko w nim rysujemy, żeby mapa była szybka.`,
-  degraded: 'Usługa kieruje do serwera powiatu lub gminy, który w tym miejscu nie odpowiada albo odrzuca zapytania.',
-};
+type WhyStatus = Exclude<CatalogStatus, 'ok'> | 'degraded';
+const WHY = (status: WhyStatus) => t(`layers.why.${status}`, { system: config.map.projection.name, code: config.map.projection.code });
 
-/** Shown at once for a long topic; the rest after "Pokaż więcej". */
+/** Shown at once for a long topic; the rest after "show more". */
 const PAGE = 60;
 
 /** Words of the query that every match must contain, ignoring case and Polish diacritics. */
@@ -62,7 +52,7 @@ const entryText = (e: CatalogIndexEntry) => [e.title, ...e.path, TOPIC_TITLE.get
 
 /** Available layers first, then by title. */
 const byAvailability = (a: CatalogIndexEntry, b: CatalogIndexEntry) =>
-  Number(a.status !== 'ok') - Number(b.status !== 'ok') || a.title.localeCompare(b.title, 'pl');
+  Number(a.status !== 'ok') - Number(b.status !== 'ok') || a.title.localeCompare(b.title, locale());
 
 export function LayerCatalog() {
   const close = useMapStore((m) => m.setPanel);
@@ -119,10 +109,15 @@ export function LayerCatalog() {
   const starters = results.filter((r) => r.s.starter);
 
   return (
-    <section className="flex h-full flex-col" aria-label="Katalog warstw">
+    <section className="flex h-full flex-col" aria-label={t('layers.panel')}>
       <header className="flex items-center gap-2 px-4 pt-4 pb-2">
-        <h2 className="flex-1 text-base font-semibold">Warstwy</h2>
-        <button type="button" onClick={() => close('none')} aria-label="Zamknij" className="rounded-full p-2 hover:bg-[var(--hover)]">
+        <h2 className="flex-1 text-base font-semibold">{t('layers.title')}</h2>
+        <button
+          type="button"
+          onClick={() => close('none')}
+          aria-label={t('common.close')}
+          className="rounded-full p-2 hover:bg-[var(--hover)]"
+        >
           <X className="h-5 w-5" />
         </button>
       </header>
@@ -132,17 +127,17 @@ export function LayerCatalog() {
           <Search className="h-4 w-4 text-[var(--muted)]" aria-hidden="true" />
           <input
             type="search"
-            aria-label="Szukaj warstwy"
+            aria-label={t('layers.search')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Szukaj warstwy: woda, gaz, plan, zabytki…"
+            placeholder={t('layers.searchPlaceholder')}
             className="w-full bg-transparent text-sm outline-none placeholder:text-[var(--muted)]"
           />
           {query && (
             <button
               type="button"
               onClick={() => setQuery('')}
-              aria-label="Wyczyść wyszukiwanie"
+              aria-label={t('layers.clearSearch')}
               className="rounded-full p-1 hover:bg-[var(--hover)]"
             >
               <X className="h-4 w-4" />
@@ -159,7 +154,7 @@ export function LayerCatalog() {
             }`}
           >
             {onlyActive && <Check className="h-3.5 w-3.5" aria-hidden="true" />}
-            Tylko włączone ({active.length})
+            {t('layers.onlyActive', { count: active.length })}
           </button>
           {TOPICS.map(({ id: t, title }) => (
             <button
@@ -179,25 +174,25 @@ export function LayerCatalog() {
 
       <div className="flex-1 overflow-y-auto px-2 pb-4">
         {filtering ? (
-          <Group title={onlyActive && q.length === 0 && topic === null ? 'Włączone warstwy' : 'Wyniki'}>
+          <Group title={onlyActive && q.length === 0 && topic === null ? t('layers.activeGroup') : t('layers.results')}>
             {results.map(({ s, hits }) => (
               <OverlayItem key={s.id} s={s} hits={hits} />
             ))}
             <CatalogList entries={others} />
             {results.length === 0 && others.length === 0 && (
               <p className="px-3 py-6 text-center text-sm text-[var(--muted)]">
-                {onlyActive && active.length === 0 ? 'Żadna warstwa nie jest włączona.' : 'Brak warstw dla tego filtru.'}
+                {onlyActive && active.length === 0 ? t('layers.noneActive') : t('layers.noneFound')}
               </p>
             )}
           </Group>
         ) : (
           <>
-            <Group title="Najpopularniejsze">
+            <Group title={t('layers.popular')}>
               {starters.map(({ s, hits }) => (
                 <OverlayItem key={s.id} s={s} hits={hits} />
               ))}
             </Group>
-            <Group title="Wszystkie warstwy">
+            <Group title={t('layers.all')}>
               {TOPICS.map(({ id: t }) => (
                 <TopicSection
                   key={t}
@@ -219,16 +214,14 @@ function CatalogNotice({ state }: { state: string }) {
   if (state === 'loading') {
     return (
       <p role="status" className="flex items-center gap-2 px-3 py-2 text-xs text-[var(--muted)]">
-        <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> Wczytuję listę warstw geoportal.gov.pl…
+        <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> {t('layers.catalogLoading')}
       </p>
     );
   }
   if (state === 'preparing' || state === 'error') {
     return (
       <p role="status" className="px-3 py-2 text-xs text-[var(--muted)]">
-        {state === 'preparing'
-          ? 'Lista wszystkich warstw geoportal.gov.pl jest w przygotowaniu. Spróbuj za kilka minut.'
-          : 'Nie udało się wczytać listy warstw geoportal.gov.pl. Warstwy powyżej działają.'}
+        {state === 'preparing' ? t('layers.catalogPreparing') : t('layers.catalogError')}
       </p>
     );
   }
@@ -259,8 +252,8 @@ function TopicSection({ topic, own, entries }: { topic: string; own: Overlay[]; 
         className="flex min-h-10 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-medium hover:bg-[var(--hover)]"
       >
         <span className="flex-1">{TOPIC_TITLE.get(topic)}</span>
-        <span className="text-xs font-normal text-[var(--muted)]" title={`${available} dostępnych z ${count}`}>
-          {available === count ? count : `${available} z ${count}`}
+        <span className="text-xs font-normal text-[var(--muted)]" title={t('layers.available', { available, count })}>
+          {available === count ? count : t('layers.availableShort', { available, count })}
         </span>
         <ChevronDown className={`h-4 w-4 text-[var(--muted)] transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
       </button>
@@ -289,7 +282,7 @@ function CatalogList({ entries }: { entries: CatalogIndexEntry[] }) {
           onClick={() => setShown(shown + PAGE)}
           className="min-h-9 rounded-xl px-3 text-left text-xs text-[var(--accent)] hover:bg-[var(--hover)]"
         >
-          Pokaż więcej ({entries.length - shown})
+          {t('layers.more', { count: entries.length - shown })}
         </button>
       )}
     </>
@@ -332,7 +325,8 @@ function CatalogItem({ entry }: { entry: CatalogIndexEntry }) {
           {entry.path.length > 0 && <span className="block text-xs text-[var(--muted)]">{entry.path.join(' › ')}</span>}
           {(active || expanded) && !failed && (
             <span className="mt-1 flex items-center gap-1.5 text-xs text-[var(--muted)]">
-              <LoaderCircle className="h-3 w-3 animate-spin" aria-hidden="true" /> {active ? 'Wczytuję warstwę…' : 'Wczytuję podwarstwy…'}
+              <LoaderCircle className="h-3 w-3 animate-spin" aria-hidden="true" />{' '}
+              {active ? t('layers.loadingLayer') : t('layers.loadingSublayers')}
             </span>
           )}
         </label>
@@ -341,7 +335,7 @@ function CatalogItem({ entry }: { entry: CatalogIndexEntry }) {
             type="button"
             onClick={expand}
             aria-expanded={expanded}
-            aria-label={`Warstwy usługi: ${entry.title}`}
+            aria-label={t('layers.serviceLayers', { title: entry.title })}
             className="rounded-full p-1 text-[var(--muted)] hover:bg-[var(--hover)]"
           >
             <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
@@ -351,13 +345,13 @@ function CatalogItem({ entry }: { entry: CatalogIndexEntry }) {
       {!available && <Why status={entry.status as Exclude<CatalogStatus, 'ok'>} detail={entry.detail} checked={checkedOn} />}
       {available && failed && (
         <p role="status" className="mt-1 ml-7 text-xs text-[var(--danger)]">
-          Nie udało się wczytać tej warstwy. Spróbuj później
+          {t('layers.failed')}
           {FALLBACK && (
             <>
               {' '}
-              albo zobacz ją w{' '}
+              {t('layers.failedFallback')}{' '}
               <a href={FALLBACK} target="_blank" rel="noopener" className="underline">
-                geoportal.gov.pl
+                {t('layers.fallbackName')}
               </a>
             </>
           )}
@@ -368,8 +362,8 @@ function CatalogItem({ entry }: { entry: CatalogIndexEntry }) {
   );
 }
 
-/** "Dlaczego niedostępna?": the reason in plain words, what the server answered, and a link. */
-function Why({ status, detail, checked }: { status: keyof typeof WHY; detail?: string; checked?: string }) {
+/** "Why unavailable?": the reason in plain words, what the server answered, and a link. */
+function Why({ status, detail, checked }: { status: WhyStatus; detail?: string; checked?: string }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="mt-1 ml-7">
@@ -380,20 +374,20 @@ function Why({ status, detail, checked }: { status: keyof typeof WHY; detail?: s
         className="inline-flex min-h-6 items-center gap-1 text-xs text-[var(--accent)] underline-offset-2 hover:underline"
       >
         <HelpCircle className="h-3.5 w-3.5" aria-hidden="true" />
-        {status === 'degraded' ? 'Dlaczego dane się nie wczytują?' : 'Niedostępna u nas. Dlaczego?'}
+        {status === 'degraded' ? t('layers.whyDegraded') : t('layers.whyBlocked')}
       </button>
       {open && (
         <div className="mt-1 rounded-lg bg-[var(--field)] px-3 py-2 text-xs leading-relaxed">
-          <p>{WHY[status]}</p>
+          <p>{WHY(status)}</p>
           {(detail || checked) && (
             <p className="mt-1 text-[var(--muted)]">
-              {detail && <>Odpowiedź serwera: {detail}. </>}
-              {checked && <>Sprawdzono {checked}.</>}
+              {detail && <>{t('layers.serverAnswer', { detail })} </>}
+              {checked && t('layers.checked', { date: checked })}
             </p>
           )}
           {FALLBACK && (
             <a href={FALLBACK} target="_blank" rel="noopener" className="mt-1 inline-flex items-center gap-1 text-[var(--accent)]">
-              Zobacz w geoportal.gov.pl <ExternalLink className="h-3 w-3" aria-hidden="true" />
+              {t('layers.seeFallback', { name: t('layers.fallbackName') })} <ExternalLink className="h-3 w-3" aria-hidden="true" />
             </a>
           )}
         </div>
@@ -406,9 +400,9 @@ function StatusDot({ status }: { status: ServiceStatus }) {
   return (
     <span
       className={`inline-block h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[status]}`}
-      title={STATUS_LABEL[status]}
+      title={STATUS_LABEL(status)}
       role="img"
-      aria-label={STATUS_LABEL[status]}
+      aria-label={STATUS_LABEL(status)}
     />
   );
 }
@@ -447,7 +441,7 @@ function OverlayItem({ s, hits, startOpen = false }: { s: Overlay; hits: string[
             type="button"
             onClick={() => setExpanded(!open)}
             aria-expanded={open}
-            aria-label={`Warstwy usługi: ${s.title}`}
+            aria-label={t('layers.serviceLayers', { title: s.title })}
             className="rounded-full p-1 text-[var(--muted)] hover:bg-[var(--hover)]"
           >
             <ChevronDown className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -475,7 +469,7 @@ function OverlayItem({ s, hits, startOpen = false }: { s: Overlay; hits: string[
           max={1}
           step={0.05}
           value={opacity}
-          aria-label={`Przezroczystość: ${s.title}`}
+          aria-label={t('layers.opacity', { title: s.title })}
           onChange={(e) => setOpacity(s.id, Number(e.target.value))}
           className="mt-1 ml-7 h-6 w-[calc(100%-1.75rem)] cursor-pointer accent-[var(--accent)]"
         />
@@ -496,8 +490,8 @@ function SublayerRow({ s, l, highlighted, disabled }: { s: Overlay; l: SubLayer;
   /** Scale the map should go to for the layer to appear: just inside its visible range. */
   const targetScale = zoomedOutTooFar ? (meta?.maxScale ?? 0) * 0.9 : (meta?.minScale ?? 0) * 1.1;
   const hint = zoomedOutTooFar
-    ? `Widoczne od skali ${scaleText(meta?.maxScale ?? 0)}`
-    : `Widoczne do skali ${scaleText(meta?.minScale ?? 0)}`;
+    ? t('layers.visibleFrom', { scale: scaleText(meta?.maxScale ?? 0) })
+    : t('layers.visibleTo', { scale: scaleText(meta?.minScale ?? 0) });
   return (
     <li className={`flex items-center gap-1 rounded-lg text-sm ${highlighted ? 'bg-[var(--field)] font-medium' : ''}`}>
       <label className="flex min-h-8 flex-1 cursor-pointer items-center gap-2 px-1.5 py-1">
@@ -510,7 +504,7 @@ function SublayerRow({ s, l, highlighted, disabled }: { s: Overlay; l: SubLayer;
           className="h-3.5 w-3.5 shrink-0 accent-[var(--accent)]"
         />
         {/* Greyed while the server does not draw it at this scale; the hint says from which scale it does. */}
-        <span className={outOfScale ? 'text-[var(--muted)]' : ''} title={outOfScale ? `${hint}. Teraz niewidoczne.` : undefined}>
+        <span className={outOfScale ? 'text-[var(--muted)]' : ''} title={outOfScale ? t('layers.hiddenNow', { hint }) : undefined}>
           {l.title}
         </span>
       </label>
@@ -520,11 +514,11 @@ function SublayerRow({ s, l, highlighted, disabled }: { s: Overlay; l: SubLayer;
           type="button"
           onClick={() => zoomToScale(targetScale)}
           title={hint}
-          aria-label={`${zoomedOutTooFar ? 'Przybliż' : 'Oddal'} mapę do warstwy ${l.title}. ${hint}`}
+          aria-label={t(zoomedOutTooFar ? 'layers.zoomInTo' : 'layers.zoomOutTo', { title: l.title, hint })}
           className="flex min-h-7 shrink-0 items-center gap-1 rounded-md px-2 text-xs text-[var(--accent)] hover:bg-[var(--hover)]"
         >
           {zoomedOutTooFar ? <ZoomIn className="h-3.5 w-3.5" aria-hidden="true" /> : <ZoomOut className="h-3.5 w-3.5" aria-hidden="true" />}
-          {zoomedOutTooFar ? 'przybliż' : 'oddal'}
+          {zoomedOutTooFar ? t('layers.zoomIn') : t('layers.zoomOut')}
         </button>
       )}
     </li>

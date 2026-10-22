@@ -11,6 +11,7 @@ import type { EventsKey } from 'ol/events';
 import { Circle, Fill, Stroke, Style } from 'ol/style';
 import { formatArea, formatLength } from './format';
 import { PROJECTION } from './projection';
+import { t } from '@/i18n';
 import { useMapStore } from '@/state/store';
 
 const ACCENT = '#466946';
@@ -26,7 +27,7 @@ export function measure(geometry: Geometry): string | undefined {
   if (geometry instanceof Polygon) {
     const area = getArea(geometry, { projection: PROJECTION });
     const perimeter = getLength(new LineString(geometry.getLinearRing(0)!.getCoordinates()), { projection: PROJECTION });
-    return `${formatArea(area)}, obwód ${formatLength(perimeter)}`;
+    return `${formatArea(area)}, ${t('measure.perimeter', { length: formatLength(perimeter) })}`;
   }
   if (geometry instanceof LineString) return formatLength(getLength(geometry, { projection: PROJECTION }));
   return undefined;

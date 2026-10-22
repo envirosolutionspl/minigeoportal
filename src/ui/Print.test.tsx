@@ -4,6 +4,7 @@ import { PrintPanel, PrintSheet, printedLayers } from './Print';
 import { useMapStore } from '@/state/store';
 import { openPrint } from '@/map/print';
 import { withCapabilities } from '@/test/helpers';
+import { overlayById } from '@/config/runtime';
 
 beforeEach(async () => {
   useMapStore.setState({
@@ -63,6 +64,18 @@ describe('PrintSheet', () => {
     expect(container.querySelector('.print-frame .print-source')?.textContent).toBe('Warstwy mapy: geoportal.gov.pl (GUGiK)');
     expect(text).toContain('Źródło warstw mapy: geoportal.gov.pl');
     expect(container.querySelector('#print-map')).toBeTruthy();
+  });
+
+  it('prints the legend layers.yaml names before the one from the capabilities', () => {
+    const kieg = overlayById.get('kieg')!;
+    const dzialki = kieg.sublayers.find((l) => l.name === 'dzialki')!;
+    dzialki.legend = 'https://example.org/legend.png';
+    useMapStore.setState({ printRequest: { paper: 'A4', orientation: 'landscape', scale: 2500, title: '' } });
+    const { container } = render(<PrintSheet />);
+    expect([...container.querySelectorAll('.print-legend img')].map((i) => i.getAttribute('src'))).toContain(
+      'https://example.org/legend.png',
+    );
+    delete dzialki.legend;
   });
 
   it('lists no layers that are not drawn at the print scale', () => {

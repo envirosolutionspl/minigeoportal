@@ -183,8 +183,10 @@ export function PrintSheet() {
   const layers = request ? printedLayers(overlays, sublayers, request) : [];
   const legends = layers.flatMap(({ def, names }) =>
     names.flatMap((name) => {
-      const url = layerMeta(def.id, name)?.legend;
-      return url ? [{ key: `${def.id}-${name}`, url, label: def.sublayers.find((l) => l.name === name)?.title ?? name }] : [];
+      // A legend named in layers.yaml wins over the one from the service's capabilities.
+      const sublayer = def.sublayers.find((l) => l.name === name);
+      const url = sublayer?.legend ?? layerMeta(def.id, name)?.legend;
+      return url ? [{ key: `${def.id}-${name}`, url, label: sublayer?.title ?? name }] : [];
     }),
   );
 

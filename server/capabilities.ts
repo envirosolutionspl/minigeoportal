@@ -5,7 +5,17 @@ import { errorMessage } from './config.ts';
 import type { ClientConfig } from '../shared/config.ts';
 import type { CapabilitiesCache, RestMeta, ServiceMeta, TileMatrixMeta, WmsLayerMeta, WmsMeta, WmtsMeta } from '../src/services/meta.ts';
 
-const ARRAYS = new Set(['Layer', 'Format', 'InfoFormat', 'Style', 'LegendURL', 'TileMatrixSet', 'TileMatrix', 'TileMatrixSetLink']);
+const ARRAYS = new Set([
+  'Layer',
+  'Format',
+  'InfoFormat',
+  'Style',
+  'LegendURL',
+  'TileMatrixSet',
+  'TileMatrix',
+  'TileMatrixSetLink',
+  'Dimension',
+]);
 /** Tile formats in order of preference; WMTS also lists text formats for GetFeatureInfo. */
 const TILE_FORMATS = ['image/png', 'image/png8', 'image/jpeg'];
 
@@ -55,16 +65,27 @@ async function fetchXml(url: string): Promise<Node> {
   return node(parser.parse(decodeXml(await readLimited(res, MAX_BYTES))));
 }
 
-/** Named layers of a WMS layer tree; scale hints and queryable are inherited as the WMS spec requires. */
+/**
+ * Named layers of a WMS layer tree; scale hints, queryable and dimensions (time, elevation) are
+ * inherited as the WMS spec requires.
+ */
 function collectLayers(
   layer: Node,
-  inherited: Pick<WmsLayerMeta, 'minScale' | 'maxScale' | 'queryable'>,
+  inherited: Pick<WmsLayerMeta, 'minScale' | 'maxScale' | 'queryable' | 'dimensions'>,
   out: Record<string, WmsLayerMeta>,
 ): void {
+  const dimensions = { ...inherited.dimensions };
+  for (const d of list(layer.Dimension)) {
+    const name = text(d['@name'])?.toLowerCase();
+    const values = text(d);
+    const fallback = text(d['@default']);
+    if (name && values) dimensions[name] = { values, ...(fallback ? { default: fallback } : {}) };
+  }
   const own = {
     queryable: layer['@queryable'] !== undefined ? layer['@queryable'] === '1' : inherited.queryable,
     minScale: num(layer.MinScaleDenominator) ?? inherited.minScale,
     maxScale: num(layer.MaxScaleDenominator) ?? inherited.maxScale,
+    ...(Object.keys(dimensions).length ? { dimensions } : {}),
   };
   const name = text(layer.Name);
   if (name) {

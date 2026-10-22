@@ -13,6 +13,11 @@ export interface WmsLayerMeta {
   legend?: string;
   /** Has named layers inside it: a group, drawn by asking for its members. */
   group?: boolean;
+  /**
+   * WMS dimensions by lowercase name (time, elevation): the values as the service lists them
+   * (a list or start/end/period) and the one it draws without a parameter.
+   */
+  dimensions?: Record<string, { values: string; default?: string }>;
 }
 
 export interface WmsMeta {

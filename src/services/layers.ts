@@ -11,6 +11,7 @@ import { config, overlayById, type Overlay, type TileService } from '@/config/ru
 import { useCatalog } from './catalog';
 import { cachedDrawOrder, layerMeta, restMeta, wmtsMeta, type WmtsMeta } from './meta';
 import { useStatusStore } from './status';
+import { timeValues } from './time';
 
 const report = (id: string, ok: boolean) => useStatusStore.getState().reportLoad(id, ok);
 
@@ -115,10 +116,13 @@ export function createOverlayLayer(def: Overlay): OverlayLayer {
     return new TileLayer({ source: tiles, ...options });
   }
   const image = { url: def.url, projection: PROJECTION, ratio: 1.25, attributions: def.attribution ?? config.map.attribution };
+  // A layer that changes over time is drawn at its current value (TIME=2020 and the like).
+  const time = timeValues(def);
+  const when = time?.param ? { [time.param]: time.current } : {};
   const source =
     def.kind === 'rest'
       ? new ImageArcGISRest({ ...image, params: { LAYERS: 'show:', FORMAT: 'png32', TRANSPARENT: true } })
-      : new ImageWMS({ ...image, params: { LAYERS: '', FORMAT: 'image/png', TRANSPARENT: true, VERSION: '1.3.0' } });
+      : new ImageWMS({ ...image, params: { LAYERS: '', FORMAT: 'image/png', TRANSPARENT: true, VERSION: '1.3.0', ...when } });
   source.on('imageloadend', () => report(def.id, true));
   source.on('imageloaderror', () => report(def.id, false));
   return new ImageLayer({ source, ...options });
@@ -128,6 +132,7 @@ export function createOverlayLayer(def: Overlay): OverlayLayer {
 function tileSource(def: Overlay): WMTS | XYZ | undefined {
   const common = { projection: PROJECTION, attributions: def.attribution ?? config.map.attribution, wrapX: false };
   const wmts = def.kind === 'wmts' ? wmtsMeta(def.id) : undefined;
+  const time = timeValues(def);
   if (wmts) {
     return new WMTS({
       ...common,
@@ -137,6 +142,7 @@ function tileSource(def: Overlay): WMTS | XYZ | undefined {
       format: wmts.format ?? 'image/png',
       style: wmts.style ?? 'default',
       tileGrid: gridOf(wmts.matrixSet),
+      ...(time?.param ? { dimensions: { [time.param]: time.current } } : {}),
     });
   }
   const cache = def.kind === 'rest' ? restMeta(def.id)?.tiles : undefined;

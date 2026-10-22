@@ -22,6 +22,7 @@ const WMS = `<?xml version="1.0"?>
         <Name>numery</Name><Title>Numery</Title>
         <MaxScaleDenominator>1500</MaxScaleDenominator>
         <MinScaleDenominator>100</MinScaleDenominator>
+        <Dimension name="TIME" units="ISO8601" default="2020">2015,2018,2020</Dimension>
       </Layer>
     </Layer>
   </Capability>
@@ -63,7 +64,13 @@ describe('buildCache', () => {
     expect(kieg.infoFormats).toEqual(['text/xml', 'text/html']);
     // Scale limits and queryable are inherited from the parent layer unless overridden.
     expect(kieg.layers.dzialki).toEqual({ title: 'Działki', queryable: true, maxScale: 10000, legend: 'https://x/legend.png' });
-    expect(kieg.layers.numery).toEqual({ title: 'Numery', queryable: false, maxScale: 1500, minScale: 100 });
+    expect(kieg.layers.numery).toEqual({
+      title: 'Numery',
+      queryable: false,
+      maxScale: 1500,
+      minScale: 100,
+      dimensions: { time: { values: '2015,2018,2020', default: '2020' } },
+    });
     expect(kieg.layers.Root).toBeUndefined();
 
     const orto = cache.services.orto;

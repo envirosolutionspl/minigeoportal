@@ -208,7 +208,8 @@ export function TopBar() {
             placeholder="Adres, miejscowość, działka…"
             aria-label="Szukaj adresu, miejscowości lub działki"
             autoComplete="off"
-            className="h-8 w-full bg-transparent text-base outline-none placeholder:text-[var(--muted)]"
+            // 16 px on phones keeps iOS from zooming into the field; from sm up it matches the "Działka" toggle and the hits.
+            className="h-8 w-full bg-transparent text-base outline-none placeholder:text-[var(--muted)] sm:text-sm"
           />
           {query && (
             <button type="button" onClick={clear} aria-label="Wyczyść" className="rounded-full p-1 hover:bg-[var(--hover)]">

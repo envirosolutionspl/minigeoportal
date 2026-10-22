@@ -114,3 +114,15 @@ describe('map tools', () => {
     ]);
   });
 });
+
+describe('search bar type', () => {
+  it('uses one text size for the field and the parcel toggle from sm up, 16 px on phones', () => {
+    render(<TopBar />);
+    const field = screen.getByRole('combobox', { name: 'Szukaj adresu, miejscowości lub działki' });
+    const toggle = screen.getByRole('button', { name: 'Znajdź działkę po numerze i obrębie' });
+    // Phones keep 16 px so iOS does not zoom into the field; the toggle's label is hidden there.
+    expect(field.className).toMatch(/(^|\s)text-base(\s|$)/);
+    expect(field.className).toMatch(/(^|\s)sm:text-sm(\s|$)/);
+    expect(toggle.className).toMatch(/(^|\s)text-sm(\s|$)/);
+  });
+});

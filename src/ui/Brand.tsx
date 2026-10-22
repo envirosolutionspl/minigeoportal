@@ -49,7 +49,10 @@ export function AuthorCredit() {
       title="EnviroSolutions: systemy i narzędzia OpenSource GIS"
     >
       Stworzone przez
-      <AuthorLogo className="-my-1 h-8" />
+      {/* The logo keeps its colours on a white plate, also in high contrast. */}
+      <span className="author-logo -my-1 rounded-lg bg-white">
+        <AuthorLogo className="h-8" />
+      </span>
     </a>
   );
 }

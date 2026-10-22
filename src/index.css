@@ -475,6 +475,14 @@ html[data-contrast='high'] .ol-control button,
 html[data-contrast='high'] .author-credit {
   outline: 2px solid #ffff00;
 }
+/* The credit has fixed light colours (Brand.tsx): yellow on black here, the logo on its plate. */
+html[data-contrast='high'] .author-credit {
+  background: #000000;
+  color: #ffff00;
+}
+html[data-contrast='high'] .author-credit .author-logo {
+  padding: 0 0.25rem;
+}
 html[data-contrast='high'] a {
   text-decoration: underline;
 }

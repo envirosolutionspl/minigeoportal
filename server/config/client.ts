@@ -1,5 +1,6 @@
 import type { ClientConfig } from '../../shared/config.ts';
 import type { AppConfig, Text } from './schema.ts';
+import { escapeHtml, renderMarkdown } from './markdown.ts';
 
 /**
  * The configuration the app receives: every text resolved to one language, only the fields the
@@ -12,8 +13,6 @@ export function textIn(value: Text, locale: string, fallback: string): string {
   return value[locale] ?? value[fallback] ?? Object.values(value)[0];
 }
 
-export const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-
 /**
  * A credit line with Markdown links ([text](https://…)) as HTML. Everything else is escaped, and
  * links may only lead to http(s) addresses.
@@ -25,7 +24,7 @@ export function creditHtml(markdown: string): string {
   );
 }
 
-export function clientConfig({ app, map, layers }: AppConfig, locale: string): ClientConfig {
+export function clientConfig({ app, map, layers, content }: AppConfig, locale: string): ClientConfig {
   const fallback = app.locales.default;
   const t = (value: Text) => textIn(value, locale, fallback);
   const keywords = (k: string[] | Record<string, string[]>) => (Array.isArray(k) ? k : (k[locale] ?? k[fallback] ?? []));
@@ -40,7 +39,9 @@ export function clientConfig({ app, map, layers }: AppConfig, locale: string): C
       contact: app.contact,
       author: app.author,
       storagePrefix: `${app.id}.`,
+      ...(app.tagline ? { tagline: t(app.tagline) } : {}),
     },
+    content: Object.fromEntries(Object.entries(content).map(([name, texts]) => [name, renderMarkdown(texts[locale] ?? texts[fallback])])),
     locale,
     locales: app.locales.available,
     map: {

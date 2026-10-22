@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { APP_NAME, AUTHOR_URL, AuthorLogo, BrandMark } from './Brand';
 import { useReport } from './ReportDialog';
 import { useAccessibility } from './AccessibilityDialog';
-
+import { Content, type ContentAction } from './Content';
 import { config } from '@/config/runtime';
 import { useModalDialog } from './useModalDialog';
 
@@ -26,9 +26,9 @@ function rememberDismissal(hide: boolean): void {
   }
 }
 
-/** Open state is shared so the brand button in the search bar can reopen the dialog. */
+/** Open state is shared so the info button can reopen the dialog; first visits see it when there is a welcome text. */
 export const useWelcome = create<{ open: boolean; setOpen(open: boolean): void }>((set) => ({
-  open: !dismissedBefore(),
+  open: Boolean(config.content.welcome) && !dismissedBefore(),
   setOpen: (open) => set({ open }),
 }));
 
@@ -45,14 +45,10 @@ export function WelcomeDialog() {
   };
   const { ref, onBackdropClick } = useModalDialog(open, close);
 
-  const report = () => {
+  const act = (action: ContentAction) => {
     close();
-    useReport.getState().openReport();
-  };
-
-  const accessibility = () => {
-    close();
-    useAccessibility.getState().setOpen(true);
+    if (action === 'report') useReport.getState().openReport();
+    if (action === 'accessibility') useAccessibility.getState().setOpen(true);
   };
 
   return (
@@ -73,40 +69,15 @@ export function WelcomeDialog() {
               <h1 id={titleId} className="text-lg font-bold tracking-tight">
                 {APP_NAME}
               </h1>
-              <p className="text-sm text-[var(--muted)]">Dane z geoportal.gov.pl – prościej i szybciej</p>
+              {config.app.tagline && <p className="text-sm text-[var(--muted)]">{config.app.tagline}</p>}
             </div>
           </header>
 
-          <div className="mt-4 space-y-3 text-sm leading-normal">
-            <section>
-              <h2 className="mb-1 font-semibold">Po co jest ten serwis</h2>
-              <p>
-                {APP_NAME} pokazuje te same publiczne dane co krajowy <GeoportalLink />, ale w formie przyjaznej dla osób, które nie zajmują
-                się mapami zawodowo. Wyszukaj i przejrzyj oficjalne dane szybciej i łatwiej.
-              </p>
-              <p className="mt-2">
-                Zobaczysz granice i numer działki, przeznaczenie w planie miejscowym lub ogólnym, ceny transakcyjne w okolicy, uzbrojenie
-                terenu i zdjęcia lotnicze. Bez logowania i bez opłat, na komputerze i na telefonie.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="mb-1 font-semibold">Skąd są dane</h2>
-              <p>
-                Wszystkie dane pochodzą z publicznych usług Głównego Urzędu Geodezji i Kartografii (
-                <GeoportalLink />) oraz serwerów starostw, gmin i innych instytucji, z którymi te usługi się łączą. Mapa pobiera je na
-                bieżąco i niczego nie zmienia ani nie przechowuje. Aktualność danych zależy od urzędu, który je prowadzi.
-              </p>
-            </section>
-
-            <section className="rounded-2xl bg-[var(--field)] px-4 py-3">
-              <h2 className="mb-1 font-semibold">Ważne</h2>
-              <p>
-                Informacje mają charakter poglądowy i nie są dokumentem urzędowym. Wiążące dane wydaje starostwo (ewidencja gruntów i
-                budynków) lub gmina (plany zagospodarowania). {APP_NAME} to niezależny serwis open source, a nie serwis GUGiK.
-              </p>
-            </section>
-          </div>
+          {config.content.welcome && (
+            <div className="mt-4 text-sm leading-normal">
+              <Content html={config.content.welcome} onAction={act} />
+            </div>
+          )}
 
           <footer className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <label className="flex cursor-pointer items-center gap-2 text-sm text-[var(--muted)]">
@@ -132,12 +103,18 @@ export function WelcomeDialog() {
 
           {/* Links and the author in one row, so the window fits a laptop screen without scrolling. */}
           <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-[var(--hover)] pt-2 text-sm sm:justify-between">
-            <button type="button" onClick={report} className="min-h-6 text-[var(--accent)] underline underline-offset-2">
+            <button type="button" onClick={() => act('report')} className="min-h-6 text-[var(--accent)] underline underline-offset-2">
               Zgłoś błąd w serwisie
             </button>
-            <button type="button" onClick={accessibility} className="min-h-6 text-[var(--accent)] underline underline-offset-2">
-              Deklaracja dostępności
-            </button>
+            {config.content.accessibility && (
+              <button
+                type="button"
+                onClick={() => act('accessibility')}
+                className="min-h-6 text-[var(--accent)] underline underline-offset-2"
+              >
+                Deklaracja dostępności
+              </button>
+            )}
             <a href={AUTHOR_URL} target="_blank" rel="noopener" className="flex items-center gap-2 text-xs text-[var(--muted)]">
               Stworzone przez
               <span className="rounded-lg bg-white px-1">
@@ -148,14 +125,5 @@ export function WelcomeDialog() {
         </div>
       </dialog>
     </>
-  );
-}
-
-/** The national geoportal, linked wherever the text names it. */
-function GeoportalLink() {
-  return (
-    <a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener" className="text-[var(--accent)] underline">
-      geoportal.gov.pl
-    </a>
   );
 }

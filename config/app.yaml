@@ -14,6 +14,14 @@ author:
   name: EnviroSolutions
   url: https://envirosolutions.pl
 
+tagline: Dane z geoportal.gov.pl – prościej i szybciej
+
+# Texts in Markdown: content/welcome means content/welcome.pl.md (and welcome.en.md for English).
+# Links may lead to web and e-mail addresses or open the report form: [formularz](app:report).
+content:
+  welcome: content/welcome
+  accessibility: content/accessibility
+
 locales:
   default: pl
   available: [pl]

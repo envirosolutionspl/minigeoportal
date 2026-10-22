@@ -25,6 +25,7 @@
     "fast-xml-parser": "^5.11.2",
     "hono": "^4.13.13",
     "lucide-react": "^0.546.0",
+    "marked": "18.0.14",
     "nodemailer": "^10.1.7",
     "ol": "^10.6.1",
     "proj4": "^2.19.10",

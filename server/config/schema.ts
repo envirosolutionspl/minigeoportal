@@ -42,6 +42,24 @@ export const appSchema = z.strictObject({
   contact: z.email(),
   author: z.strictObject({ name: z.string().min(1), url }),
   locales: z.strictObject({ default: locale, available: z.array(locale).min(1) }),
+  /** A line under the name in the welcome window. */
+  tagline: text.optional(),
+  /**
+   * Texts in Markdown, as paths in the configuration directory without the language:
+   * content/welcome means content/welcome.pl.md, content/welcome.en.md and so on.
+   */
+  content: z
+    .strictObject({
+      welcome: z
+        .string()
+        .regex(/^[a-z0-9_-]+(\/[a-z0-9_-]+)*$/i, 'a path inside the configuration directory')
+        .optional(),
+      accessibility: z
+        .string()
+        .regex(/^[a-z0-9_-]+(\/[a-z0-9_-]+)*$/i, 'a path inside the configuration directory')
+        .optional(),
+    })
+    .default({}),
   links: z.strictObject({ fallbackMap: url.optional() }).default({}),
   report: z.strictObject({
     categories: z.array(z.strictObject({ id, label: text })).min(1),
@@ -173,4 +191,6 @@ export interface AppConfig {
   app: AppFile;
   map: MapFile;
   layers: LayersFile;
+  /** Markdown of each text in each language that has it (the default language always does). */
+  content: Partial<Record<keyof AppFile['content'], Record<string, string>>>;
 }

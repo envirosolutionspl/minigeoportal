@@ -112,7 +112,11 @@ export interface ClientConfig {
     author: { name: string; url: string };
     /** Prefix of everything the app keeps in the browser's storage. */
     storagePrefix: string;
+    /** A line under the name in the welcome window. */
+    tagline?: string;
   };
+  /** Texts of the deployment as HTML made from its Markdown (server/config/markdown.ts). */
+  content: { welcome?: string; accessibility?: string };
   locale: string;
   locales: string[];
   map: {

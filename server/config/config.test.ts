@@ -90,6 +90,13 @@ describe('loadConfig', () => {
     expect(problems(xyz('https://tile.openstreetmap.org/tiles.png')).join('\n')).toMatch(/an address with \{z\}, \{x\} and \{y\}/);
   });
 
+  it('needs every text in the default language, and keeps paths inside the directory', () => {
+    const missing = broken('app.yaml', (s) => s.replace('welcome: content/welcome', 'welcome: content/hello'));
+    expect(problems(missing).join('\n')).toMatch(/content\.welcome: content\/hello\.pl\.md not found/);
+    const outside = broken('app.yaml', (s) => s.replace('welcome: content/welcome', 'welcome: ../secret'));
+    expect(problems(outside).join('\n')).toMatch(/content\.welcome: a path inside the configuration directory/);
+  });
+
   it('says which file is missing', () => {
     const dir = mkdtempSync(join(tmpdir(), 'config-'));
     dirs.push(dir);

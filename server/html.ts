@@ -1,5 +1,6 @@
 import type { ClientConfig } from '../shared/config.ts';
-import { clientConfig, escapeHtml } from './config/client.ts';
+import { clientConfig } from './config/client.ts';
+import { escapeHtml } from './config/markdown.ts';
 import type { AppConfig } from './config/schema.ts';
 
 /**

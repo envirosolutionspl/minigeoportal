@@ -143,16 +143,18 @@ export function DisplayMenu() {
             </span>
             Wysoki kontrast
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              setOpen(false);
-              useAccessibility.getState().setOpen(true);
-            }}
-            className="min-h-6 text-[var(--accent)] underline underline-offset-2"
-          >
-            Deklaracja dostępności
-          </button>
+          {config.content.accessibility && (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                useAccessibility.getState().setOpen(true);
+              }}
+              className="min-h-6 text-[var(--accent)] underline underline-offset-2"
+            >
+              Deklaracja dostępności
+            </button>
+          )}
         </div>
       )}
     </div>

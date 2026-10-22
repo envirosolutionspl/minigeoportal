@@ -13,7 +13,43 @@ exports[`default configuration > stays what the app was built with (any change s
     "id": "prostygeoportal",
     "name": "Prosty Geoportal",
     "storagePrefix": "prostygeoportal.",
+    "tagline": "Dane z geoportal.gov.pl – prościej i szybciej",
     "title": "Prosty Geoportal: działki, plany i ortofotomapa",
+  },
+  "content": {
+    "accessibility": "<p>EnviroSolutions zobowiązuje się zapewnić dostępność serwisu Prosty Geoportal (prostygeoportal.pl) zgodnie ze standardem WCAG 2.1 na poziomie AA (norma EN 301 549), wymaganym przez ustawę o dostępności cyfrowej stron internetowych i aplikacji mobilnych oraz ustawę o zapewnianiu spełniania wymagań dostępności niektórych produktów i usług.</p>
+<h3>Stan dostępności</h3>
+<p>Serwis jest częściowo zgodny z WCAG 2.1 AA z powodu niezgodności i wyłączeń wymienionych niżej.</p>
+<ul>
+<li>Obraz mapy, ortofotomapy i warstw pochodzi z usług GUGiK, starostw i gmin i nie ma opisu tekstowego. Treść mapy w danym miejscu można odczytać jako tekst: Enter na mapie albo kliknięcie otwiera panel informacji o miejscu, a wyszukiwarki podają adresy i działki tekstem.</li>
+<li>Legendy warstw są obrazami dostarczanymi przez usługi źródłowe.</li>
+<li>Rysowanie pomiaru odległości i powierzchni wymaga myszy lub dotyku.</li>
+<li>Raport o działce otwiera się w serwisie geoportal.gov.pl, za którego dostępność odpowiada GUGiK.</li>
+</ul>
+<h3>Obsługa z klawiatury</h3>
+<ul>
+<li>Tab przechodzi między elementami, pierwszy z nich przenosi od razu do mapy lub wyszukiwarki.</li>
+<li>Na mapie: strzałki przesuwają, plus i minus zmieniają skalę, Enter pokazuje informacje o środku mapy.</li>
+<li>W wyszukiwarce: strzałki wybierają wynik, Enter pokazuje go na mapie, Esc zamyka listę.</li>
+<li>Esc zamyka okna, panel informacji i listę warstw.</li>
+</ul>
+<h3>Ułatwienia</h3>
+<p>Przycisk ułatwień obok wyszukiwarki powiększa tekst (A, A+, A++) i włącza wysoki kontrast (żółty na czarnym); wybór jest zapamiętywany. Serwis działa przy powiększeniu przeglądarki do 200% i na wąskich ekranach, ma tryb ciemny zgodny z ustawieniem systemu i wyłącza animacje, gdy system prosi o ograniczenie ruchu. Komunikaty o wynikach wyszukiwania, wczytywaniu danych i pomiarach są odczytywane przez czytniki ekranu.</p>
+<h3>Przygotowanie deklaracji</h3>
+<p>Deklarację sporządzono 2026-10-21 na podstawie samooceny przeprowadzonej przez EnviroSolutions, wspartej testami automatycznymi.</p>
+<h3>Informacje zwrotne i kontakt</h3>
+<p>Problemy z dostępnością prosimy zgłaszać przez <a href="#report" data-action="report">formularz zgłoszeń</a> (rodzaj „Dostępność”) albo e-mailem na adres <a href="mailto:office@envirosolutions.pl">office@envirosolutions.pl</a>. Można też poprosić o informację z mapy w innej, dostępnej formie. Odpowiadamy niezwłocznie, nie później niż w ciągu 7 dni.</p>
+",
+    "welcome": "<h2>Po co jest ten serwis</h2>
+<p>Prosty Geoportal pokazuje te same publiczne dane co krajowy <a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">geoportal.gov.pl</a>, ale w formie przyjaznej dla osób, które nie zajmują się mapami zawodowo. Wyszukaj i przejrzyj oficjalne dane szybciej i łatwiej.</p>
+<p>Zobaczysz granice i numer działki, przeznaczenie w planie miejscowym lub ogólnym, ceny transakcyjne w okolicy, uzbrojenie terenu i zdjęcia lotnicze. Bez logowania i bez opłat, na komputerze i na telefonie.</p>
+<h2>Skąd są dane</h2>
+<p>Wszystkie dane pochodzą z publicznych usług Głównego Urzędu Geodezji i Kartografii (<a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">geoportal.gov.pl</a>) oraz serwerów starostw, gmin i innych instytucji, z którymi te usługi się łączą. Mapa pobiera je na bieżąco i niczego nie zmienia ani nie przechowuje. Aktualność danych zależy od urzędu, który je prowadzi.</p>
+<blockquote>
+<h2>Ważne</h2>
+<p>Informacje mają charakter poglądowy i nie są dokumentem urzędowym. Wiążące dane wydaje starostwo (ewidencja gruntów i budynków) lub gmina (plany zagospodarowania). Prosty Geoportal to niezależny serwis open source, a nie serwis GUGiK.</p>
+</blockquote>
+",
   },
   "layers": {
     "drawOrder": [

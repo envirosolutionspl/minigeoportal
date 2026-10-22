@@ -158,6 +158,28 @@ function crossCheck(
   }
 }
 
+/** The Markdown texts in every language that has them; the default language must. */
+function readContent(root: string, app: Parsed<AppConfig['app']>, problems: string[]): AppConfig['content'] {
+  const content: AppConfig['content'] = {};
+  if (!app.value) return content;
+  const { locales } = app.value;
+  for (const [name, path] of Object.entries(app.value.content) as [keyof AppConfig['content'], string | undefined][]) {
+    if (!path) continue;
+    const texts: Record<string, string> = {};
+    for (const locale of locales.available) {
+      try {
+        texts[locale] = readFileSync(join(root, `${path}.${locale}.md`), 'utf8');
+      } catch {
+        if (locale === locales.default) {
+          problems.push(`${locate('app.yaml', app.doc, app.lines, ['content', name])} content.${name}: ${path}.${locale}.md not found`);
+        }
+      }
+    }
+    content[name] = texts;
+  }
+  return content;
+}
+
 /** The configuration in `dir`, checked; throws ConfigError listing every problem. */
 export function loadConfig(dir: string): AppConfig {
   const root = resolve(dir);
@@ -166,6 +188,7 @@ export function loadConfig(dir: string): AppConfig {
   const map = readFile(root, 'map.yaml', mapSchema, problems);
   const layers = readFile(root, 'layers.yaml', layersSchema, problems);
   crossCheck(app, map, layers, problems);
+  const content = readContent(root, app, problems);
   if (problems.length || !app.value || !map.value || !layers.value) throw new ConfigError(problems);
-  return { dir: root, app: app.value, map: map.value, layers: layers.value };
+  return { dir: root, app: app.value, map: map.value, layers: layers.value, content };
 }

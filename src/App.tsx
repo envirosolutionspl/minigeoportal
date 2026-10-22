@@ -32,8 +32,9 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  // Phones held sideways: the app keeps clear of the notch (viewport-fit=cover lets the page under it).
   return (
-    <div data-panel={panel} className="relative h-dvh w-full overflow-hidden">
+    <div data-panel={panel} className="relative mr-[env(safe-area-inset-right)] ml-[env(safe-area-inset-left)] h-dvh overflow-hidden">
       <nav aria-label={t('app.skipLinks')} className="skip-links">
         <a href="#map">{t('app.skipToMap')}</a>
         <a href="#search">{t('app.skipToSearch')}</a>
@@ -49,7 +50,7 @@ export default function App() {
         aria-hidden={panel !== 'catalog'}
         inert={panel !== 'catalog'}
         className={`absolute z-40 bg-[var(--surface)] shadow-2xl transition-transform duration-300 ease-out
-          inset-x-0 bottom-0 h-[70dvh] rounded-t-3xl
+          inset-x-0 bottom-0 h-[70dvh] rounded-t-3xl pb-[var(--safe-bottom)]
           sm:inset-y-0 sm:right-0 sm:left-auto sm:h-auto sm:w-96 sm:rounded-none
           ${panel === 'catalog' ? 'translate-y-0 sm:translate-x-0' : 'translate-y-full sm:translate-x-full sm:translate-y-0'}`}
       >

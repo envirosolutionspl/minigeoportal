@@ -170,7 +170,7 @@ export function TopBar() {
 
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start gap-2 p-3 sm:p-4">
-      <div className="search-box pointer-events-auto relative w-full max-w-lg">
+      <div className="search-box pointer-events-auto relative z-10 w-full max-w-lg">
         <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface)] py-1.5 pr-3 pl-1.5 shadow-lg ring-1 ring-black/5 has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-[var(--accent)]">
           <button
             type="button"

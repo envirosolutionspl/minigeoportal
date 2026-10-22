@@ -64,7 +64,7 @@ export function BasemapSwitcher() {
         setFocused(false);
         setDismissed(false);
       }}
-      className="group pointer-events-auto absolute bottom-9 left-3 z-20 flex items-end gap-2 sm:bottom-10 sm:left-4"
+      className="group pointer-events-auto absolute bottom-[calc(2.25rem+var(--safe-bottom))] left-3 z-30 flex items-end gap-2 sm:bottom-[calc(2.5rem+var(--safe-bottom))] sm:left-4"
     >
       <Thumb
         ref={toggle}
@@ -87,7 +87,7 @@ export function BasemapSwitcher() {
         id="basemap-list"
         role="group"
         aria-label={t('basemaps.title')}
-        className={`${shown ? 'flex' : 'hidden'} gap-2 rounded-2xl bg-[var(--surface)] p-2 shadow-lg ring-1 ring-black/5 [@media(hover:hover)]:group-hover:flex`}
+        className={`${shown ? 'flex' : 'hidden'} max-w-[calc(100vw-8.5rem)] flex-wrap gap-2 rounded-2xl bg-[var(--surface)] p-2 shadow-lg ring-1 ring-black/5 [@media(hover:hover)]:group-hover:flex`}
       >
         {/* The thumbnail's own base map is one click away, so the list leaves it out. */}
         {config.map.baseMaps

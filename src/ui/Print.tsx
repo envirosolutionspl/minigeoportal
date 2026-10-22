@@ -54,7 +54,7 @@ export function PrintPanel() {
   return (
     <section
       aria-labelledby={`${id}-title`}
-      className="pointer-events-auto absolute inset-x-0 bottom-0 z-30 max-h-[60dvh] overflow-y-auto rounded-t-3xl bg-[var(--surface)] shadow-2xl
+      className="pointer-events-auto absolute inset-x-0 bottom-0 z-30 max-h-[60dvh] overflow-y-auto rounded-t-3xl pb-[var(--safe-bottom)] bg-[var(--surface)] shadow-2xl
         sm:inset-x-auto sm:top-[4.75rem] sm:bottom-auto sm:left-4 sm:max-h-[calc(100dvh-7rem)] sm:w-80 sm:rounded-2xl"
     >
       <form onSubmit={submit} className="space-y-3 p-4 text-sm">

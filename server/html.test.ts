@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { gzipSync } from 'node:zlib';
 import { GUGIK_SEARCH_HOSTS, connectSources, pickLocale, renderPage, scriptJson } from './html.ts';
 import { defaults } from './testSite.ts';
 
@@ -45,6 +46,12 @@ describe('renderPage', () => {
     const json = scriptJson({ text: '</script><script>alert(1)</script>\u2028' });
     expect(json).not.toContain('<');
     expect(JSON.parse(json)).toEqual({ text: '</script><script>alert(1)</script>\u2028' });
+  });
+});
+
+describe('size', () => {
+  it('keeps the configuration inside the page small: under 12 KB compressed', () => {
+    expect(gzipSync(scriptJson(defaults)).length).toBeLessThan(12 * 1024);
   });
 });
 

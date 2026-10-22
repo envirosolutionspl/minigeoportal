@@ -120,7 +120,10 @@ function crossCheck(
     }
     if (m.view.zoom > m.zoom.scales.length - 1)
       problems.push(`${at(map, 'map.yaml', ['view', 'zoom'])} view.zoom: there are only ${m.zoom.scales.length} zoom levels`);
+    // The browser loads tiles and map images itself: the page's CSP and HTTPS allow only https.
     m.tileServices.forEach((s, i) => {
+      if (!s.url.startsWith('https:'))
+        problems.push(`${at(map, 'map.yaml', ['tileServices', i, 'url'])} tile service "${s.id}" needs an https address`);
       if (s.kind !== 'wmts') return;
       if (s.firstLevel + s.levels > m.zoom.scales.length)
         problems.push(`${at(map, 'map.yaml', ['tileServices', i])} tile service "${s.id}" goes past the last zoom level`);
@@ -134,6 +137,8 @@ function crossCheck(
     const overlays = unique(l.overlays, layers, 'layers.yaml', 'overlays');
     l.overlays.forEach((o, i) => {
       if (!topics.has(o.topic)) problems.push(`${at(layers, 'layers.yaml', ['overlays', i, 'topic'])} unknown topic "${o.topic}"`);
+      if (!o.url.startsWith('https:'))
+        problems.push(`${at(layers, 'layers.yaml', ['overlays', i, 'url'])} layer "${o.id}" needs an https address`);
     });
     (l.drawOrder ?? []).forEach((idInOrder, i) => {
       if (!overlays.has(idInOrder)) problems.push(`${at(layers, 'layers.yaml', ['drawOrder', i])} unknown overlay "${idInOrder}"`);

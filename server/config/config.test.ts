@@ -121,6 +121,11 @@ describe('loadConfig', () => {
     expect(loadConfig(own).skin).toContain('#123456');
   });
 
+  it('needs https for every service the browser loads', () => {
+    const dir = broken('layers.yaml', (s) => s.replace('url: https://integracja.gugik.gov.pl', 'url: http://integracja.gugik.gov.pl'));
+    expect(problems(dir).join(' ')).toMatch(/layers\.yaml:\d+:\d+ layer "kieg" needs an https address/);
+  });
+
   it('says which file is missing', () => {
     const dir = mkdtempSync(join(tmpdir(), 'config-'));
     dirs.push(dir);

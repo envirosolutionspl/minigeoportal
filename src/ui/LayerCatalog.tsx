@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ExternalLink, HelpCircle, LoaderCircle, Search, X, ZoomIn, ZoomOut } from 'lucide-react';
-import { GEOPORTAL_MAP, OVERLAYS, TOPICS, selectedSublayers, type Overlay, type SubLayer, type Topic } from '@/services/registry';
+import { GEOPORTAL_MAP, OVERLAYS, TOPICS, type Overlay, type SubLayer, type Topic } from '@/services/registry';
 import { layerMeta, serviceError, visibleAtScale } from '@/services/meta';
 import { normalize } from '@/services/text';
 import { statusOf, useStatusStore, type ServiceStatus } from '@/services/status';
 import { loadCatalogLayer, useCatalog } from '@/services/catalog';
 import type { CatalogIndexEntry, CatalogStatus } from '@/services/catalogTypes';
 import { overlayOpacity, useMapStore } from '@/state/store';
+import { dateText } from '@/services/ortho';
+import { scaleText } from '@/map/format';
 
 const STATUS_LABEL: Record<ServiceStatus, string> = {
   unknown: 'Jeszcze nie wczytywana',
@@ -30,7 +32,7 @@ const WHY: Record<Exclude<CatalogStatus, 'ok'> | 'degraded', string> = {
   token: 'Usługa wymaga tokenu, który GUGiK wydaje tylko aplikacji geoportal.gov.pl.',
   refused: 'Serwer tej usługi odrzuca zapytania spoza geoportal.gov.pl.',
   down: 'Serwer usługi nie odpowiadał przy ostatnim sprawdzeniu. Sprawdzimy go ponownie przy kolejnym odświeżeniu listy warstw.',
-  unsupported: 'To usługa innego rodzaju (kafle WMTS lub ArcGIS REST), której ta wersja jeszcze nie wyświetla.',
+  unsupported: 'Usługa nie podaje mapy w układzie PL-1992 (EPSG:2180), a tylko w nim rysujemy, żeby mapa była szybka.',
   degraded: 'Usługa kieruje do serwera powiatu lub gminy, który w tym miejscu nie odpowiada albo odrzuca zapytania.',
 };
 
@@ -61,14 +63,20 @@ export function LayerCatalog() {
   const close = useMapStore((m) => m.setPanel);
   const [query, setQuery] = useState('');
   const [topic, setTopic] = useState<Topic | null>(null);
-  const q = useMemo(() => words(query), [query]);
+  // Typing stays quick: the list filters after the keystroke is shown.
+  const deferred = useDeferredValue(query);
+  const q = useMemo(() => words(deferred), [deferred]);
   const catalogState = useCatalog((c) => c.state);
   const entries = useCatalog((c) => c.entries);
+  const panel = useMapStore((m) => m.panel);
 
-  // The geoportal list loads with the panel; our own layers work without it.
+  // The geoportal list loads when the panel is first opened; our own layers work without it.
   useEffect(() => {
-    void useCatalog.getState().load();
-  }, []);
+    if (panel === 'catalog') void useCatalog.getState().load();
+  }, [panel]);
+
+  /** Search text of every geoportal layer, normalized once instead of on each keystroke. */
+  const texts = useMemo(() => new Map(entries.map((e) => [e.id, normalize(entryText(e))])), [entries]);
 
   /** Our services matching the filter; matching sublayers open the service with those rows highlighted. */
   const results = useMemo(
@@ -87,9 +95,9 @@ export function LayerCatalog() {
   const others = useMemo(
     () =>
       entries
-        .filter((e) => !e.curated && (topic === null || e.topic === topic) && (q.length === 0 || textMatches(entryText(e), q)))
+        .filter((e) => !e.curated && (topic === null || e.topic === topic) && (q.length === 0 || q.every((w) => texts.get(e.id)?.includes(w))))
         .sort(byAvailability),
-    [entries, q, topic],
+    [entries, texts, q, topic],
   );
 
   const filtering = q.length > 0 || topic !== null;
@@ -263,7 +271,7 @@ function CatalogItem({ entry }: { entry: CatalogIndexEntry }) {
     if (!expanded) void loadCatalogLayer(entry.id);
     setExpanded(!expanded);
   };
-  const checkedOn = entry.checked.slice(0, 10).split('-').reverse().join('.');
+  const checkedOn = dateText(entry.checked.slice(0, 10));
 
   return (
     <div className={`rounded-xl px-3 py-2 ${active ? 'bg-[var(--accent-soft)]' : ''}`}>
@@ -300,7 +308,7 @@ function CatalogItem({ entry }: { entry: CatalogIndexEntry }) {
       </div>
       {!available && <Why status={entry.status as Exclude<CatalogStatus, 'ok'>} detail={entry.detail} checked={checkedOn} />}
       {available && failed && (
-        <p role="status" className="mt-1 ml-7 text-xs text-[#8a2c0d]">
+        <p role="status" className="mt-1 ml-7 text-xs text-[var(--danger)]">
           Nie udało się wczytać tej warstwy. Spróbuj później albo zobacz ją w{' '}
           <a href={GEOPORTAL_MAP} target="_blank" rel="noopener" className="underline">
             geoportal.gov.pl
@@ -427,7 +435,9 @@ function OverlayItem({ s, hits, startOpen = false }: { s: Overlay; hits: string[
 }
 
 function SublayerRow({ s, l, highlighted, disabled }: { s: Overlay; l: SubLayer; highlighted: boolean; disabled: boolean }) {
-  const checked = useMapStore((m) => m.overlays.includes(s.id) && selectedSublayers(s, m.sublayers).includes(l.name));
+  const on = useMapStore((m) => m.overlays.includes(s.id));
+  const chosen = useMapStore((m) => m.sublayers[s.id]);
+  const checked = on && (chosen ? chosen.includes(l.name) : Boolean(l.default));
   const toggle = useMapStore((m) => m.toggleSublayer);
   const zoomToScale = useMapStore((m) => m.zoomToScale);
   const outOfScale = useMapStore((m) => !visibleAtScale(s.id, l.name, m.scale));
@@ -436,8 +446,8 @@ function SublayerRow({ s, l, highlighted, disabled }: { s: Overlay; l: SubLayer;
   /** Scale the map should go to for the layer to appear: just inside its visible range. */
   const targetScale = zoomedOutTooFar ? (meta?.maxScale ?? 0) * 0.9 : (meta?.minScale ?? 0) * 1.1;
   const hint = zoomedOutTooFar
-    ? `Widoczne od skali 1:${Math.round(meta?.maxScale ?? 0)}`
-    : `Widoczne do skali 1:${Math.round(meta?.minScale ?? 0)}`;
+    ? `Widoczne od skali ${scaleText(meta?.maxScale ?? 0)}`
+    : `Widoczne do skali ${scaleText(meta?.minScale ?? 0)}`;
   return (
     <li className={`flex items-center gap-1 rounded-lg text-sm ${highlighted ? 'bg-[var(--field)] font-medium' : ''}`}>
       <label className="flex min-h-8 flex-1 cursor-pointer items-center gap-2 px-1.5 py-1">

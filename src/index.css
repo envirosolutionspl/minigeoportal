@@ -13,6 +13,8 @@
   --field: #f2f4f5;
   --hover: #d9e1d9;
   --muted: #59705b;
+  --danger: #8a2c0d;
+  --danger-soft: #fde8e0;
   --accent: #466946;
   --on-accent: #ffffff;
   --accent-soft: #e6ede6;
@@ -29,6 +31,8 @@
     --field: #2e3f2f;
     --hover: #466946;
     --muted: #b3cbb4;
+    --danger: #ffb59a;
+    --danger-soft: #4a2a1e;
     --accent: #9db49e;
     --on-accent: #253326;
     --accent-soft: #34483a;
@@ -105,7 +109,7 @@ input[type='search']::-webkit-search-cancel-button {
     bottom: 11rem;
   }
 }
-/* Cursor coordinates in the bottom bar, left of the attribution; mice only. */
+/* Cursor coordinates in the bottom bar; mice only. */
 .ol-mouse-position {
   /* Centred in the attribution bar, clear of the credits on both sides. */
   top: auto;
@@ -402,7 +406,7 @@ html[data-printing] #print-sheet {
 }
 
 /* Print preview: the printed area, with the map around it dimmed; the map moves under it. */
-.print-frame {
+.print-preview {
   position: absolute;
   pointer-events: none;
   outline: 3px dashed #ff8142;
@@ -416,6 +420,8 @@ html[data-contrast='high'] {
   --field: #000000;
   --hover: #3a3a00;
   --muted: #ffff00;
+  --danger: #ffff00;
+  --danger-soft: #000000;
   --accent: #ffff00;
   --on-accent: #000000;
   --accent-soft: #000000;

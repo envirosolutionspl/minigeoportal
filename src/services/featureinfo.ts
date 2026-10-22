@@ -132,23 +132,25 @@ const LABELS: Record<string, string> = {
   WWW: 'Strona uchwały',
 };
 
-/** A value may itself be markup (Intergraph wraps links and QR codes in CDATA). */
-function field(label: string, raw: string): InfoField | null {
+/**
+ * One field from a table cell, or from a text value that may itself be markup (Intergraph
+ * wraps links and QR codes in CDATA).
+ */
+function field(label: string, raw: string | Element): InfoField | null {
   label = clean(label);
   if (!label || HIDDEN.test(label)) return null;
   label = LABELS[label] ?? label;
-  if (EMPTY.test(raw.trim())) return null;
-  if (/<[a-z]/i.test(raw)) {
-    const doc = parseHtmlFragment(raw);
-    const link = doc.querySelector('a[href]');
-    const text = clean(doc.body.textContent);
-    if (link && /^https?:/i.test(link.getAttribute('href') ?? '')) {
-      return { label, value: text || 'Otwórz', href: link.getAttribute('href')! };
-    }
-    return text ? { label, value: text } : null;
+  const el = typeof raw === 'string' ? (/<[a-z]/i.test(raw) ? parseHtmlFragment(raw).body : undefined) : raw;
+  if (el) {
+    const href = el.querySelector('a[href]')?.getAttribute('href') ?? '';
+    const text = clean(el.textContent);
+    if (EMPTY.test(text)) return null;
+    if (/^https?:/i.test(href)) return { label, value: text || 'Otwórz', href };
+    if (!text) return null;
+    return /^https?:\/\/\S+$/i.test(text) ? { label, value: text, href: text } : { label, value: text };
   }
-  const value = clean(raw);
-  if (!value) return null;
+  const value = clean(raw as string); // Not an element: that branch returned above.
+  if (!value || EMPTY.test(value)) return null;
   return /^https?:\/\/\S+$/i.test(value) ? { label, value, href: value } : { label, value };
 }
 
@@ -187,7 +189,7 @@ function parseHtml(doc: Document): InfoRecord[] {
       // Column table: one record per data row.
       for (const row of rows.slice(1)) {
         const cells = [...row.querySelectorAll('td')];
-        push(records, title, cells.map((td, i) => field(header[i]?.textContent ?? '', td.innerHTML)));
+        push(records, title, cells.map((td, i) => field(header[i]?.textContent ?? '', td)));
       }
     } else {
       // Key/value table: two cells per row.
@@ -196,7 +198,7 @@ function parseHtml(doc: Document): InfoRecord[] {
         title,
         rows.map((row) => {
           const cells = [...row.querySelectorAll('th, td')];
-          return cells.length >= 2 ? field(cells[0].textContent ?? '', cells[1].innerHTML) : null;
+          return cells.length >= 2 ? field(cells[0].textContent ?? '', cells[1]) : null;
         }),
       );
     }
@@ -222,7 +224,8 @@ function parseXml(doc: Document): InfoRecord[] {
     const f = field(el.localName.replace(/_/g, ' '), el.textContent ?? '');
     const parent = el.parentElement;
     if (!f || !parent) continue;
-    groups.set(parent, [...(groups.get(parent) ?? []), f]);
+    groups.set(parent, groups.get(parent) ?? []);
+    groups.get(parent)!.push(f);
   }
   for (const [parent, fields] of groups) {
     push(records, parent.getAttribute('name') ?? parent.localName.replace(/_feature$|_layer$/i, ''), fields);

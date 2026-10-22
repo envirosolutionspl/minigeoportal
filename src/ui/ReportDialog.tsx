@@ -160,7 +160,7 @@ export function ReportDialog() {
               tylko, jeśli chcesz otrzymać odpowiedź; używamy go wyłącznie w tym celu.
             </p>
             <div aria-live="polite" className="empty:hidden">
-              {state.kind === 'error' && <p className="rounded-xl bg-[#fde8e0] px-3 py-2 text-[#8a2c0d]">{state.message}</p>}
+              {state.kind === 'error' && <p className="rounded-xl bg-[var(--danger-soft)] px-3 py-2 text-[var(--danger)]">{state.message}</p>}
             </div>
             <button
               type="submit"

@@ -12,11 +12,12 @@ export interface UnitNames {
 
 const known = new Map<string, UnitNames>();
 
-export async function unitNames(codes: string[]): Promise<Map<string, UnitNames>> {
+export async function unitNames(codes: string[], signal?: AbortSignal): Promise<Map<string, UnitNames>> {
   const missing = [...new Set(codes)].filter((c) => /^\d{6}$/.test(c) && !known.has(c));
   if (missing.length > 0) {
     try {
-      const res = await fetch(`/api/dict/jednostki?teryt=${missing.join(',')}`, { signal: AbortSignal.timeout(4000) });
+      const timeout = AbortSignal.timeout(4000);
+      const res = await fetch(`/api/dict/jednostki?teryt=${missing.join(',')}`, { signal: signal ? AbortSignal.any([signal, timeout]) : timeout });
       if (res.ok) {
         for (const [code, names] of Object.entries((await res.json()) as Record<string, UnitNames>)) known.set(code, names);
       }

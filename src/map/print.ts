@@ -1,4 +1,5 @@
 import type Map from 'ol/Map';
+import { unByKey } from 'ol/Observable';
 import { containsExtent, type Extent } from 'ol/extent';
 import { OGC_PIXEL } from './projection';
 import { duration } from './motion';
@@ -114,7 +115,7 @@ export function freeArea(map: Map): { extent: Extent; center: [number, number] }
 function attachPreview(map: Map): () => void {
   const view = map.getView();
   const frame = document.createElement('div');
-  frame.className = 'print-frame';
+  frame.className = 'print-preview';
   frame.hidden = true;
   // Above the map layers, below the map buttons.
   map.getViewport()?.insertBefore(frame, map.getOverlayContainer() ?? null);
@@ -182,6 +183,8 @@ export function attachPrint(map: Map): () => void {
       if (done) return;
       done = true;
       window.clearTimeout(timer);
+      unByKey(rendered);
+      window.removeEventListener('afterprint', restore);
       map.setTarget(home);
       if (center) view.setCenter(center);
       if (resolution) view.setResolution(resolution);
@@ -190,8 +193,10 @@ export function attachPrint(map: Map): () => void {
       useMapStore.getState().printDone();
     };
     const print = () => {
+      if (done) return;
       window.clearTimeout(timer);
-      // The browser blocks here until its print dialog closes.
+      // Desktop browsers block here until the print dialog closes; others fire afterprint later.
+      window.addEventListener('afterprint', restore, { once: true });
       window.print();
       restore();
     };
@@ -199,9 +204,9 @@ export function attachPrint(map: Map): () => void {
     map.setTarget(frame);
     if (sheetCenter) view.setCenter(sheetCenter);
     view.setResolution(layout.resolution);
-    // Print what has loaded if some server is slow.
+    // Print what has loaded if some server is slow; whichever comes first prints, once.
     const timer = window.setTimeout(print, RENDER_TIMEOUT_MS);
-    map.once('rendercomplete', print);
+    const rendered = map.once('rendercomplete', print);
     map.render();
   };
 

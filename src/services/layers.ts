@@ -47,7 +47,7 @@ export function createTileLayer(
     projection: EPSG2180,
     tileGrid: tileGrid(def),
     attributions: GUGIK_ATTRIBUTION,
-    // GUGiK WMTS sends CORS headers; readable tiles allow exporting the map later.
+    // GUGiK WMTS sends CORS headers; readable tiles keep an image export possible.
     crossOrigin: 'anonymous',
     wrapX: false,
   });
@@ -57,8 +57,8 @@ export function createTileLayer(
     source,
     visible: false,
     ...range,
-    // Lower-resolution tiles stay ready, so zooming out never shows an empty map.
-    preload: Infinity,
+    // One coarser level stays ready, so zooming out never shows an empty map.
+    preload: 1,
     zIndex: 0,
   });
 }

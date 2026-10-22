@@ -209,7 +209,8 @@ async function nature(query: string, signal: AbortSignal): Promise<SearchHit[]> 
   // Where each object is, so that the many "Czarny Staw" lakes can be told apart. Rivers and
   // other objects drawn with many points cross many municipalities, so they get none.
   const codes = await Promise.all(top.map((h) => (h.wkt ? undefined : communeAt(h.center, signal).catch(() => undefined))));
-  const names = await unitNames(codes.filter((c): c is string => Boolean(c)));
+  signal.throwIfAborted();
+  const names = await unitNames(codes.filter((c): c is string => Boolean(c)), signal);
   return top.map((h, i) => {
     const code = codes[i];
     const u = code ? names.get(code) : undefined;
@@ -328,7 +329,8 @@ export async function search(query: string, signal: AbortSignal): Promise<Search
     ...allPlaces.filter((h) => !first(h)),
     ...others.filter((h) => !exact(h)),
   ].slice(0, MAX_HITS);
-  const names = await unitNames(merged.flatMap((h) => (h.teryt && !h.detail?.includes('woj.') ? [h.teryt] : [])));
+  signal.throwIfAborted();
+  const names = await unitNames(merged.flatMap((h) => (h.teryt && !h.detail?.includes('woj.') ? [h.teryt] : [])), signal);
   return merged.map((h) => withUnits(h, names));
 }
 

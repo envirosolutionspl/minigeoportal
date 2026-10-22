@@ -50,12 +50,16 @@ describe('attachPrint', () => {
       getView: () => view,
       getTargetElement: () => home,
       setTarget: vi.fn(),
-      once: vi.fn((_: string, cb: () => void) => (rendered = cb)),
+      once: vi.fn((_: string, cb: () => void) => {
+        rendered = cb;
+        return { target: map, type: 'rendercomplete', listener: cb };
+      }),
       render: vi.fn(),
       getViewport: () => document.createElement('div'),
       getOverlayContainer: () => undefined,
       on: vi.fn(),
       un: vi.fn(),
+      removeEventListener: vi.fn(),
       getSize: () => undefined,
     } as unknown as OlMap;
     const print = vi.fn(() => {
@@ -69,6 +73,8 @@ describe('attachPrint', () => {
     expect(map.setTarget).toHaveBeenLastCalledWith(document.getElementById('print-map'));
     expect(view.setResolution).toHaveBeenLastCalledWith(1 / 6);
     expect(document.getElementById('print-map')!.style.width).toBe('1662px');
+    rendered!();
+    // A later render (the timer, a pan) must not open the print dialog again.
     rendered!();
 
     expect(print).toHaveBeenCalledOnce();
@@ -89,7 +95,7 @@ describe('print preview', () => {
     const map = new OlMap({ view: new View({ projection: EPSG2180, center: [500000, 500000], resolution: 10 }) });
     map.setSize([1000, 800]);
     const detach = attachPrint(map);
-    const frame = map.getViewport()!.querySelector<HTMLElement>('.print-frame')!;
+    const frame = map.getViewport()!.querySelector<HTMLElement>('.print-preview')!;
     expect(frame.hidden).toBe(true);
 
     useMapStore.getState().setTool('print');
@@ -111,6 +117,6 @@ describe('print preview', () => {
     useMapStore.getState().setTool('none');
     expect(frame.hidden).toBe(true);
     detach();
-    expect(map.getViewport()!.querySelector('.print-frame')).toBeNull();
+    expect(map.getViewport()!.querySelector('.print-preview')).toBeNull();
   });
 });

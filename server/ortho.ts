@@ -37,19 +37,28 @@ export interface OrthoInfo {
   archived: number;
 }
 
+/** After a failed read the fallback list is used, and the index is asked again after this long. */
+const RETRY_AFTER_FAILURE_MS = 10 * 60000;
 let layers: { names: string[]; at: number } | undefined;
+let loading: Promise<string[]> | undefined;
 
-async function sheetLayers(): Promise<string[]> {
-  if (layers && Date.now() - layers.at < LAYERS_TTL_MS) return layers.names;
-  try {
-    const res = await fetchFixed(`${INDEX}?SERVICE=WMS&REQUEST=GetCapabilities`, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-    const xml = new TextDecoder().decode(await readLimited(res, MAX_BYTES));
-    const names = [...new Set(xml.match(/SkorowidzeOrtofotomapy(?:\d{4}|Starsze)(?=<)/g) ?? [])];
-    layers = { names: names.length > 0 ? names : FALLBACK_LAYERS, at: Date.now() };
-  } catch {
-    layers = { names: FALLBACK_LAYERS, at: Date.now() - LAYERS_TTL_MS + 600000 };
-  }
-  return layers.names;
+/** Index layers (one per year): read from the service once a day, shared by concurrent clicks. */
+function sheetLayers(): Promise<string[]> {
+  if (layers && Date.now() - layers.at < LAYERS_TTL_MS) return Promise.resolve(layers.names);
+  loading ??= (async () => {
+    try {
+      const res = await fetchFixed(`${INDEX}?SERVICE=WMS&REQUEST=GetCapabilities`, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+      const xml = new TextDecoder().decode(await readLimited(res, MAX_BYTES));
+      const names = [...new Set(xml.match(/SkorowidzeOrtofotomapy(?:\d{4}|Starsze)(?=<)/g) ?? [])];
+      layers = { names: names.length > 0 ? names : FALLBACK_LAYERS, at: Date.now() };
+    } catch {
+      layers = { names: FALLBACK_LAYERS, at: Date.now() - LAYERS_TTL_MS + RETRY_AFTER_FAILURE_MS };
+    } finally {
+      loading = undefined;
+    }
+    return layers.names;
+  })();
+  return loading;
 }
 
 const RECORD = /skorDo5cm\.push\(\{([^{}]*)\}\);/g;
@@ -89,6 +98,7 @@ export function latestPhoto(sheets: OrthoSheet[]): OrthoSheet | undefined {
     .sort((a, b) => b.date.localeCompare(a.date) || a.pixel - b.pixel)[0];
 }
 
+/** Aerial photo at a point of Poland (PL-1992); a point outside it is a RequestError. */
 export async function orthoAt(xParam: string | undefined, yParam: string | undefined, abort?: AbortSignal): Promise<OrthoInfo> {
   const x = Number(xParam);
   const y = Number(yParam);

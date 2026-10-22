@@ -82,20 +82,24 @@ export interface CapabilitiesCache {
 
 let cache: CapabilitiesCache | null = null;
 
+async function fetchCapabilities(timeoutMs: number): Promise<boolean> {
+  try {
+    const res = await fetch('/api/capabilities', { signal: AbortSignal.timeout(timeoutMs) });
+    if (res.ok) cache = (await res.json()) as CapabilitiesCache;
+  } catch {
+    // Network error or timeout.
+  }
+  return cache !== null;
+}
+
 /**
- * Loads the cache once at startup, with one retry for a restarting server.
+ * Loads the cache at startup: one short try before the map is shown, so a slow server does not
+ * keep the page blank, and one more in the background for a server that is restarting.
  * Without it the app still works on registry defaults, only without scale limits.
  */
 export async function loadCapabilities(): Promise<void> {
-  for (let attempt = 0; attempt < 2 && !cache; attempt++) {
-    try {
-      const res = await fetch('/api/capabilities', { signal: AbortSignal.timeout(4000) });
-      if (res.ok) cache = (await res.json()) as CapabilitiesCache;
-    } catch {
-      // Network error or timeout; retried once below.
-    }
-    if (!cache && attempt === 0) await new Promise((r) => setTimeout(r, 500));
-  }
+  if (await fetchCapabilities(2500)) return;
+  setTimeout(() => void fetchCapabilities(8000), 2000);
 }
 
 /** Metadata of a catalog layer, loaded when it is switched on (see catalog.ts). */

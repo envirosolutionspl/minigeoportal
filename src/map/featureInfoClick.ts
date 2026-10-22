@@ -94,5 +94,6 @@ export function attachFeatureInfo(map: Map, overlays: () => { def: Overlay; laye
     target?.removeEventListener('keydown', onKey);
     unsubscribe();
     controller?.abort();
+    map.removeLayer(markerLayer);
   };
 }

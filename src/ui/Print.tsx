@@ -4,11 +4,9 @@ import { BASE_MAPS, selectedSublayers, type Overlay } from '@/services/registry'
 import { overlayDef } from '@/services/catalog';
 import { layerMeta, visibleAtScale } from '@/services/meta';
 import { useMapStore } from '@/state/store';
-import { formatCoordinate } from '@/map/format';
+import { formatCoordinate, scaleText } from '@/map/format';
 import { PRINT_SCALES, printLayout, serverScale, type PrintOptions } from '@/map/print';
 import { APP_DOMAIN, APP_NAME } from './Brand';
-
-const scaleText = (scale: number) => `1:${scale.toLocaleString('pl-PL')}`;
 
 /**
  * Print settings, beside the map rather than over it: the map shows the printed area and can
@@ -165,7 +163,8 @@ export function PrintSheet() {
   const base = useMapStore((m) => m.base);
   const overlays = useMapStore((m) => m.overlays);
   const sublayers = useMapStore((m) => m.sublayers);
-  const center = useMapStore((m) => m.printCenter ?? m.center);
+  // Read only while printing, so map moves do not re-render the sheet.
+  const center = useMapStore((m) => (m.printRequest ? (m.printCenter ?? m.center) : null));
   const layout = request ? printLayout(request) : null;
 
   const layers = request ? printedLayers(overlays, sublayers, request) : [];
@@ -190,7 +189,7 @@ export function PrintSheet() {
       {request && (
         <footer className="print-footer">
           <p>
-            <strong>Skala {scaleText(request.scale)}</strong> · {new Date().toLocaleDateString('pl-PL')} · środek: {formatCoordinate(center)}
+            <strong>Skala {scaleText(request.scale)}</strong> · {new Date().toLocaleDateString('pl-PL')} · środek: {center && formatCoordinate(center)}
           </p>
           <p>
             Podkład: {BASE_MAPS.find((b) => b.id === base)?.title ?? 'brak'}

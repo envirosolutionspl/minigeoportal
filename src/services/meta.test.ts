@@ -3,15 +3,15 @@ import { infoFormat, layerMeta, loadCapabilities, serviceError, visibleAtScale, 
 import { CAPABILITIES, stubFetch, withCapabilities } from '@/test/helpers';
 
 describe('loadCapabilities', () => {
-  it('retries once and leaves the app on defaults when the API is down', async () => {
+  it('leaves the app on defaults when the API is down and tries once more in the background', async () => {
     vi.useFakeTimers();
     const { fetchMock } = stubFetch([]);
-    const loading = loadCapabilities();
-    await vi.advanceTimersByTimeAsync(600);
-    await loading;
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await loadCapabilities();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(layerMeta('kieg', 'dzialki')).toBeUndefined();
     expect(visibleAtScale('kieg', 'dzialki', 1e9)).toBe(true);
+    await vi.advanceTimersByTimeAsync(2100);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     vi.useRealTimers();
   });
 

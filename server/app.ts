@@ -12,8 +12,9 @@ import { orthoAt } from './ortho.ts';
 import { errorMessage } from './config.ts';
 
 /**
- * API of the app: cached service metadata, dictionaries for the parcel search, a
- * GetFeatureInfo proxy and bug reports by e-mail. `index.ts` adds static files and starts listening.
+ * API of the app: cached service metadata, the geoportal layer catalog, dictionaries for the
+ * parcel search, a point-query proxy (GetFeatureInfo, ArcGIS identify), the orthophoto index
+ * and bug reports by e-mail. `index.ts` adds static files and starts listening.
  */
 
 export interface AppOptions {
@@ -143,7 +144,7 @@ export function createApp({ cache, refresh, mailer, origin, catalog, refreshCata
     }
   });
 
-  /** One map click asks up to five services, so the burst allows a few clicks in a row. */
+  /** One map click asks every active layer, so the burst allows a few clicks in a row. */
   const upstream = concurrencyGate(24);
   app.use('/api/featureinfo/*', rateLimit(...(limits?.featureInfo ?? [40, 60])));
   app.get('/api/featureinfo/:service', async (c) => {
@@ -189,10 +190,13 @@ export function createApp({ cache, refresh, mailer, origin, catalog, refreshCata
   };
 
   /** Every layer of geoportal.gov.pl with its topic and availability; metadata come per layer. */
+  let index: { of: Catalog; body: ReturnType<typeof catalogIndex> } | undefined;
   app.get('/api/catalog', (c) => {
     const current = catalog?.();
     if (!current) return c.text('Katalog warstw jest w przygotowaniu, spróbuj za chwilę.', 503);
-    return revalidated(c, current.generatedAt, () => catalogIndex(current));
+    // The index is built once per catalog, not per request.
+    if (index?.of !== current) index = { of: current, body: catalogIndex(current) };
+    return revalidated(c, current.generatedAt, () => index!.body);
   });
   app.get('/api/catalog/:id', (c) => {
     const current = catalog?.();

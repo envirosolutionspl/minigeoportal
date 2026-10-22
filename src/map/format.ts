@@ -5,6 +5,10 @@ import { toLonLat } from 'ol/proj';
 const int = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 });
 const one = new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const two = new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const four = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 4 });
+
+/** Scale denominator as shown to people: 1:10 000. */
+export const scaleText = (scale: number) => `1:${int.format(scale)}`;
 const deg = new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 5, maximumFractionDigits: 5 });
 
 /**
@@ -44,6 +48,6 @@ export function formatLength(metres: number): string {
 /** Area in square metres: m² for small areas, hectares (with m²) for parcels, km² for large ones. */
 export function formatArea(m2: number): string {
   if (m2 < 10000) return `${int.format(m2)} m²`;
-  if (m2 < 1_000_000) return `${new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 4 }).format(m2 / 10000)} ha (${int.format(m2)} m²)`;
+  if (m2 < 1_000_000) return `${four.format(m2 / 10000)} ha (${int.format(m2)} m²)`;
   return `${two.format(m2 / 1_000_000)} km²`;
 }

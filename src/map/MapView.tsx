@@ -6,7 +6,7 @@ import { defaults as defaultInteractions } from 'ol/interaction/defaults';
 import { duration } from './motion';
 import { EPSG2180, GUGIK_RESOLUTIONS, OGC_PIXEL, POLAND_EXTENT } from './projection';
 import { BASE_MAPS, TILE_SERVICE_BY_ID, selectedSublayers, type Overlay } from '@/services/registry';
-import { loadCatalogLayer, overlayDef } from '@/services/catalog';
+import { loadCatalogLayer, overlayDef, useCatalog } from '@/services/catalog';
 import { createOverlayLayer, createTileLayer, resolutionRange, showSublayers, type OverlayLayer } from '@/services/layers';
 import { hasInitialView, overlayOpacity, useMapStore } from '@/state/store';
 import { attachFeatureInfo } from './featureInfoClick';
@@ -36,8 +36,9 @@ export function MapView() {
       }),
     );
     /**
-     * Overlay layers are made when first switched on, not upfront: the catalog has hundreds of
-     * layers. They stay on the map, hidden, when switched off.
+     * Overlay layers are made when switched on, not upfront: the catalog has hundreds of layers.
+     * Switched off, they are dropped again: a hidden WMS layer would keep its last image, several
+     * megabytes each, for the whole visit.
      */
     const overlays = new globalThis.Map<string, { def: Overlay; layer: OverlayLayer }>();
 
@@ -69,12 +70,15 @@ export function MapView() {
 
     if (!hasInitialView) view.fit(POLAND_EXTENT, { padding: [24, 24, 24, 24] });
 
+    let alive = true;
     /** The layer of an overlay, made now if its definition is known; catalog layers load first. */
     const ensureOverlay = (id: string) => {
       if (overlays.has(id)) return;
       const def = overlayDef(id);
       if (!def) {
-        void loadCatalogLayer(id).then((loaded) => loaded && applyState());
+        // A layer that could not be loaded is not asked for again on every change of the map.
+        if (useCatalog.getState().failed.has(id)) return;
+        void loadCatalogLayer(id).then((loaded) => loaded && alive && applyState());
         return;
       }
       const layer = createOverlayLayer(def);
@@ -84,11 +88,22 @@ export function MapView() {
 
     const applyState = () => {
       const s = useMapStore.getState();
-      for (const { def, layer } of bases) layer.setVisible(def.id === s.base);
+      for (const { def, layer } of bases) {
+        const on = def.id === s.base;
+        // Tiles of a base map that just went out of sight are let go.
+        if (!on && layer.getVisible()) layer.getSource()?.clear();
+        layer.setVisible(on);
+      }
       for (const id of s.overlays) ensureOverlay(id);
-      for (const { def, layer } of overlays.values()) {
+      for (const [id, { def, layer }] of overlays) {
+        if (!s.overlays.includes(id)) {
+          map.removeLayer(layer);
+          layer.dispose();
+          overlays.delete(id);
+          continue;
+        }
         const names = selectedSublayers(def, s.sublayers);
-        const visible = s.overlays.includes(def.id) && names.length > 0;
+        const visible = names.length > 0;
         layer.setVisible(visible);
         if (!visible) continue;
         showSublayers(layer, names);
@@ -119,12 +134,14 @@ export function MapView() {
     const detachPrint = attachPrint(map);
 
     return () => {
+      alive = false;
       detachPrint();
       detachMeasure();
       detachFocus();
       detachFeatureInfo();
       unsubscribeState();
       map.setTarget(undefined);
+      map.dispose();
     };
   }, []);
 

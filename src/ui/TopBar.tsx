@@ -36,6 +36,7 @@ export function TopBar() {
   const [announce, setAnnounce] = useState('');
   const [parcelOpen, setParcelOpen] = useState(false);
   const abort = useRef<AbortController | null>(null);
+  const picked = useRef(0);
   /** Set when choosing a hit writes its name into the box, which is not a new search. */
   const chosen = useRef(false);
   const focusOn = useMapStore((m) => m.focusOn);
@@ -68,6 +69,7 @@ export function TopBar() {
       setBusy(true);
       try {
         const found = await search(q, controller.signal);
+        if (controller.signal.aborted) return;
         setHits(found);
         setActive(-1);
         setAnnounce(found.length ? `Wyników: ${found.length}. Strzałki w dół i w górę wybierają, Enter pokazuje na mapie.` : 'Brak wyników.');
@@ -75,7 +77,8 @@ export function TopBar() {
       } catch (e) {
         if (!(e instanceof DOMException && e.name === 'AbortError')) setHits([]);
       } finally {
-        if (!controller.signal.aborted) setBusy(false);
+        // A newer search owns the spinner now; otherwise this one turns it off.
+        if (abort.current === controller) setBusy(false);
       }
     }, 300);
     return () => window.clearTimeout(timer);
@@ -84,6 +87,7 @@ export function TopBar() {
   const listOpen = !parcelOpen && open && (hits.length > 0 || busy);
 
   const pick = async (hit: SearchHit) => {
+    const mine = ++picked.current;
     const text = hit.detail && (hit.kind === 'address' || hit.kind === 'street') ? `${hit.label}, ${hit.detail}` : hit.label;
     // Only a changed text runs the search effect, which then skips this one change.
     chosen.current = text !== query;
@@ -105,6 +109,8 @@ export function TopBar() {
         persist = true;
       }
     }
+    // A later pick wins, even when its outline arrives first.
+    if (mine !== picked.current) return;
     focusOn({ wkt, center: hit.center, zoom: ZOOM[hit.kind], persist });
   };
 

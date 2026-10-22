@@ -72,6 +72,11 @@ const isPrivateAddress = (address: string) => {
   return family === 0 || PRIVATE.check(address, family === 6 ? 'ipv6' : 'ipv4');
 };
 
+/** Recent answers of isPublicHost: a click asks the same few hosts again and again. */
+const HOST_TTL_MS = 60000;
+const MAX_HOSTS = 1000;
+const hosts = new Map<string, { ok: boolean; at: number }>();
+
 /**
  * True when every address the host resolves to is public. Resolving here closes the gap
  * between a public-looking name and a private address behind it; a change of record
@@ -80,13 +85,22 @@ const isPrivateAddress = (address: string) => {
 export async function isPublicHost(hostname: string): Promise<boolean> {
   const literal = hostname.replace(/^\[|\]$/g, '');
   if (isIP(literal)) return !isPrivateAddress(literal);
+  const known = hosts.get(hostname);
+  if (known && Date.now() - known.at < HOST_TTL_MS) return known.ok;
+  let ok = false;
   try {
     const addresses = await lookup(hostname, { all: true });
-    return addresses.length > 0 && addresses.every((a) => !isPrivateAddress(a.address));
+    ok = addresses.length > 0 && addresses.every((a) => !isPrivateAddress(a.address));
   } catch {
-    return false;
+    ok = false;
   }
+  if (hosts.size >= MAX_HOSTS) hosts.clear();
+  hosts.set(hostname, { ok, at: Date.now() });
+  return ok;
 }
+
+/** Test hook: forgets the remembered host answers. */
+export const forgetHosts = () => hosts.clear();
 
 /** Ports of web servers; anything else (databases, admin consoles) is never contacted. */
 const WEB_PORTS = new Set(['', '80', '443', '8080', '8443']);

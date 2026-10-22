@@ -44,10 +44,24 @@ const num = (v: unknown): number | undefined => {
 const TIMEOUT_MS = 30000;
 const MAX_BYTES = 5_000_000;
 
+/** Text of an XML body in the encoding its declaration names (some servers answer in ISO-8859-2). */
+function decodeXml(bytes: Uint8Array): string {
+  const head = new TextDecoder('latin1').decode(bytes.subarray(0, 200));
+  const encoding = /encoding=["']([\w-]+)["']/i.exec(head)?.[1] ?? 'utf-8';
+  try {
+    return new TextDecoder(encoding).decode(bytes);
+  } catch {
+    return new TextDecoder().decode(bytes);
+  }
+}
+
 async function fetchXml(url: string): Promise<Node> {
   const res = await fetchPublic(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return node(parser.parse(new TextDecoder().decode(await readLimited(res, MAX_BYTES))));
+  if (!res.ok) {
+    await res.body?.cancel();
+    throw new Error(`HTTP ${res.status}`);
+  }
+  return node(parser.parse(decodeXml(await readLimited(res, MAX_BYTES))));
 }
 
 /** Named layers of a WMS layer tree; scale hints and queryable are inherited as the WMS spec requires. */

@@ -132,8 +132,8 @@ describe('LayerCatalog', () => {
     render(<LayerCatalog />);
     fireEvent.click(screen.getByRole('button', { name: 'Warstwy usługi: Ewidencja gruntów i budynków' }));
     // A sublayer the server does not draw at this scale is greyed, and says why on hover.
-    expect(screen.getByTitle('Widoczne od skali 1:10000. Teraz niewidoczne.').textContent).toBe('Działki');
-    const zoom = screen.getByTitle('Widoczne od skali 1:10000');
+    expect(screen.getByTitle('Widoczne od skali 1:10 000. Teraz niewidoczne.').textContent).toBe('Działki');
+    const zoom = screen.getByTitle('Widoczne od skali 1:10 000');
     // Outside the checkbox label: a click next to the button cannot switch the layer off.
     expect(zoom.closest('label')).toBeNull();
     fireEvent.click(zoom);

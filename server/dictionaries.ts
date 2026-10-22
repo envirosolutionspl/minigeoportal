@@ -68,20 +68,31 @@ function loadOnce(key: string, load: () => Promise<DictEntry[]>): Promise<DictEn
   return request;
 }
 
-/** Fresh copy from memory or disk; otherwise load, and on failure fall back to a stale copy. */
+/** A source that just failed is left alone for a while, so an outage does not slow every request. */
+const FAILURE_PAUSE_MS = 5 * 60000;
+const failedAt = new Map<string, number>();
+
+const loadRemembered = (key: string, load: () => Promise<DictEntry[]>) =>
+  loadOnce(key, load).catch((e: unknown) => {
+    failedAt.set(key, Date.now());
+    throw e;
+  });
+
+/**
+ * Fresh copy from memory or disk. A stale copy is answered at once and refreshed behind; with no
+ * copy at all the request waits for the source, unless it failed a moment ago.
+ */
 async function cached(key: string, load: () => Promise<DictEntry[]>): Promise<DictEntry[]> {
   const hit = memory.get(key) ?? (await readDisk(key));
+  const recentlyFailed = Date.now() - (failedAt.get(key) ?? 0) < FAILURE_PAUSE_MS;
   if (hit) {
     memory.set(key, hit);
     const ttl = hit.entries.length > 0 ? TTL_MS : EMPTY_TTL_MS;
-    if (Date.now() - hit.fetchedAt < ttl) return hit.entries;
+    if (Date.now() - hit.fetchedAt >= ttl && !recentlyFailed) void loadRemembered(key, load).catch(() => undefined);
+    return hit.entries;
   }
-  try {
-    return await loadOnce(key, load);
-  } catch (e) {
-    if (hit) return hit.entries;
-    throw e;
-  }
+  if (recentlyFailed) throw new Error(`${key}: source unavailable`);
+  return loadRemembered(key, load);
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
@@ -257,7 +268,7 @@ const inCityCounty = (communeCode: string) => Number(communeCode.slice(2, 4)) >=
 
 /**
  * Voivodeships, counties and municipalities whose name starts with the query, from the
- * cached PRG lists of the whole country (three upstream requests, then served from cache).
+ * cached PRG lists of the whole country (a few upstream requests, then served from cache).
  */
 export async function findUnits(query: string): Promise<UnitHit[]> {
   let q = normalize(query);

@@ -32,6 +32,7 @@ export const useCatalog = create<CatalogStore>((set, get) => ({
   defs: new Map(),
   failed: new Set(),
   load: async () => {
+    // Tried again after an error or while the server was still building the list.
     if (get().state === 'loading' || get().state === 'ready') return;
     set({ state: 'loading' });
     try {

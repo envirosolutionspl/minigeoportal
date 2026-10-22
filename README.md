@@ -46,9 +46,10 @@ Produkcja: `npm run build` (buduje aplikację i zapisuje skompresowane kopie `.b
 
 Konfiguracja w zmiennych środowiskowych albo w pliku `.env` (wzór: `.env.example`; pliku `.env` nie dodaje się do repozytorium):
 
-- `PORT` (8787), `HOST` (`0.0.0.0` w produkcji, `127.0.0.1` poza nią).
-- `TRUSTED_PROXY=1`, gdy przed serwerem stoi reverse proxy ustawiające `X-Forwarded-For` (limity zapytań liczą się wtedy per adres klienta, nie per proxy).
+- `PORT` (8787), `HOST` (`0.0.0.0` w produkcji, `127.0.0.1` poza nią; za reverse proxy zostaw `127.0.0.1`).
+- `TRUSTED_PROXY=1`, gdy przed serwerem stoi reverse proxy dopisujące adres klienta na końcu `X-Forwarded-For` (limity zapytań liczą się wtedy per adres klienta; wpisy wcześniejsze, które mógł dopisać sam klient, są ignorowane). Trasy odświeżania cache są wtedy wyłączone, zostają polecenia `npm run capabilities` i `npm run catalog`.
 - `APP_ORIGIN`, publiczny adres aplikacji; zgłoszenia mogą zawierać tylko link do niej.
+- `DATA_DIR`, katalog na cache serwera (domyślnie `server/data`).
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `REPORT_FROM`, `REPORT_TO`: serwer poczty i adresat zgłoszeń błędów. Bez `SMTP_HOST` i `REPORT_TO` formularz jest wyłączony.
 
 ## Architektura

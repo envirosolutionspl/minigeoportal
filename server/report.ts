@@ -91,10 +91,14 @@ export function mailerFromEnv(env: NodeJS.ProcessEnv = process.env): Mailer | un
   const { SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS, REPORT_TO, REPORT_FROM } = env;
   if (!SMTP_HOST || !REPORT_TO) return undefined;
   const port = Number(SMTP_PORT ?? 587);
+  const secure = SMTP_SECURE ? SMTP_SECURE === 'true' : port === 465;
   const transport = nodemailer.createTransport({
     host: SMTP_HOST,
     port,
-    secure: SMTP_SECURE ? SMTP_SECURE === 'true' : port === 465,
+    secure,
+    // Credentials never go out in the clear: STARTTLS is required when the connection is not TLS from the start.
+    requireTLS: !secure,
+    tls: { minVersion: 'TLSv1.2' },
     auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
     connectionTimeout: 10000,
     greetingTimeout: 10000,

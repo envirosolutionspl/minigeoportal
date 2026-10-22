@@ -78,6 +78,16 @@ describe('rateLimit', () => {
     expect((await app.request('/x', {}, env)).status).toBe(200);
     vi.useRealTimers();
   });
+
+  it('keys IPv6 clients by their /64 and refuses new clients when the table is full', async () => {
+    const app = new Hono().use('*', rateLimit(1, 60, 2)).get('/x', (c) => c.text('ok'));
+    expect((await app.request('/x', {}, socket('2001:db8:1:2::1'))).status).toBe(200);
+    // The same subscriber from another address in the /64 shares the bucket.
+    expect((await app.request('/x', {}, socket('2001:db8:1:2:ffff::9'))).status).toBe(429);
+    expect((await app.request('/x', {}, socket('2001:db8:1:3::1'))).status).toBe(200);
+    // A third client finds no room until a bucket goes stale.
+    expect((await app.request('/x', {}, socket('5.6.7.8'))).status).toBe(429);
+  });
 });
 
 describe('clientAddress and isLoopback', () => {
@@ -90,9 +100,11 @@ describe('clientAddress and isLoopback', () => {
     expect(await probe({ 'x-forwarded-for': '9.9.9.9' }, socket('1.2.3.4'))).toEqual({ address: '1.2.3.4', loopback: false });
   });
 
-  it('honours the first forwarded address only with TRUSTED_PROXY', async () => {
+  it('honours the address the proxy appended (the last one) only with TRUSTED_PROXY, and then nothing is local', async () => {
     vi.stubEnv('TRUSTED_PROXY', '1');
-    expect((await probe({ 'x-forwarded-for': '9.9.9.9, 10.0.0.1' }, socket('1.2.3.4'))).address).toBe('9.9.9.9');
+    // The first entry is whatever the client wrote; the proxy appends the address it saw.
+    expect((await probe({ 'x-forwarded-for': '9.9.9.9, 10.0.0.1' }, socket('1.2.3.4'))).address).toBe('10.0.0.1');
+    expect((await probe({}, socket('127.0.0.1'))).loopback).toBe(false);
   });
 
   it('treats a loopback socket without a proxy header as local', async () => {
@@ -153,7 +165,7 @@ describe('publicWebUrl and fetchPublic', () => {
         return url.includes('a.example') ? new Response(null, { status: 302, headers: { location: 'https://inside.example/x' } }) : new Response('x');
       }),
     );
-    await expect(fetchPublic('https://a.example/caps')).rejects.toThrow('Address not allowed');
+    await expect(fetchPublic('https://a.example/caps')).rejects.toThrow('Redirect chain rejected');
     expect(calls).toEqual(['https://a.example/caps']);
   });
 });

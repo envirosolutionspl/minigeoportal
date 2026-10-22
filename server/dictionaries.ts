@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { RequestError, readLimited } from './http.ts';
+import { resolve } from 'node:path';
+import { RequestError, fetchFixed, readLimited } from './http.ts';
+import { dataPath } from './config.ts';
 import { normalize } from '../src/services/text.ts';
 
 /**
@@ -29,7 +29,7 @@ const TIMEOUT_MS = 20000;
 const MAX_BYTES = 2_000_000;
 const MAX_PAGES = 5;
 /** Overridable so tests never touch the real cache. */
-const CACHE_DIR = process.env.DICT_CACHE_DIR ?? resolve(dirname(fileURLToPath(import.meta.url)), 'data', 'dict');
+const CACHE_DIR = process.env.DICT_CACHE_DIR ?? dataPath('dict');
 
 interface Cached {
   fetchedAt: number;
@@ -85,8 +85,7 @@ async function cached(key: string, load: () => Promise<DictEntry[]>): Promise<Di
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const res = await fetchFixed(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
   return JSON.parse(new TextDecoder().decode(await readLimited(res, MAX_BYTES))) as T;
 }
 
@@ -183,8 +182,7 @@ export async function precincts(commune: string): Promise<DictEntry[]> {
   await ensureKnown(communes(commune.slice(0, 4)), commune, 'municipality');
   return cached(`obr-${commune}`, async () => {
     const q = new URLSearchParams({ request: 'GetRegionById', id: commune, result: 'teryt,region' });
-    const res = await fetch(`${ULDK}?${q}`, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-    if (!res.ok) throw new Error(`ULDK ${res.status}`);
+    const res = await fetchFixed(`${ULDK}?${q}`, { signal: AbortSignal.timeout(TIMEOUT_MS) });
     const [status, ...rows] = new TextDecoder().decode(await readLimited(res, MAX_BYTES)).trim().split('\n');
     if (status.startsWith('-1')) return [];
     if (!status.startsWith('0')) throw new Error('ULDK error status');

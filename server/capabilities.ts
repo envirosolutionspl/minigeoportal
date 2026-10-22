@@ -1,6 +1,7 @@
 import { XMLParser } from 'fast-xml-parser';
 import { fetchPublic, readLimited, serviceUrl } from './http.ts';
 import { fetchDrawOrder } from './drawOrder.ts';
+import { errorMessage } from './config.ts';
 import { OVERLAYS, TILE_SERVICES, type Overlay, type TileService } from '../src/services/registry.ts';
 import type {
   CapabilitiesCache,
@@ -197,7 +198,7 @@ async function safely(fetchMeta: () => Promise<ServiceMeta>): Promise<ServiceMet
   try {
     return await fetchMeta();
   } catch (e) {
-    return { kind: 'error', fetchedAt: new Date().toISOString(), error: e instanceof Error ? e.message : String(e) };
+    return { kind: 'error', fetchedAt: new Date().toISOString(), error: errorMessage(e) };
   }
 }
 
@@ -213,7 +214,7 @@ export async function buildCache(previous?: CapabilitiesCache): Promise<Capabili
     ]),
     // The layer order of geoportal.gov.pl; when it cannot be read, the last good one is kept.
     fetchDrawOrder().catch((e: unknown) => {
-      console.warn(`draw order: ${e instanceof Error ? e.message : String(e)}`);
+      console.warn(`draw order: ${errorMessage(e)}`);
       return undefined;
     }),
   ]);

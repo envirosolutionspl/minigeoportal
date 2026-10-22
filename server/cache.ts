@@ -1,11 +1,11 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { dirname } from 'node:path';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
 import { buildCache } from './capabilities.ts';
+import { dataPath } from './config.ts';
 
-export const CACHE_FILE =
-  process.env.CAPABILITIES_FILE ?? resolve(dirname(fileURLToPath(import.meta.url)), 'data', 'capabilities.json');
+/** Metadata of the registry services; tracked in git, so a fresh checkout starts with scale limits. */
+const CACHE_FILE = process.env.CAPABILITIES_FILE ?? dataPath('capabilities.json');
 
 export async function readCache(): Promise<CapabilitiesCache | undefined> {
   try {
@@ -18,6 +18,8 @@ export async function readCache(): Promise<CapabilitiesCache | undefined> {
 export async function refreshCache(): Promise<CapabilitiesCache> {
   const cache = await buildCache(await readCache());
   await mkdir(dirname(CACHE_FILE), { recursive: true });
-  await writeFile(CACHE_FILE, `${JSON.stringify(cache, null, 1)}\n`);
+  // Written next to the target and renamed, so a crash never leaves half a file.
+  await writeFile(`${CACHE_FILE}.tmp`, `${JSON.stringify(cache, null, 1)}\n`);
+  await rename(`${CACHE_FILE}.tmp`, CACHE_FILE);
   return cache;
 }

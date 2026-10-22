@@ -1,4 +1,5 @@
-import { readLimited } from './http.ts';
+import { fetchFixed, readLimited } from './http.ts';
+import { errorMessage } from './config.ts';
 
 /**
  * The layer list of geoportal.gov.pl, read from the configuration of its map application.
@@ -39,7 +40,8 @@ export interface GeoportalConfig {
   modules: ConfigModule[];
 }
 
-export const stripComments = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+// Only blanks before "//": a class with newlines in it would scan the whole file per line.
+export const stripComments = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
 
 /** Top-level `{...}` items of the array whose `[` is at `start`. */
 export function arrayItems(code: string, start: number): string[] {
@@ -159,8 +161,9 @@ export const parsePrefixes = (source: string) =>
   Object.fromEntries([...stripComments(source).matchAll(/(\w+):\s*'(https:\/\/[^']+)'/g)].map(([, k, v]) => [k, v]));
 
 async function fetchText(url: string): Promise<string> {
-  const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-  if (!res.ok) throw new Error(`${url.slice(CONFIG_BASE.length)}: HTTP ${res.status}`);
+  const res = await fetchFixed(url, { signal: AbortSignal.timeout(TIMEOUT_MS) }).catch((e: unknown) => {
+    throw new Error(`${url.slice(CONFIG_BASE.length)}: ${errorMessage(e)}`);
+  });
   return new TextDecoder().decode(await readLimited(res, MAX_BYTES));
 }
 

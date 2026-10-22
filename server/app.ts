@@ -1,6 +1,7 @@
 import { Hono, type Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { secureHeaders } from 'hono/secure-headers';
+import { compress } from 'hono/compress';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
 import { featureInfo, registryTarget, type QueryTarget } from './featureinfo.ts';
 import { catalogIndex, serviceKey, type Catalog } from './catalog.ts';
@@ -8,6 +9,7 @@ import { communes, counties, findUnits, precincts, unitNames, voivodeships, type
 import { RequestError, concurrencyGate, isLoopback, rateLimit } from './http.ts';
 import { parseReport, type Mailer } from './report.ts';
 import { orthoAt } from './ortho.ts';
+import { errorMessage } from './config.ts';
 
 /**
  * API of the app: cached service metadata, dictionaries for the parcel search, a
@@ -54,9 +56,6 @@ export function createApp({ cache, refresh, mailer, origin, catalog, refreshCata
           'https://uldk.gugik.gov.pl',
           'https://capap.gugik.gov.pl',
           'https://mapy.geoportal.gov.pl',
-          'https://integracja.gugik.gov.pl',
-          'https://integracja01.gugik.gov.pl',
-          'https://integracja02.gugik.gov.pl',
         ],
         frameAncestors: ["'none'"],
         baseUri: ["'self'"],
@@ -67,6 +66,9 @@ export function createApp({ cache, refresh, mailer, origin, catalog, refreshCata
       crossOriginEmbedderPolicy: false,
     }),
   );
+
+  // The catalog index is ~90 KB of JSON and GetFeatureInfo answers can be large: compressed on the way out.
+  app.use('/api/*', compress());
 
   app.get('/api/health', (c) => c.json({ ok: true, capabilitiesGeneratedAt: current.generatedAt }));
 
@@ -89,15 +91,20 @@ export function createApp({ cache, refresh, mailer, origin, catalog, refreshCata
    * Rebuilds the cache on demand, only from the machine the server runs on. The custom header
    * keeps a page in a local browser from triggering it. A scheduled refresh is still to be designed.
    */
+  let refreshing: Promise<CapabilitiesCache> | undefined;
   app.post('/api/capabilities/refresh', async (c) => {
     if (!isLoopback(c) || c.req.header('x-refresh') !== 'capabilities') return c.text('Forbidden', 403);
-    current = await refresh();
+    // One rebuild at a time; a second call while it runs waits for the same result.
+    refreshing ??= refresh().finally(() => {
+      refreshing = undefined;
+    });
+    current = await refreshing;
     return c.json({ generatedAt: current.generatedAt });
   });
 
   /** Upstream errors are logged here and reported to the client in one generic sentence. */
   const upstreamFailure = (c: Context, where: string, e: unknown) => {
-    console.warn(`${where}: ${e instanceof Error ? e.message : String(e)}`);
+    console.warn(`${where}: ${errorMessage(e)}`);
     return c.text('Usługa źródłowa nie odpowiada. Spróbuj ponownie za chwilę.', 502);
   };
 
@@ -141,7 +148,7 @@ export function createApp({ cache, refresh, mailer, origin, catalog, refreshCata
   app.use('/api/featureinfo/*', rateLimit(...(limits?.featureInfo ?? [40, 60])));
   app.get('/api/featureinfo/:service', async (c) => {
     try {
-      const result = await upstream(() => featureInfo(c.req.param('service'), new URL(c.req.url).searchParams, queryTarget));
+      const result = await upstream(() => featureInfo(c.req.param('service'), new URL(c.req.url).searchParams, queryTarget, c.req.raw.signal));
       if (!result) return c.text('Serwer jest zajęty, spróbuj za chwilę.', 503);
       // Upstream markup is returned as plain text and parsed by the app; it is never rendered as a page.
       c.header('Content-Type', 'text/plain; charset=utf-8');
@@ -203,7 +210,7 @@ export function createApp({ cache, refresh, mailer, origin, catalog, refreshCata
   app.use('/api/orto', rateLimit(...(limits?.ortho ?? [10, 30])));
   app.get('/api/orto', async (c) => {
     try {
-      const info = await upstream(() => orthoAt(c.req.query('x'), c.req.query('y')));
+      const info = await upstream(() => orthoAt(c.req.query('x'), c.req.query('y'), c.req.raw.signal));
       if (!info) return c.text('Serwer jest zajęty, spróbuj za chwilę.', 503);
       c.header('Cache-Control', 'public, max-age=86400');
       return c.json(info);
@@ -221,13 +228,21 @@ export function createApp({ cache, refresh, mailer, origin, catalog, refreshCata
     bodyLimit({ maxSize: 16 * 1024, onError: (c) => c.text('Zgłoszenie jest za długie', 413) }),
     async (c) => {
       if (!mailer) return c.text('Formularz zgłoszeń jest wyłączony.', 503);
+      // Only the app's own page sends JSON: a form on another site cannot post a report
+      // (a JSON body needs a CORS preflight, which no other origin passes).
+      const site = c.req.header('sec-fetch-site');
+      if (!/^application\/json\b/i.test(c.req.header('content-type') ?? '') || (site && site !== 'same-origin' && site !== 'none')) {
+        return c.text('Forbidden', 403);
+      }
       try {
-        const report = parseReport(await c.req.json().catch(() => null), origin ?? c.req.header('origin') ?? '');
+        // Without APP_ORIGIN the page's own origin is accepted only from the machine itself (development).
+        const own = origin ?? (isLoopback(c) ? c.req.header('origin') : undefined) ?? '';
+        const report = parseReport(await c.req.json().catch(() => null), own);
         if (report) await mailer.send(report, { userAgent: c.req.header('user-agent') });
         return c.json({ ok: true });
       } catch (e) {
         if (e instanceof RequestError) return c.text(e.message, 400);
-        console.warn(`report: ${e instanceof Error ? e.message : String(e)}`);
+        console.warn(`report: ${errorMessage(e)}`);
         return c.text('Nie udało się wysłać zgłoszenia. Spróbuj ponownie później.', 502);
       }
     },

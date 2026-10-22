@@ -1,5 +1,5 @@
 import { OVERLAY_BY_ID } from '../src/services/registry.ts';
-import { RequestError, publicWebUrl, readLimited, serviceUrl } from './http.ts';
+import { RequestError, fetchPublic, readLimited, serviceUrl } from './http.ts';
 
 /**
  * Point query proxy: WMS and WMTS GetFeatureInfo, ArcGIS REST identify. The browser cannot query integration services directly: they
@@ -9,7 +9,7 @@ import { RequestError, publicWebUrl, readLimited, serviceUrl } from './http.ts';
  *
  * Only registered services are reachable, every parameter is validated and rebuilt here,
  * redirects may lead only to public hosts on web ports, and the answer is read with a size
- * cap and one deadline for the whole chain.
+ * cap and one deadline for the whole chain. A client that goes away ends the upstream request.
  */
 
 const MAX_REDIRECTS = 5;
@@ -166,40 +166,29 @@ function identifyParams(def: QueryTarget, query: URLSearchParams): { url: string
   return { url: serviceUrl(`${def.url.replace(/\/+$/, '')}/identify`, params) };
 }
 
-/** Where a request or redirect is allowed to go: public web hosts on web ports, nothing else. */
-const allowedTarget = (location: string, from: string) => publicWebUrl(location, from);
-
 export async function featureInfo(
   serviceId: string,
   query: URLSearchParams,
   lookup: (id: string) => QueryTarget | undefined = registryTarget,
+  abort?: AbortSignal,
 ): Promise<FeatureInfoResult> {
-  let { url } = buildParams(lookup(serviceId), query);
-  const signal = AbortSignal.timeout(DEADLINE_MS);
+  const { url } = buildParams(lookup(serviceId), query);
+  const deadline = AbortSignal.timeout(DEADLINE_MS);
+  const signal = abort ? AbortSignal.any([deadline, abort]) : deadline;
   // Catalog addresses come from the geoportal configuration: checked like redirects.
-  if (!(await allowedTarget(url, url))) throw new Error('Address not allowed');
-
-  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-    const res = await fetch(url, { redirect: 'manual', signal });
-    const location = res.headers.get('location');
-    if (res.status >= 300 && res.status < 400 && location) {
-      await res.body?.cancel();
-      const next = await allowedTarget(location, url);
-      if (!next) break;
-      url = next.toString();
-      continue;
-    }
-    const contentType = res.headers.get('content-type') ?? 'text/plain';
-    const bytes = await readLimited(res, MAX_BYTES);
-    if (!res.ok) throw new Error(`Upstream HTTP ${res.status}`);
-    const charset = /charset=([\w-]+)/i.exec(contentType)?.[1] ?? 'utf-8';
-    let body: string;
-    try {
-      body = new TextDecoder(charset).decode(bytes);
-    } catch {
-      body = new TextDecoder().decode(bytes);
-    }
-    return { contentType: contentType.split(';')[0].trim().slice(0, 100), body };
+  const res = await fetchPublic(url, { signal }, MAX_REDIRECTS);
+  if (!res.ok) {
+    await res.body?.cancel();
+    throw new Error(`Upstream HTTP ${res.status}`);
   }
-  throw new Error('Redirect chain rejected');
+  const contentType = res.headers.get('content-type') ?? 'text/plain';
+  const bytes = await readLimited(res, MAX_BYTES);
+  const charset = /charset=([\w-]+)/i.exec(contentType)?.[1] ?? 'utf-8';
+  let body: string;
+  try {
+    body = new TextDecoder(charset).decode(bytes);
+  } catch {
+    body = new TextDecoder().decode(bytes);
+  }
+  return { contentType: contentType.split(';')[0].trim().slice(0, 100), body };
 }

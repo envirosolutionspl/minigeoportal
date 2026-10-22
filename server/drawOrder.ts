@@ -1,4 +1,5 @@
-import { readLimited } from './http.ts';
+import { fetchFixed, readLimited } from './http.ts';
+import { CONFIG_BASE, stripComments } from './geoportalConfig.ts';
 import { OVERLAYS } from '../src/services/registry.ts';
 
 /**
@@ -8,7 +9,7 @@ import { OVERLAYS } from '../src/services/registry.ts';
  * groups are expanded, and the list of the map is taken bottom to top.
  */
 
-export const GEOPORTAL_CONFIG = 'https://mapy.geoportal.gov.pl/imapnext/imap/config/config_parts/part_GeoportalKrajowy.js';
+const GEOPORTAL_CONFIG = `${CONFIG_BASE}config_parts/part_GeoportalKrajowy.js`;
 const MAP_ID = 'modulGK';
 const TIMEOUT_MS = 30000;
 const MAX_BYTES = 2_000_000;
@@ -16,7 +17,7 @@ const MAX_BYTES = 2_000_000;
 /** Layer ids of the map in drawing order, lowest first, with groups expanded. */
 export function geoportalLayerOrder(source: string, mapId = MAP_ID): string[] {
   // Comments hold switched-off layers; "//" inside URLs is not at the start of a line.
-  const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const code = stripComments(source);
   const children = new Map<string, string[]>();
   let owner: string | undefined;
   for (const [, key, value] of code.matchAll(/\b(id|layerId):\s*'([^']+)'/g)) {
@@ -48,7 +49,6 @@ export function overlayOrder(source: string): string[] | undefined {
 }
 
 export async function fetchDrawOrder(): Promise<string[] | undefined> {
-  const res = await fetch(GEOPORTAL_CONFIG, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const res = await fetchFixed(GEOPORTAL_CONFIG, { signal: AbortSignal.timeout(TIMEOUT_MS) });
   return overlayOrder(new TextDecoder().decode(await readLimited(res, MAX_BYTES)));
 }

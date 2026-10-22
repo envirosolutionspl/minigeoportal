@@ -1,12 +1,12 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { dirname } from 'node:path';
 import { OVERLAYS, type Topic } from '../src/services/registry.ts';
 import type { CatalogEntry, CatalogIndex, CatalogMeta, CatalogStatus } from '../src/services/catalogTypes.ts';
 import { catalogSublayers } from '../src/services/catalogSublayers.ts';
 import { normalize } from '../src/services/text.ts';
 import { arcgisCapabilities, wmsCapabilities, wmtsCapabilities } from './capabilities.ts';
 import { fetchGeoportalConfig, type ConfigService, type GeoportalConfig } from './geoportalConfig.ts';
+import { dataPath, errorMessage } from './config.ts';
 
 /**
  * Catalog of every layer of geoportal.gov.pl, kept on disk and rebuilt on demand.
@@ -38,7 +38,7 @@ export interface Catalog {
 /** A WMTS serves several tile layers under one address, each with its own grid. */
 export const serviceKey = (e: Pick<CatalogEntry, 'url' | 'layer'>) => (e.layer ? `${e.url} ${e.layer}` : e.url);
 
-const CATALOG_FILE = process.env.CATALOG_FILE ?? resolve(dirname(fileURLToPath(import.meta.url)), 'data', 'catalog', 'catalog.json');
+const CATALOG_FILE = process.env.CATALOG_FILE ?? dataPath('catalog', 'catalog.json');
 /** Services checked at once: the geoportal servers are shared with everyone. */
 const CONCURRENCY = 6;
 /** The main module first, so layers take their groups from where most people know them. */
@@ -194,7 +194,7 @@ export async function buildCatalog(previous?: Catalog, log: (line: string) => vo
     config = await fetchGeoportalConfig();
   } catch (e) {
     if (previous) {
-      log(`catalog: configuration not read (${e instanceof Error ? e.message : e}), previous catalog kept`);
+      log(`catalog: configuration not read (${errorMessage(e)}), previous catalog kept`);
       return previous;
     }
     throw e;

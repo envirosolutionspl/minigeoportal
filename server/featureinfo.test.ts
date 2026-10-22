@@ -108,13 +108,29 @@ describe('featureInfo redirects', () => {
   it('gives up after too many redirects', async () => {
     vi.mocked(lookup).mockResolvedValue([{ address: '93.184.216.34', family: 4 }] as never);
     const calls = stubHops(Array.from({ length: 8 }, (_, i) => redirect(`https://h${i}.example/`)));
-    await expect(featureInfo('kieg', query(VALID))).rejects.toThrow(/Redirect chain rejected/);
+    await expect(featureInfo('kieg', query(VALID))).rejects.toThrow(/Too many redirects/);
     expect(calls).toHaveLength(6);
   });
 
   it('reports upstream errors without exposing the body', async () => {
     stubHops([() => new Response('internal details', { status: 500 })]);
     await expect(featureInfo('kieg', query(VALID))).rejects.toThrow('Upstream HTTP 500');
+  });
+
+  it('ends the upstream request when the client goes away', async () => {
+    let seen: AbortSignal | undefined;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string, init: RequestInit) => {
+        seen = init.signal ?? undefined;
+        return new Response('<a/>', { headers: { 'content-type': 'text/xml' } });
+      }),
+    );
+    const client = new AbortController();
+    await featureInfo('kieg', query(VALID), undefined, client.signal);
+    expect(seen?.aborted).toBe(false);
+    client.abort();
+    expect(seen?.aborted).toBe(true);
   });
 
   it('decodes the declared charset and falls back to utf-8 for an unknown one', async () => {

@@ -1,4 +1,4 @@
-import { RequestError, readLimited } from './http.ts';
+import { RequestError, fetchFixed, readLimited } from './http.ts';
 
 /**
  * When and how sharp the aerial photo is at a point, from the GUGiK orthophoto index
@@ -42,8 +42,7 @@ let layers: { names: string[]; at: number } | undefined;
 async function sheetLayers(): Promise<string[]> {
   if (layers && Date.now() - layers.at < LAYERS_TTL_MS) return layers.names;
   try {
-    const res = await fetch(`${INDEX}?SERVICE=WMS&REQUEST=GetCapabilities`, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const res = await fetchFixed(`${INDEX}?SERVICE=WMS&REQUEST=GetCapabilities`, { signal: AbortSignal.timeout(TIMEOUT_MS) });
     const xml = new TextDecoder().decode(await readLimited(res, MAX_BYTES));
     const names = [...new Set(xml.match(/SkorowidzeOrtofotomapy(?:\d{4}|Starsze)(?=<)/g) ?? [])];
     layers = { names: names.length > 0 ? names : FALLBACK_LAYERS, at: Date.now() };
@@ -90,7 +89,7 @@ export function latestPhoto(sheets: OrthoSheet[]): OrthoSheet | undefined {
     .sort((a, b) => b.date.localeCompare(a.date) || a.pixel - b.pixel)[0];
 }
 
-export async function orthoAt(xParam: string | undefined, yParam: string | undefined): Promise<OrthoInfo> {
+export async function orthoAt(xParam: string | undefined, yParam: string | undefined, abort?: AbortSignal): Promise<OrthoInfo> {
   const x = Number(xParam);
   const y = Number(yParam);
   if (!Number.isFinite(x) || !Number.isFinite(y) || x < BOUNDS.minX || x > BOUNDS.maxX || y < BOUNDS.minY || y > BOUNDS.maxY) {
@@ -114,8 +113,8 @@ export async function orthoAt(xParam: string | undefined, yParam: string | undef
     INFO_FORMAT: 'text/html',
     FEATURE_COUNT: '100',
   });
-  const res = await fetch(`${INDEX}?${params}`, { signal: AbortSignal.timeout(TIMEOUT_MS), redirect: 'error' });
-  if (!res.ok) throw new Error(`Upstream HTTP ${res.status}`);
+  const deadline = AbortSignal.timeout(TIMEOUT_MS);
+  const res = await fetchFixed(`${INDEX}?${params}`, { signal: abort ? AbortSignal.any([deadline, abort]) : deadline });
   const sheets = parseIndex(new TextDecoder().decode(await readLimited(res, MAX_BYTES)));
   return { latest: latestPhoto(sheets), archived: sheets.length };
 }

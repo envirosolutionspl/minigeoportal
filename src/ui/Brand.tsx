@@ -62,8 +62,8 @@ export function AuthorCredit() {
     >
       {t('brand.madeBy')}
       {/* The logo keeps its colours on a white plate, also in high contrast. */}
-      <span className="author-logo -my-1 rounded-lg bg-white">
-        <AuthorLogo className="h-8" />
+      <span className="author-logo rounded-lg bg-white">
+        <AuthorLogo className="h-7" />
       </span>
     </a>
   );

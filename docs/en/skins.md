@@ -6,7 +6,7 @@ A skin sets the colours of the interface in light and dark mode. It is one style
 skin: harbour
 ```
 
-The server looks for `skins/harbour/skin.css` in the configuration directory first, then among the skins that come with the app (`skins/` of the repository; `default` is the look of prostygeoportal.pl), and puts the stylesheet into the page.
+The server looks for `skins/harbour/skin.css` in the configuration directory first, then among the skins that come with the app (`skins/` of the repository; `default` is the look of minigeoportal.pl), and puts the stylesheet into the page.
 
 Start from a copy of `skins/default/skin.css` and change the values:
 

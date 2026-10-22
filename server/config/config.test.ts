@@ -36,7 +36,7 @@ describe('default configuration', () => {
   });
 
   it('keeps the first view, the search and the modules', () => {
-    expect(config.app).toMatchObject({ name: 'Prosty Geoportal', storagePrefix: 'prostygeoportal.' });
+    expect(config.app).toMatchObject({ name: 'MiniGeoportal', storagePrefix: 'minigeoportal.' });
     expect(config.map.attribution).toBe(
       'Dane: <a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">GUGiK, geoportal.gov.pl</a>',
     );
@@ -52,7 +52,7 @@ describe('default configuration in English', () => {
   const en = clientConfig(loadConfig('config'), 'en');
 
   it('gives every text in English, the interface and the Markdown too', () => {
-    expect(en.app).toMatchObject({ name: 'Prosty Geoportal', tagline: 'Data from geoportal.gov.pl, simpler and faster' });
+    expect(en.app).toMatchObject({ name: 'MiniGeoportal', tagline: 'Data from geoportal.gov.pl, simpler and faster' });
     expect(en.layers.overlays.find((o) => o.id === 'kieg')).toMatchObject({ title: 'Land and building register' });
     expect(en.layers.overlays.find((o) => o.id === 'kieg')?.keywords).toContain('parcels');
     expect(en.map.view.homeLabel).toBe('All of Poland');

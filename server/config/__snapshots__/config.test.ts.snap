@@ -8,16 +8,16 @@ exports[`default configuration > stays what the app was built with (any change s
       "url": "https://envirosolutions.pl",
     },
     "contact": "office@envirosolutions.pl",
-    "description": "Prosty Geoportal: szybkie sprawdzanie działki, planu miejscowego, cen transakcyjnych i ortofotomapy na danych GUGiK.",
-    "domain": "prostygeoportal.pl",
-    "id": "prostygeoportal",
-    "name": "Prosty Geoportal",
-    "storagePrefix": "prostygeoportal.",
+    "description": "MiniGeoportal: szybkie sprawdzanie działki, planu miejscowego, cen transakcyjnych i ortofotomapy na danych GUGiK.",
+    "domain": "minigeoportal.pl",
+    "id": "minigeoportal",
+    "name": "MiniGeoportal",
+    "storagePrefix": "minigeoportal.",
     "tagline": "Dane z geoportal.gov.pl – prościej i szybciej",
-    "title": "Prosty Geoportal: działki, plany i ortofotomapa",
+    "title": "MiniGeoportal: działki, plany i ortofotomapa",
   },
   "content": {
-    "accessibility": "<p>EnviroSolutions zobowiązuje się zapewnić dostępność serwisu Prosty Geoportal (prostygeoportal.pl) zgodnie ze standardem WCAG 2.1 na poziomie AA (norma EN 301 549), wymaganym przez ustawę o dostępności cyfrowej stron internetowych i aplikacji mobilnych oraz ustawę o zapewnianiu spełniania wymagań dostępności niektórych produktów i usług.</p>
+    "accessibility": "<p>EnviroSolutions zobowiązuje się zapewnić dostępność serwisu MiniGeoportal (minigeoportal.pl) zgodnie ze standardem WCAG 2.1 na poziomie AA (norma EN 301 549), wymaganym przez ustawę o dostępności cyfrowej stron internetowych i aplikacji mobilnych oraz ustawę o zapewnianiu spełniania wymagań dostępności niektórych produktów i usług.</p>
 <h3>Stan dostępności</h3>
 <p>Serwis jest częściowo zgodny z WCAG 2.1 AA z powodu niezgodności i wyłączeń wymienionych niżej.</p>
 <ul>
@@ -41,13 +41,13 @@ exports[`default configuration > stays what the app was built with (any change s
 <p>Problemy z dostępnością prosimy zgłaszać przez <a href="#report" data-action="report">formularz zgłoszeń</a> (rodzaj „Dostępność”) albo e-mailem na adres <a href="mailto:office@envirosolutions.pl">office@envirosolutions.pl</a>. Można też poprosić o informację z mapy w innej, dostępnej formie. Odpowiadamy niezwłocznie, nie później niż w ciągu 7 dni.</p>
 ",
     "welcome": "<h2>Po co jest ten serwis</h2>
-<p>Prosty Geoportal pokazuje te same publiczne dane co krajowy <a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">geoportal.gov.pl</a>, ale w formie przyjaznej dla osób, które nie zajmują się mapami zawodowo. Wyszukaj i przejrzyj oficjalne dane szybciej i łatwiej.</p>
+<p>MiniGeoportal pokazuje te same publiczne dane co krajowy <a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">geoportal.gov.pl</a>, ale w formie przyjaznej dla osób, które nie zajmują się mapami zawodowo. Wyszukaj i przejrzyj oficjalne dane szybciej i łatwiej.</p>
 <p>Zobaczysz granice i numer działki, przeznaczenie w planie miejscowym lub ogólnym, ceny transakcyjne w okolicy, uzbrojenie terenu i zdjęcia lotnicze. Bez logowania i bez opłat, na komputerze i na telefonie.</p>
 <h2>Skąd są dane</h2>
 <p>Wszystkie dane pochodzą z publicznych usług Głównego Urzędu Geodezji i Kartografii (<a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">geoportal.gov.pl</a>) oraz serwerów starostw, gmin i innych instytucji, z którymi te usługi się łączą. Mapa pobiera je na bieżąco i niczego nie zmienia ani nie przechowuje. Aktualność danych zależy od urzędu, który je prowadzi.</p>
 <blockquote>
 <h2>Ważne</h2>
-<p>Informacje mają charakter poglądowy i nie są dokumentem urzędowym. Wiążące dane wydaje starostwo (ewidencja gruntów i budynków) lub gmina (plany zagospodarowania). Prosty Geoportal to niezależny serwis open source, a nie serwis GUGiK.</p>
+<p>Informacje mają charakter poglądowy i nie są dokumentem urzędowym. Wiążące dane wydaje starostwo (ewidencja gruntów i budynków) lub gmina (plany zagospodarowania). MiniGeoportal to niezależny serwis open source, a nie serwis GUGiK.</p>
 </blockquote>
 ",
   },

@@ -21,7 +21,7 @@ describe('DisplayMenu', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Wysoki kontrast/ }));
     expect(document.documentElement.dataset.contrast).toBe('high');
-    expect(JSON.parse(localStorage.getItem('prostygeoportal.display.v1')!)).toEqual({ textSize: 2, contrast: true });
+    expect(JSON.parse(localStorage.getItem('minigeoportal.display.v1')!)).toEqual({ textSize: 2, contrast: true });
 
     fireEvent.click(screen.getByRole('button', { name: /Wysoki kontrast/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Tekst standardowy' }));

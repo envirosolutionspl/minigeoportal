@@ -1,6 +1,6 @@
 ## Po co jest ten serwis
 
-Prosty Geoportal pokazuje te same publiczne dane co krajowy [geoportal.gov.pl](https://www.geoportal.gov.pl), ale w formie przyjaznej dla osób, które nie zajmują się mapami zawodowo. Wyszukaj i przejrzyj oficjalne dane szybciej i łatwiej.
+MiniGeoportal pokazuje te same publiczne dane co krajowy [geoportal.gov.pl](https://www.geoportal.gov.pl), ale w formie przyjaznej dla osób, które nie zajmują się mapami zawodowo. Wyszukaj i przejrzyj oficjalne dane szybciej i łatwiej.
 
 Zobaczysz granice i numer działki, przeznaczenie w planie miejscowym lub ogólnym, ceny transakcyjne w okolicy, uzbrojenie terenu i zdjęcia lotnicze. Bez logowania i bez opłat, na komputerze i na telefonie.
 
@@ -10,4 +10,4 @@ Wszystkie dane pochodzą z publicznych usług Głównego Urzędu Geodezji i Kart
 
 > ## Ważne
 >
-> Informacje mają charakter poglądowy i nie są dokumentem urzędowym. Wiążące dane wydaje starostwo (ewidencja gruntów i budynków) lub gmina (plany zagospodarowania). Prosty Geoportal to niezależny serwis open source, a nie serwis GUGiK.
+> Informacje mają charakter poglądowy i nie są dokumentem urzędowym. Wiążące dane wydaje starostwo (ewidencja gruntów i budynków) lub gmina (plany zagospodarowania). MiniGeoportal to niezależny serwis open source, a nie serwis GUGiK.

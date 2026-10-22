@@ -1,17 +1,17 @@
 # The application: name, author, languages, search and optional modules.
 # Every text can be one string or one string per language, e.g.
-#   name: { pl: Prosty Geoportal, en: Simple Geoportal }
+#   name: { pl: Mapa gminy, en: Municipal map }
 # Secrets (SMTP password and the like) never go here: they belong in environment variables.
 
-id: prostygeoportal # short id: prefix of browser storage, part of the server's User-Agent
-name: Prosty Geoportal
+id: minigeoportal # short id: prefix of browser storage, part of the server's User-Agent
+name: MiniGeoportal
 title:
-  pl: 'Prosty Geoportal: działki, plany i ortofotomapa'
-  en: 'Prosty Geoportal: parcels, plans and orthophoto map'
+  pl: 'MiniGeoportal: działki, plany i ortofotomapa'
+  en: 'MiniGeoportal: parcels, plans and orthophoto map'
 description:
-  pl: 'Prosty Geoportal: szybkie sprawdzanie działki, planu miejscowego, cen transakcyjnych i ortofotomapy na danych GUGiK.'
-  en: 'Prosty Geoportal: a quick look at a parcel, its local plan, transaction prices and the orthophoto map, on GUGiK data.'
-domain: prostygeoportal.pl
+  pl: 'MiniGeoportal: szybkie sprawdzanie działki, planu miejscowego, cen transakcyjnych i ortofotomapy na danych GUGiK.'
+  en: 'MiniGeoportal: a quick look at a parcel, its local plan, transaction prices and the orthophoto map, on GUGiK data.'
+domain: minigeoportal.pl
 contact: office@envirosolutions.pl
 
 author:

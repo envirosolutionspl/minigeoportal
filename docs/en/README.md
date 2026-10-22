@@ -17,7 +17,7 @@ config/
 
 The repository ships two deployments:
 
-- `config/`: Prosty Geoportal (prostygeoportal.pl), on the services of the Polish Head Office of Geodesy and Cartography (GUGiK) in PL-1992 (EPSG:2180), with the `gugik` module.
+- `config/`: MiniGeoportal (minigeoportal.pl), on the services of the Polish Head Office of Geodesy and Cartography (GUGiK) in PL-1992 (EPSG:2180), with the `gugik` module.
 - `examples/osm/`: OpenStreetMap tiles in Web Mercator (EPSG:3857), the Nominatim search and one WMS overlay, without any GUGiK service.
 
 Run the example:

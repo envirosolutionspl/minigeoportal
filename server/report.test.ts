@@ -5,7 +5,7 @@ import { formatReport, mailerFromEnv, parseReport, type Mailer } from './report.
 import type { CapabilitiesCache } from '../src/services/meta.ts';
 import { defaults, site } from './testSite.ts';
 
-const ORIGIN = 'https://prostygeoportal.pl';
+const ORIGIN = 'https://minigeoportal.pl';
 const valid = { category: 'mapa', message: 'Warstwa działek się nie wczytuje.', email: 'jan@example.com', view: `${ORIGIN}/?x=1&y=2&z=3` };
 
 describe('parseReport', () => {
@@ -35,7 +35,7 @@ describe('parseReport', () => {
 describe('formatReport', () => {
   it('writes a plain-text mail with a fixed subject', () => {
     const { subject, text } = formatReport(parseReport(valid, ORIGIN, defaults)!, { userAgent: 'Chrome' }, defaults);
-    expect(subject).toBe('[Prosty Geoportal] Zgłoszenie: Mapa lub warstwy');
+    expect(subject).toBe('[MiniGeoportal] Zgłoszenie: Mapa lub warstwy');
     expect(text).toContain('Kontakt: jan@example.com');
     expect(text).toContain(`Widok mapy: ${valid.view}`);
     expect(text).toContain('Przeglądarka: Chrome');

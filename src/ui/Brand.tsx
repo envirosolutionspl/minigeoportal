@@ -30,14 +30,17 @@ export function BrandMark({ className = 'h-7 w-7' }: { className?: string }) {
   );
 }
 
-const LEAD = APP_NAME.split(' ').slice(0, -1).join(' ');
-const LAST = APP_NAME.split(' ').slice(-1)[0];
+/**
+ * The part of the name in the accent colour, as in the logo: the last word (Mapa Gminy), or in a
+ * one-word name its last capitalised part (Mini·Geoportal).
+ */
+const LAST = APP_NAME.includes(' ') ? APP_NAME.slice(APP_NAME.lastIndexOf(' ') + 1) : (/\p{Lu}\P{Lu}*$/u.exec(APP_NAME)?.[0] ?? APP_NAME);
+const LEAD = APP_NAME.slice(0, APP_NAME.length - LAST.length);
 
 export function Wordmark() {
   return (
     <span className="text-[15px] leading-none tracking-tight whitespace-nowrap">
-      {/* The last word of the name in the accent colour, as in the logo: Prosty Geoportal. */}
-      {LEAD && <span className="font-medium">{LEAD} </span>}
+      {LEAD && <span className="font-medium">{LEAD}</span>}
       <span className="font-bold text-[var(--accent)]">{LAST}</span>
     </span>
   );

@@ -6,7 +6,7 @@ Skórka ustala kolory interfejsu w trybie jasnym i ciemnym. To jeden arkusz styl
 skin: przystan
 ```
 
-Serwer szuka `skins/przystan/skin.css` najpierw w katalogu konfiguracji, potem wśród skórek dołączonych do aplikacji (`skins/` w repozytorium; `default` to wygląd prostygeoportal.pl), i umieszcza arkusz w stronie.
+Serwer szuka `skins/przystan/skin.css` najpierw w katalogu konfiguracji, potem wśród skórek dołączonych do aplikacji (`skins/` w repozytorium; `default` to wygląd minigeoportal.pl), i umieszcza arkusz w stronie.
 
 Zacznij od kopii `skins/default/skin.css` i zmień wartości:
 

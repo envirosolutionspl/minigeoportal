@@ -1,4 +1,4 @@
-EnviroSolutions zobowiązuje się zapewnić dostępność serwisu Prosty Geoportal (prostygeoportal.pl) zgodnie ze standardem WCAG 2.1 na poziomie AA (norma EN 301 549), wymaganym przez ustawę o dostępności cyfrowej stron internetowych i aplikacji mobilnych oraz ustawę o zapewnianiu spełniania wymagań dostępności niektórych produktów i usług.
+EnviroSolutions zobowiązuje się zapewnić dostępność serwisu MiniGeoportal (minigeoportal.pl) zgodnie ze standardem WCAG 2.1 na poziomie AA (norma EN 301 549), wymaganym przez ustawę o dostępności cyfrowej stron internetowych i aplikacji mobilnych oraz ustawę o zapewnianiu spełniania wymagań dostępności niektórych produktów i usług.
 
 ### Stan dostępności
 

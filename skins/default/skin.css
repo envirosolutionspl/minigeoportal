@@ -1,5 +1,5 @@
 /*
- * The default skin of MiniGeoportal, the look of prostygeoportal.pl: colours of the interface in light and dark mode.
+ * The default skin of MiniGeoportal (minigeoportal.pl): colours of the interface in light and dark mode.
  * A skin of your own copies this file to skins/<name>/skin.css (or to skins/<name>/ in the
  * configuration directory), changes the values and names the skin in app.yaml (skin: <name>).
  * High contrast is the same for every skin; text and accent colours must keep a contrast of at

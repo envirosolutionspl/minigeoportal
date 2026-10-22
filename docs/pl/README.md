@@ -17,7 +17,7 @@ config/
 
 Repozytorium zawiera dwa wdrożenia:
 
-- `config/`: Prosty Geoportal (prostygeoportal.pl), na usługach Głównego Urzędu Geodezji i Kartografii (GUGiK) w układzie PL-1992 (EPSG:2180), z modułem `gugik`.
+- `config/`: MiniGeoportal (minigeoportal.pl), na usługach Głównego Urzędu Geodezji i Kartografii (GUGiK) w układzie PL-1992 (EPSG:2180), z modułem `gugik`.
 - `examples/osm/`: kafle OpenStreetMap w układzie Web Mercator (EPSG:3857), wyszukiwarka Nominatim i jedna warstwa WMS, bez żadnej usługi GUGiK.
 
 Uruchomienie przykładu:

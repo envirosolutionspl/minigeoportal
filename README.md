@@ -8,10 +8,10 @@ Projekt open source na licencji MIT, tworzony przez [EnviroSolutions](https://en
 
 ## Wdrożenia w repozytorium
 
-| Katalog         | Wdrożenie                                                                                                                                                                                                                                                                    |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `config/`       | [Prosty Geoportal](https://prostygeoportal.pl): usługi Głównego Urzędu Geodezji i Kartografii (geoportal.gov.pl) w układzie PL-1992, z modułem `gugik`: działki, plany miejscowe i ogólne, ceny transakcyjne, uzbrojenie terenu, ortofotomapa i ponad 400 warstw geoportalu. |
-| `examples/osm/` | Kafle OpenStreetMap w układzie Web Mercator, wyszukiwarka Nominatim i jedna warstwa WMS, bez żadnej usługi GUGiK. Dobry punkt wyjścia dla własnego wdrożenia.                                                                                                                |
+| Katalog         | Wdrożenie                                                                                                                                                                                                                                                               |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config/`       | [MiniGeoportal](https://minigeoportal.pl): usługi Głównego Urzędu Geodezji i Kartografii (geoportal.gov.pl) w układzie PL-1992, z modułem `gugik`: działki, plany miejscowe i ogólne, ceny transakcyjne, uzbrojenie terenu, ortofotomapa i ponad 400 warstw geoportalu. |
+| `examples/osm/` | Kafle OpenStreetMap w układzie Web Mercator, wyszukiwarka Nominatim i jedna warstwa WMS, bez żadnej usługi GUGiK. Dobry punkt wyjścia dla własnego wdrożenia.                                                                                                           |
 
 ## Funkcje
 

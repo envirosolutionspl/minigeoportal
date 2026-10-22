@@ -1,4 +1,4 @@
-EnviroSolutions is committed to making Prosty Geoportal (prostygeoportal.pl) accessible in line with WCAG 2.1 at level AA (standard EN 301 549), as required by the Polish acts on the digital accessibility of websites and mobile applications and on the accessibility of certain products and services.
+EnviroSolutions is committed to making MiniGeoportal (minigeoportal.pl) accessible in line with WCAG 2.1 at level AA (standard EN 301 549), as required by the Polish acts on the digital accessibility of websites and mobile applications and on the accessibility of certain products and services.
 
 ### Compliance status
 

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { POLAND_EXTENT } from '@/map/projection';
+import { config } from '@/config/runtime';
 import { overlayOpacity, useMapStore } from './store';
 
 const state = () => useMapStore.getState();
@@ -11,6 +12,8 @@ beforeEach(() => {
 describe('defaults', () => {
   const fresh = async (phone: boolean) => {
     vi.resetModules();
+    // Fresh modules start without configuration, as on a page load: main.tsx gives it first.
+    (await import('@/config/runtime')).initConfig(config);
     vi.stubGlobal('matchMedia', (query: string) => ({ matches: phone && query.includes('max-width'), media: query }));
     return (await import('./store')).useMapStore.getState();
   };
@@ -106,7 +109,7 @@ describe('measurement tool', () => {
 });
 
 describe('overlayOpacity', () => {
-  it('prefers the user value, then the registry default, then 1', () => {
+  it('prefers the user value, then the configured default, then 1', () => {
     expect(overlayOpacity('kimpzp', {})).toBe(0.8);
     expect(overlayOpacity('kimpzp', { kimpzp: 0.3 })).toBe(0.3);
     expect(overlayOpacity('kieg', {})).toBe(1);

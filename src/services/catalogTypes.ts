@@ -1,4 +1,3 @@
-import type { Topic } from './registry';
 import type { RestMeta, WmsMeta, WmtsMeta } from './meta';
 
 /**
@@ -21,7 +20,8 @@ export interface CatalogEntry {
   path: string[];
   /** Geoportal modules (thematic maps) listing the layer. */
   modules: string[];
-  topic: Topic;
+  /** Id of a topic of the layer list. */
+  topic: string;
   kind: 'wms' | 'wmts' | 'rest';
   url: string;
   /** Rank in the geoportal drawing order, lowest drawn first. */
@@ -35,7 +35,7 @@ export interface CatalogEntry {
   detail?: string;
   /** When the service was last checked (ISO). */
   checked: string;
-  /** Id of our own registry entry for the same layer, which the catalog shows instead. */
+  /** Id of the configured overlay showing the same layer, which the catalog shows instead. */
   curated?: string;
 }
 

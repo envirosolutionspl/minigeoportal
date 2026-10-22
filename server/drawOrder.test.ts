@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { geoportalLayerOrder, overlayOrder } from './drawOrder.ts';
+import { defaults } from './testSite.ts';
 
 /** Shape of the geoportal.gov.pl configuration: services with groups, then the map's layer list. */
 const CONFIG = `export const config = {
@@ -60,7 +61,17 @@ describe('geoportalLayerOrder', () => {
 
 describe('overlayOrder', () => {
   it('orders our overlays as the geoportal draws them', () => {
-    expect(overlayOrder(CONFIG)).toEqual(['suikzp', 'kimpzp', 'pog', 'kibdot', 'kiut', 'kieg', 'rcn', 'kina', 'prg']);
+    expect(overlayOrder(CONFIG, defaults.layers.overlays)).toEqual([
+      'suikzp',
+      'kimpzp',
+      'pog',
+      'kibdot',
+      'kiut',
+      'kieg',
+      'rcn',
+      'kina',
+      'prg',
+    ]);
   });
 
   it('follows a changed order', () => {
@@ -68,10 +79,20 @@ describe('overlayOrder', () => {
       "{ layerId: 'msKIUT', visible: true },\n        { layerId: 'msKIEG', visible: true },",
       "{ layerId: 'msKIEG', visible: true },\n        { layerId: 'msKIUT', visible: true },",
     );
-    expect(overlayOrder(swapped)).toEqual(['suikzp', 'kimpzp', 'pog', 'kibdot', 'kieg', 'kiut', 'rcn', 'kina', 'prg']);
+    expect(overlayOrder(swapped, defaults.layers.overlays)).toEqual([
+      'suikzp',
+      'kimpzp',
+      'pog',
+      'kibdot',
+      'kieg',
+      'kiut',
+      'rcn',
+      'kina',
+      'prg',
+    ]);
   });
 
   it('gives up when an overlay is missing, so the built-in order is used', () => {
-    expect(overlayOrder(CONFIG.replace("{ layerId: 'msKIUT', visible: true },", ''))).toBeUndefined();
+    expect(overlayOrder(CONFIG.replace("{ layerId: 'msKIUT', visible: true },", ''), defaults.layers.overlays)).toBeUndefined();
   });
 });

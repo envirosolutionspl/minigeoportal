@@ -6,7 +6,7 @@
 id: prostygeoportal # short id: prefix of browser storage, part of the server's User-Agent
 name: Prosty Geoportal
 title: 'Prosty Geoportal: działki, plany i ortofotomapa'
-description: Szybki i prosty podgląd danych z geoportal.gov.pl (GUGiK) – działki, plany miejscowe, ortofotomapa.
+description: 'Prosty Geoportal: szybkie sprawdzanie działki, planu miejscowego, cen transakcyjnych i ortofotomapy na danych GUGiK.'
 domain: prostygeoportal.pl
 contact: office@envirosolutions.pl
 

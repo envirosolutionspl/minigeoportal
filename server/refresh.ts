@@ -1,7 +1,10 @@
 /** Rebuilds the capabilities cache: `npm run capabilities`. */
 import { refreshCache } from './cache.ts';
+import { config } from './config.ts';
+import { loadConfig } from './config/load.ts';
+import { createSite } from './html.ts';
 
-const cache = await refreshCache();
+const cache = await refreshCache(createSite(loadConfig(config.configDir)).defaults);
 for (const [id, meta] of Object.entries(cache.services)) {
   const detail =
     meta.kind === 'wms'

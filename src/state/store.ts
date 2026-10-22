@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { BASE_MAPS, OVERLAY_BY_ID, selectedSublayers } from '@/services/registry';
+import { config, overlayById, selectedSublayers } from '@/config/runtime';
 import { CATALOG_ID, overlayDef } from '@/services/catalog';
 import { POLAND_EXTENT } from '@/map/projection';
 import { readUrl, writeUrl } from './url';
@@ -35,7 +35,7 @@ interface MapStore {
   scale: number;
   base: string;
   overlays: string[];
-  /** Custom sublayer selection per overlay; absent means the registry defaults. */
+  /** Custom sublayer selection per overlay; absent means the configured defaults. */
   sublayers: Record<string, string[]>;
   opacity: Record<string, number>;
   panel: Panel;
@@ -73,22 +73,20 @@ interface MapStore {
   printDone(): void;
 }
 
-/**
- * The BDOO and BDOT10k map on wide screens; the simplified map on phones, where its small
- * tiles load fastest on mobile connections.
- */
-const DEFAULT_BASE = typeof window !== 'undefined' && window.matchMedia?.('(max-width: 639px)').matches ? 'prosta' : 'mapa';
-const DEFAULT_OVERLAYS = ['kieg'];
+/** Phones may start on a lighter base map (map.yaml: view.baseMobile), whose tiles load faster on mobile connections. */
+const { view } = config.map;
+const DEFAULT_BASE =
+  view.baseMobile && typeof window !== 'undefined' && window.matchMedia?.('(max-width: 639px)').matches ? view.baseMobile : view.base;
 
 const initial = readUrl();
 
 export const useMapStore = create<MapStore>((set, get) => ({
-  center: initial.center ?? [500000, 465000],
-  zoom: initial.zoom ?? 3,
+  center: initial.center ?? view.center,
+  zoom: initial.zoom ?? view.zoom,
   scale: Infinity,
-  base: BASE_MAPS.find((s) => s.id === initial.base)?.id ?? DEFAULT_BASE,
+  base: config.map.baseMaps.find((s) => s.id === initial.base)?.id ?? DEFAULT_BASE,
   // Catalog layers in a link are loaded by the map; unknown ids simply draw nothing.
-  overlays: (initial.overlays ?? DEFAULT_OVERLAYS).filter((id) => OVERLAY_BY_ID.has(id) || CATALOG_ID.test(id)),
+  overlays: (initial.overlays ?? view.overlays).filter((id) => overlayById.has(id) || CATALOG_ID.test(id)),
   sublayers: initial.sublayers ?? {},
   opacity: {},
   panel: 'none',

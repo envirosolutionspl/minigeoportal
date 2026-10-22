@@ -2,8 +2,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('node:dns/promises', () => ({ lookup: vi.fn() }));
 import { lookup } from 'node:dns/promises';
-import { featureInfo } from './featureinfo.ts';
+import { featureInfo, overlayTarget } from './featureinfo.ts';
+import { defaults } from './testSite.ts';
 import { RequestError } from './http.ts';
+
+/** The configured overlays, as the app looks them up. */
+const own = (id: string) => {
+  const def = defaults.layers.overlays.find((o) => o.id === id);
+  return def && overlayTarget(def);
+};
 
 const KIEG = 'https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow';
 const VALID = 'QUERY_LAYERS=dzialki&BBOX=482449,656835,482475,656861&WIDTH=101&HEIGHT=101&I=50&J=50&INFO_FORMAT=text/xml';
@@ -42,13 +49,13 @@ describe('featureInfo validation', () => {
     ['kieg', VALID.replace('text/xml', 'text/evil'), 'Invalid INFO_FORMAT'],
   ])('rejects %s?%s with "%s"', async (service, q, message) => {
     stubHops([]);
-    await expect(featureInfo(service, query(q))).rejects.toThrow(new RequestError(message));
+    await expect(featureInfo(service, query(q), own)).rejects.toThrow(new RequestError(message));
     expect(fetch).not.toHaveBeenCalled();
   });
 
   it('rebuilds the upstream request from validated values only', async () => {
     const calls = stubHops([ok('<x/>')]);
-    await featureInfo('kieg', query(`${VALID}&FEATURE_COUNT=99999&REQUEST=GetMap&SERVICE=WFS&EXTRA=1`));
+    await featureInfo('kieg', query(`${VALID}&FEATURE_COUNT=99999&REQUEST=GetMap&SERVICE=WFS&EXTRA=1`), own);
     const url = new URL(calls[0]);
     expect(url.origin + url.pathname).toBe(KIEG);
     expect(url.searchParams.get('REQUEST')).toBe('GetFeatureInfo');
@@ -87,7 +94,7 @@ describe('featureInfo redirects', () => {
       redirect('https://powiat-otwocki.geoportal2.pl/map/wmse.php?b=2'),
       ok('<?xml version="1.0"?><F/>', 'text/xml; charset=utf-8'),
     ]);
-    const result = await featureInfo('kieg', query(VALID));
+    const result = await featureInfo('kieg', query(VALID), own);
     expect(calls).toHaveLength(3);
     expect(calls[2]).toContain('powiat-otwocki.geoportal2.pl');
     expect(result).toEqual({ contentType: 'text/xml', body: '<?xml version="1.0"?><F/>' });
@@ -97,27 +104,27 @@ describe('featureInfo redirects', () => {
     vi.mocked(lookup).mockImplementation((async (host: string) =>
       host === 'internal.example' ? [{ address: '10.0.0.5', family: 4 }] : [{ address: '93.184.216.34', family: 4 }]) as never);
     const calls = stubHops([redirect('https://internal.example/admin'), ok('secret')]);
-    await expect(featureInfo('kieg', query(VALID))).rejects.toThrow(/Redirect chain rejected/);
+    await expect(featureInfo('kieg', query(VALID), own)).rejects.toThrow(/Redirect chain rejected/);
     expect(calls).toHaveLength(1);
   });
 
   it.each(['ftp://x.example/', 'https://x.example:8000/', 'file:///etc/passwd'])('stops at %s', async (location) => {
     vi.mocked(lookup).mockResolvedValue([{ address: '93.184.216.34', family: 4 }] as never);
     const calls = stubHops([redirect(location), ok('x')]);
-    await expect(featureInfo('kieg', query(VALID))).rejects.toThrow(/Redirect chain rejected/);
+    await expect(featureInfo('kieg', query(VALID), own)).rejects.toThrow(/Redirect chain rejected/);
     expect(calls).toHaveLength(1);
   });
 
   it('gives up after too many redirects', async () => {
     vi.mocked(lookup).mockResolvedValue([{ address: '93.184.216.34', family: 4 }] as never);
     const calls = stubHops(Array.from({ length: 8 }, (_, i) => redirect(`https://h${i}.example/`)));
-    await expect(featureInfo('kieg', query(VALID))).rejects.toThrow(/Too many redirects/);
+    await expect(featureInfo('kieg', query(VALID), own)).rejects.toThrow(/Too many redirects/);
     expect(calls).toHaveLength(6);
   });
 
   it('reports upstream errors without exposing the body', async () => {
     stubHops([() => new Response('internal details', { status: 500 })]);
-    await expect(featureInfo('kieg', query(VALID))).rejects.toThrow('Upstream HTTP 500');
+    await expect(featureInfo('kieg', query(VALID), own)).rejects.toThrow('Upstream HTTP 500');
   });
 
   it('ends the upstream request when the client goes away', async () => {
@@ -130,7 +137,7 @@ describe('featureInfo redirects', () => {
       }),
     );
     const client = new AbortController();
-    await featureInfo('kieg', query(VALID), undefined, client.signal);
+    await featureInfo('kieg', query(VALID), own, client.signal);
     expect(seen?.aborted).toBe(false);
     client.abort();
     expect(seen?.aborted).toBe(true);
@@ -139,9 +146,9 @@ describe('featureInfo redirects', () => {
   it('decodes the declared charset and falls back to utf-8 for an unknown one', async () => {
     const latin2 = new Uint8Array([0xb3, 0xb1]); // "łą" in ISO-8859-2
     stubHops([() => new Response(latin2, { headers: { 'content-type': 'text/html; charset=ISO-8859-2' } })]);
-    expect((await featureInfo('kieg', query(VALID))).body).toBe('łą');
+    expect((await featureInfo('kieg', query(VALID), own)).body).toBe('łą');
     stubHops([() => new Response('plain', { headers: { 'content-type': 'text/html; charset=x-unknown' } })]);
-    expect((await featureInfo('kieg', query(VALID))).body).toBe('plain');
+    expect((await featureInfo('kieg', query(VALID), own)).body).toBe('plain');
   });
 });
 

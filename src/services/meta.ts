@@ -34,7 +34,7 @@ export interface WmtsMeta {
   kind: 'wmts';
   fetchedAt: string;
   title: string;
-  /** Layer, image format and style to request; registry services name their own. */
+  /** Layer, image format and style to request; configured services name their own. */
   layer?: string;
   format?: string;
   style?: string;
@@ -95,7 +95,7 @@ async function fetchCapabilities(timeoutMs: number): Promise<boolean> {
 /**
  * Loads the cache at startup: one short try before the map is shown, so a slow server does not
  * keep the page blank, and one more in the background for a server that is restarting.
- * Without it the app still works on registry defaults, only without scale limits.
+ * Without it the app still works on configured defaults, only without scale limits.
  */
 export async function loadCapabilities(): Promise<void> {
   if (await fetchCapabilities(2500)) return;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { OGC_PIXEL } from '@/map/projection';
-import { OVERLAY_BY_ID, type Overlay } from './registry';
+import { overlayById, type Overlay } from '@/config/runtime';
 import { fetchFeatureInfo, parseFeatureInfo, queryLayers } from './featureinfo';
 import { createOverlayLayer } from './layers';
 import { registerMeta } from './meta';
@@ -105,10 +105,10 @@ describe('parseFeatureInfo', () => {
 describe('queryLayers', () => {
   it('keeps only queryable sublayers visible at the scale, and everything without metadata', async () => {
     await withCapabilities();
-    const kieg = OVERLAY_BY_ID.get('kieg')!;
+    const kieg = overlayById.get('kieg')!;
     expect(queryLayers(kieg, ['obreby', 'dzialki', 'budynki', 'numery_dzialek'], 5000)).toEqual(['dzialki']);
     expect(queryLayers(kieg, ['obreby', 'dzialki'], 15000)).toEqual(['obreby']);
-    expect(queryLayers(OVERLAY_BY_ID.get('pog')!, ['strefaPlanistyczna'], 5000)).toEqual(['strefaPlanistyczna']);
+    expect(queryLayers(overlayById.get('pog')!, ['strefaPlanistyczna'], 5000)).toEqual(['strefaPlanistyczna']);
   });
 });
 
@@ -119,7 +119,7 @@ describe('fetchFeatureInfo', () => {
       ['/api/capabilities', {}],
       ['/api/featureinfo/kieg', KIEG_XML, { headers: { 'X-Upstream-Content-Type': 'text/xml' } }],
     ]);
-    const kieg = OVERLAY_BY_ID.get('kieg')!;
+    const kieg = overlayById.get('kieg')!;
     const records = await fetchFeatureInfo(
       kieg,
       createOverlayLayer(kieg),
@@ -140,7 +140,7 @@ describe('fetchFeatureInfo', () => {
   it('turns a proxy error status into an exception', async () => {
     await withCapabilities();
     stubFetch([['/api/featureinfo/', 'busy', { status: 503 }]]);
-    const kieg = OVERLAY_BY_ID.get('kieg')!;
+    const kieg = overlayById.get('kieg')!;
     await expect(fetchFeatureInfo(kieg, createOverlayLayer(kieg), [1, 2], 1, ['dzialki'], new AbortController().signal)).rejects.toThrow(
       'HTTP 503',
     );
@@ -148,7 +148,7 @@ describe('fetchFeatureInfo', () => {
 });
 
 describe('WMTS and ArcGIS layers', () => {
-  const base = OVERLAY_BY_ID.get('kieg')!;
+  const base = overlayById.get('kieg')!;
   const topo: Overlay = {
     ...base,
     id: 'msTopo',

@@ -4,9 +4,6 @@ import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { ConfigError, loadConfig } from './load.ts';
 import { clientConfig, creditHtml, textIn } from './client.ts';
-import { BASE_MAPS, GEOPORTAL_MAP, GUGIK_ATTRIBUTION, OVERLAYS, TILE_SERVICES, TOPICS } from '../../src/services/registry.ts';
-import { APP_DOMAIN, APP_NAME, AUTHOR_NAME, AUTHOR_URL, CONTACT_EMAIL, STORAGE_PREFIX } from '../../src/services/brand.ts';
-import { CATEGORIES } from '../../src/services/reportTypes.ts';
 
 const dirs: string[] = [];
 afterAll(() => dirs.forEach((d) => rmSync(d, { recursive: true, force: true })));
@@ -33,20 +30,16 @@ const problems = (dir: string) => {
 describe('default configuration', () => {
   const config = clientConfig(loadConfig('config'), 'pl');
 
-  it('describes exactly the services, base maps, layers and topics the app had built in', () => {
-    expect(config.map.tileServices).toEqual(TILE_SERVICES);
-    expect(config.map.baseMaps).toEqual(BASE_MAPS);
-    expect(config.layers.topics).toEqual(Object.entries(TOPICS).map(([id, title]) => ({ id, title })));
-    expect(config.layers.overlays).toEqual(OVERLAYS.map(({ geoportalId, ...o }) => ({ ...o, catalogId: geoportalId })));
-    expect(config.layers.drawOrder).toEqual(['suikzp', 'kimpzp', 'pog', 'kibdot', 'kiut', 'kieg', 'rcn', 'kina', 'prg']);
+  it('stays what the app was built with (any change shows up here)', () => {
+    expect(config).toMatchSnapshot();
   });
 
-  it('keeps the identity, links, report categories and first view of the app', () => {
-    expect(config.app).toMatchObject({ name: APP_NAME, domain: APP_DOMAIN, contact: CONTACT_EMAIL, storagePrefix: STORAGE_PREFIX });
-    expect(config.app.author).toEqual({ name: AUTHOR_NAME, url: AUTHOR_URL });
-    expect(config.map.attribution).toBe(GUGIK_ATTRIBUTION);
-    expect(config.links.fallbackMap).toBe(GEOPORTAL_MAP);
-    expect(config.report.categories).toEqual(Object.entries(CATEGORIES).map(([id, label]) => ({ id, label })));
+  it('keeps the first view, the search and the modules', () => {
+    expect(config.app).toMatchObject({ name: 'Prosty Geoportal', storagePrefix: 'prostygeoportal.' });
+    expect(config.map.attribution).toBe(
+      'Dane: <a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">GUGiK, geoportal.gov.pl</a>',
+    );
+    expect(config.layers.drawOrder).toEqual(['suikzp', 'kimpzp', 'pog', 'kibdot', 'kiut', 'kieg', 'rcn', 'kina', 'prg']);
     expect(config.map.view).toMatchObject({ center: [500000, 465000], zoom: 3, base: 'mapa', baseMobile: 'prosta', overlays: ['kieg'] });
     expect(config.map.view.home).toEqual([170000, 130000, 870000, 800000]);
     expect(config.search).toEqual({ provider: 'gugik', parcel: true });

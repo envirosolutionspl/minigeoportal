@@ -1,4 +1,4 @@
-import type { SubLayer } from './registry';
+import type { SubLayer } from '../../shared/config';
 import type { CatalogEntry, CatalogMeta } from './catalogTypes';
 
 /**

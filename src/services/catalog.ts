@@ -1,13 +1,13 @@
 import { create } from 'zustand';
-import { OVERLAY_BY_ID, type Overlay } from './registry';
+import { overlayById, type Overlay } from '@/config/runtime';
 import { registerMeta } from './meta';
 import { catalogSublayers } from './catalogSublayers';
 import type { CatalogEntry, CatalogIndex, CatalogIndexEntry, CatalogMeta } from './catalogTypes';
 
 /**
- * Layers of geoportal.gov.pl beyond our own registry, from the server's catalog. The list
+ * Layers of geoportal.gov.pl beyond the configured overlays, from the server's catalog. The list
  * arrives when the layer panel is first opened; a layer's definition (sublayers, scale limits,
- * legends) arrives when it is switched on. Until then the app runs on its registry alone.
+ * legends) arrives when it is switched on. Until then the app runs on the configured overlays alone.
  */
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'preparing' | 'error';
@@ -45,9 +45,9 @@ export const useCatalog = create<CatalogStore>((set, get) => ({
   },
 }));
 
-/** Our registry entry, or a catalog layer whose definition has been loaded. */
+/** A configured overlay, or a catalog layer whose definition has been loaded. */
 export function overlayDef(id: string): Overlay | undefined {
-  return OVERLAY_BY_ID.get(id) ?? useCatalog.getState().defs.get(id);
+  return overlayById.get(id) ?? useCatalog.getState().defs.get(id);
 }
 
 /**
@@ -73,7 +73,7 @@ export function loadCatalogLayer(id: string): Promise<Overlay | undefined> {
         if (meta) registerMeta(entry.id, meta);
         const def: Overlay = {
           id: entry.id,
-          geoportalId: entry.id,
+          catalogId: entry.id,
           kind: entry.kind,
           title: entry.title,
           description: entry.path.join(' › '),

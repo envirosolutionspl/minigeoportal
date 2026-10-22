@@ -2,7 +2,7 @@ import { XMLParser } from 'fast-xml-parser';
 import { fetchPublic, readLimited, serviceUrl } from './http.ts';
 import { fetchDrawOrder } from './drawOrder.ts';
 import { errorMessage } from './config.ts';
-import { OVERLAYS, TILE_SERVICES } from '../src/services/registry.ts';
+import type { ClientConfig } from '../shared/config.ts';
 import type { CapabilitiesCache, RestMeta, ServiceMeta, TileMatrixMeta, WmsLayerMeta, WmsMeta, WmtsMeta } from '../src/services/meta.ts';
 
 const ARRAYS = new Set(['Layer', 'Format', 'InfoFormat', 'Style', 'LegendURL', 'TileMatrixSet', 'TileMatrix', 'TileMatrixSetLink']);
@@ -204,17 +204,18 @@ async function safely(fetchMeta: () => Promise<ServiceMeta>): Promise<ServiceMet
 }
 
 /**
- * Fetches capabilities of every registered service. A failed service keeps its previous
+ * Fetches capabilities of every configured service. A failed service keeps its previous
  * entry, so one unreachable server never wipes metadata that was already known.
  */
-export async function buildCache(previous?: CapabilitiesCache): Promise<CapabilitiesCache> {
+export async function buildCache(config: ClientConfig, previous?: CapabilitiesCache): Promise<CapabilitiesCache> {
+  const { overlays } = config.layers;
   const [entries, drawOrder] = await Promise.all([
     Promise.all([
-      ...OVERLAYS.map(async (def) => [def.id, await safely(() => wmsCapabilities(def.url, def.title))] as const),
-      ...TILE_SERVICES.map(async (def) => [def.id, await safely(() => wmtsCapabilities(def.url, def.layer))] as const),
+      ...overlays.map(async (def) => [def.id, await safely(() => wmsCapabilities(def.url, def.title))] as const),
+      ...config.map.tileServices.map(async (def) => [def.id, await safely(() => wmtsCapabilities(def.url, def.layer))] as const),
     ]),
     // The layer order of geoportal.gov.pl; when it cannot be read, the last good one is kept.
-    fetchDrawOrder().catch((e: unknown) => {
+    (config.modules.gugik?.drawOrder ? fetchDrawOrder(overlays) : Promise.resolve(undefined)).catch((e: unknown) => {
       console.warn(`draw order: ${errorMessage(e)}`);
       return undefined;
     }),

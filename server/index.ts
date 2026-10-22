@@ -1,12 +1,22 @@
+import { readFile } from 'node:fs/promises';
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
+import { compress } from 'hono/compress';
+import { etag } from 'hono/etag';
+import type { Context } from 'hono';
 import { createApp } from './app.ts';
 import { readCache, refreshCache } from './cache.ts';
 import { mailerFromEnv } from './report.ts';
 import { buildCatalog, readCatalog, writeCatalog, type Catalog } from './catalog.ts';
 import { config, errorMessage, production } from './config.ts';
+import { loadConfig } from './config/load.ts';
+import { createSite, renderPage } from './html.ts';
 
 /** Starts the API; in production it also serves the built app from ./dist. Settings: config.ts. */
+
+/** A configuration with problems stops the server here, with every problem listed. */
+const site = createSite(loadConfig(config.configDir));
+const overlays = site.defaults.layers.overlays;
 
 /**
  * The geoportal layer catalog: read from disk, or built in the background on the first start
@@ -16,7 +26,7 @@ import { config, errorMessage, production } from './config.ts';
 let catalog: Catalog | undefined = await readCatalog();
 let building: Promise<Catalog> | undefined;
 const refreshCatalog = () => {
-  building ??= buildCatalog(catalog)
+  building ??= buildCatalog(overlays, catalog)
     .then(async (built) => {
       catalog = built;
       await writeCatalog(built);
@@ -29,11 +39,13 @@ const refreshCatalog = () => {
 };
 if (!catalog) refreshCatalog().catch((e: unknown) => console.warn(`catalog: ${errorMessage(e)}`));
 
-const mailer = mailerFromEnv();
+const mailer = mailerFromEnv(site.defaults);
 if (!mailer) console.log('Bug reports off: set SMTP_HOST and REPORT_TO to turn them on.');
+const refresh = () => refreshCache(site.defaults);
 const app = createApp({
-  cache: (await readCache()) ?? (await refreshCache()),
-  refresh: refreshCache,
+  site,
+  cache: (await readCache()) ?? (await refresh()),
+  refresh,
   mailer,
   origin: config.origin,
   catalog: () => catalog,
@@ -41,18 +53,24 @@ const app = createApp({
 });
 
 if (production) {
+  // The page carries the configuration in the visitor's language. It is always checked
+  // (ETag), so a new release or configuration reaches everyone at once.
+  const template = await readFile('./dist/index.html', 'utf8');
+  const pages = new Map(site.config.app.locales.available.map((l) => [l, renderPage(template, site.client(l))]));
+  const page = (c: Context) => {
+    c.header('Cache-Control', 'no-cache');
+    if (site.multilingual) c.header('Vary', 'Accept-Language');
+    return c.html(pages.get(site.locale(c.req.query('lang'), c.req.header('accept-language')))!);
+  };
+  app.get('/', compress(), etag(), page);
+  app.get('/index.html', compress(), etag(), page);
   // Hashed assets never change, so they are cached for a year; .br/.gz files come from the build.
-  // The page itself is always checked, so a new release reaches everyone at once.
   app.use('/assets/*', async (c, next) => {
     await next();
     c.header('Cache-Control', 'public, max-age=31536000, immutable');
   });
   app.use('/*', serveStatic({ root: './dist', precompressed: true }));
-  app.get('*', async (c, next) => {
-    await next();
-    c.header('Cache-Control', 'no-cache');
-  });
-  app.get('*', serveStatic({ path: './dist/index.html' }));
+  app.get('*', compress(), etag(), page);
 }
 
 serve({ fetch: app.fetch, port: config.port, hostname: config.host }, (info) => {

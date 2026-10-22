@@ -1,6 +1,6 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Check, ChevronDown, ExternalLink, HelpCircle, LoaderCircle, Search, X, ZoomIn, ZoomOut } from 'lucide-react';
-import { GEOPORTAL_MAP, OVERLAYS, TOPICS, type Overlay, type SubLayer, type Topic } from '@/services/registry';
+import { config, type Overlay, type SubLayer } from '@/config/runtime';
 import { layerMeta, serviceError, visibleAtScale } from '@/services/meta';
 import { normalize } from '@/services/text';
 import { statusOf, useStatusStore, type ServiceStatus } from '@/services/status';
@@ -49,11 +49,16 @@ function textMatches(text: string, q: string[]): boolean {
   return q.every((w) => hay.includes(w));
 }
 
+const TOPICS = config.layers.topics;
+const TOPIC_TITLE = new Map(TOPICS.map((t) => [t.id, t.title]));
+/** Where to see a layer that does not work here. */
+const FALLBACK = config.links.fallbackMap;
+
 function serviceText(s: Overlay): string {
-  return [s.title, s.description, ...s.keywords, TOPICS[s.topic]].join(' ');
+  return [s.title, s.description, ...s.keywords, TOPIC_TITLE.get(s.topic)].join(' ');
 }
 
-const entryText = (e: CatalogIndexEntry) => [e.title, ...e.path, TOPICS[e.topic]].join(' ');
+const entryText = (e: CatalogIndexEntry) => [e.title, ...e.path, TOPIC_TITLE.get(e.topic)].join(' ');
 
 /** Available layers first, then by title. */
 const byAvailability = (a: CatalogIndexEntry, b: CatalogIndexEntry) =>
@@ -62,7 +67,7 @@ const byAvailability = (a: CatalogIndexEntry, b: CatalogIndexEntry) =>
 export function LayerCatalog() {
   const close = useMapStore((m) => m.setPanel);
   const [query, setQuery] = useState('');
-  const [topic, setTopic] = useState<Topic | null>(null);
+  const [topic, setTopic] = useState<string | null>(null);
   /** Only the layers switched on: a short list to adjust what is on the map. */
   const [onlyActive, setOnlyActive] = useState(false);
   const active = useMapStore((m) => m.overlays);
@@ -84,7 +89,8 @@ export function LayerCatalog() {
   /** Our services matching the filter; matching sublayers open the service with those rows highlighted. */
   const results = useMemo(
     () =>
-      OVERLAYS.filter((s) => (topic === null || s.topic === topic) && (!onlyActive || active.includes(s.id)))
+      config.layers.overlays
+        .filter((s) => (topic === null || s.topic === topic) && (!onlyActive || active.includes(s.id)))
         .map((s) => {
           if (q.length === 0) return { s, hits: [] as string[] };
           const hits = s.sublayers.filter((l) => textMatches(l.title, q)).map((l) => l.name);
@@ -155,7 +161,7 @@ export function LayerCatalog() {
             {onlyActive && <Check className="h-3.5 w-3.5" aria-hidden="true" />}
             Tylko włączone ({active.length})
           </button>
-          {(Object.keys(TOPICS) as Topic[]).map((t) => (
+          {TOPICS.map(({ id: t, title }) => (
             <button
               key={t}
               type="button"
@@ -165,7 +171,7 @@ export function LayerCatalog() {
                 topic === t ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'bg-[var(--field)] hover:bg-[var(--hover)]'
               }`}
             >
-              {TOPICS[t]}
+              {title}
             </button>
           ))}
         </div>
@@ -192,7 +198,7 @@ export function LayerCatalog() {
               ))}
             </Group>
             <Group title="Wszystkie warstwy">
-              {(Object.keys(TOPICS) as Topic[]).map((t) => (
+              {TOPICS.map(({ id: t }) => (
                 <TopicSection
                   key={t}
                   topic={t}
@@ -239,7 +245,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
 }
 
 /** One topic of the full list, closed until opened: it can hold dozens of layers. */
-function TopicSection({ topic, own, entries }: { topic: Topic; own: Overlay[]; entries: CatalogIndexEntry[] }) {
+function TopicSection({ topic, own, entries }: { topic: string; own: Overlay[]; entries: CatalogIndexEntry[] }) {
   const [open, setOpen] = useState(false);
   const count = own.length + entries.length;
   if (count === 0) return null;
@@ -252,7 +258,7 @@ function TopicSection({ topic, own, entries }: { topic: Topic; own: Overlay[]; e
         aria-expanded={open}
         className="flex min-h-10 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-medium hover:bg-[var(--hover)]"
       >
-        <span className="flex-1">{TOPICS[topic]}</span>
+        <span className="flex-1">{TOPIC_TITLE.get(topic)}</span>
         <span className="text-xs font-normal text-[var(--muted)]" title={`${available} dostępnych z ${count}`}>
           {available === count ? count : `${available} z ${count}`}
         </span>
@@ -345,10 +351,16 @@ function CatalogItem({ entry }: { entry: CatalogIndexEntry }) {
       {!available && <Why status={entry.status as Exclude<CatalogStatus, 'ok'>} detail={entry.detail} checked={checkedOn} />}
       {available && failed && (
         <p role="status" className="mt-1 ml-7 text-xs text-[var(--danger)]">
-          Nie udało się wczytać tej warstwy. Spróbuj później albo zobacz ją w{' '}
-          <a href={GEOPORTAL_MAP} target="_blank" rel="noopener" className="underline">
-            geoportal.gov.pl
-          </a>
+          Nie udało się wczytać tej warstwy. Spróbuj później
+          {FALLBACK && (
+            <>
+              {' '}
+              albo zobacz ją w{' '}
+              <a href={FALLBACK} target="_blank" rel="noopener" className="underline">
+                geoportal.gov.pl
+              </a>
+            </>
+          )}
           .
         </p>
       )}
@@ -379,9 +391,11 @@ function Why({ status, detail, checked }: { status: keyof typeof WHY; detail?: s
               {checked && <>Sprawdzono {checked}.</>}
             </p>
           )}
-          <a href={GEOPORTAL_MAP} target="_blank" rel="noopener" className="mt-1 inline-flex items-center gap-1 text-[var(--accent)]">
-            Zobacz w geoportal.gov.pl <ExternalLink className="h-3 w-3" aria-hidden="true" />
-          </a>
+          {FALLBACK && (
+            <a href={FALLBACK} target="_blank" rel="noopener" className="mt-1 inline-flex items-center gap-1 text-[var(--accent)]">
+              Zobacz w geoportal.gov.pl <ExternalLink className="h-3 w-3" aria-hidden="true" />
+            </a>
+          )}
         </div>
       )}
     </div>

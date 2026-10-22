@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef } from 'react';
 import { LoaderCircle, Printer, X } from 'lucide-react';
-import { BASE_MAPS, selectedSublayers, type Overlay } from '@/services/registry';
+import { config, selectedSublayers, type Overlay } from '@/config/runtime';
 import { overlayDef } from '@/services/catalog';
 import { layerMeta, visibleAtScale } from '@/services/meta';
 import { useMapStore } from '@/state/store';
@@ -203,7 +203,7 @@ export function PrintSheet() {
             {center && formatCoordinate(center)}
           </p>
           <p>
-            Podkład: {BASE_MAPS.find((b) => b.id === base)?.title ?? 'brak'}
+            Podkład: {config.map.baseMaps.find((b) => b.id === base)?.title ?? 'brak'}
             {layers.length > 0 && ` · Warstwy: ${layers.map(({ def }) => def.title).join(', ')}`}
           </p>
           {legends.length > 0 && (

@@ -12,7 +12,7 @@ export function textIn(value: Text, locale: string, fallback: string): string {
   return value[locale] ?? value[fallback] ?? Object.values(value)[0];
 }
 
-const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+export const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 /**
  * A credit line with Markdown links ([text](https://…)) as HTML. Everything else is escaped, and

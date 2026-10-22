@@ -1,6 +1,6 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import { OVERLAYS, type Topic } from '../src/services/registry.ts';
+import type { Overlay } from '../shared/config.ts';
 import type { CatalogEntry, CatalogIndex, CatalogMeta, CatalogStatus } from '../src/services/catalogTypes.ts';
 import { catalogSublayers } from '../src/services/catalogSublayers.ts';
 import { normalize } from '../src/services/text.ts';
@@ -44,6 +44,24 @@ const CONCURRENCY = 6;
 /** The main module first, so layers take their groups from where most people know them. */
 const MAIN_MODULE = 'modulGK';
 
+/** Topics the geoportal layers are sorted into; layers.yaml must define them. */
+export const CATALOG_TOPICS = [
+  'dzialki',
+  'planowanie',
+  'ceny',
+  'uzbrojenie',
+  'granice',
+  'teren',
+  'srodowisko',
+  'zagrozenia',
+  'zabytki',
+  'archiwalne',
+  'pobieranie',
+  'geodezja',
+  'inne',
+] as const;
+type Topic = (typeof CATALOG_TOPICS)[number];
+
 /**
  * Topic of a layer from its name and groups. The first rule that matches wins, so the more
  * specific topics (archival, hazards, heritage) come before the broad ones (terrain, other).
@@ -84,14 +102,15 @@ export function topicOf(title: string, path: string[]): Topic {
   return TOPIC_RULES.find(([, re]) => re.test(text))?.[0] ?? 'inne';
 }
 
-/** Our own registry entries that show the same geoportal layer, by geoportal id. */
-const CURATED = new Map(OVERLAYS.flatMap((o) => (o.geoportalId ? [[o.geoportalId, o.id] as const] : [])));
+/** Configured overlays that show the same geoportal layer: overlay id by geoportal id. */
+const curatedIds = (overlays: Overlay[]) => new Map(overlays.flatMap((o) => (o.catalogId ? [[o.catalogId, o.id] as const] : [])));
 
 /**
  * Entries of the catalog: every layer some module lists, once, with its group path in the first
  * module that lists it and its rank in the drawing order (bottom to top, main module first).
  */
-export function catalogEntries(config: GeoportalConfig): Omit<CatalogEntry, 'status' | 'detail' | 'checked'>[] {
+export function catalogEntries(config: GeoportalConfig, overlays: Overlay[] = []): Omit<CatalogEntry, 'status' | 'detail' | 'checked'>[] {
+  const curated = curatedIds(overlays);
   const modules = [...config.modules].sort((a, b) => (a.id === MAIN_MODULE ? -1 : b.id === MAIN_MODULE ? 1 : 0));
   const out = new Map<string, Omit<CatalogEntry, 'status' | 'detail' | 'checked'>>();
   /**
@@ -118,7 +137,7 @@ export function catalogEntries(config: GeoportalConfig): Omit<CatalogEntry, 'sta
       if (!known.modules.includes(module)) known.modules.push(module);
       return;
     }
-    const entry = entryFor(s, path, module, out.size);
+    const entry = entryFor(s, path, module, out.size, curated.get(s.id));
     out.set(id, entry);
     sameLayer.set(key, entry);
     sameLayer.set(named, entry);
@@ -139,7 +158,13 @@ function withoutReplaced<T extends Pick<CatalogEntry, 'id' | 'title' | 'path' | 
   return entries.filter((e) => isNew(e) || !renewed.has(place(e)));
 }
 
-function entryFor(s: ConfigService, path: string[], module: string, order: number): Omit<CatalogEntry, 'status' | 'detail' | 'checked'> {
+function entryFor(
+  s: ConfigService,
+  path: string[],
+  module: string,
+  order: number,
+  curated?: string,
+): Omit<CatalogEntry, 'status' | 'detail' | 'checked'> {
   const title = s.label || s.id;
   const kind = s.type === 'wms' ? 'wms' : s.type === 'wmts' ? 'wmts' : 'rest';
   return {
@@ -153,7 +178,7 @@ function entryFor(s: ConfigService, path: string[], module: string, order: numbe
     order,
     ...(s.sublayers ? { sublayers: s.sublayers } : {}),
     ...(kind === 'wmts' && (s.layer ?? s.sublayers?.[0]) ? { layer: s.layer ?? s.sublayers![0].name } : {}),
-    ...(CURATED.has(s.id) ? { curated: CURATED.get(s.id) } : {}),
+    ...(curated ? { curated } : {}),
   };
 }
 
@@ -205,7 +230,7 @@ async function mapLimited<T, R>(items: T[], limit: number, fn: (item: T) => Prom
 }
 
 /** Builds the catalog anew; keeps the previous one if the geoportal configuration cannot be read. */
-export async function buildCatalog(previous?: Catalog, log: (line: string) => void = console.log): Promise<Catalog> {
+export async function buildCatalog(overlays: Overlay[], previous?: Catalog, log: (line: string) => void = console.log): Promise<Catalog> {
   let config: GeoportalConfig;
   try {
     config = await fetchGeoportalConfig();
@@ -216,7 +241,7 @@ export async function buildCatalog(previous?: Catalog, log: (line: string) => vo
     }
     throw e;
   }
-  const entries = catalogEntries(config);
+  const entries = catalogEntries(config, overlays);
   const unique = [...new Map(entries.map((e) => [serviceKey(e), e])).entries()];
   const checked = await mapLimited(unique, CONCURRENCY, async ([key, e]) => [key, await checkService(e, previous?.services[key])] as const);
   const services = Object.fromEntries(checked);

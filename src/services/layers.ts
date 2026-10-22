@@ -7,7 +7,7 @@ import ImageArcGISRest from 'ol/source/ImageArcGISRest';
 import TileGrid from 'ol/tilegrid/TileGrid';
 import WMTSTileGrid from 'ol/tilegrid/WMTS';
 import { EPSG2180, OGC_PIXEL, gugikWmtsGrid } from '@/map/projection';
-import { GUGIK_ATTRIBUTION, OVERLAY_BY_ID, type Overlay, type TileService } from './registry';
+import { config, overlayById, type Overlay, type TileService } from '@/config/runtime';
 import { useCatalog } from './catalog';
 import { cachedDrawOrder, layerMeta, restMeta, wmtsMeta, type WmtsMeta } from './meta';
 import { useStatusStore } from './status';
@@ -43,7 +43,7 @@ export function createTileLayer(def: TileService, range: { minResolution?: numbe
     style: 'default',
     projection: EPSG2180,
     tileGrid: tileGrid(def),
-    attributions: GUGIK_ATTRIBUTION,
+    attributions: config.map.attribution,
     // GUGiK WMTS sends CORS headers; readable tiles keep an image export possible.
     crossOrigin: 'anonymous',
     wrapX: false,
@@ -67,22 +67,22 @@ export function createTileLayer(def: TileService, range: { minResolution?: numbe
  * networks over them, land register parcels and buildings over both, transaction prices on
  * top. The catalog keeps its own order; this one only decides what covers what.
  */
-export const DRAW_ORDER = ['suikzp', 'kimpzp', 'pog', 'kibdot', 'kiut', 'kieg', 'rcn', 'kina', 'prg'];
 
 /**
- * Place of an overlay in the drawing order. Our own overlays follow the order above; a layer of
- * the geoportal catalog goes just above the highest of ours that the geoportal draws below it,
- * so the two lists interleave as on geoportal.gov.pl. Unknown layers go on top.
+ * Place of an overlay in the drawing order. Configured overlays follow the order geoportal.gov.pl
+ * draws them in, else `layers.drawOrder`; a layer of the geoportal catalog goes just above the
+ * highest of ours that the geoportal draws below it, so the two lists interleave as on
+ * geoportal.gov.pl. Unknown layers go on top.
  */
 const drawIndex = (id: string) => {
-  const order = cachedDrawOrder() ?? DRAW_ORDER;
+  const order = cachedDrawOrder() ?? config.layers.drawOrder;
   const i = order.indexOf(id);
   if (i >= 0) return i;
   const { byId } = useCatalog.getState();
   const entry = byId.get(id);
   if (!entry) return order.length;
   const ranks = order.map((own) => {
-    const gid = OVERLAY_BY_ID.get(own)?.geoportalId;
+    const gid = overlayById.get(own)?.catalogId;
     return gid ? byId.get(gid)?.order : undefined;
   });
   if (ranks.every((r) => r === undefined)) return order.length + entry.order / 1e5;
@@ -110,7 +110,7 @@ export function createOverlayLayer(def: Overlay): OverlayLayer {
     tiles.on('tileloaderror', () => report(def.id, false));
     return new TileLayer({ source: tiles, ...options });
   }
-  const image = { url: def.url, projection: EPSG2180, ratio: 1.25, attributions: GUGIK_ATTRIBUTION };
+  const image = { url: def.url, projection: EPSG2180, ratio: 1.25, attributions: def.attribution ?? config.map.attribution };
   const source =
     def.kind === 'rest'
       ? new ImageArcGISRest({ ...image, params: { LAYERS: 'show:', FORMAT: 'png32', TRANSPARENT: true } })
@@ -122,7 +122,7 @@ export function createOverlayLayer(def: Overlay): OverlayLayer {
 
 /** Tiles of a catalog WMTS or ArcGIS tile cache, on the grid its server described. */
 function tileSource(def: Overlay): WMTS | XYZ | undefined {
-  const common = { projection: EPSG2180, attributions: GUGIK_ATTRIBUTION, wrapX: false };
+  const common = { projection: EPSG2180, attributions: def.attribution ?? config.map.attribution, wrapX: false };
   const wmts = def.kind === 'wmts' ? wmtsMeta(def.id) : undefined;
   if (wmts) {
     return new WMTS({

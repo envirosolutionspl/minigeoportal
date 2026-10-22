@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { CATALOG_ID, clearCatalog, loadCatalogLayer, overlayDef, useCatalog } from './catalog';
 import { catalogSublayers } from './catalogSublayers';
 import { layerMeta } from './meta';
-import { DRAW_ORDER, createOverlayLayer } from './layers';
+import { createOverlayLayer } from './layers';
+import { config } from '@/config/runtime';
 import type { CatalogEntry } from './catalogTypes';
 import { stubFetch, withCapabilities } from '@/test/helpers';
 
@@ -90,7 +91,7 @@ describe('loadCatalogLayer', () => {
     expect(CATALOG_ID.test('a b')).toBe(false);
   });
 
-  it('prefers our own registry entry', async () => {
+  it('prefers the configured overlay', async () => {
     expect((await loadCatalogLayer('kieg'))?.title).toBe('Ewidencja gruntów i budynków');
   });
 });
@@ -109,7 +110,7 @@ describe('drawing order of catalog layers', () => {
     });
     stubFetch([['/api/catalog/msZabytki', { entry: ENTRY, meta: META }]]);
     const zabytki = createOverlayLayer((await loadCatalogLayer('msZabytki'))!);
-    const z = (id: string) => 10 + DRAW_ORDER.indexOf(id);
+    const z = (id: string) => 10 + config.layers.drawOrder.indexOf(id);
     expect(zabytki.getZIndex()!).toBeGreaterThan(z('kieg'));
     expect(zabytki.getZIndex()!).toBeLessThan(z('rcn'));
   });

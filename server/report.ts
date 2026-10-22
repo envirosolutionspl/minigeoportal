@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 import { RequestError } from './http.ts';
-import { CATEGORIES, EMAIL_MAX, MESSAGE, type Category } from '../src/services/reportTypes.ts';
-import { APP_NAME } from '../src/services/brand.ts';
+import type { ClientConfig } from '../shared/config.ts';
+import { EMAIL_MAX, MESSAGE } from '../shared/report.ts';
 
 /**
  * Bug reports from the app, sent by e-mail to the administrator. The mail server and the
@@ -11,8 +11,12 @@ import { APP_NAME } from '../src/services/brand.ts';
  * category, the sender's address goes to Reply-To, and nothing from the form is rendered as HTML.
  */
 
+/** The app's name and the report categories, in the language mails are written in. */
+export type ReportForm = { app: Pick<ClientConfig['app'], 'name'>; report: ClientConfig['report'] };
+
 export interface Report {
-  category: Category;
+  /** Id of one of the configured categories. */
+  category: string;
   message: string;
   email?: string;
   /** Map view the report refers to (the app's own URL). */
@@ -33,13 +37,14 @@ const clean = (s: string) => s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\
  * Validates a submitted form. `website` is a field hidden from people: bots fill it in, and
  * such a report is accepted silently but not sent (returns null).
  */
-export function parseReport(body: unknown, appOrigin: string): Report | null {
+export function parseReport(body: unknown, appOrigin: string, form: ReportForm): Report | null {
   if (!body || typeof body !== 'object') throw new RequestError('Nieprawidłowe zgłoszenie');
   const b = body as Record<string, unknown>;
   if (typeof b.website === 'string' && b.website !== '') return null;
 
   const category = b.category;
-  if (typeof category !== 'string' || !Object.hasOwn(CATEGORIES, category)) throw new RequestError('Wybierz rodzaj zgłoszenia');
+  if (typeof category !== 'string' || !form.report.categories.some((c) => c.id === category))
+    throw new RequestError('Wybierz rodzaj zgłoszenia');
 
   const message = typeof b.message === 'string' ? clean(b.message) : '';
   if (message.length < MESSAGE.min || message.length > MESSAGE.max) {
@@ -63,23 +68,24 @@ export function parseReport(body: unknown, appOrigin: string): Report | null {
     }
   }
 
-  return { category: category as Category, message, email, view };
+  return { category, message, email, view };
 }
 
-export function formatReport(report: Report, meta: { userAgent?: string }): { subject: string; text: string } {
+export function formatReport(report: Report, meta: { userAgent?: string }, form: ReportForm): { subject: string; text: string } {
+  const category = form.report.categories.find((c) => c.id === report.category)?.label ?? report.category;
   const lines = [
-    `Rodzaj: ${CATEGORIES[report.category]}`,
+    `Rodzaj: ${category}`,
     `Kontakt: ${report.email ?? 'nie podano'}`,
     `Widok mapy: ${report.view ?? 'nie dołączono'}`,
     `Przeglądarka: ${meta.userAgent ? clean(meta.userAgent).slice(0, 300) : 'nieznana'}`,
     '',
     report.message,
   ];
-  return { subject: `[${APP_NAME}] Zgłoszenie: ${CATEGORIES[report.category]}`, text: lines.join('\n') };
+  return { subject: `[${form.app.name}] Zgłoszenie: ${category}`, text: lines.join('\n') };
 }
 
 /** SMTP mailer from the environment, or undefined when the form is not configured. */
-export function mailerFromEnv(env: NodeJS.ProcessEnv = process.env): Mailer | undefined {
+export function mailerFromEnv(form: ReportForm, env: NodeJS.ProcessEnv = process.env): Mailer | undefined {
   const { SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS, REPORT_TO, REPORT_FROM } = env;
   if (!SMTP_HOST || !REPORT_TO) return undefined;
   const port = Number(SMTP_PORT ?? 587);
@@ -98,7 +104,7 @@ export function mailerFromEnv(env: NodeJS.ProcessEnv = process.env): Mailer | un
   });
   return {
     async send(report, meta) {
-      const { subject, text } = formatReport(report, meta);
+      const { subject, text } = formatReport(report, meta, form);
       await transport.sendMail({ from: REPORT_FROM ?? SMTP_USER, to: REPORT_TO, replyTo: report.email, subject, text });
     },
   };

@@ -4,10 +4,10 @@ import { APP_NAME, AUTHOR_URL, AuthorLogo, BrandMark } from './Brand';
 import { useReport } from './ReportDialog';
 import { useAccessibility } from './AccessibilityDialog';
 
-import { STORAGE_PREFIX } from '@/services/brand';
+import { config } from '@/config/runtime';
 import { useModalDialog } from './useModalDialog';
 
-const STORAGE_KEY = `${STORAGE_PREFIX}welcome.v1`;
+const STORAGE_KEY = `${config.app.storagePrefix}welcome.v1`;
 
 function dismissedBefore(): boolean {
   try {

@@ -1,7 +1,10 @@
 import logoUrl from '@/assets/envirosolutions.svg';
 
-import { APP_DOMAIN, APP_NAME, AUTHOR_URL } from '@/services/brand';
-export { APP_DOMAIN, APP_NAME, AUTHOR_URL };
+import { config } from '@/config/runtime';
+
+export const APP_NAME = config.app.name;
+export const APP_DOMAIN = config.app.domain;
+export const AUTHOR_URL = config.app.author.url;
 
 /**
  * Sign of the app: a magnifying glass over parcel boundaries, one parcel picked out in the

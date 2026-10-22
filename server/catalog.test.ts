@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 // Upstream hosts resolve to a public address, so the address check lets them through.
 vi.mock('node:dns/promises', () => ({ lookup: vi.fn(async () => [{ address: '203.0.113.10', family: 4 }]) }));
 import type { GeoportalConfig } from './geoportalConfig.ts';
+import { defaults } from './testSite.ts';
 
 let dir: string;
 let mod: typeof import('./catalog.ts');
@@ -51,7 +52,7 @@ describe('topicOf', () => {
 
 describe('catalogEntries', () => {
   it('lists every layer some module shows once, main module first, with groups, order and our own entries', () => {
-    const entries = mod.catalogEntries(config());
+    const entries = mod.catalogEntries(config(), defaults.layers.overlays);
     expect(entries.map((e) => e.id)).toEqual(['msMPZP', 'msStudium', 'msRest', 'msZabytki', 'msCLC']);
     const mpzp = entries[0];
     expect(mpzp).toMatchObject({
@@ -184,7 +185,7 @@ describe('buildCatalog', () => {
       }),
     );
     const log = vi.fn();
-    const first = await mod.buildCatalog(undefined, log);
+    const first = await mod.buildCatalog(defaults.layers.overlays, undefined, log);
     expect(first.entries.map((e) => [e.id, e.status])).toEqual([
       ['msMPZP', 'ok'],
       ['msStudium', 'ok'],
@@ -203,7 +204,7 @@ describe('buildCatalog', () => {
         url.startsWith('https://nid.example') ? Promise.reject(new Error('timeout')) : new Response(CAPS('plany')),
       ),
     );
-    const second = await mod.buildCatalog(first, log);
+    const second = await mod.buildCatalog(defaults.layers.overlays, first, log);
     expect(second.entries.find((e) => e.id === 'msZabytki')?.status).toBe('down');
     expect(second.services['https://nid.example/wms'].meta).toMatchObject({ layers: { zabytki: {} } });
 
@@ -218,14 +219,14 @@ describe('buildCatalog', () => {
     });
     changed.services.set('msPOG', { id: 'msPOG', label: 'Plany ogólne', type: 'wms', url: 'https://gugik.example/pog' });
     spy.mockResolvedValue(changed);
-    const third = await mod.buildCatalog(second, log);
+    const third = await mod.buildCatalog(defaults.layers.overlays, second, log);
     // Heritage is now only in the environment module, which lists Corine before it.
     expect(third.entries.map((e) => e.id)).toEqual(['msMPZP', 'msPOG', 'msCLC', 'msZabytki']);
     expect(log).toHaveBeenLastCalledWith('catalog: 4 layers (1 added, 2 removed)');
 
     spy.mockRejectedValue(new Error('HTTP 404'));
-    expect(await mod.buildCatalog(third, log)).toBe(third);
-    await expect(mod.buildCatalog(undefined, log)).rejects.toThrow('HTTP 404');
+    expect(await mod.buildCatalog(defaults.layers.overlays, third, log)).toBe(third);
+    await expect(mod.buildCatalog(defaults.layers.overlays, undefined, log)).rejects.toThrow('HTTP 404');
     spy.mockRestore();
   });
 

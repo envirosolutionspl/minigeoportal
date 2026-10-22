@@ -6,7 +6,7 @@ import Point from 'ol/geom/Point';
 import { Circle, Fill, Stroke, Style } from 'ol/style';
 import { OGC_PIXEL } from './projection';
 import { HIGHLIGHT } from './style';
-import { selectedSublayers, type Overlay } from '@/services/registry';
+import { selectedSublayers, type Overlay } from '@/config/runtime';
 import type { OverlayLayer } from '@/services/layers';
 import { fetchFeatureInfo, queryLayers } from '@/services/featureinfo';
 import { useInfoStore } from '@/state/info';

@@ -1,7 +1,7 @@
 import ImageWMS from 'ol/source/ImageWMS';
 import WMTS from 'ol/source/WMTS';
 import type WMTSTileGrid from 'ol/tilegrid/WMTS';
-import type { Overlay } from './registry';
+import type { Overlay } from '@/config/runtime';
 import { infoFormat, layerMeta, restMeta, wmtsMeta } from './meta';
 import type { OverlayLayer } from './layers';
 

@@ -5,7 +5,7 @@ import { defaults as defaultControls, MousePosition, ScaleLine, ZoomToExtent } f
 import { defaults as defaultInteractions } from 'ol/interaction/defaults';
 import { duration } from './motion';
 import { EPSG2180, GUGIK_RESOLUTIONS, OGC_PIXEL, POLAND_EXTENT } from './projection';
-import { BASE_MAPS, TILE_SERVICE_BY_ID, selectedSublayers, type Overlay } from '@/services/registry';
+import { config, selectedSublayers, tileServiceById, type Overlay } from '@/config/runtime';
 import { loadCatalogLayer, overlayDef, useCatalog } from '@/services/catalog';
 import { createOverlayLayer, createTileLayer, resolutionRange, showSublayers, type OverlayLayer } from '@/services/layers';
 import { hasInitialView, overlayOpacity, useMapStore } from '@/state/store';
@@ -25,9 +25,9 @@ export function MapView() {
 
     const { center, zoom, setView } = useMapStore.getState();
     // Each base map is a composition: one layer per tile service, drawn in its scale range.
-    const bases = BASE_MAPS.flatMap((def) =>
+    const bases = config.map.baseMaps.flatMap((def) =>
       def.sources.flatMap((src) => {
-        const service = TILE_SERVICE_BY_ID.get(src.service);
+        const service = tileServiceById.get(src.service);
         if (!service) return [];
         const layer = createTileLayer(service, {
           minResolution: src.minScale !== undefined ? src.minScale * OGC_PIXEL : undefined,

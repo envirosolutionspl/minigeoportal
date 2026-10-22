@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Ban, ChevronUp } from 'lucide-react';
-import { BASE_MAPS, type BaseMap } from '@/services/registry';
+import { config, type BaseMap } from '@/config/runtime';
 import { useMapStore } from '@/state/store';
 
 /**
@@ -16,7 +16,7 @@ export function BasemapSwitcher() {
   useEffect(() => {
     if (base !== 'orto') setLastMap(base);
   }, [base]);
-  const target = BASE_MAPS.find((b) => b.id === (base === 'orto' ? lastMap : 'orto'))!;
+  const target = config.map.baseMaps.find((b) => b.id === (base === 'orto' ? lastMap : 'orto'))!;
 
   /** Opened with the touch button. */
   const [open, setOpen] = useState(false);
@@ -79,9 +79,11 @@ export function BasemapSwitcher() {
         className={`${shown ? 'flex' : 'hidden'} gap-2 rounded-2xl bg-[var(--surface)] p-2 shadow-lg ring-1 ring-black/5 [@media(hover:hover)]:group-hover:flex`}
       >
         {/* The thumbnail's own base map is one click away, so the list leaves it out. */}
-        {BASE_MAPS.filter((b) => b.id !== target.id).map((b) => (
-          <Thumb key={b.id} def={b} size="sm" active={b.id === base} onClick={() => choose(b.id)} />
-        ))}
+        {config.map.baseMaps
+          .filter((b) => b.id !== target.id)
+          .map((b) => (
+            <Thumb key={b.id} def={b} size="sm" active={b.id === base} onClick={() => choose(b.id)} />
+          ))}
       </div>
     </div>
   );

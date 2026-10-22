@@ -11,9 +11,9 @@ import { useAccessibility } from './AccessibilityDialog';
 
 type TextSize = 0 | 1 | 2;
 const ROOT_SIZE = ['100%', '112.5%', '125%'];
-import { STORAGE_PREFIX } from '@/services/brand';
+import { config } from '@/config/runtime';
 
-const STORAGE_KEY = `${STORAGE_PREFIX}display.v1`;
+const STORAGE_KEY = `${config.app.storagePrefix}display.v1`;
 
 interface Display {
   textSize: TextSize;

@@ -1,4 +1,4 @@
-import { OVERLAY_BY_ID } from '../src/services/registry.ts';
+import type { Overlay } from '../shared/config.ts';
 import { RequestError, fetchPublic, readLimited, serviceUrl } from './http.ts';
 
 /**
@@ -48,10 +48,9 @@ export interface QueryTarget {
   };
 }
 
-/** Overlays of our registry; other layers (the geoportal catalog) come from the caller's lookup. */
-export function registryTarget(serviceId: string): QueryTarget | undefined {
-  const def = OVERLAY_BY_ID.get(serviceId);
-  return def ? { url: def.url, layers: new Set(def.sublayers.map((l) => l.name)) } : undefined;
+/** A configured overlay; other layers (the geoportal catalog) come from the caller's lookup. */
+export function overlayTarget(def: Overlay): QueryTarget {
+  return { url: def.url, layers: new Set(def.sublayers.map((l) => l.name)) };
 }
 
 /** Layers named in QUERY_LAYERS, all of them known to the service. */
@@ -169,7 +168,7 @@ function identifyParams(def: QueryTarget, query: URLSearchParams): string {
 export async function featureInfo(
   serviceId: string,
   query: URLSearchParams,
-  lookup: (id: string) => QueryTarget | undefined = registryTarget,
+  lookup: (id: string) => QueryTarget | undefined,
   abort?: AbortSignal,
 ): Promise<FeatureInfoResult> {
   const url = buildParams(lookup(serviceId), query);

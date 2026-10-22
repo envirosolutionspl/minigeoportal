@@ -2,7 +2,8 @@ import { useId, useState } from 'react';
 import { create } from 'zustand';
 import { Bug, LoaderCircle, X } from 'lucide-react';
 
-import { CATEGORIES, EMAIL_MAX, MESSAGE } from '@/services/reportTypes';
+import { config } from '@/config/runtime';
+import { EMAIL_MAX, MESSAGE } from '../../shared/report';
 import { useModalDialog } from './useModalDialog';
 
 const MIN = MESSAGE.min;
@@ -111,7 +112,7 @@ export function ReportDialog() {
               <label className="block">
                 <span className="mb-1 block font-medium">Czego dotyczy</span>
                 <select name="category" required defaultValue="mapa" className={field}>
-                  {Object.entries(CATEGORIES).map(([value, label]) => (
+                  {config.report.categories.map(({ id: value, label }) => (
                     <option key={value} value={value}>
                       {label}
                     </option>

@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('node:dns/promises', () => ({ lookup: vi.fn(async () => [{ address: '203.0.113.10', family: 4 }]) }));
 import { arcgisCapabilities, buildCache, wmtsCapabilities } from './capabilities.ts';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
+import { defaults } from './testSite.ts';
 
 const WMS = `<?xml version="1.0"?>
 <WMS_Capabilities xmlns="http://www.opengis.net/wms">
@@ -54,7 +55,7 @@ function stub(answer: (url: string) => Response) {
 describe('buildCache', () => {
   it('reduces WMS and WMTS capabilities to the fields the app needs', async () => {
     stub((url) => new Response(url.includes('WMTS') ? WMTS : WMS));
-    const cache = await buildCache();
+    const cache = await buildCache(defaults);
     const kieg = cache.services.kieg;
     expect(kieg.kind).toBe('wms');
     if (kieg.kind !== 'wms') return;
@@ -84,11 +85,11 @@ describe('buildCache', () => {
       generatedAt: 'earlier',
       services: { kieg: { kind: 'wms', fetchedAt: 'earlier', title: 'Old KIEG', infoFormats: [], layers: {} } },
     };
-    const cache = await buildCache(previous);
+    const cache = await buildCache(defaults, previous);
     expect(cache.services.kieg).toEqual(previous.services.kieg);
     expect(cache.services.kimpzp.kind).toBe('wms');
 
-    const fresh = await buildCache();
+    const fresh = await buildCache(defaults);
     expect(fresh.services.kieg).toMatchObject({ kind: 'error', error: 'HTTP 503' });
   });
 
@@ -98,20 +99,20 @@ describe('buildCache', () => {
       { layerId: 'msKIUT' }, { layerId: 'msRejestrCenNieruchomosci' }, { layerId: 'msAdresyUlice' }, { layerId: 'msPRG' },
     ] }]`;
     stub((url) => new Response(url.includes('part_GeoportalKrajowy') ? config : url.includes('WMTS') ? WMTS : WMS));
-    const cache = await buildCache();
+    const cache = await buildCache(defaults);
     expect(cache.drawOrder).toEqual(['suikzp', 'kimpzp', 'pog', 'kibdot', 'kieg', 'kiut', 'rcn', 'kina', 'prg']);
 
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     stub((url) =>
       url.includes('part_GeoportalKrajowy') ? new Response('gone', { status: 404 }) : new Response(url.includes('WMTS') ? WMTS : WMS),
     );
-    expect((await buildCache(cache)).drawOrder).toEqual(cache.drawOrder);
-    expect((await buildCache()).drawOrder).toBeUndefined();
+    expect((await buildCache(defaults, cache)).drawOrder).toEqual(cache.drawOrder);
+    expect((await buildCache(defaults)).drawOrder).toBeUndefined();
   });
 
   it('treats a WMTS without the expected layer or matrix set as an error', async () => {
     stub((url) => new Response(url.includes('WMTS') ? WMTS.replace('ORTOFOTOMAPA', 'INNA') : WMS));
-    const cache = await buildCache();
+    const cache = await buildCache(defaults);
     expect(cache.services.orto).toMatchObject({ kind: 'error', error: 'Layer ORTOFOTOMAPA not found' });
   });
 });

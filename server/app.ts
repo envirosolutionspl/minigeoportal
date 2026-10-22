@@ -3,13 +3,15 @@ import { bodyLimit } from 'hono/body-limit';
 import { secureHeaders } from 'hono/secure-headers';
 import { compress } from 'hono/compress';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
-import { featureInfo, registryTarget, type QueryTarget } from './featureinfo.ts';
+import { etag } from 'hono/etag';
+import { featureInfo, overlayTarget, type QueryTarget } from './featureinfo.ts';
 import { catalogIndex, serviceKey, type Catalog } from './catalog.ts';
 import { MAX_QUERY, communes, counties, findUnits, precincts, unitNames, voivodeships, type DictEntry } from './dictionaries.ts';
 import { RequestError, concurrencyGate, isLoopback, rateLimit } from './http.ts';
 import { parseReport, type Mailer } from './report.ts';
 import { orthoAt } from './ortho.ts';
 import { errorMessage } from './config.ts';
+import type { Site } from './html.ts';
 
 /**
  * API of the app: cached service metadata, the geoportal layer catalog, dictionaries for the
@@ -18,6 +20,8 @@ import { errorMessage } from './config.ts';
  */
 
 interface AppOptions {
+  /** The deployment's configuration (config/), per language. */
+  site: Site;
   cache: CapabilitiesCache;
   refresh(): Promise<CapabilitiesCache>;
   /** Sends bug reports; without it the report form answers 503. */
@@ -37,8 +41,9 @@ interface AppOptions {
   };
 }
 
-export function createApp({ cache, refresh, mailer, origin, catalog, refreshCatalog, limits }: AppOptions): Hono {
+export function createApp({ site, cache, refresh, mailer, origin, catalog, refreshCatalog, limits }: AppOptions): Hono {
   let current = cache;
+  const overlays = new Map(site.defaults.layers.overlays.map((o) => [o.id, o]));
   const app = new Hono();
 
   /** Map images and tiles come from GUGiK, county and city servers, so images may load from any https host. */
@@ -70,6 +75,13 @@ export function createApp({ cache, refresh, mailer, origin, catalog, refreshCata
 
   // The catalog index is ~90 KB of JSON and GetFeatureInfo answers can be large: compressed on the way out.
   app.use('/api/*', compress());
+
+  /** What the page carries inside (html.ts), for a page served without it. */
+  app.get('/api/config', etag(), (c) => {
+    c.header('Cache-Control', 'no-cache');
+    if (site.multilingual) c.header('Vary', 'Accept-Language');
+    return c.json(site.client(site.locale(c.req.query('lang'), c.req.header('accept-language'))));
+  });
 
   app.get('/api/health', (c) => c.json({ ok: true, capabilitiesGeneratedAt: current.generatedAt }));
 
@@ -173,8 +185,8 @@ export function createApp({ cache, refresh, mailer, origin, catalog, refreshCata
    * GetFeatureInfo formats for its tile layer, an ArcGIS service for its queryable layer ids.
    */
   const queryTarget = (id: string): QueryTarget | undefined => {
-    const own = registryTarget(id);
-    if (own) return own;
+    const own = overlays.get(id);
+    if (own) return overlayTarget(own);
     const current = catalog?.();
     const entry = current?.entries.find((e) => e.id === id);
     if (!current || !entry || entry.status !== 'ok') return undefined;
@@ -252,14 +264,14 @@ export function createApp({ cache, refresh, mailer, origin, catalog, refreshCata
       if (!mailer) return c.text('Formularz zgłoszeń jest wyłączony.', 503);
       // Only the app's own page sends JSON: a form on another site cannot post a report
       // (a JSON body needs a CORS preflight, which no other origin passes).
-      const site = c.req.header('sec-fetch-site');
-      if (!/^application\/json\b/i.test(c.req.header('content-type') ?? '') || (site && site !== 'same-origin' && site !== 'none')) {
+      const from = c.req.header('sec-fetch-site');
+      if (!/^application\/json\b/i.test(c.req.header('content-type') ?? '') || (from && from !== 'same-origin' && from !== 'none')) {
         return c.text('Forbidden', 403);
       }
       try {
         // Without APP_ORIGIN the page's own origin is accepted only from the machine itself (development).
         const own = origin ?? (isLoopback(c) ? c.req.header('origin') : undefined) ?? '';
-        const report = parseReport(await c.req.json().catch(() => null), own);
+        const report = parseReport(await c.req.json().catch(() => null), own, site.defaults);
         if (report) await mailer.send(report, { userAgent: c.req.header('user-agent') });
         return c.json({ ok: true });
       } catch (e) {

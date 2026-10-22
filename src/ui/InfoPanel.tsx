@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Bug, Camera, Download, ExternalLink, FileText, Layers, LoaderCircle, MapPin, X } from 'lucide-react';
 import { formatCoordinate } from '@/map/format';
-import { BASE_MAPS, GEOPORTAL_MAP, parcelReportUrl } from '@/services/registry';
+import { config } from '@/config/runtime';
+import { parcelReportUrl } from '@/modules/gugik/parcelReport';
 import { overlayDef } from '@/services/catalog';
 import type { InfoRecord } from '@/services/featureinfo';
 import { useInfoStore, type InfoResult } from '@/state/info';
@@ -15,7 +16,9 @@ export function InfoPanel() {
   const close = useInfoStore((s) => s.close);
   const setPanel = useMapStore((m) => m.setPanel);
   // The photo date matters only when the photos are on screen.
-  const showsPhotos = useMapStore((m) => BASE_MAPS.find((b) => b.id === m.base)?.sources.some((s) => s.service === 'orto') ?? false);
+  const showsPhotos = useMapStore(
+    (m) => config.map.baseMaps.find((b) => b.id === m.base)?.sources.some((s) => s.service === 'orto') ?? false,
+  );
   if (!query) return null;
 
   const [e, n] = query.coordinate;
@@ -32,17 +35,19 @@ export function InfoPanel() {
         <div className="min-w-0 flex-1">
           <h2 className="text-base font-semibold">Informacje o miejscu</h2>
           <p className="text-xs text-[var(--muted)]">{formatCoordinate(query.coordinate)}</p>
-          <a
-            href={parcelReportUrl(query.coordinate)}
-            target="_blank"
-            rel="noopener"
-            className="mt-1.5 inline-flex min-h-6 items-center gap-1.5 text-sm font-medium text-[var(--accent)] underline-offset-2 hover:underline"
-          >
-            <FileText className="h-4 w-4" aria-hidden="true" />
-            Raport o działce
-            <span className="sr-only">(geoportal.gov.pl, otwiera się w nowej karcie)</span>
-            <ExternalLink className="h-3 w-3" aria-hidden="true" />
-          </a>
+          {config.modules.gugik?.parcelReport && (
+            <a
+              href={parcelReportUrl(query.coordinate)}
+              target="_blank"
+              rel="noopener"
+              className="mt-1.5 inline-flex min-h-6 items-center gap-1.5 text-sm font-medium text-[var(--accent)] underline-offset-2 hover:underline"
+            >
+              <FileText className="h-4 w-4" aria-hidden="true" />
+              Raport o działce
+              <span className="sr-only">(geoportal.gov.pl, otwiera się w nowej karcie)</span>
+              <ExternalLink className="h-3 w-3" aria-hidden="true" />
+            </a>
+          )}
         </div>
         <button type="button" onClick={close} aria-label="Zamknij" className="rounded-full p-2 hover:bg-[var(--hover)]">
           <X className="h-5 w-5" />
@@ -100,9 +105,11 @@ function ServiceResult({ id, result }: { id: string; result: InfoResult | undefi
       {result.status === 'error' && (
         <p className="text-sm text-[var(--muted)]">
           Nie udało się pobrać danych. Serwer usługi nie odpowiada albo odrzucił zapytanie.{' '}
-          <a href={GEOPORTAL_MAP} target="_blank" rel="noopener" className="text-[var(--accent)] underline">
-            Sprawdź w geoportal.gov.pl
-          </a>
+          {config.links.fallbackMap && (
+            <a href={config.links.fallbackMap} target="_blank" rel="noopener" className="text-[var(--accent)] underline">
+              Sprawdź w geoportal.gov.pl
+            </a>
+          )}
         </p>
       )}
       {result.status === 'done' && result.records.length === 0 && <p className="text-sm text-[var(--muted)]">Brak danych w tym miejscu.</p>}

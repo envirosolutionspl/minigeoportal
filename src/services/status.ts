@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { TILE_SERVICE_BY_ID } from './registry';
+import { tileServiceById } from '@/config/runtime';
 import { serviceError } from './meta';
 
 /**
@@ -32,7 +32,7 @@ export const useStatusStore = create<StatusStore>((set, get) => ({
   status: {},
   reportLoad: (id, ok) => {
     // One overlay image covers the whole view, so a single failure matters; tiles fail more often.
-    const threshold = TILE_SERVICE_BY_ID.has(id) ? 2 : 1;
+    const threshold = tileServiceById.has(id) ? 2 : 1;
     const count = ok ? 0 : (failures.get(id) ?? 0) + 1;
     failures.set(id, count);
     const current = get().status[id] ?? initialStatus(id);

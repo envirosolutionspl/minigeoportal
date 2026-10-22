@@ -14,6 +14,8 @@ export const config = {
   host: process.env.HOST ?? (production ? '0.0.0.0' : '127.0.0.1'),
   /** Public address of the app; bug reports may link only to it. */
   origin: process.env.APP_ORIGIN,
+  /** The deployment's configuration files (app.yaml, map.yaml, layers.yaml). */
+  configDir: process.env.CONFIG_DIR ?? 'config',
 };
 
 /** Files the server keeps between starts (caches), under server/data unless moved by DATA_DIR. */

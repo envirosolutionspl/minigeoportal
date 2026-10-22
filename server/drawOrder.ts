@@ -1,6 +1,6 @@
 import { fetchFixed, readLimited } from './http.ts';
 import { CONFIG_BASE, stripComments } from './geoportalConfig.ts';
-import { OVERLAYS } from '../src/services/registry.ts';
+import type { Overlay } from '../shared/config.ts';
 
 /**
  * Drawing order of the overlays as on geoportal.gov.pl, read from the configuration of its
@@ -41,14 +41,14 @@ export function geoportalLayerOrder(source: string, mapId = MAP_ID): string[] {
  * Our overlay ids in the geoportal's drawing order, or undefined when the configuration does not
  * list every overlay (then the app keeps its built-in order rather than guess).
  */
-export function overlayOrder(source: string): string[] | undefined {
+export function overlayOrder(source: string, overlays: Overlay[]): string[] | undefined {
   const order = geoportalLayerOrder(source);
-  const ranked = OVERLAYS.map((o) => ({ id: o.id, rank: order.indexOf(o.geoportalId) }));
+  const ranked = overlays.map((o) => ({ id: o.id, rank: o.catalogId ? order.indexOf(o.catalogId) : -1 }));
   if (ranked.some((r) => r.rank < 0)) return undefined;
   return ranked.sort((a, b) => a.rank - b.rank).map((r) => r.id);
 }
 
-export async function fetchDrawOrder(): Promise<string[] | undefined> {
+export async function fetchDrawOrder(overlays: Overlay[]): Promise<string[] | undefined> {
   const res = await fetchFixed(GEOPORTAL_CONFIG, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-  return overlayOrder(new TextDecoder().decode(await readLimited(res, MAX_BYTES)));
+  return overlayOrder(new TextDecoder().decode(await readLimited(res, MAX_BYTES)), overlays);
 }

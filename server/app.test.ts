@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Hono } from 'hono';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
+import { site } from './testSite.ts';
 
 // Upstream hosts resolve to a public address unless a test says otherwise.
 vi.mock('node:dns/promises', () => ({ lookup: vi.fn() }));
@@ -22,11 +23,20 @@ beforeAll(async () => {
   process.env.DICT_CACHE_DIR = dir;
   const { createApp } = await import('./app.ts');
   refresh = vi.fn<() => Promise<CapabilitiesCache>>(async () => ({ ...CACHE, generatedAt: 'refreshed' }));
-  app = createApp({ cache: CACHE, refresh, limits: { dict: [2, 60], featureInfo: [40, 60] } });
+  app = createApp({ site, cache: CACHE, refresh, limits: { dict: [2, 60], featureInfo: [40, 60] } });
 });
 afterAll(() => rm(dir, { recursive: true, force: true }));
 
 describe('routes', () => {
+  it('serves the configuration for the page, revalidated', async () => {
+    const res = await app.request('/api/config', {}, remote);
+    expect(res.headers.get('cache-control')).toBe('no-cache');
+    const body = (await res.json()) as typeof site.defaults;
+    expect(body).toEqual(site.defaults);
+    const again = await app.request('/api/config', { headers: { 'if-none-match': res.headers.get('etag')! } }, remote);
+    expect(again.status).toBe(304);
+  });
+
   it('serves health and capabilities with security headers', async () => {
     const res = await app.request('/api/health', {}, remote);
     expect(await res.json()).toEqual({ ok: true, capabilitiesGeneratedAt: CACHE.generatedAt });
@@ -181,13 +191,13 @@ describe('catalog routes', () => {
 
   it('answers 503 while the first catalog is being built', async () => {
     const { createApp } = await import('./app.ts');
-    const building = createApp({ cache: CACHE, refresh, catalog: () => undefined });
+    const building = createApp({ site, cache: CACHE, refresh, catalog: () => undefined });
     expect((await building.request('/api/catalog', {}, client)).status).toBe(503);
   });
 
   it('lists the layers without addresses and gives one layer with its metadata, revalidated by ETag', async () => {
     const { createApp } = await import('./app.ts');
-    const withCatalog = createApp({ cache: CACHE, refresh, catalog: () => CATALOG });
+    const withCatalog = createApp({ site, cache: CACHE, refresh, catalog: () => CATALOG });
     const list = await withCatalog.request('/api/catalog', {}, client);
     const body = (await list.json()) as { entries: Record<string, unknown>[] };
     expect(body.entries.map((e) => e.id)).toEqual(['msZabytki', 'msCLC']);
@@ -208,7 +218,7 @@ describe('catalog routes', () => {
   it('serves layers whose geoportal id has Polish letters', async () => {
     const { createApp } = await import('./app.ts');
     const polish = { ...CATALOG, entries: [{ ...CATALOG.entries[0], id: 'msWyłozeniaModernizacja' }] };
-    const res = await createApp({ cache: CACHE, refresh, catalog: () => polish }).request(
+    const res = await createApp({ site, cache: CACHE, refresh, catalog: () => polish }).request(
       `/api/catalog/${encodeURIComponent('msWyłozeniaModernizacja')}`,
       {},
       client,
@@ -219,7 +229,7 @@ describe('catalog routes', () => {
 
   it('queries available catalog layers through the proxy and refuses unavailable ones', async () => {
     const { createApp } = await import('./app.ts');
-    const withCatalog = createApp({ cache: CACHE, refresh, catalog: () => CATALOG });
+    const withCatalog = createApp({ site, cache: CACHE, refresh, catalog: () => CATALOG });
     const fetchMock = vi.fn(async (_url: string) => new Response('<a/>', { headers: { 'content-type': 'text/xml' } }));
     vi.stubGlobal('fetch', fetchMock);
     const q = 'QUERY_LAYERS=monuments&BBOX=1,2,3,4&WIDTH=10&HEIGHT=10&I=1&J=1&INFO_FORMAT=text/xml';
@@ -231,7 +241,7 @@ describe('catalog routes', () => {
   it('rebuilds the catalog only from the server machine with the header', async () => {
     const { createApp } = await import('./app.ts');
     const refreshCatalog = vi.fn(async () => CATALOG);
-    const withCatalog = createApp({ cache: CACHE, refresh, catalog: () => CATALOG, refreshCatalog });
+    const withCatalog = createApp({ site, cache: CACHE, refresh, catalog: () => CATALOG, refreshCatalog });
     expect((await withCatalog.request('/api/catalog/refresh', { method: 'POST' }, local)).status).toBe(403);
     expect(
       (await withCatalog.request('/api/catalog/refresh', { method: 'POST', headers: { 'x-refresh': 'catalog' } }, remote)).status,

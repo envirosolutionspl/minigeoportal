@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "concurrently -k -n web,api -c green,blue \"vite\" \"npm run dev:api\"",
     "dev:web": "vite",
-    "dev:api": "node --env-file-if-exists=.env --watch-path=server --watch-path=src/services server/index.ts",
+    "dev:api": "node --env-file-if-exists=.env --watch-path=server --watch-path=src/services --watch-path=shared --watch-path=config server/index.ts",
     "build": "tsc -b && vite build && node scripts/precompress.ts",
     "start": "node --env-file-if-exists=.env server/index.ts",
     "capabilities": "node --env-file-if-exists=.env server/refresh.ts",

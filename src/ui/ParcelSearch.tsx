@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { LoaderCircle, SquareDashed, X } from 'lucide-react';
 import { dictionary, parcelInPrecinct, type DictEntry, type DictLevel } from '@/services/dictionaries';
-import type { SearchHit } from '@/services/geocoder';
+import type { SearchHit } from '@/search/provider';
 import { useMapStore } from '@/state/store';
+import { zoomForScale } from '@/map/projection';
 
 /** Parcel ids zoom closer than other objects: a parcel is small. */
-export const PARCEL_ZOOM = 15;
+export const PARCEL_SCALE = 500;
 
 interface Choice {
   woj?: string;
@@ -71,7 +72,7 @@ export function ParcelSearch({ onClose }: { onClose(): void }) {
   const ready = !!precinct && choice.number.trim().length > 0;
 
   const show = (hit: SearchHit) => {
-    focusOn({ wkt: hit.wkt, zoom: PARCEL_ZOOM, persist: true });
+    focusOn({ wkt: hit.wkt, zoom: zoomForScale(PARCEL_SCALE), persist: true });
     setShown(hit);
   };
 

@@ -51,7 +51,7 @@ describe('connections', () => {
   });
 
   it('lists every host the GUGiK search reaches', () => {
-    const source = readFileSync('src/services/geocoder.ts', 'utf8');
+    const source = readFileSync('src/modules/gugik/geocoder.ts', 'utf8');
     const hosts = new Set([...source.matchAll(/https:\/\/[a-z0-9.-]+/g)].map((m) => m[0]));
     for (const host of hosts) expect(GUGIK_SEARCH_HOSTS).toContain(host);
   });

@@ -1,7 +1,8 @@
 import { fromLonLat } from 'ol/proj';
 import { PROJECTION } from '@/map/projection';
-import { unitNames, type UnitNames } from './units';
-import { normalize } from './text';
+import { unitNames, type UnitNames, type UnitLevel } from '@/services/units';
+import { normalize } from '@/services/text';
+import type { HitKind, SearchHit } from '@/search/provider';
 
 /**
  * Search across GUGiK services: addresses, streets and exact place names from the universal
@@ -11,26 +12,6 @@ import { normalize } from './text';
  * from the parcel location service (ULDK). Every hit carries its geometry, or a way to fetch
  * it, so the map can zoom to it and outline it.
  */
-
-export type HitKind = 'address' | 'street' | 'place' | 'unit' | 'nature' | 'parcel';
-import type { UnitLevel } from './units';
-export type { UnitLevel };
-
-export interface SearchHit {
-  kind: HitKind;
-  label: string;
-  detail?: string;
-  /** EPSG:2180 [easting, northing]; absent when the geometry says where the hit is. */
-  center?: [number, number];
-  /** WKT in EPSG:2180, when the service returned a geometry. */
-  wkt?: string;
-  /** 6-digit municipality TERYT code from the geocoder, used to name the units in `detail`. */
-  teryt?: string;
-  /** A town (miasto): listed before villages, units and objects of a similar name. */
-  town?: boolean;
-  /** Administrative unit; its boundary is fetched when the hit is chosen. */
-  unit?: { level: UnitLevel; teryt: string; name: string };
-}
 
 const UUG = 'https://services.gugik.gov.pl/uug/';
 const ULDK = 'https://uldk.gugik.gov.pl/';

@@ -90,7 +90,7 @@ export function clientConfig({ app, map, layers }: AppConfig, locale: string): C
       })),
       drawOrder: layers.drawOrder ?? layers.overlays.map((o) => o.id),
     },
-    search: app.search,
+    search: { provider: app.search.provider, parcel: app.search.parcel },
     links: app.links,
     report: { categories: app.report.categories.map((c) => ({ id: c.id, label: t(c.label) })) },
     modules: app.modules.gugik?.enabled

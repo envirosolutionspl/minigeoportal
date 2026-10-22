@@ -31,13 +31,36 @@ afterAll(() => rm(dir, { recursive: true, force: true }));
 describe('routes', () => {
   it('leaves out the gugik routes, and its search hosts in the CSP, without the module', async () => {
     const { createApp } = await import('./app.ts');
-    const plain = createSite({ ...site.config, app: { ...site.config.app, modules: {}, search: { provider: 'none', parcel: false } } });
+    const plain = createSite({
+      ...site.config,
+      app: { ...site.config.app, modules: {}, search: { ...site.config.app.search, provider: 'none', parcel: false } },
+    });
     const bare = createApp({ site: plain, cache: CACHE, refresh, catalog: () => undefined });
     for (const path of ['/api/catalog', '/api/dict/wojewodztwa', '/api/orto?x=1&y=1']) {
       expect((await bare.request(path, {}, remote)).status).toBe(404);
     }
     const csp = (await bare.request('/api/health', {}, remote)).headers.get('content-security-policy')!;
     expect(csp).toContain("connect-src 'self';");
+  });
+
+  it('searches OpenStreetMap places through Nominatim only when configured to', async () => {
+    const { createApp } = await import('./app.ts');
+    const osm = createSite({ ...site.config, app: { ...site.config.app, search: { ...site.config.app.search, provider: 'nominatim' } } });
+    const row = {
+      display_name: 'Kraków, Polska',
+      lat: '50.06',
+      lon: '19.94',
+      boundingbox: ['49.97', '50.13', '19.79', '20.22'],
+      type: 'city',
+    };
+    const fetch = vi.fn(async () => new Response(JSON.stringify([row])));
+    vi.stubGlobal('fetch', fetch);
+    const res = await createApp({ site: osm, cache: CACHE, refresh }).request('/api/search?q=Krak%C3%B3w&lang=pl', {}, remote);
+    expect(await res.json()).toEqual([
+      { label: 'Kraków, Polska', point: [19.94, 50.06], bbox: [19.79, 49.97, 20.22, 50.13], type: 'city' },
+    ]);
+    expect(String(fetch.mock.calls[0]).startsWith('https://nominatim.openstreetmap.org/search?')).toBe(true);
+    expect((await app.request('/api/search?q=Krak%C3%B3w', {}, remote)).status).toBe(404);
   });
 
   it('serves the configuration for the page, revalidated', async () => {

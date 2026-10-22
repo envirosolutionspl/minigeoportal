@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Building2,
+  Crosshair,
   Home,
   Info,
   Landmark,
@@ -17,19 +18,28 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { fromLonLat } from 'ol/proj';
-import { buildingAt, placeOutline, search, unitOutline, type HitKind, type SearchHit } from '@/services/geocoder';
+import { searchProvider, type HitKind, type SearchHit } from '@/search';
+import { config } from '@/config/runtime';
 import { useMapStore } from '@/state/store';
 import { useInfoStore } from '@/state/info';
 import { openPrint } from '@/map/print';
 import { linkFor } from '@/state/url';
 import { APP_NAME, BrandMark, Wordmark } from './Brand';
 import { useWelcome } from './WelcomeDialog';
-import { PARCEL_ZOOM, ParcelSearch } from './ParcelSearch';
-import { PROJECTION } from '@/map/projection';
+import { PARCEL_SCALE, ParcelSearch } from './ParcelSearch';
+import { PROJECTION, zoomForScale } from '@/map/projection';
 import { DisplayMenu } from './DisplayMenu';
 
-/** Closest zoom per hit kind on the GUGiK scale series (13 = 1:1890, 14 = 1:945, 15 = 1:472). */
-const ZOOM: Record<HitKind, number> = { address: 14, street: 14, place: 12, unit: 14, nature: 12, parcel: PARCEL_ZOOM };
+/** Scale per hit kind; points zoom to it, outlines at most to it. */
+const SCALE: Record<HitKind, number> = {
+  address: 1000,
+  street: 1000,
+  place: 5000,
+  unit: 1000,
+  nature: 5000,
+  parcel: PARCEL_SCALE,
+  point: 1000,
+};
 const ICON: Record<HitKind, LucideIcon> = {
   address: Home,
   street: Route,
@@ -37,10 +47,9 @@ const ICON: Record<HitKind, LucideIcon> = {
   unit: Landmark,
   nature: Mountain,
   parcel: SquareDashed,
+  point: Crosshair,
 };
-const OUTLINE_TIMEOUT_MS = 2500;
-/** A unit has no point to fall back on, so its boundary may take longer. */
-const UNIT_TIMEOUT_MS = 8000;
+const provider = searchProvider;
 
 export function TopBar() {
   const [query, setQuery] = useState('');
@@ -68,6 +77,31 @@ export function TopBar() {
   const [copied, setCopied] = useState('');
   const openWelcome = useWelcome((w) => w.setOpen);
 
+  const run = async (q: string, controller: AbortController) => {
+    setBusy(true);
+    try {
+      const found = await provider.search(q, controller.signal);
+      if (controller.signal.aborted) return;
+      setHits(found);
+      setActive(-1);
+      setAnnounce(found.length ? `Wyników: ${found.length}. Strzałki w dół i w górę wybierają, Enter pokazuje na mapie.` : 'Brak wyników.');
+      setOpen(true);
+    } catch (e) {
+      if (!(e instanceof DOMException && e.name === 'AbortError')) setHits([]);
+    } finally {
+      // A newer search owns the spinner now; otherwise this one turns it off.
+      if (abort.current === controller) setBusy(false);
+    }
+  };
+
+  /** Search after Enter, for a provider that does not search while typing. */
+  const searchNow = () => {
+    abort.current?.abort();
+    const controller = new AbortController();
+    abort.current = controller;
+    void run(query.trim(), controller);
+  };
+
   useEffect(() => {
     abort.current?.abort();
     if (chosen.current) {
@@ -75,31 +109,15 @@ export function TopBar() {
       return;
     }
     const q = query.trim();
-    if (q.length < 3) {
+    // A provider that searches after Enter shows no results of an older text.
+    if (q.length < 3 || !provider.instant) {
       setHits([]);
       setAnnounce('');
       return;
     }
     const controller = new AbortController();
     abort.current = controller;
-    const timer = window.setTimeout(async () => {
-      setBusy(true);
-      try {
-        const found = await search(q, controller.signal);
-        if (controller.signal.aborted) return;
-        setHits(found);
-        setActive(-1);
-        setAnnounce(
-          found.length ? `Wyników: ${found.length}. Strzałki w dół i w górę wybierają, Enter pokazuje na mapie.` : 'Brak wyników.',
-        );
-        setOpen(true);
-      } catch (e) {
-        if (!(e instanceof DOMException && e.name === 'AbortError')) setHits([]);
-      } finally {
-        // A newer search owns the spinner now; otherwise this one turns it off.
-        if (abort.current === controller) setBusy(false);
-      }
-    }, 300);
+    const timer = window.setTimeout(() => void run(q, controller), 300);
     return () => window.clearTimeout(timer);
   }, [query]);
 
@@ -113,24 +131,11 @@ export function TopBar() {
     setQuery(text);
     setOpen(false);
     setParcelOpen(false);
-    let wkt = hit.wkt;
-    // Parcels, units and river courses stay on the map until the search is cleared.
-    let persist = hit.kind === 'parcel' || hit.kind === 'unit' || (hit.kind === 'nature' && Boolean(hit.wkt));
-    // Places and addresses come as points; their outline (town boundary, building) is looked up
-    // separately, without delaying the map for long.
-    const signal = AbortSignal.timeout(OUTLINE_TIMEOUT_MS);
-    if (hit.kind === 'place') wkt = await placeOutline(hit, signal).catch(() => undefined);
-    if (hit.unit) wkt = await unitOutline(hit.unit, AbortSignal.timeout(UNIT_TIMEOUT_MS)).catch(() => undefined);
-    if (hit.kind === 'address' && hit.center) {
-      const building = await buildingAt(hit.center, signal).catch(() => undefined);
-      if (building) {
-        wkt = building;
-        persist = true;
-      }
-    }
+    const { wkt, persist } = provider.outline ? await provider.outline(hit) : { wkt: hit.wkt, persist: false };
     // A later pick wins, even when its outline arrives first.
     if (mine !== picked.current) return;
-    focusOn({ wkt, center: hit.center, zoom: ZOOM[hit.kind], persist });
+    const zoom = zoomForScale(SCALE[hit.kind]);
+    focusOn(hit.extent && !wkt ? { extent: hit.extent, zoom } : { wkt, center: hit.center, zoom, persist });
   };
 
   const clear = () => {
@@ -155,7 +160,7 @@ export function TopBar() {
     navigator.geolocation?.getCurrentPosition(
       (pos) => {
         const c = fromLonLat([pos.coords.longitude, pos.coords.latitude], PROJECTION);
-        focusOn({ center: [c[0], c[1]], zoom: ZOOM.address });
+        focusOn({ center: [c[0], c[1]], zoom: zoomForScale(SCALE.point) });
       },
       undefined,
       { enableHighAccuracy: true, timeout: 8000 },
@@ -200,14 +205,15 @@ export function TopBar() {
                 setActive((i) => (i + step + hits.length) % hits.length);
               }
               if (e.key === 'Enter' && hits.length > 0) void pick(hits[Math.max(active, 0)]);
+              else if (e.key === 'Enter' && query.trim().length >= 3) searchNow();
               if (e.key === 'Escape' && listOpen) {
                 e.stopPropagation();
                 setOpen(false);
               }
             }}
             onBlur={() => window.setTimeout(() => setOpen(false), 150)}
-            placeholder="Adres, miejscowość, działka…"
-            aria-label="Szukaj adresu, miejscowości lub działki"
+            placeholder={provider.placeholder}
+            aria-label={provider.label}
             autoComplete="off"
             // 16 px on phones keeps iOS from zooming into the field; from sm up it matches the "Działka" toggle and the hits.
             className="h-8 w-full bg-transparent text-base outline-none placeholder:text-[var(--muted)] sm:text-sm"
@@ -217,19 +223,21 @@ export function TopBar() {
               <X className="h-4 w-4" />
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => setParcelOpen(!parcelOpen)}
-            aria-expanded={parcelOpen}
-            title="Znajdź działkę po numerze i obrębie"
-            aria-label="Znajdź działkę po numerze i obrębie"
-            className={`flex shrink-0 items-center gap-1.5 rounded-xl px-2 py-1 text-sm transition ${
-              parcelOpen ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'text-[var(--accent)] hover:bg-[var(--hover)]'
-            }`}
-          >
-            <SquareDashed className="h-4 w-4" />
-            <span className="hidden sm:inline">Działka</span>
-          </button>
+          {config.search.parcel && (
+            <button
+              type="button"
+              onClick={() => setParcelOpen(!parcelOpen)}
+              aria-expanded={parcelOpen}
+              title="Znajdź działkę po numerze i obrębie"
+              aria-label="Znajdź działkę po numerze i obrębie"
+              className={`flex shrink-0 items-center gap-1.5 rounded-xl px-2 py-1 text-sm transition ${
+                parcelOpen ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'text-[var(--accent)] hover:bg-[var(--hover)]'
+              }`}
+            >
+              <SquareDashed className="h-4 w-4" />
+              <span className="hidden sm:inline">Działka</span>
+            </button>
+          )}
         </div>
         {parcelOpen && <ParcelSearch onClose={() => setParcelOpen(false)} />}
         <ul
@@ -264,6 +272,13 @@ export function TopBar() {
           {busy && hits.length === 0 && (
             <li role="presentation" className="px-4 py-2 text-sm text-[var(--muted)]">
               Szukam…
+            </li>
+          )}
+          {provider.credit && hits.length > 0 && (
+            <li role="presentation" className="px-4 pt-1 pb-1.5 text-right text-xs text-[var(--muted)]">
+              <a href={provider.credit.href} target="_blank" rel="noopener" className="underline-offset-2 hover:underline">
+                {provider.credit.text}
+              </a>
             </li>
           )}
         </ul>

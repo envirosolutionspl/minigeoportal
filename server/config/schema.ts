@@ -50,8 +50,16 @@ export const appSchema = z.strictObject({
     .strictObject({
       provider: z.enum(['gugik', 'nominatim', 'none']).default('none'),
       parcel: z.boolean().default(false),
+      /** The Nominatim server; the public one by default (one request a second for the whole app). */
+      nominatim: z
+        .strictObject({
+          url: url.default('https://nominatim.openstreetmap.org'),
+          countryCodes: z.array(z.string().regex(/^[a-z]{2}$/, 'a two-letter country code such as pl')).optional(),
+          viewbox: z.tuple([z.number(), z.number(), z.number(), z.number()]).optional(),
+        })
+        .default({ url: 'https://nominatim.openstreetmap.org' }),
     })
-    .default({ provider: 'none', parcel: false }),
+    .default({ provider: 'none', parcel: false, nominatim: { url: 'https://nominatim.openstreetmap.org' } }),
   modules: z
     .strictObject({
       gugik: z

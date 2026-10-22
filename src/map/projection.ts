@@ -42,6 +42,16 @@ export const resolutionToScale = (resolution: number) => (resolution * metresPer
 /** Resolutions of the zoom levels (map.yaml: zoom.scales). */
 export const RESOLUTIONS: number[] = config.map.scales.map(scaleToResolution);
 
+/** The zoom level closest to a scale, so the same scale means the same view on any series of levels. */
+export function zoomForScale(scale: number): number {
+  const target = Math.log(scaleToResolution(scale));
+  let best = 0;
+  RESOLUTIONS.forEach((r, i) => {
+    if (Math.abs(Math.log(r) - target) < Math.abs(Math.log(RESOLUTIONS[best]) - target)) best = i;
+  });
+  return best;
+}
+
 /** The whole area of the map: first visit and the "whole area" button. */
 export const HOME_EXTENT = config.map.view.home;
 

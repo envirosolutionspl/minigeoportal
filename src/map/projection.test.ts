@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { fromLonLat, toLonLat } from 'ol/proj';
-import { HOME_EXTENT, OGC_PIXEL, PROJECTION, RESOLUTIONS, resolutionToScale, scaleToResolution, sharedWmtsGrid } from './projection';
+import {
+  HOME_EXTENT,
+  OGC_PIXEL,
+  PROJECTION,
+  RESOLUTIONS,
+  resolutionToScale,
+  scaleToResolution,
+  sharedWmtsGrid,
+  zoomForScale,
+} from './projection';
 
 describe('PL-1992 of the default configuration', () => {
   it('is registered with north-east axis order, so WMS 1.3.0 BBOX is swapped by OpenLayers', () => {
@@ -29,6 +38,13 @@ describe('PL-1992 of the default configuration', () => {
   it('converts scales to resolutions in metres', () => {
     expect(scaleToResolution(10000)).toBeCloseTo(2.8, 6);
     expect(resolutionToScale(2.8)).toBeCloseTo(10000, 6);
+  });
+
+  it('finds the zoom level closest to a scale', () => {
+    expect(zoomForScale(1000)).toBe(14);
+    expect(zoomForScale(5000)).toBe(12);
+    expect(zoomForScale(500)).toBe(15);
+    expect(zoomForScale(1e9)).toBe(0);
   });
 });
 

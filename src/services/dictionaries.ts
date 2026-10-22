@@ -1,4 +1,5 @@
-import { findParcels, type SearchHit } from './geocoder';
+import { findParcels } from '@/modules/gugik/geocoder';
+import type { SearchHit } from '@/search/provider';
 
 /** Administrative dictionaries served and cached by the backend (server/dictionaries.ts). */
 export interface DictEntry {

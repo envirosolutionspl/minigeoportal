@@ -25,7 +25,7 @@ export const scriptJson = (value: unknown) =>
     .replace(/\u2028/g, '\\u2028')
     .replace(/\u2029/g, '\\u2029');
 
-/** Hosts the GUGiK search reaches from the browser (src/services/geocoder.ts). */
+/** Hosts the GUGiK search reaches from the browser (src/modules/gugik/geocoder.ts). */
 export const GUGIK_SEARCH_HOSTS = [
   'https://services.gugik.gov.pl',
   'https://uldk.gugik.gov.pl',

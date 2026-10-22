@@ -55,6 +55,17 @@ describe('search box', () => {
     expect(box.getAttribute('aria-expanded')).toBe('false');
   });
 
+  it('finds coordinates typed in, without asking the search services', async () => {
+    const { calls } = stubFetch([]);
+    render(<TopBar />);
+    const box = await type('52,2318 21,0067');
+    expect(screen.getAllByRole('option')).toHaveLength(1);
+    expect(calls).toEqual([]);
+    fireEvent.keyDown(box, { key: 'Enter' });
+    await act(() => new Promise((r) => setTimeout(r, 50)));
+    expect(useMapStore.getState().focus?.center?.[0]).toBeCloseTo(637000, -2);
+  });
+
   it('closes the list with Escape and says when nothing was found', async () => {
     render(<TopBar />);
     const box = await type('Komaszyce');

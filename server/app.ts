@@ -19,6 +19,7 @@ import {
 import { RequestError, concurrencyGate, isLoopback, rateLimit } from './http.ts';
 import { parseReport, type Mailer } from './report.ts';
 import { orthoAt } from './modules/gugik/ortho.ts';
+import { nominatimSearch } from './modules/nominatim.ts';
 import { errorMessage } from './config.ts';
 import { connectSources, type Site } from './html.ts';
 
@@ -47,6 +48,7 @@ interface AppOptions {
     featureInfo: [burst: number, perMinute: number];
     report?: [burst: number, perMinute: number];
     ortho?: [burst: number, perMinute: number];
+    search?: [burst: number, perMinute: number];
   };
 }
 
@@ -267,6 +269,25 @@ export function createApp({ site, cache, refresh, mailer, origin, catalog, refre
       } catch (e) {
         if (e instanceof RequestError) return c.text(e.message, 400);
         return upstreamFailure(c, 'orto', e);
+      }
+    });
+  }
+
+  if (site.defaults.search.provider === 'nominatim') {
+    /** Places from OpenStreetMap, searched by the server for everyone (modules/nominatim.ts). */
+    const { app: about } = site.config;
+    const places = nominatimSearch({ ...about.search.nominatim, userAgent: `${about.id}/1.0 (+https://${about.domain})` });
+    app.use('/api/search', rateLimit(...(limits?.search ?? [10, 30])));
+    app.get('/api/search', async (c) => {
+      const q = c.req.query('q') ?? '';
+      if (q.trim().length < 3) return c.json([]);
+      try {
+        const hits = await places(q, site.locale(c.req.query('lang')));
+        if (!hits) return c.text('Wyszukiwarka jest zajęta, spróbuj za chwilę.', 503);
+        c.header('Cache-Control', 'public, max-age=86400');
+        return c.json(hits);
+      } catch (e) {
+        return upstreamFailure(c, 'search', e);
       }
     });
   }

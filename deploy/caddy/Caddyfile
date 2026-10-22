@@ -18,3 +18,8 @@
 		health_interval 15s
 	}
 }
+
+# The www address leads to the main one.
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}

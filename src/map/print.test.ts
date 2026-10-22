@@ -90,6 +90,8 @@ describe('print preview', () => {
     const detach = attachPrint(map);
     const layer = map.getLayers().getArray().at(-1) as VectorLayer;
     expect(layer.getVisible()).toBe(false);
+    // Redrawn during a drag and a glide, not only when the map stops.
+    expect([layer.getUpdateWhileInteracting(), layer.getUpdateWhileAnimating()]).toEqual([true, true]);
 
     useMapStore.getState().setTool('print');
     expect(layer.getVisible()).toBe(true);

@@ -125,7 +125,15 @@ export function freeArea(map: Map): { extent: Extent; center: [number, number] }
 function attachPreview(map: Map): () => void {
   const view = map.getView();
   const frame = new Feature();
-  const layer = new VectorLayer({ source: new VectorSource({ features: [frame] }), style: FRAME_STYLE, zIndex: 120, visible: false });
+  // Redrawn while the map is dragged or glides, so the frame stays in place instead of jumping at the end.
+  const layer = new VectorLayer({
+    source: new VectorSource({ features: [frame] }),
+    style: FRAME_STYLE,
+    zIndex: 120,
+    visible: false,
+    updateWhileInteracting: true,
+    updateWhileAnimating: true,
+  });
   map.addLayer(layer);
 
   const update = () => {

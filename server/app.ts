@@ -155,16 +155,28 @@ export function createApp({ cache, refresh, mailer, origin, catalog, refreshCata
   });
 
   /**
-   * A layer of the catalog may be queried when its WMS answered the last check; the layer names
-   * allowed are those of its capabilities and of the geoportal configuration.
+   * A layer of the catalog may be queried when its service answered the last check: a WMS for the
+   * layer names of its capabilities and of the geoportal configuration, a WMTS that lists
+   * GetFeatureInfo formats for its tile layer, an ArcGIS service for its queryable layer ids.
    */
   const queryTarget = (id: string): QueryTarget | undefined => {
     const own = registryTarget(id);
     if (own) return own;
     const current = catalog?.();
     const entry = current?.entries.find((e) => e.id === id);
-    if (!current || !entry || entry.kind !== 'wms' || entry.status !== 'ok') return undefined;
+    if (!current || !entry || entry.status !== 'ok') return undefined;
     const meta = current.services[serviceKey(entry)]?.meta;
+    if (meta?.kind === 'wmts') {
+      const { layer, style = 'default', format = 'image/png', infoFormats = [], matrixSet } = meta;
+      if (!layer || infoFormats.length === 0) return undefined;
+      const wmts = { layer, style, format, matrixSet: matrixSet.id, matrices: new Set(matrixSet.matrices.map((m) => m.id)), tileSize: matrixSet.tileSize, infoFormats: new Set(infoFormats) };
+      return { kind: 'wmts', url: entry.url, layers: new Set([layer]), wmts };
+    }
+    if (meta?.kind === 'rest') {
+      const queryable = Object.entries(meta.layers).filter(([, l]) => l.queryable).map(([id]) => id);
+      return { kind: 'rest', url: entry.url, layers: new Set(queryable) };
+    }
+    if (entry.kind !== 'wms') return undefined;
     const named = meta?.kind === 'wms' ? Object.keys(meta.layers) : [];
     return { url: entry.url, layers: new Set([...named, ...(entry.sublayers ?? []).map((l) => l.name)]) };
   };

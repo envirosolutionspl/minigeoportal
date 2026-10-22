@@ -12,7 +12,7 @@ import type {
   WmtsMeta,
 } from '../src/services/meta.ts';
 
-const ARRAYS = new Set(['Layer', 'Format', 'Style', 'LegendURL', 'TileMatrixSet', 'TileMatrix', 'TileMatrixSetLink']);
+const ARRAYS = new Set(['Layer', 'Format', 'InfoFormat', 'Style', 'LegendURL', 'TileMatrixSet', 'TileMatrix', 'TileMatrixSetLink']);
 /** Tile formats in order of preference; WMTS also lists text formats for GetFeatureInfo. */
 const TILE_FORMATS = ['image/png', 'image/png8', 'image/jpeg'];
 
@@ -120,6 +120,7 @@ export async function wmtsCapabilities(url: string, layer?: string): Promise<Wmt
     layer: text(found.Identifier),
     format: TILE_FORMATS.find((f) => formats.includes(f)) ?? formats.find((f) => f.startsWith('image/')) ?? 'image/png',
     style: text(style?.Identifier) ?? 'default',
+    infoFormats: texts(found.InfoFormat),
     matrixSet: {
       id: text(set.Identifier) ?? '',
       origin: [east, north],
@@ -139,6 +140,7 @@ export async function wmtsCapabilities(url: string, layer?: string): Promise<Wmt
 interface ArcgisInfo {
   error?: { code?: number };
   mapName?: string;
+  capabilities?: string;
   documentInfo?: { Title?: string };
   spatialReference?: { wkid?: number; latestWkid?: number };
   singleFusedMapCache?: boolean;
@@ -148,7 +150,7 @@ interface ArcgisInfo {
     spatialReference?: { wkid?: number; latestWkid?: number };
     lods: { resolution: number }[];
   };
-  layers?: { id: number; name: string; minScale?: number; maxScale?: number; subLayerIds?: number[] | null }[];
+  layers?: { id: number; name: string; type?: string; minScale?: number; maxScale?: number; subLayerIds?: number[] | null }[];
 }
 
 const wkid = (sr?: { wkid?: number; latestWkid?: number }) => sr?.latestWkid ?? sr?.wkid;
@@ -165,11 +167,13 @@ export async function arcgisCapabilities(url: string): Promise<RestMeta> {
   if (info.error) throw new Error(`HTTP ${info.error.code ?? 500}`);
   if (wkid(info.spatialReference) !== 2180) throw new Error(`Unsupported: EPSG:${wkid(info.spatialReference)}`);
   const layers: Record<string, WmsLayerMeta> = {};
+  // Identify answers for the layers of a service that allows queries, except groups and pictures.
+  const query = /\bQuery\b/.test(info.capabilities ?? '');
   // ArcGIS minScale is the most zoomed-out scale, the WMS MaxScaleDenominator, and the reverse.
   for (const l of info.layers ?? []) {
     layers[String(l.id)] = {
       title: l.name,
-      queryable: false,
+      queryable: query && !l.subLayerIds?.length && l.type !== 'Raster Layer',
       ...(l.minScale ? { maxScale: l.minScale } : {}),
       ...(l.maxScale ? { minScale: l.maxScale } : {}),
       ...(l.subLayerIds?.length ? { group: true } : {}),

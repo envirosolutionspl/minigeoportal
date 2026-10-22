@@ -112,7 +112,7 @@ describe('catalog services', () => {
     `<TileMatrix><ows:Identifier>${id}:0</ows:Identifier><ScaleDenominator>5458804.2</ScaleDenominator><TopLeftCorner>908411.0 144693.3</TopLeftCorner><TileWidth>512</TileWidth><TileHeight>512</TileHeight><MatrixWidth>2</MatrixWidth><MatrixHeight>1</MatrixHeight></TileMatrix>`;
   const GWC = `<Capabilities xmlns="http://www.opengis.net/wmts/1.0" xmlns:ows="http://www.opengis.net/ows/1.1"><Contents>
     <Layer><ows:Identifier>Susza:gleby</ows:Identifier><Style isDefault="true"><ows:Identifier>susza</ows:Identifier></Style>
-      <Format>text/xml</Format><Format>image/jpeg</Format><Format>image/png</Format>
+      <Format>text/xml</Format><Format>image/jpeg</Format><Format>image/png</Format><InfoFormat>text/html</InfoFormat>
       <TileMatrixSetLink><TileMatrixSet>EPSG:3857</TileMatrixSet></TileMatrixSetLink><TileMatrixSetLink><TileMatrixSet>EPSG:2180v1</TileMatrixSet></TileMatrixSetLink></Layer>
     <Layer><ows:Identifier>common:drogi</ows:Identifier><TileMatrixSetLink><TileMatrixSet>EPSG:3857</TileMatrixSet></TileMatrixSetLink></Layer>
     <TileMatrixSet><ows:Identifier>EPSG:3857</ows:Identifier><ows:SupportedCRS>urn:ogc:def:crs:EPSG::3857</ows:SupportedCRS>${matrix('EPSG:3857')}</TileMatrixSet>
@@ -122,7 +122,7 @@ describe('catalog services', () => {
   it('takes the named WMTS layer with its EPSG:2180 grid, an image format and the default style', async () => {
     stub(() => new Response(GWC));
     const meta = await wmtsCapabilities('https://iung.example/gwc/service/wmts', 'Susza:gleby');
-    expect(meta).toMatchObject({ layer: 'Susza:gleby', format: 'image/png', style: 'susza' });
+    expect(meta).toMatchObject({ layer: 'Susza:gleby', format: 'image/png', style: 'susza', infoFormats: ['text/html'] });
     expect(meta.matrixSet).toMatchObject({ id: 'EPSG:2180v1', origin: [144693.3, 908411.0], tileSize: 512 });
     await expect(wmtsCapabilities('https://iung.example/gwc/service/wmts', 'common:drogi')).rejects.toThrow('Unsupported: no EPSG:2180 tile matrix set');
   });
@@ -130,6 +130,7 @@ describe('catalog services', () => {
   it('reads the layers and tile cache of an ArcGIS map service and recognises a token request', async () => {
     const info = {
       mapName: 'Gleby',
+      capabilities: 'Map,Query,Data',
       spatialReference: { wkid: 2180 },
       singleFusedMapCache: true,
       tileInfo: { rows: 512, origin: { x: 100000, y: 850000 }, spatialReference: { wkid: 2180 }, lods: [{ resolution: 100 }, { resolution: 50 }] },
@@ -140,7 +141,7 @@ describe('catalog services', () => {
     };
     stub(() => Response.json(info));
     const meta = await arcgisCapabilities('https://gugik.example/MapServer/');
-    expect(meta.layers).toEqual({ '0': { title: 'Gleby', queryable: false, group: true }, '1': { title: 'Kontury', queryable: false, maxScale: 50000, minScale: 500 } });
+    expect(meta.layers).toEqual({ '0': { title: 'Gleby', queryable: false, group: true }, '1': { title: 'Kontury', queryable: true, maxScale: 50000, minScale: 500 } });
     expect(meta.tiles).toEqual({ origin: [100000, 850000], tileSize: 512, resolutions: [100, 50] });
 
     stub(() => Response.json({ ...info, spatialReference: { wkid: 102100, latestWkid: 3857 } }));

@@ -125,3 +125,65 @@ describe('featureInfo redirects', () => {
     expect((await featureInfo('kieg', query(VALID))).body).toBe('plain');
   });
 });
+
+describe('WMTS and ArcGIS queries', () => {
+  const WMTS = {
+    kind: 'wmts' as const,
+    url: 'https://mapy.geoportal.gov.pl/wss/service/WMTS/guest/wmts/TOPO',
+    layers: new Set(['MAPA TOPOGRAFICZNA']),
+    wmts: {
+      layer: 'MAPA TOPOGRAFICZNA',
+      style: 'default',
+      format: 'image/jpeg',
+      matrixSet: 'EPSG:2180',
+      matrices: new Set(['EPSG:2180:9']),
+      tileSize: 512,
+      infoFormats: new Set(['text/html']),
+    },
+  };
+  const REST = { kind: 'rest' as const, url: 'https://mapy.geoportal.gov.pl/gprest/services/MapaGlebowoRolnicza/MapServer/', layers: new Set(['0', '2']) };
+  const lookup = (id: string) => (id === 'msTopo' ? WMTS : id === 'msGleby' ? REST : undefined);
+  const TILE = 'TILEMATRIX=EPSG:2180:9&TILEROW=120&TILECOL=88&I=10&J=511&INFOFORMAT=text/html';
+
+  it('asks a WMTS about one pixel of one tile of its own grid', async () => {
+    const calls = stubHops([ok('<html></html>', 'text/html')]);
+    await featureInfo('msTopo', query(TILE), lookup);
+    const url = new URL(calls[0]);
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      SERVICE: 'WMTS',
+      REQUEST: 'GetFeatureInfo',
+      VERSION: '1.0.0',
+      LAYER: 'MAPA TOPOGRAFICZNA',
+      STYLE: 'default',
+      FORMAT: 'image/jpeg',
+      TILEMATRIXSET: 'EPSG:2180',
+      TILEMATRIX: 'EPSG:2180:9',
+      TILEROW: '120',
+      TILECOL: '88',
+      I: '10',
+      J: '511',
+      INFOFORMAT: 'text/html',
+    });
+  });
+
+  it.each([
+    [TILE.replace('EPSG:2180:9', 'EPSG:2180:99'), 'Invalid TILEMATRIX'],
+    [TILE.replace('J=511', 'J=512'), 'Invalid TILEROW, TILECOL, I or J'],
+    [TILE.replace('TILEROW=120', 'TILEROW=x'), 'Invalid TILEROW, TILECOL, I or J'],
+    [TILE.replace('text/html', 'text/evil'), 'Invalid INFOFORMAT'],
+  ])('rejects a WMTS query %s with "%s"', async (q, message) => {
+    await expect(featureInfo('msTopo', query(q), lookup)).rejects.toThrow(message);
+  });
+
+  it('asks an ArcGIS service to identify the clicked point in its queryable layers', async () => {
+    const calls = stubHops([ok('{"results":[]}', 'application/json')]);
+    await featureInfo('msGleby', query('QUERY_LAYERS=2,0&BBOX=559950,419950,560050,420050&WIDTH=100&HEIGHT=100&I=50&J=50'), lookup);
+    const url = new URL(calls[0]);
+    expect(url.pathname).toBe('/gprest/services/MapaGlebowoRolnicza/MapServer/identify');
+    expect(url.searchParams.get('geometry')).toBe('560000.00,420000.00');
+    expect(url.searchParams.get('layers')).toBe('visible:2,0');
+    expect(url.searchParams.get('sr')).toBe('2180');
+    expect(url.searchParams.get('imageDisplay')).toBe('100,100,96');
+    await expect(featureInfo('msGleby', query('QUERY_LAYERS=1&BBOX=0,0,1,1&WIDTH=1&HEIGHT=1&I=0&J=0'), lookup)).rejects.toThrow('Invalid QUERY_LAYERS');
+  });
+});

@@ -1,5 +1,4 @@
 import type Map from 'ol/Map';
-import ImageWMS from 'ol/source/ImageWMS';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import Feature from 'ol/Feature';
@@ -47,12 +46,8 @@ export function attachFeatureInfo(map: Map, overlays: () => { def: Overlay; laye
 
     const s = useMapStore.getState();
     const scale = resolution / OGC_PIXEL;
-    // Only WMS answers GetFeatureInfo; tiles and ArcGIS maps are drawn without it.
     const targets = overlays()
-      .flatMap(({ def, layer }) => {
-        const source = layer.getSource();
-        return s.overlays.includes(def.id) && source instanceof ImageWMS ? [{ def, source }] : [];
-      })
+      .filter(({ def }) => s.overlays.includes(def.id))
       .map((o) => ({ ...o, layers: queryLayers(o.def, selectedSublayers(o.def, s.sublayers), scale) }))
       .filter((t) => t.layers.length > 0);
 
@@ -63,7 +58,7 @@ export function attachFeatureInfo(map: Map, overlays: () => { def: Overlay; laye
     if (s.panel === 'catalog' && window.innerWidth < 640) s.setPanel('none');
 
     for (const t of targets) {
-      fetchFeatureInfo(t.def, t.source, coordinate, resolution, t.layers, signal)
+      fetchFeatureInfo(t.def, t.layer, coordinate, resolution, t.layers, signal)
         .then((records) => info.resolve(coordinate, t.def.id, { status: 'done', records }))
         .catch((e: unknown) => {
           if (signal.aborted) return;

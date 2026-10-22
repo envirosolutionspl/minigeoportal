@@ -38,6 +38,8 @@ export interface WmtsMeta {
   layer?: string;
   format?: string;
   style?: string;
+  /** GetFeatureInfo formats; absent or empty when the service answers no point queries. */
+  infoFormats?: string[];
   matrixSet: {
     id: string;
     /** Top-left corner as [easting, northing]. */

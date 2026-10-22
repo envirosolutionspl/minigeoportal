@@ -1,11 +1,15 @@
-import type ImageWMS from 'ol/source/ImageWMS';
+import ImageWMS from 'ol/source/ImageWMS';
+import WMTS from 'ol/source/WMTS';
+import type WMTSTileGrid from 'ol/tilegrid/WMTS';
 import type { Overlay } from './registry';
-import { infoFormat, layerMeta } from './meta';
+import { infoFormat, layerMeta, restMeta, wmtsMeta } from './meta';
+import type { OverlayLayer } from './layers';
 
 /**
- * GetFeatureInfo through the backend proxy, and a parser that turns the many response
- * formats of GUGiK and local servers (HTML tables, HTML lists, Intergraph XML, MapServer
- * XML, GML) into plain label/value pairs. Upstream markup is never inserted into the page.
+ * Point queries through the backend proxy (WMS and WMTS GetFeatureInfo, ArcGIS identify), and
+ * a parser that turns the many response formats of GUGiK and local servers (HTML tables,
+ * Intergraph XML, MapServer XML, GML, ArcGIS JSON) into plain label/value pairs. Upstream
+ * markup is never inserted into the page.
  */
 
 export interface InfoField {
@@ -20,37 +24,90 @@ export interface InfoRecord {
 }
 
 /** Technical attributes that mean nothing to a non-specialist. */
-const HIDDEN = /^(id|fid|gid|objectid|shape|shape_length|shape_area|gdb_id|id_pg|geom|the_geom|geometry|kod qr|bbox)$/i;
+const HIDDEN = /^(id|fid|gid|objectid|esri_oid|sys_id|shape([._].*)?|gdb_id|id_pg|geom|geometria|the_geom|geometry|raster|kod qr|bbox)$/i;
+/**
+ * Fields of an ArcGIS mosaic of scanned sheets (topographic maps, aerial photos): pixel sizes,
+ * centres and who edited the record. The sheet name, series and date stay.
+ */
+const MOSAIC = /^(minps|maxps|lowps|highps|centerx|centery|category|tag|groupname|productname|zorder|edytowal|utworzyl|data_edycji|data_utworzenia)$/i;
+/** ArcGIS writes an empty attribute as the word Null. */
+const EMPTY = /^(null|<null>)?$/i;
 const SERVICE_ERROR = /ServiceException/;
 /** Local servers answer this way when they do not publish the layer: no data here, not a failure. */
 const NOT_PUBLISHED = /LayerNotDefined|Invalid layer|layer might be disabled/i;
 
-/** Queryable selected sublayers visible at the current scale; only those are sent. */
+/**
+ * Queryable selected sublayers visible at the current scale; only those are sent. A WMTS has one
+ * layer, queryable when the service lists GetFeatureInfo formats; an ArcGIS tile cache is drawn
+ * whole, so all its layers are asked about.
+ */
 export function queryLayers(def: Overlay, selected: string[], scale: number): string[] {
-  return selected.filter((name) => {
+  if (def.kind === 'wmts') return wmtsMeta(def.id)?.infoFormats?.length ? selected : [];
+  const cache = def.kind === 'rest' ? restMeta(def.id) : undefined;
+  return (cache?.tiles ? Object.keys(cache.layers) : selected).filter((name) => {
     const m = layerMeta(def.id, name);
-    if (!m) return true;
+    // Our own WMS are queried even before their capabilities are known.
+    if (!m) return def.kind === 'wms';
     return m.queryable && scale >= (m.minScale ?? 0) && scale <= (m.maxScale ?? Infinity);
+  });
+}
+
+/** WMTS answers in HTML tables like WMS; XML comes next, as GML needs more guessing. */
+const WMTS_FORMATS = ['text/html', 'text/xml', 'text/plain'];
+
+/** Parameters of the query for the clicked point, in the form the proxy checks for each kind. */
+function queryParams(def: Overlay, layer: OverlayLayer, coordinate: number[], resolution: number, layers: string[]): URLSearchParams | undefined {
+  const source = layer.getSource();
+  if (source instanceof ImageWMS) {
+    const url = source.getFeatureInfoUrl(coordinate, resolution, 'EPSG:2180', {
+      // Non-queryable layers in LAYERS make some servers reject the whole request.
+      LAYERS: layers.join(','),
+      QUERY_LAYERS: layers.join(','),
+      INFO_FORMAT: infoFormat(def.id),
+      FEATURE_COUNT: 10,
+    });
+    return url ? new URL(url).searchParams : undefined;
+  }
+  if (source instanceof WMTS) {
+    // The pixel of the tile under the point, at the level the map shows.
+    const grid = source.getTileGrid() as WMTSTileGrid;
+    const tile = grid.getTileCoordForCoordAndResolution(coordinate, resolution);
+    const extent = grid.getTileCoordExtent(tile);
+    const r = grid.getResolution(tile[0]);
+    const offered = wmtsMeta(def.id)?.infoFormats ?? [];
+    return new URLSearchParams({
+      TILEMATRIX: grid.getMatrixId(tile[0]),
+      TILECOL: String(tile[1]),
+      TILEROW: String(tile[2]),
+      I: String(Math.floor((coordinate[0] - extent[0]) / r)),
+      J: String(Math.floor((extent[3] - coordinate[1]) / r)),
+      INFOFORMAT: WMTS_FORMATS.find((f) => offered.includes(f)) ?? offered[0] ?? 'text/html',
+    });
+  }
+  // ArcGIS identify: the point in the middle of a 100-pixel window at the map's resolution.
+  const [x, y] = coordinate;
+  const half = 50 * resolution;
+  return new URLSearchParams({
+    QUERY_LAYERS: layers.join(','),
+    BBOX: [x - half, y - half, x + half, y + half].join(','),
+    WIDTH: '100',
+    HEIGHT: '100',
+    I: '50',
+    J: '50',
   });
 }
 
 export async function fetchFeatureInfo(
   def: Overlay,
-  source: ImageWMS,
+  layer: OverlayLayer,
   coordinate: number[],
   resolution: number,
   layers: string[],
   signal: AbortSignal,
 ): Promise<InfoRecord[]> {
-  const url = source.getFeatureInfoUrl(coordinate, resolution, 'EPSG:2180', {
-    // Non-queryable layers in LAYERS make some servers reject the whole request.
-    LAYERS: layers.join(','),
-    QUERY_LAYERS: layers.join(','),
-    INFO_FORMAT: infoFormat(def.id),
-    FEATURE_COUNT: 10,
-  });
-  if (!url) return [];
-  const res = await fetch(`/api/featureinfo/${def.id}?${new URL(url).searchParams.toString()}`, { signal });
+  const params = queryParams(def, layer, coordinate, resolution, layers);
+  if (!params) return [];
+  const res = await fetch(`/api/featureinfo/${encodeURIComponent(def.id)}?${params.toString()}`, { signal });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const body = await res.text();
   return parseFeatureInfo(body, res.headers.get('X-Upstream-Content-Type') ?? '');
@@ -80,6 +137,7 @@ function field(label: string, raw: string): InfoField | null {
   label = clean(label);
   if (!label || HIDDEN.test(label)) return null;
   label = LABELS[label] ?? label;
+  if (EMPTY.test(raw.trim())) return null;
   if (/<[a-z]/i.test(raw)) {
     const doc = parseHtmlFragment(raw);
     const link = doc.querySelector('a[href]');
@@ -98,12 +156,16 @@ function field(label: string, raw: string): InfoField | null {
 function cleanTitle(title: string | undefined): string | undefined {
   const t = clean(title)
     .replace(/^FeatureInfoCollection\s*-\s*layer name:\s*/i, '')
+    .replace(/^warstwa:\s*/i, '')
     .replace(/^['"]|['"]$/g, '');
   return t || undefined;
 }
 
 function push(records: InfoRecord[], title: string | undefined, fields: (InfoField | null)[]) {
-  const kept = fields.filter((f): f is InfoField => f !== null);
+  const all = fields.filter((f): f is InfoField => f !== null);
+  // Overview images of a mosaic are its own previews, not map sheets.
+  if (all.some((f) => /^category$/i.test(f.label) && f.value === 'Overview')) return;
+  const kept = all.filter((f) => !MOSAIC.test(f.label));
   if (kept.length > 0) records.push({ title: cleanTitle(title), fields: kept });
 }
 
@@ -183,8 +245,24 @@ export function parseFeatureInfo(body: string, contentType: string): InfoRecord[
   return unique(parseAny(body, contentType));
 }
 
+interface IdentifyResponse {
+  error?: unknown;
+  results?: { layerName?: string; attributes?: Record<string, unknown> }[];
+}
+
+/** ArcGIS identify: one record per feature, titled with its layer. */
+function parseIdentify(response: IdentifyResponse): InfoRecord[] {
+  if (response.error) throw new Error('Serwer odrzucił zapytanie');
+  const records: InfoRecord[] = [];
+  for (const r of response.results ?? []) {
+    push(records, r.layerName, Object.entries(r.attributes ?? {}).map(([label, value]) => field(label, String(value ?? ''))));
+  }
+  return records;
+}
+
 function parseAny(body: string, contentType: string): InfoRecord[] {
   if (!body.trim() || NOT_PUBLISHED.test(body)) return [];
+  if (/json/i.test(contentType) || body.trimStart().startsWith('{')) return parseIdentify(JSON.parse(body) as IdentifyResponse);
   if (SERVICE_ERROR.test(body)) throw new Error('Serwer odrzucił zapytanie');
   const xml = /xml|gml/i.test(contentType) || body.trimStart().startsWith('<?xml');
   if (xml) {

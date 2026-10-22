@@ -4,6 +4,8 @@ Niezależna, lekka aplikacja mapowa dla osób, które chcą szybko sprawdzić dz
 
 Projekt open source na licencji MIT, tworzony przez [EnviroSolutions](https://envirosolutions.pl).
 
+Aplikacja jest uniwersalna: wdrożenie to katalog plików konfiguracyjnych (układ współrzędnych, podkłady, warstwy, wyszukiwarka, języki, skórka, treści), a integracja z geoportal.gov.pl to opcjonalny moduł. Przykład bez usług GUGiK, na OpenStreetMap, jest w `examples/osm`. Dokumentacja po polsku i angielsku: [docs/](docs/README.md).
+
 ## Funkcje
 
 - Wyszukiwarka adresów, ulic, miejscowości, gmin, powiatów, województw i obiektów fizjograficznych (rzeki, jeziora, szczyty) oraz osobna wyszukiwarka działek z listami województw, powiatów, gmin i obrębów. Źródła: geokoder UUG, indeks pełnotekstowy geoportalu (miejscowości i obiekty z PRNG, miasta przed wsiami), listy PRG z cache serwera. Jednostki są pokazywane z obrysem z PRG (uogólnionym, kilkadziesiąt KB), a obiekty fizjograficzne jako punkty, bo PRNG nie ma ich obrysów: rzeka to szereg punktów wzdłuż biegu.
@@ -15,6 +17,7 @@ Projekt open source na licencji MIT, tworzony przez [EnviroSolutions](https://en
 - Wydruk w skali 1:500–1:2 500 000 na A4 lub A3 z tytułem, legendą i źródłami, także jako PDF przez okno drukowania przeglądarki. Obszar wydruku jest zaznaczony ramką na mapie, a legenda obejmuje tylko warstwy, które serwer narysuje w tej skali.
 - Kopiowanie linku do bieżącego widoku (środek, skala, podkład, włączone warstwy).
 - Formularz zgłaszania błędów wysyłany e-mailem do administratora.
+- Interfejs po polsku i angielsku, z przełącznikiem języka; kolejne języki dodaje się plikami w konfiguracji.
 - Dostępność WCAG 2.1 AA: obsługa klawiaturą, czytniki ekranu, tryb ciemny, ograniczenie ruchu, przełączniki wielkości tekstu i wysokiego kontrastu, deklaracja dostępności.
 
 ## Uruchomienie

@@ -1,6 +1,6 @@
 # Prosty Geoportal
 
-Roboczo: prostygeoportal.pl. Niezależna, lekka aplikacja mapowa dla osób, które chcą szybko sprawdzić działkę: granice, numer, przeznaczenie w planie, ceny w okolicy, uzbrojenie, ortofotomapę aktualną i archiwalną. Interfejs w stylu map konsumenckich, dane na żywo z usług GUGiK (geoportal.gov.pl).
+Niezależna, lekka aplikacja mapowa dla osób, które chcą szybko sprawdzić działkę: granice, numer, przeznaczenie w planie, ceny w okolicy, uzbrojenie, ortofotomapę aktualną i archiwalną. Interfejs w stylu map konsumenckich, dane na żywo z usług GUGiK (geoportal.gov.pl).
 
 Projekt open source na licencji MIT, tworzony przez [EnviroSolutions](https://envirosolutions.pl).
 

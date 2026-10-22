@@ -1,0 +1,53 @@
+# The application: name, author, languages, search and optional modules.
+# Every text can be one string or one string per language, e.g.
+#   name: { pl: Prosty Geoportal, en: Simple Geoportal }
+# Secrets (SMTP password and the like) never go here: they belong in environment variables.
+
+id: prostygeoportal # short id: prefix of browser storage, part of the server's User-Agent
+name: Prosty Geoportal
+title: 'Prosty Geoportal: działki, plany i ortofotomapa'
+description: Szybki i prosty podgląd danych z geoportal.gov.pl (GUGiK) – działki, plany miejscowe, ortofotomapa.
+domain: prostygeoportal.pl
+contact: office@envirosolutions.pl
+
+author:
+  name: EnviroSolutions
+  url: https://envirosolutions.pl
+
+locales:
+  default: pl
+  available: [pl]
+
+links:
+  # Where to send people when a layer cannot be shown here.
+  fallbackMap: https://mapy.geoportal.gov.pl/imap/Imgp_2.html
+
+report:
+  # Kinds of problems people can choose in the bug report form.
+  categories:
+    - id: mapa
+      label: Mapa lub warstwy
+    - id: wyszukiwanie
+      label: Wyszukiwanie
+    - id: dzialki
+      label: Działki i informacje o miejscu
+    - id: dostepnosc
+      label: Dostępność
+    - id: inne
+      label: Inne
+
+search:
+  # gugik: addresses, places, units and parcels from GUGiK services; nominatim: OpenStreetMap; none
+  provider: gugik
+  # The parcel search by voivodeship, county, municipality and precinct (needs the gugik module).
+  parcel: true
+
+modules:
+  # Integration with geoportal.gov.pl: its whole layer catalog, its drawing order,
+  # the orthophoto index and the parcel report. Other deployments leave it out.
+  gugik:
+    enabled: true
+    catalog: true
+    drawOrder: true
+    ortho: true
+    parcelReport: true

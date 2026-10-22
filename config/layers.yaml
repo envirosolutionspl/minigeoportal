@@ -1,0 +1,338 @@
+# Layers drawn over the base map: topics of the layer list, the layers, their drawing order.
+# A layer's sublayers are listed in the order the layer list shows them; `default: true` ones are
+# switched on with the layer. `catalogId` names the same layer in the geoportal.gov.pl catalog.
+# Time-capable layers get a `time` block (see docs): a TIME dimension or a series of editions.
+
+topics:
+  - id: dzialki
+    title: Działki i budynki
+  - id: planowanie
+    title: Planowanie
+  - id: ceny
+    title: Ceny
+  - id: uzbrojenie
+    title: Uzbrojenie i drogi
+  - id: granice
+    title: Granice i adresy
+  - id: teren
+    title: Teren i zdjęcia
+  - id: srodowisko
+    title: Środowisko
+  - id: zagrozenia
+    title: Zagrożenia
+  - id: zabytki
+    title: Zabytki i turystyka
+  - id: archiwalne
+    title: Archiwalne
+  - id: pobieranie
+    title: Dane do pobrania
+  - id: geodezja
+    title: Geodezja
+  - id: inne
+    title: Inne
+# Drawing order, lowest first: plans at the bottom, networks over them, parcels over both.
+drawOrder:
+  - suikzp
+  - kimpzp
+  - pog
+  - kibdot
+  - kiut
+  - kieg
+  - rcn
+  - kina
+  - prg
+overlays:
+  - id: kieg
+    kind: wms
+    url: https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow
+    title: Ewidencja gruntów i budynków
+    description: Działki, numery działek, budynki, obręby, użytki.
+    topic: dzialki
+    starter: true
+    catalogId: msKIEG
+    keywords:
+      - działki
+      - ewidencja
+      - egib
+      - granice
+      - numery
+      - budynki
+      - obręby
+      - użytki
+      - kontury
+      - klasy
+    sublayers:
+      - name: uzytki
+        title: Użytki gruntowe
+      - name: kontury
+        title: Kontury klasyfikacyjne
+      - name: obreby
+        title: Granice obrębów
+        default: true
+      - name: dzialki
+        title: Działki
+        default: true
+      - name: geoportal
+        title: Działki uzupełnione z LPIS
+      - name: budynki
+        title: Budynki
+        default: true
+      - name: numery_dzialek
+        title: Numery działek
+        default: true
+  - id: kimpzp
+    kind: wms
+    # `granice` and `plany` are left out: they redirect to municipal servers that reject browser requests.
+    url: https://mapy.geoportal.gov.pl/wss/ext/KrajowaIntegracjaMiejscowychPlanowZagospodarowaniaPrzestrzennego
+    title: Plany miejscowe (MPZP)
+    description: Miejscowe plany zagospodarowania przestrzennego.
+    topic: planowanie
+    starter: true
+    catalogId: msMPZP
+    opacity: 0.8
+    keywords:
+      - mpzp
+      - plan
+      - zagospodarowanie
+      - przeznaczenie
+      - budowa
+      - zabudowa
+    sublayers:
+      - name: raster
+        title: Plany rastrowe (skany rysunków)
+        default: true
+      - name: wektor-str
+        title: Strefy przeznaczenia
+        default: true
+      - name: wektor-pow
+        title: Obiekty powierzchniowe
+        default: true
+      - name: wektor-lin
+        title: Obiekty liniowe
+        default: true
+      - name: wektor-lzb
+        title: Linie zabudowy
+        default: true
+      - name: wektor-pkt
+        title: Obiekty punktowe
+        default: true
+  - id: pog
+    kind: wms
+    url: https://mapy.geoportal.gov.pl/wss/ext/PlanyOgolneGmin
+    title: Plany ogólne gmin (POG)
+    description: Strefy planistyczne z uchwalonych planów ogólnych.
+    topic: planowanie
+    starter: true
+    catalogId: msPlanyOgolneGmin
+    opacity: 0.8
+    keywords:
+      - pog
+      - plan ogólny
+      - strefy
+      - planistyczne
+    sublayers:
+      - name: aktPlanowaniaprzestrzennego
+        title: Zasięg planu ogólnego
+        default: true
+      - name: strefaPlanistyczna
+        title: Strefy planistyczne
+        default: true
+      - name: obszarUzupelnieniaZabudowy
+        title: Obszary uzupełnienia zabudowy
+        default: true
+      - name: obszarZabSrodmiejskiej
+        title: Obszary zabudowy śródmiejskiej
+        default: true
+  - id: rcn
+    kind: wms
+    url: https://mapy.geoportal.gov.pl/wss/service/rcn
+    title: Ceny transakcyjne (RCN)
+    description: Rejestr cen nieruchomości, tylko powiaty publikujące dane.
+    topic: ceny
+    starter: true
+    catalogId: msRejestrCenNieruchomosci
+    keywords:
+      - ceny
+      - rcn
+      - transakcje
+      - wartość
+      - sprzedaż
+      - mieszkania
+      - lokale
+    sublayers:
+      - name: powiaty
+        title: Powiaty z danymi
+        default: true
+      - name: dzialki
+        title: 'Transakcje: działki'
+        default: true
+      - name: budynki
+        title: 'Transakcje: budynki'
+        default: true
+      - name: lokale
+        title: 'Transakcje: lokale'
+        default: true
+  - id: kiut
+    kind: wms
+    url: https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaUzbrojeniaTerenu
+    title: Uzbrojenie terenu
+    description: 'Sieci: woda, kanalizacja, gaz, prąd, telekomunikacja, ciepło.'
+    topic: uzbrojenie
+    starter: true
+    catalogId: msKIUT
+    keywords:
+      - uzbrojenie
+      - gesut
+      - sieci
+      - przyłącze
+      - media
+    sublayers:
+      - name: gesut
+        title: Powiaty z danymi
+        default: true
+      - name: przewod_wodociagowy
+        title: Woda
+        default: true
+      - name: przewod_kanalizacyjny
+        title: Kanalizacja
+        default: true
+      - name: przewod_gazowy
+        title: Gaz
+        default: true
+      - name: przewod_elektroenergetyczny
+        title: Elektroenergetyka
+        default: true
+      - name: przewod_telekomunikacyjny
+        title: Telekomunikacja
+        default: true
+      - name: przewod_cieplowniczy
+        title: Ciepłownictwo
+        default: true
+      - name: przewod_specjalny
+        title: Sieć specjalna
+        default: true
+      - name: przewod_niezidentyfikowany
+        title: Sieci niezidentyfikowane
+        default: true
+      - name: przewod_urzadzenia
+        title: Urządzenia
+        default: true
+  - id: kibdot
+    kind: wms
+    url: https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaBazDanychObiektowTopograficznych
+    title: Obiekty topograficzne (BDOT500)
+    description: 'Szczegółowa mapa zasadnicza: budowle, ogrodzenia, chodniki, drogi, skarpy.'
+    topic: dzialki
+    starter: true
+    catalogId: msKIBDOT
+    keywords:
+      - bdot500
+      - mapa zasadnicza
+      - topografia
+      - ogrodzenia
+      - budowle
+      - chodniki
+      - drogi
+      - skarpy
+      - kibdot
+    sublayers:
+      - name: wdrozenia
+        title: Powiaty z danymi
+        default: true
+      - name: bdot
+        title: Obiekty topograficzne
+        default: true
+  - id: suikzp
+    kind: wms
+    url: https://mapy.geoportal.gov.pl/wss/ext/KrajowaIntegracjaStudiumKierunkowZagospodarowaniaPrzestrzennego
+    title: Studium zagospodarowania
+    description: Studium uwarunkowań i kierunków zagospodarowania gminy, gdzie nie ma planu.
+    topic: planowanie
+    starter: true
+    catalogId: msSUiKZP
+    opacity: 0.8
+    keywords:
+      - studium
+      - suikzp
+      - kierunki
+      - zagospodarowanie
+      - gmina
+      - przeznaczenie
+    sublayers:
+      - name: gminy
+        title: Gminy z danymi
+        default: true
+      - name: studium
+        title: Studium
+        default: true
+  - id: kina
+    kind: wms
+    url: https://mapy.geoportal.gov.pl/wss/ext/KrajowaIntegracjaNumeracjiAdresowej
+    title: Adresy i ulice
+    description: Punkty adresowe z numerami i osie ulic z gminnych ewidencji.
+    topic: granice
+    starter: true
+    catalogId: msAdresyUlice
+    keywords:
+      - adresy
+      - numery
+      - ulice
+      - emuia
+      - punkty adresowe
+      - kina
+    sublayers:
+      - name: A08_Ulice_Powierzchnie
+        title: 'Ulice: obszary'
+      - name: A08_Ulice_Linie
+        title: 'Ulice: osie'
+        default: true
+      - name: A07_Punkty_adresowe
+        title: Punkty adresowe
+        default: true
+  - id: prg
+    kind: wms
+    url: https://mapy.geoportal.gov.pl/wss/service/PZGIK/PRG/WMS/AdministrativeBoundaries
+    title: Granice administracyjne (PRG)
+    description: Granice województw, powiatów, gmin i obrębów, a także sądów, urzędów i nadleśnictw.
+    topic: granice
+    starter: true
+    catalogId: msPRG
+    keywords:
+      - granice
+      - prg
+      - gmina
+      - powiat
+      - województwo
+      - obręb
+      - jednostka
+      - sąd
+      - urząd skarbowy
+      - nadleśnictwo
+      - spis
+    sublayers:
+      - name: R01_Granice_rejonow_statystycznych
+        title: Rejony statystyczne
+      - name: U06_Nadlesnictwo
+        title: Nadleśnictwa
+      - name: U02_Urzad_skarbowy
+        title: Urzędy skarbowe
+      - name: S03_Sad_rejonowy
+        title: Sądy rejonowe
+      - name: A06_Granice_obrebow_ewidencyjnych
+        title: Obręby ewidencyjne
+      - name: A05_Granice_jednostek_ewidencyjnych
+        title: Jednostki ewidencyjne
+      - name: A04_Granice_miast
+        title: Miasta
+      - name: A03_Granice_gmin
+        title: Gminy
+        default: true
+      - name: A02_Granice_powiatow
+        title: Powiaty
+        default: true
+      - name: A01_Granice_wojewodztw
+        title: Województwa
+        default: true
+      - name: A00_Granice_panstwa
+        title: Granica państwa
+        default: true

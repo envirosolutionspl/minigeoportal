@@ -20,5 +20,5 @@
     },
     "types": ["vite/client", "node", "vitest/globals"]
   },
-  "include": ["src", "server", "scripts", "vite.config.ts", "vitest.config.ts"]
+  "include": ["src", "server", "shared", "scripts", "vite.config.ts", "vitest.config.ts"]
 }

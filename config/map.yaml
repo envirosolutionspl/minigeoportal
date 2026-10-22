@@ -1,0 +1,137 @@
+# The map: coordinate system, zoom levels, first view, base maps and their tile services.
+# Scales are denominators: 47247.1183 means 1:47 247.
+
+projection:
+  code: EPSG:2180
+  name: PL-1992 # how people know the system; shown on the coordinate bar and on prints
+  proj4: +proj=tmerc +lat_0=0 +lon_0=19 +k=0.9993 +x_0=500000 +y_0=-5300000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs
+  # neu: the EPSG definition orders axes northing, easting; WMS 1.3.0 follows it.
+  axisOrientation: neu
+  extent: [100000, 100000, 900000, 900000]
+
+zoom:
+  # The zoom levels of the map, from the GUGiK WMTS tile matrix set (it steps by 2.5 three times).
+  scales:
+    [
+      30238155.7143,
+      15119077.8571,
+      7559538.9286,
+      3779769.4643,
+      1889884.7321,
+      944942.3661,
+      472471.183,
+      236235.5915,
+      94494.2366,
+      47247.1183,
+      23623.5592,
+      9449.4237,
+      4724.7118,
+      1889.8847,
+      944.9424,
+      472.4712,
+      236.2356,
+    ]
+
+# Tile grid shared by every tile service below, used until their capabilities are cached.
+tileGrid:
+  origin: [100000, 850000]
+  tileSize: 512
+  matrixIdPrefix: 'EPSG:2180:'
+
+view:
+  center: [500000, 465000]
+  zoom: 3 # index into zoom.scales
+  # The whole country: first visit and the "whole area" button.
+  home: [170000, 130000, 870000, 800000]
+  homeLabel: Cała Polska
+  base: mapa
+  baseMobile: prosta # the simplified map loads fastest on mobile connections
+  overlays: [kieg]
+
+attribution: 'Dane: [GUGiK, geoportal.gov.pl](https://www.geoportal.gov.pl)'
+
+# WMTS services; firstLevel and levels say which of the zoom levels above each one publishes.
+tileServices:
+  - id: orto
+    kind: wmts
+    url: https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMTS/StandardResolution
+    layer: ORTOFOTOMAPA
+    format: image/jpeg
+    firstLevel: 0
+    levels: 17
+  - id: bdoo
+    kind: wmts
+    url: https://mapy.geoportal.gov.pl/wss/service/PZGIK/BDOO/WMTS/aktualne
+    layer: BDOO
+    format: image/png
+    firstLevel: 2
+    levels: 13
+  - id: bdot10k
+    kind: wmts
+    url: https://mapy.geoportal.gov.pl/wss/service/WMTS/guest/wmts/BDOT10k
+    layer: BDOT10k
+    format: image/png
+    firstLevel: 2
+    levels: 13
+  - id: relief
+    kind: wmts
+    url: https://mapy.geoportal.gov.pl/wss/service/PZGIK/NMT/GRID1/WMTS/HypsometryAndShadedRelief
+    layer: HipsoCien
+    format: image/jpeg
+    firstLevel: 2
+    levels: 13
+  - id: g2mobile
+    kind: wmts
+    url: https://mapy.geoportal.gov.pl/wss/service/WMTS/guest/wmts/G2_MOBILE_500
+    layer: G2_MOBILE_500
+    format: image/png
+    firstLevel: 0
+    levels: 16
+  - id: topo
+    kind: wmts
+    url: https://mapy.geoportal.gov.pl/wss/service/WMTS/guest/wmts/TOPO
+    layer: MAPA TOPOGRAFICZNA
+    format: image/jpeg
+    firstLevel: 2
+    levels: 13
+
+# Base maps as people see them: each is made of tile services that switch with scale.
+# BDOO is drawn above 1:70 000 and BDOT10k below, where neither has much detail.
+baseMaps:
+  - id: orto
+    title: Zdjęcia
+    description: Ortofotomapa
+    thumb: /thumbs/orto.jpg
+    sources:
+      - service: orto
+  - id: mapa
+    title: Mapa
+    description: Mapa ogólnogeograficzna BDOO, po przybliżeniu topograficzna BDOT10k
+    thumb: /thumbs/mapa.jpg
+    sources:
+      - service: bdoo
+        minScale: 70000
+      - service: bdot10k
+        maxScale: 70000
+  - id: teren
+    title: Teren
+    description: 'Rzeźba terenu: wysokości i cieniowanie z NMT'
+    thumb: /thumbs/teren.jpg
+    sources:
+      - service: relief
+  - id: prosta
+    title: Prosta
+    description: Uproszczona mapa, szybka na telefonie
+    thumb: /thumbs/prosta.jpg
+    sources:
+      - service: g2mobile
+  - id: skany
+    title: Skany
+    description: Skany map topograficznych
+    thumb: /thumbs/skany.jpg
+    sources:
+      - service: topo
+  - id: brak
+    title: Brak
+    description: Bez podkładu mapowego
+    sources: []

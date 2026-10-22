@@ -13,8 +13,8 @@
     "capabilities": "node --env-file-if-exists=.env server/refresh.ts",
     "typecheck": "tsc -b",
     "lint": "eslint .",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format": "prettier --write --ignore-path .gitignore --ignore-path .prettierignore --ignore-path .git/info/exclude .",
+    "format:check": "prettier --check --ignore-path .gitignore --ignore-path .prettierignore --ignore-path .git/info/exclude .",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm test",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -31,6 +31,8 @@
     "proj4": "^2.19.10",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "yaml": "2.9.1",
+    "zod": "4.6.7",
     "zustand": "^5.0.8"
   },
   "devDependencies": {

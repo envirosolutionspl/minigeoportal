@@ -9,7 +9,7 @@ import { scaleToResolution } from './projection';
 import { duration } from './motion';
 import { useMapStore, type FocusTarget } from '@/state/store';
 
-import { HIGHLIGHT } from './style';
+import { HIGHLIGHT, translucent } from './style';
 
 const ORANGE = HIGHLIGHT;
 const SHOW_MS = 3500;
@@ -23,7 +23,7 @@ const STYLE = [
   }),
   new Style({
     stroke: new Stroke({ color: ORANGE, width: 3.5 }),
-    fill: new Fill({ color: 'rgba(255,129,66,0.14)' }),
+    fill: new Fill({ color: translucent(ORANGE, 0.14) }),
     image: new Circle({ radius: 8, fill: new Fill({ color: ORANGE }) }),
   }),
 ];

@@ -11,13 +11,14 @@ import type { EventsKey } from 'ol/events';
 import { Circle, Fill, Stroke, Style } from 'ol/style';
 import { formatArea, formatLength } from './format';
 import { PROJECTION } from './projection';
+import { MEASURE, translucent } from './style';
 import { t } from '@/i18n';
 import { useMapStore } from '@/state/store';
 
-const ACCENT = '#466946';
+const ACCENT = MEASURE;
 
 const STYLE = new Style({
-  fill: new Fill({ color: 'rgba(70,105,70,0.15)' }),
+  fill: new Fill({ color: translucent(MEASURE, 0.15) }),
   stroke: new Stroke({ color: ACCENT, width: 3, lineDash: [8, 6] }),
   image: new Circle({ radius: 5, fill: new Fill({ color: '#ffffff' }), stroke: new Stroke({ color: ACCENT, width: 2 }) }),
 });

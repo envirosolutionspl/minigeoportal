@@ -17,6 +17,8 @@
   --muted: #59705b;
   --danger: #8a2c0d;
   --highlight: #ff8142;
+  /* Measured lines and areas on the map, the same in light and dark mode. */
+  --map-measure: #466946;
   --danger-soft: #fde8e0;
   --accent: #466946;
   --on-accent: #ffffff;

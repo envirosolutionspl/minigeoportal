@@ -3,7 +3,7 @@
 [![Testy i obraz](https://github.com/envirosolutionspl/minigeoportal/actions/workflows/image.yml/badge.svg?branch=main)](https://github.com/envirosolutionspl/minigeoportal/actions/workflows/image.yml)
 [![Obraz Dockera](https://img.shields.io/badge/ghcr.io-minigeoportal-2496ED?logo=docker&logoColor=white)](https://github.com/envirosolutionspl/minigeoportal/pkgs/container/minigeoportal)
 [![minigeoportal.pl](https://img.shields.io/website?url=https%3A%2F%2Fminigeoportal.pl&label=minigeoportal.pl)](https://minigeoportal.pl)
-[![Node.js](https://img.shields.io/github/package-json/engines/node/envirosolutionspl/minigeoportal?logo=nodedotjs&logoColor=white&label=node)](package.json)
+[![Node.js](https://img.shields.io/badge/node-%E2%89%A522.18-5FA04E?logo=nodedotjs&logoColor=white)](package.json)
 [![Licencja MIT](https://img.shields.io/github/license/envirosolutionspl/minigeoportal)](LICENSE)
 
 Lekka, szybka mapa internetowa dla publicznych usług mapowych, przeznaczona dla osób, które nie pracują z mapami zawodowo. Jedna aplikacja obsługuje dowolny zestaw usług: wdrożenie to katalog plików konfiguracyjnych (układ współrzędnych, podkłady, warstwy, wyszukiwarka, języki, skórka, treści), bez zmian w kodzie.

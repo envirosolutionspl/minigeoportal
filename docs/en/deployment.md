@@ -32,8 +32,10 @@ A fresh data directory starts with `seed/capabilities.json` of the configuration
 `compose.yaml` runs the whole service: Caddy in front (certificates, HTTP/2 and HTTP/3), several replicas of the app on a shared data volume and one updater that refreshes the data once a day.
 
 ```bash
-DOMAIN=example.org docker compose up -d --build
+DOMAIN=example.org docker compose up -d
+docker compose pull && docker compose up -d # update to a new image
 docker compose up -d --scale app=4 # more replicas
+docker compose up -d --build # built from this checkout instead of pulled
 ```
 
 - **Caddy** gets a certificate for `DOMAIN` by itself and answers on ports 80, 443 and 443/UDP (HTTP/3). It spreads visitors over the replicas and keeps each visitor with one replica, so the rate limits counted there apply to the visitor as a whole. Request bodies are limited to 64 KB.
@@ -42,11 +44,10 @@ docker compose up -d --scale app=4 # more replicas
 
 Your own configuration goes in by replacing the `./config` mount of `compose.yaml` with your directory. Mail settings and other secrets go into `.env` next to `compose.yaml`; it is optional.
 
-The image runs without root, needs no build tools at runtime and stops cleanly on SIGTERM. Built alone:
+The image is published by GitHub Actions as `ghcr.io/envirosolutionspl/minigeoportal` (tags `latest`, `sha-<commit>` and version numbers), for x86 and ARM servers. It is built only when something that goes into it changes; documentation alone builds nothing. The image runs without root, needs no build tools at runtime and stops cleanly on SIGTERM. Run alone:
 
 ```bash
-docker build -t minigeoportal .
-docker run -p 8787:8787 -v minigeoportal-data:/data minigeoportal
+docker run -p 8787:8787 -v minigeoportal-data:/data ghcr.io/envirosolutionspl/minigeoportal
 ```
 
 ## Environment variables

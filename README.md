@@ -161,15 +161,19 @@ Opis każdego pola: [docs/pl/konfiguracja.md](docs/pl/konfiguracja.md); treści 
 
 ### Docker Compose (zalecane)
 
-1. Na serwerze sklonuj repozytorium i umieść w nim katalog konfiguracji.
+Gotowy obraz publikuje GitHub Actions: `ghcr.io/envirosolutionspl/minigeoportal` (tagi `latest`, `sha-<commit>` i numery wersji), dla serwerów x86 i ARM. Obraz powstaje tylko wtedy, gdy zmienia się coś, co do niego trafia; zmiany w dokumentacji go nie przebudowują. Serwer niczego nie buduje, tylko pobiera obraz.
+
+1. Na serwerze sklonuj repozytorium (potrzebne są `compose.yaml`, `deploy/` i katalog konfiguracji) i umieść w nim swój katalog konfiguracji.
 2. W `compose.yaml` zamień montowany katalog `./config` na swój (w usługach `app` i `updater`): `- ./moja-mapa:/app/config:ro`.
 3. Utwórz `.env` obok `compose.yaml` (wzór: `.env.example`), co najmniej z ustawieniami poczty, jeśli formularz zgłoszeń ma działać.
 4. Uruchom:
 
 ```bash
-DOMAIN=mapa.example.org docker compose up -d --build
-docker compose up -d --scale app=3     # więcej replik aplikacji
-docker compose logs -f app             # logi
+DOMAIN=mapa.example.org docker compose up -d
+docker compose pull && docker compose up -d    # aktualizacja do nowego obrazu
+docker compose up -d --scale app=3             # więcej replik aplikacji
+docker compose logs -f app                     # logi
+docker compose up -d --build                   # obraz zbudowany z lokalnej kopii zamiast pobranego
 ```
 
 Co uruchamia `compose.yaml`:

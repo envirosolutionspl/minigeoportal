@@ -1,6 +1,8 @@
 # The app behind Caddy: automatic HTTPS, HTTP/2 and HTTP/3, several replicas of the app and one
-# updater that refreshes the shared data once a day. Start:
-#   DOMAIN=example.org docker compose up -d --build
+# updater that refreshes the shared data once a day. Start with the published image:
+#   DOMAIN=example.org docker compose up -d
+# Update: docker compose pull && docker compose up -d
+# Built from this checkout instead: docker compose up -d --build
 # More replicas: docker compose up -d --scale app=4
 # Own configuration: mount a directory with app.yaml, map.yaml and layers.yaml at /app/config
 # (see docs/), e.g. replace ./config below with ./my-config.
@@ -8,7 +10,7 @@
 services:
   app:
     build: .
-    image: minigeoportal
+    image: ghcr.io/envirosolutionspl/minigeoportal:latest
     init: true
     restart: unless-stopped
     environment:
@@ -25,7 +27,7 @@ services:
       replicas: 2
 
   updater:
-    image: minigeoportal
+    image: ghcr.io/envirosolutionspl/minigeoportal:latest
     init: true
     restart: unless-stopped
     environment:

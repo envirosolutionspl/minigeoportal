@@ -32,8 +32,10 @@ Nowy katalog danych zaczyna od `seed/capabilities.json` z katalogu konfiguracji,
 `compose.yaml` uruchamia cały serwis: Caddy na wejściu (certyfikaty, HTTP/2 i HTTP/3), kilka replik aplikacji na wspólnym wolumenie danych i jeden proces aktualizujący dane raz dziennie.
 
 ```bash
-DOMAIN=example.org docker compose up -d --build
+DOMAIN=example.org docker compose up -d
+docker compose pull && docker compose up -d # aktualizacja do nowego obrazu
 docker compose up -d --scale app=4 # więcej replik
+docker compose up -d --build # obraz zbudowany z lokalnej kopii zamiast pobranego
 ```
 
 - **Caddy** sam uzyskuje certyfikat dla `DOMAIN` i odpowiada na portach 80, 443 i 443/UDP (HTTP/3). Rozdziela odwiedzających między repliki i trzyma każdego przy jednej, więc liczone tam limity zapytań dotyczą odwiedzającego jako całości. Treść zapytań jest ograniczona do 64 KB.
@@ -42,11 +44,10 @@ docker compose up -d --scale app=4 # więcej replik
 
 Własną konfigurację podłącza się, zastępując w `compose.yaml` montowany katalog `./config` swoim. Ustawienia poczty i inne sekrety trafiają do `.env` obok `compose.yaml`; plik jest opcjonalny.
 
-Obraz działa bez uprawnień roota, nie potrzebuje w działaniu narzędzi do budowania i poprawnie kończy pracę na SIGTERM. Samodzielnie:
+Obraz publikuje GitHub Actions jako `ghcr.io/envirosolutionspl/minigeoportal` (tagi `latest`, `sha-<commit>` i numery wersji), dla serwerów x86 i ARM. Powstaje tylko wtedy, gdy zmienia się coś, co do niego trafia; zmiany w dokumentacji go nie przebudowują. Obraz działa bez uprawnień roota, nie potrzebuje w działaniu narzędzi do budowania i poprawnie kończy pracę na SIGTERM. Samodzielnie:
 
 ```bash
-docker build -t minigeoportal .
-docker run -p 8787:8787 -v minigeoportal-data:/data minigeoportal
+docker run -p 8787:8787 -v minigeoportal-data:/data ghcr.io/envirosolutionspl/minigeoportal
 ```
 
 ## Zmienne środowiskowe

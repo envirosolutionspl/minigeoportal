@@ -32,7 +32,7 @@ const WHY: Record<Exclude<CatalogStatus, 'ok'> | 'degraded', string> = {
   token: 'Usługa wymaga tokenu, który GUGiK wydaje tylko aplikacji geoportal.gov.pl.',
   refused: 'Serwer tej usługi odrzuca zapytania spoza geoportal.gov.pl.',
   down: 'Serwer usługi nie odpowiadał przy ostatnim sprawdzeniu. Sprawdzimy go ponownie przy kolejnym odświeżeniu listy warstw.',
-  unsupported: 'Usługa nie podaje mapy w układzie PL-1992 (EPSG:2180), a tylko w nim rysujemy, żeby mapa była szybka.',
+  unsupported: `Usługa nie podaje mapy w układzie ${config.map.projection.name} (${config.map.projection.code}), a tylko w nim rysujemy, żeby mapa była szybka.`,
   degraded: 'Usługa kieruje do serwera powiatu lub gminy, który w tym miejscu nie odpowiada albo odrzuca zapytania.',
 };
 

@@ -4,7 +4,7 @@ import View from 'ol/View';
 import { defaults as defaultControls, MousePosition, ScaleLine, ZoomToExtent } from 'ol/control';
 import { defaults as defaultInteractions } from 'ol/interaction/defaults';
 import { duration } from './motion';
-import { EPSG2180, GUGIK_RESOLUTIONS, OGC_PIXEL, POLAND_EXTENT } from './projection';
+import { HOME_EXTENT, PROJECTION, RESOLUTIONS, resolutionToScale, scaleToResolution } from './projection';
 import { config, selectedSublayers, tileServiceById, type Overlay } from '@/config/runtime';
 import { loadCatalogLayer, overlayDef, useCatalog } from '@/services/catalog';
 import { createOverlayLayer, createTileLayer, resolutionRange, showSublayers, type OverlayLayer } from '@/services/layers';
@@ -30,8 +30,8 @@ export function MapView() {
         const service = tileServiceById.get(src.service);
         if (!service) return [];
         const layer = createTileLayer(service, {
-          minResolution: src.minScale !== undefined ? src.minScale * OGC_PIXEL : undefined,
-          maxResolution: src.maxScale !== undefined ? src.maxScale * OGC_PIXEL : undefined,
+          minResolution: src.minScale !== undefined ? scaleToResolution(src.minScale) : undefined,
+          maxResolution: src.maxScale !== undefined ? scaleToResolution(src.maxScale) : undefined,
         });
         return [{ def, layer }];
       }),
@@ -44,11 +44,11 @@ export function MapView() {
     const overlays = new globalThis.Map<string, { def: Overlay; layer: OverlayLayer }>();
 
     const view = new View({
-      projection: EPSG2180,
-      resolutions: GUGIK_RESOLUTIONS,
+      projection: PROJECTION,
+      resolutions: RESOLUTIONS,
       center,
       zoom,
-      extent: EPSG2180.getExtent(),
+      extent: config.map.projection.extent,
       constrainOnlyCenter: true,
     });
 
@@ -64,19 +64,19 @@ export function MapView() {
         zoomOptions: { duration: duration(250), zoomInTipLabel: 'Przybliż', zoomOutTipLabel: 'Oddal' },
       }).extend([
         new ScaleLine({ units: 'metric' }),
-        new ZoomToExtent({ extent: POLAND_EXTENT, label: wholeCountryIcon(), tipLabel: 'Cała Polska' }),
+        new ZoomToExtent({ extent: HOME_EXTENT, label: wholeCountryIcon(), tipLabel: config.map.view.homeLabel }),
         // The scale, and beside it the cursor position (with a mouse only), in the bottom bar.
         status,
         new MousePosition({
           target: status.positionTarget,
-          projection: EPSG2180,
+          projection: PROJECTION,
           coordinateFormat: (c) => (c ? coordinateBar(c) : ''),
           placeholder: '',
         }),
       ]),
     });
 
-    if (!hasInitialView) view.fit(POLAND_EXTENT, { padding: [24, 24, 24, 24] });
+    if (!hasInitialView) view.fit(HOME_EXTENT, { padding: [24, 24, 24, 24] });
 
     let alive = true;
     /** The layer of an overlay, made now if its definition is known; catalog layers load first. */
@@ -133,7 +133,7 @@ export function MapView() {
       const c = view.getCenter();
       const z = view.getZoom();
       const r = view.getResolution();
-      if (c && z !== undefined && r !== undefined) setView([c[0], c[1]], z, r / OGC_PIXEL);
+      if (c && z !== undefined && r !== undefined) setView([c[0], c[1]], z, resolutionToScale(r));
     });
 
     const detachFeatureInfo = attachFeatureInfo(map, () => [...overlays.values()]);

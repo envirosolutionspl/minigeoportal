@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { config, overlayById, selectedSublayers } from '@/config/runtime';
 import { CATALOG_ID, overlayDef } from '@/services/catalog';
-import { POLAND_EXTENT } from '@/map/projection';
+import { HOME_EXTENT } from '@/map/projection';
 import { readUrl, writeUrl } from './url';
 import type { PrintOptions } from '@/map/print';
 
@@ -61,7 +61,7 @@ interface MapStore {
   setPanel(panel: Panel): void;
   focusOn(target: Omit<FocusTarget, 'seq'>): void;
   clearFocus(): void;
-  /** Whole country, as on first opening. */
+  /** The whole area, as on first opening. */
   goHome(): void;
   /** Zooms at the current centre to the given scale denominator, e.g. where a layer becomes visible. */
   zoomToScale(scale: number): void;
@@ -123,7 +123,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
   setPanel: (panel) => set({ panel }),
   focusOn: (target) => set({ focus: { ...target, seq: (get().focus?.seq ?? 0) + 1 } }),
   clearFocus: () => set({ focus: null }),
-  goHome: () => get().focusOn({ extent: POLAND_EXTENT, zoom: 0 }),
+  goHome: () => get().focusOn({ extent: HOME_EXTENT, zoom: 0 }),
   zoomToScale: (scale) => get().focusOn({ scale, zoom: 0 }),
   setTool: (tool) => set({ tool }),
   clearMeasurements: () => set((s) => ({ measureClears: s.measureClears + 1, measureResult: '' })),

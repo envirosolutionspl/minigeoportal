@@ -81,7 +81,9 @@ export const mapSchema = z.strictObject({
       .min(2)
       .refine((s) => s.every((v, i) => i === 0 || v < s[i - 1]), 'scales go from the largest denominator to the smallest'),
   }),
-  tileGrid: z.strictObject({ origin: point, tileSize: z.int().positive(), matrixIdPrefix: z.string() }).optional(),
+  tileGrid: z
+    .strictObject({ origin: point, tileSize: z.int().positive(), matrixSet: z.string().min(1), matrixIdPrefix: z.string() })
+    .optional(),
   view: z.strictObject({
     center: point,
     zoom: z.number().min(0),
@@ -94,15 +96,23 @@ export const mapSchema = z.strictObject({
   attribution: text,
   tileServices: z
     .array(
-      z.strictObject({
-        id,
-        kind: z.literal('wmts'),
-        url,
-        layer: z.string().min(1),
-        format: z.string().regex(/^image\//),
-        firstLevel: z.int().min(0),
-        levels: z.int().positive(),
-      }),
+      z.discriminatedUnion('kind', [
+        z.strictObject({
+          id,
+          kind: z.literal('wmts'),
+          url,
+          layer: z.string().min(1),
+          format: z.string().regex(/^image\//),
+          firstLevel: z.int().min(0),
+          levels: z.int().positive(),
+        }),
+        z.strictObject({
+          id,
+          kind: z.literal('xyz'),
+          url: url.refine((u) => ['{z}', '{x}', '{y}'].every((p) => decodeURI(u).includes(p)), 'an address with {z}, {x} and {y}'),
+          maxZoom: z.int().min(0).optional(),
+        }),
+      ]),
     )
     .default([]),
   baseMaps: z

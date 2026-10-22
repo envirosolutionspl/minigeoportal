@@ -118,11 +118,12 @@ function crossCheck(
     }
     if (m.view.zoom > m.zoom.scales.length - 1)
       problems.push(`${at(map, 'map.yaml', ['view', 'zoom'])} view.zoom: there are only ${m.zoom.scales.length} zoom levels`);
-    for (const s of m.tileServices) {
-      if (s.firstLevel + s.levels > m.zoom.scales.length) {
-        problems.push(`${at(map, 'map.yaml', ['tileServices'])} tile service "${s.id}" goes past the last zoom level`);
-      }
-    }
+    m.tileServices.forEach((s, i) => {
+      if (s.kind !== 'wmts') return;
+      if (s.firstLevel + s.levels > m.zoom.scales.length)
+        problems.push(`${at(map, 'map.yaml', ['tileServices', i])} tile service "${s.id}" goes past the last zoom level`);
+      if (!m.tileGrid) problems.push(`${at(map, 'map.yaml', ['tileServices', i])} WMTS service "${s.id}" needs map.yaml tileGrid`);
+    });
   }
 
   if (layers.value) {
@@ -148,6 +149,9 @@ function crossCheck(
       problems.push(`${at(app, 'app.yaml', ['locales', 'default'])} locales.default must be one of locales.available`);
     }
     const gugik = a.modules.gugik?.enabled === true;
+    // GUGiK services, the parcel search and the photo index all work in PL-1992.
+    if (gugik && map.value && map.value.projection.code !== 'EPSG:2180')
+      problems.push(`${at(app, 'app.yaml', ['modules', 'gugik'])} modules.gugik needs map.yaml projection EPSG:2180`);
     if (a.search.provider === 'gugik' && !gugik)
       problems.push(`${at(app, 'app.yaml', ['search', 'provider'])} search.provider gugik needs modules.gugik.enabled`);
     if (a.search.parcel && !gugik) problems.push(`${at(app, 'app.yaml', ['search', 'parcel'])} search.parcel needs modules.gugik.enabled`);

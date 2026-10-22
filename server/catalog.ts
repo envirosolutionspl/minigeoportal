@@ -4,7 +4,7 @@ import type { Overlay } from '../shared/config.ts';
 import type { CatalogEntry, CatalogIndex, CatalogMeta, CatalogStatus } from '../src/services/catalogTypes.ts';
 import { catalogSublayers } from '../src/services/catalogSublayers.ts';
 import { normalize } from '../src/services/text.ts';
-import { arcgisCapabilities, wmsCapabilities, wmtsCapabilities } from './capabilities.ts';
+import { PL1992, serviceCapabilities } from './capabilities.ts';
 import { fetchGeoportalConfig, type ConfigService, type GeoportalConfig } from './geoportalConfig.ts';
 import { dataPath, errorMessage } from './config.ts';
 
@@ -192,8 +192,7 @@ export function failureStatus(error: unknown): { status: CatalogStatus; detail: 
   return { status: 'down', detail: code ?? message.slice(0, 120) };
 }
 
-const capabilities = (e: Pick<CatalogEntry, 'kind' | 'url' | 'layer'>): Promise<CatalogMeta> =>
-  e.kind === 'wms' ? wmsCapabilities(e.url) : e.kind === 'wmts' ? wmtsCapabilities(e.url, e.layer) : arcgisCapabilities(e.url);
+const capabilities = (e: Pick<CatalogEntry, 'kind' | 'url' | 'layer'>): Promise<CatalogMeta> => serviceCapabilities(e, PL1992);
 
 async function checkService(
   e: Pick<CatalogEntry, 'kind' | 'url' | 'layer'>,

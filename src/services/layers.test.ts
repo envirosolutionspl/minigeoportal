@@ -4,7 +4,7 @@ import WMTS from 'ol/source/WMTS';
 import XYZ from 'ol/source/XYZ';
 import ImageWMS from 'ol/source/ImageWMS';
 import ImageArcGISRest from 'ol/source/ImageArcGISRest';
-import { EPSG2180, GUGIK_RESOLUTIONS, OGC_PIXEL } from '@/map/projection';
+import { PROJECTION, RESOLUTIONS, OGC_PIXEL } from '@/map/projection';
 import { config, overlayById, tileServiceById } from '@/config/runtime';
 import { createOverlayLayer, createTileLayer, resolutionRange, showSublayers } from './layers';
 import { registerMeta } from './meta';
@@ -14,7 +14,7 @@ describe('createTileLayer', () => {
   it('uses the shared GUGiK grid without a cache and the cached matrices with it', async () => {
     const bdot = tileServiceById.get('bdot10k')!;
     const fallback = createTileLayer(bdot).getSource()!.getTileGrid() as WMTSTileGrid;
-    expect(fallback.getResolutions()).toEqual(GUGIK_RESOLUTIONS.slice(2, 15));
+    expect(fallback.getResolutions()).toEqual(RESOLUTIONS.slice(2, 15));
     expect(fallback.getMatrixIds()[0]).toBe('EPSG:2180:0');
 
     await withCapabilities();
@@ -23,6 +23,13 @@ describe('createTileLayer', () => {
     expect(grid.getResolution(1)).toBeCloseTo(15119077.8571 * OGC_PIXEL, 3);
     // Matrix sizes limit which tiles the map asks for: one tile at level 0.
     expect(grid.getFullTileRange(0)!.getWidth()).toBe(1);
+  });
+
+  it('draws XYZ tiles on the standard grid of the map projection', () => {
+    const source = createTileLayer({ id: 'osm', kind: 'xyz', url: 'https://tile.example/{z}/{x}/{y}.png', maxZoom: 18 }).getSource()!;
+    expect(source).toBeInstanceOf(XYZ);
+    expect(source.getProjection()).toBe(PROJECTION);
+    expect(source.getTileGrid()!.getMaxZoom()).toBe(18);
   });
 
   it('draws only in the given resolution range', () => {
@@ -82,7 +89,7 @@ describe('createOverlayLayer', () => {
       url: 'https://gugik.example/MapServer/',
       sublayers: [],
     }).getSource() as XYZ;
-    expect(cache.getTileUrlFunction()([1, 2, 3], 1, EPSG2180)).toBe('https://gugik.example/MapServer/tile/1/3/2');
+    expect(cache.getTileUrlFunction()([1, 2, 3], 1, PROJECTION)).toBe('https://gugik.example/MapServer/tile/1/3/2');
 
     registerMeta('msGleby', { kind: 'rest', fetchedAt: 'x', title: 'Gleby', layers: { '2': { title: 'Kontury', queryable: false } } });
     const gleby = createOverlayLayer({ ...base, id: 'msGleby', kind: 'rest', url: 'https://gugik.example/gleby/MapServer', sublayers: [] });

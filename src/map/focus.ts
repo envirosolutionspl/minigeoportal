@@ -5,7 +5,7 @@ import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import WKT from 'ol/format/WKT';
 import { Circle, Fill, Stroke, Style } from 'ol/style';
-import { OGC_PIXEL } from './projection';
+import { scaleToResolution } from './projection';
 import { duration } from './motion';
 import { useMapStore, type FocusTarget } from '@/state/store';
 
@@ -65,7 +65,7 @@ export function attachFocus(map: Map): () => void {
       return;
     }
     if (target.scale) {
-      view.animate({ resolution: target.scale * OGC_PIXEL, duration: duration(500) });
+      view.animate({ resolution: scaleToResolution(target.scale), duration: duration(500) });
       return;
     }
     stop();

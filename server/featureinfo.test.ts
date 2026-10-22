@@ -4,6 +4,8 @@ vi.mock('node:dns/promises', () => ({ lookup: vi.fn() }));
 import { lookup } from 'node:dns/promises';
 import { featureInfo, overlayTarget } from './featureinfo.ts';
 import { defaults } from './testSite.ts';
+
+const CRS = 'EPSG:2180';
 import { RequestError } from './http.ts';
 
 /** The configured overlays, as the app looks them up. */
@@ -49,13 +51,13 @@ describe('featureInfo validation', () => {
     ['kieg', VALID.replace('text/xml', 'text/evil'), 'Invalid INFO_FORMAT'],
   ])('rejects %s?%s with "%s"', async (service, q, message) => {
     stubHops([]);
-    await expect(featureInfo(service, query(q), own)).rejects.toThrow(new RequestError(message));
+    await expect(featureInfo(service, query(q), own, CRS)).rejects.toThrow(new RequestError(message));
     expect(fetch).not.toHaveBeenCalled();
   });
 
   it('rebuilds the upstream request from validated values only', async () => {
     const calls = stubHops([ok('<x/>')]);
-    await featureInfo('kieg', query(`${VALID}&FEATURE_COUNT=99999&REQUEST=GetMap&SERVICE=WFS&EXTRA=1`), own);
+    await featureInfo('kieg', query(`${VALID}&FEATURE_COUNT=99999&REQUEST=GetMap&SERVICE=WFS&EXTRA=1`), own, CRS);
     const url = new URL(calls[0]);
     expect(url.origin + url.pathname).toBe(KIEG);
     expect(url.searchParams.get('REQUEST')).toBe('GetFeatureInfo');
@@ -70,18 +72,18 @@ describe('featureInfo validation', () => {
     const calls = stubHops([ok('<x/>')]);
     const find = (id: string) =>
       id === 'msSiatka' ? { url: 'https://wms02.example/cgi-bin/mapserv?map=/srv/siatka92.map', layers: new Set(['dzialki']) } : undefined;
-    await featureInfo('msSiatka', query(VALID), find);
+    await featureInfo('msSiatka', query(VALID), find, CRS);
     const url = new URL(calls[0]);
     expect(url.searchParams.get('map')).toBe('/srv/siatka92.map');
     expect(url.searchParams.get('REQUEST')).toBe('GetFeatureInfo');
-    await expect(featureInfo('msOther', query(VALID), find)).rejects.toThrow(new RequestError('Unknown service'));
+    await expect(featureInfo('msOther', query(VALID), find, CRS)).rejects.toThrow(new RequestError('Unknown service'));
   });
 
   it('never contacts a catalog address in a private network', async () => {
     const calls = stubHops([ok('secret')]);
     vi.mocked(lookup).mockResolvedValue([{ address: '192.168.1.10', family: 4 }] as never);
     const find = () => ({ url: 'https://router.example/wms', layers: new Set(['dzialki']) });
-    await expect(featureInfo('msRouter', query(VALID), find)).rejects.toThrow('Address not allowed');
+    await expect(featureInfo('msRouter', query(VALID), find, CRS)).rejects.toThrow('Address not allowed');
     expect(calls).toHaveLength(0);
   });
 });
@@ -94,7 +96,7 @@ describe('featureInfo redirects', () => {
       redirect('https://powiat-otwocki.geoportal2.pl/map/wmse.php?b=2'),
       ok('<?xml version="1.0"?><F/>', 'text/xml; charset=utf-8'),
     ]);
-    const result = await featureInfo('kieg', query(VALID), own);
+    const result = await featureInfo('kieg', query(VALID), own, CRS);
     expect(calls).toHaveLength(3);
     expect(calls[2]).toContain('powiat-otwocki.geoportal2.pl');
     expect(result).toEqual({ contentType: 'text/xml', body: '<?xml version="1.0"?><F/>' });
@@ -104,27 +106,27 @@ describe('featureInfo redirects', () => {
     vi.mocked(lookup).mockImplementation((async (host: string) =>
       host === 'internal.example' ? [{ address: '10.0.0.5', family: 4 }] : [{ address: '93.184.216.34', family: 4 }]) as never);
     const calls = stubHops([redirect('https://internal.example/admin'), ok('secret')]);
-    await expect(featureInfo('kieg', query(VALID), own)).rejects.toThrow(/Redirect chain rejected/);
+    await expect(featureInfo('kieg', query(VALID), own, CRS)).rejects.toThrow(/Redirect chain rejected/);
     expect(calls).toHaveLength(1);
   });
 
   it.each(['ftp://x.example/', 'https://x.example:8000/', 'file:///etc/passwd'])('stops at %s', async (location) => {
     vi.mocked(lookup).mockResolvedValue([{ address: '93.184.216.34', family: 4 }] as never);
     const calls = stubHops([redirect(location), ok('x')]);
-    await expect(featureInfo('kieg', query(VALID), own)).rejects.toThrow(/Redirect chain rejected/);
+    await expect(featureInfo('kieg', query(VALID), own, CRS)).rejects.toThrow(/Redirect chain rejected/);
     expect(calls).toHaveLength(1);
   });
 
   it('gives up after too many redirects', async () => {
     vi.mocked(lookup).mockResolvedValue([{ address: '93.184.216.34', family: 4 }] as never);
     const calls = stubHops(Array.from({ length: 8 }, (_, i) => redirect(`https://h${i}.example/`)));
-    await expect(featureInfo('kieg', query(VALID), own)).rejects.toThrow(/Too many redirects/);
+    await expect(featureInfo('kieg', query(VALID), own, CRS)).rejects.toThrow(/Too many redirects/);
     expect(calls).toHaveLength(6);
   });
 
   it('reports upstream errors without exposing the body', async () => {
     stubHops([() => new Response('internal details', { status: 500 })]);
-    await expect(featureInfo('kieg', query(VALID), own)).rejects.toThrow('Upstream HTTP 500');
+    await expect(featureInfo('kieg', query(VALID), own, CRS)).rejects.toThrow('Upstream HTTP 500');
   });
 
   it('ends the upstream request when the client goes away', async () => {
@@ -137,7 +139,7 @@ describe('featureInfo redirects', () => {
       }),
     );
     const client = new AbortController();
-    await featureInfo('kieg', query(VALID), own, client.signal);
+    await featureInfo('kieg', query(VALID), own, CRS, client.signal);
     expect(seen?.aborted).toBe(false);
     client.abort();
     expect(seen?.aborted).toBe(true);
@@ -146,9 +148,9 @@ describe('featureInfo redirects', () => {
   it('decodes the declared charset and falls back to utf-8 for an unknown one', async () => {
     const latin2 = new Uint8Array([0xb3, 0xb1]); // "łą" in ISO-8859-2
     stubHops([() => new Response(latin2, { headers: { 'content-type': 'text/html; charset=ISO-8859-2' } })]);
-    expect((await featureInfo('kieg', query(VALID), own)).body).toBe('łą');
+    expect((await featureInfo('kieg', query(VALID), own, CRS)).body).toBe('łą');
     stubHops([() => new Response('plain', { headers: { 'content-type': 'text/html; charset=x-unknown' } })]);
-    expect((await featureInfo('kieg', query(VALID), own)).body).toBe('plain');
+    expect((await featureInfo('kieg', query(VALID), own, CRS)).body).toBe('plain');
   });
 });
 
@@ -177,7 +179,7 @@ describe('WMTS and ArcGIS queries', () => {
 
   it('asks a WMTS about one pixel of one tile of its own grid', async () => {
     const calls = stubHops([ok('<html></html>', 'text/html')]);
-    await featureInfo('msTopo', query(TILE), lookup);
+    await featureInfo('msTopo', query(TILE), lookup, CRS);
     const url = new URL(calls[0]);
     expect(Object.fromEntries(url.searchParams)).toEqual({
       SERVICE: 'WMTS',
@@ -202,19 +204,19 @@ describe('WMTS and ArcGIS queries', () => {
     [TILE.replace('TILEROW=120', 'TILEROW=x'), 'Invalid TILEROW, TILECOL, I or J'],
     [TILE.replace('text/html', 'text/evil'), 'Invalid INFOFORMAT'],
   ])('rejects a WMTS query %s with "%s"', async (q, message) => {
-    await expect(featureInfo('msTopo', query(q), lookup)).rejects.toThrow(message);
+    await expect(featureInfo('msTopo', query(q), lookup, CRS)).rejects.toThrow(message);
   });
 
   it('asks an ArcGIS service to identify the clicked point in its queryable layers', async () => {
     const calls = stubHops([ok('{"results":[]}', 'application/json')]);
-    await featureInfo('msGleby', query('QUERY_LAYERS=2,0&BBOX=559950,419950,560050,420050&WIDTH=100&HEIGHT=100&I=50&J=50'), lookup);
+    await featureInfo('msGleby', query('QUERY_LAYERS=2,0&BBOX=559950,419950,560050,420050&WIDTH=100&HEIGHT=100&I=50&J=50'), lookup, CRS);
     const url = new URL(calls[0]);
     expect(url.pathname).toBe('/gprest/services/MapaGlebowoRolnicza/MapServer/identify');
     expect(url.searchParams.get('geometry')).toBe('560000.00,420000.00');
     expect(url.searchParams.get('layers')).toBe('visible:2,0');
     expect(url.searchParams.get('sr')).toBe('2180');
     expect(url.searchParams.get('imageDisplay')).toBe('100,100,96');
-    await expect(featureInfo('msGleby', query('QUERY_LAYERS=1&BBOX=0,0,1,1&WIDTH=1&HEIGHT=1&I=0&J=0'), lookup)).rejects.toThrow(
+    await expect(featureInfo('msGleby', query('QUERY_LAYERS=1&BBOX=0,0,1,1&WIDTH=1&HEIGHT=1&I=0&J=0'), lookup, CRS)).rejects.toThrow(
       'Invalid QUERY_LAYERS',
     );
   });

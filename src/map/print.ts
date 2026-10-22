@@ -1,7 +1,7 @@
 import type Map from 'ol/Map';
 import { unByKey } from 'ol/Observable';
 import { containsExtent, type Extent } from 'ol/extent';
-import { OGC_PIXEL } from './projection';
+import { resolutionToScale } from './projection';
 import { duration } from './motion';
 import { useMapStore } from '@/state/store';
 
@@ -77,7 +77,8 @@ export function printExtent([x, y]: number[], options: Pick<PrintOptions, 'paper
  * print has smaller ones, so 1:10 000 on paper reads as about 1:6000; layers switch on and off
  * by this number, which decides what the legend lists.
  */
-export const serverScale = (options: Pick<PrintOptions, 'paper' | 'orientation' | 'scale'>) => printLayout(options).resolution / OGC_PIXEL;
+export const serverScale = (options: Pick<PrintOptions, 'paper' | 'orientation' | 'scale'>) =>
+  resolutionToScale(printLayout(options).resolution);
 
 /** The print scale closest to the screen scale; 1:10 000 before the map has reported one. */
 export function nearestPrintScale(scale: number): number {

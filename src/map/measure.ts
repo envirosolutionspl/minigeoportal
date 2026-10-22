@@ -10,6 +10,7 @@ import { unByKey } from 'ol/Observable';
 import type { EventsKey } from 'ol/events';
 import { Circle, Fill, Stroke, Style } from 'ol/style';
 import { formatArea, formatLength } from './format';
+import { PROJECTION } from './projection';
 import { useMapStore } from '@/state/store';
 
 const ACCENT = '#466946';
@@ -20,14 +21,14 @@ const STYLE = new Style({
   image: new Circle({ radius: 5, fill: new Fill({ color: '#ffffff' }), stroke: new Stroke({ color: ACCENT, width: 2 }) }),
 });
 
-/** Geodesic measurement on the ellipsoid, so results do not depend on PL-1992 scale distortion. */
+/** Geodesic measurement on the ellipsoid, so results do not depend on the scale distortion of the map's projection. */
 export function measure(geometry: Geometry): string | undefined {
   if (geometry instanceof Polygon) {
-    const area = getArea(geometry, { projection: 'EPSG:2180' });
-    const perimeter = getLength(new LineString(geometry.getLinearRing(0)!.getCoordinates()), { projection: 'EPSG:2180' });
+    const area = getArea(geometry, { projection: PROJECTION });
+    const perimeter = getLength(new LineString(geometry.getLinearRing(0)!.getCoordinates()), { projection: PROJECTION });
     return `${formatArea(area)}, obwód ${formatLength(perimeter)}`;
   }
-  if (geometry instanceof LineString) return formatLength(getLength(geometry, { projection: 'EPSG:2180' }));
+  if (geometry instanceof LineString) return formatLength(getLength(geometry, { projection: PROJECTION }));
   return undefined;
 }
 

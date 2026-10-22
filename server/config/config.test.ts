@@ -75,6 +75,21 @@ describe('loadConfig', () => {
     expect(found).toMatch(/search\.parcel needs modules\.gugik\.enabled/);
   });
 
+  it('keeps the gugik module to PL-1992 and WMTS services to a shared tile grid', () => {
+    const found = problems(
+      broken('map.yaml', (s) => s.replace('  code: EPSG:2180', '  code: EPSG:3857').replace(/tileGrid:\n( {2}.*\n)+/, '')),
+    ).join('\n');
+    expect(found).toMatch(/modules\.gugik needs map\.yaml projection EPSG:2180/);
+    expect(found).toMatch(/WMTS service "orto" needs map\.yaml tileGrid/);
+  });
+
+  it('accepts XYZ tiles only with {z}, {x} and {y} in the address', () => {
+    const xyz = (url: string) =>
+      broken('map.yaml', (s) => s.replace('tileServices:\n', `tileServices:\n  - id: osm\n    kind: xyz\n    url: ${url}\n`));
+    expect(problems(xyz('https://tile.openstreetmap.org/{z}/{x}/{y}.png'))).toEqual([]);
+    expect(problems(xyz('https://tile.openstreetmap.org/tiles.png')).join('\n')).toMatch(/an address with \{z\}, \{x\} and \{y\}/);
+  });
+
   it('says which file is missing', () => {
     const dir = mkdtempSync(join(tmpdir(), 'config-'));
     dirs.push(dir);

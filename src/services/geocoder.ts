@@ -1,5 +1,5 @@
 import { fromLonLat } from 'ol/proj';
-import { EPSG2180 } from '@/map/projection';
+import { PROJECTION } from '@/map/projection';
 import { unitNames, type UnitNames } from './units';
 import { normalize } from './text';
 
@@ -137,7 +137,7 @@ async function fts(query: string, signal: AbortSignal): Promise<SearchHit[]> {
     })
     .map((f) => {
       const p = f.properties;
-      const [e, n] = fromLonLat(f.geometry!.coordinates as number[], EPSG2180);
+      const [e, n] = fromLonLat(f.geometry!.coordinates as number[], PROJECTION);
       const name = p.NAZWAGLOWNA!;
       const commune = communeName(p.GMINA);
       const detail = [
@@ -200,7 +200,7 @@ async function nature(query: string, signal: AbortSignal): Promise<SearchHit[]> 
     const rank = n === q ? 0 : n.startsWith(q) ? 1 : n.split(/[\s-]+/).some((w) => w.startsWith(q)) ? 2 : -1;
     if (rank < 0) return [];
     const points = (g.type === 'Point' ? [g.coordinates as number[]] : (g.coordinates as number[][])).map(
-      (c) => fromLonLat(c, EPSG2180) as [number, number],
+      (c) => fromLonLat(c, PROJECTION) as [number, number],
     );
     const wkt = points.length === 1 ? undefined : `MULTIPOINT(${points.map(([x, y]) => `(${x} ${y})`).join(',')})`;
     const center = points[Math.floor(points.length / 2)];

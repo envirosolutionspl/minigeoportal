@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import OlMap from 'ol/Map';
 import View from 'ol/View';
 import MousePosition from 'ol/control/MousePosition';
-import { EPSG2180, OGC_PIXEL } from './projection';
+import { PROJECTION, OGC_PIXEL } from './projection';
 import { MapStatus, roundScale } from './mapStatus';
 
 // Intl in pl-PL groups with a narrow no-break space; compare with plain spaces.
@@ -28,7 +28,7 @@ describe('MapStatus', () => {
         disconnect() {}
       },
     );
-    const view = new View({ projection: EPSG2180, center: [500000, 500000], resolution: 47247.1183 * OGC_PIXEL });
+    const view = new View({ projection: PROJECTION, center: [500000, 500000], resolution: 47247.1183 * OGC_PIXEL });
     const status = new MapStatus();
     const map = new OlMap({
       target: document.createElement('div'),

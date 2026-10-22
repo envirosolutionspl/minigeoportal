@@ -21,7 +21,6 @@ export function InfoPanel() {
   );
   if (!query) return null;
 
-  const [e, n] = query.coordinate;
   const loading = query.services.some((id) => query.results[id]?.status === 'loading');
 
   return (
@@ -78,7 +77,7 @@ export function InfoPanel() {
         <button
           type="button"
           onClick={() =>
-            useReport.getState().openReport(`Miejsce: PL-1992 X ${Math.round(n)}, Y ${Math.round(e)}
+            useReport.getState().openReport(`Miejsce: ${formatCoordinate(query.coordinate)}
 
 `)
           }

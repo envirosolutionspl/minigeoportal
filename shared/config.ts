@@ -14,17 +14,25 @@ export interface SubLayer {
   legend?: string;
 }
 
-/** A WMTS service: a building block of base maps. */
-export interface TileService {
-  id: string;
-  kind: 'wmts';
-  url: string;
-  layer: string;
-  format: string;
-  /** First level of the map's scale series the service publishes, and how many it publishes. */
-  firstLevel: number;
-  levels: number;
-}
+/** A tile service: a building block of base maps. */
+export type TileService =
+  | {
+      id: string;
+      kind: 'wmts';
+      url: string;
+      layer: string;
+      format: string;
+      /** First level of the map's scale series the service publishes, and how many it publishes. */
+      firstLevel: number;
+      levels: number;
+    }
+  | {
+      id: string;
+      /** Tiles at {z}/{x}/{y} on the standard grid of the map's projection (e.g. OpenStreetMap). */
+      kind: 'xyz';
+      url: string;
+      maxZoom?: number;
+    };
 
 /** A tile service inside a base map, drawn only in its scale range. */
 export interface BaseSource {
@@ -119,7 +127,7 @@ export interface ClientConfig {
     /** Scale denominators of the zoom levels, largest first. */
     scales: number[];
     /** Tile grid shared by the tile services, used when their capabilities are not cached. */
-    tileGrid?: { origin: [number, number]; tileSize: number; matrixIdPrefix: string };
+    tileGrid?: { origin: [number, number]; tileSize: number; matrixSet: string; matrixIdPrefix: string };
     view: {
       center: [number, number];
       zoom: number;

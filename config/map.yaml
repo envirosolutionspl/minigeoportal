@@ -36,6 +36,7 @@ zoom:
 tileGrid:
   origin: [100000, 850000]
   tileSize: 512
+  matrixSet: EPSG:2180
   matrixIdPrefix: 'EPSG:2180:'
 
 view:

@@ -1,3 +1,5 @@
+import { PROJECTION } from '@/map/projection';
+
 /**
  * Map state lives in the URL query so every view is a shareable link:
  * ?x=637000&y=486000&z=12&b=orto&l=kieg,kiut.przewod_wodociagowy.przewod_gazowy
@@ -38,11 +40,14 @@ export function readUrl(): Partial<UrlState> {
   return state;
 }
 
+/** Metres to the metre; degrees (a geographic map) to about a metre. */
+const DIGITS = PROJECTION.getUnits() === 'degrees' ? 5 : 0;
+
 /** Query string of a view, e.g. "?x=637000&y=486000&z=12.0&b=orto&l=kieg". */
 function queryFor(state: UrlState): string {
   const q = new URLSearchParams();
-  q.set('x', Math.round(state.center[0]).toString());
-  q.set('y', Math.round(state.center[1]).toString());
+  q.set('x', state.center[0].toFixed(DIGITS));
+  q.set('y', state.center[1].toFixed(DIGITS));
   q.set('z', state.zoom.toFixed(1));
   q.set('b', state.base);
   q.set('l', state.overlays.map((id) => [id, ...(state.sublayers[id] ?? [])].join('.')).join(','));

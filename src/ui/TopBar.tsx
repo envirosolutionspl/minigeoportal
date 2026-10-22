@@ -25,6 +25,7 @@ import { linkFor } from '@/state/url';
 import { APP_NAME, BrandMark, Wordmark } from './Brand';
 import { useWelcome } from './WelcomeDialog';
 import { PARCEL_ZOOM, ParcelSearch } from './ParcelSearch';
+import { PROJECTION } from '@/map/projection';
 import { DisplayMenu } from './DisplayMenu';
 
 /** Closest zoom per hit kind on the GUGiK scale series (13 = 1:1890, 14 = 1:945, 15 = 1:472). */
@@ -153,7 +154,7 @@ export function TopBar() {
   const locate = () => {
     navigator.geolocation?.getCurrentPosition(
       (pos) => {
-        const c = fromLonLat([pos.coords.longitude, pos.coords.latitude], 'EPSG:2180');
+        const c = fromLonLat([pos.coords.longitude, pos.coords.latitude], PROJECTION);
         focusOn({ center: [c[0], c[1]], zoom: ZOOM.address });
       },
       undefined,

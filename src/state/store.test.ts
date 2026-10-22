@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { POLAND_EXTENT } from '@/map/projection';
+import { HOME_EXTENT } from '@/map/projection';
 import { config } from '@/config/runtime';
 import { overlayOpacity, useMapStore } from './store';
 
@@ -88,7 +88,7 @@ describe('focus', () => {
 
   it('goHome shows the whole country and zoomToScale asks for a scale', () => {
     state().goHome();
-    expect(state().focus).toMatchObject({ extent: POLAND_EXTENT });
+    expect(state().focus).toMatchObject({ extent: HOME_EXTENT });
     state().zoomToScale(9000);
     expect(state().focus).toMatchObject({ scale: 9000 });
   });

@@ -3,6 +3,7 @@ import WMTS from 'ol/source/WMTS';
 import type WMTSTileGrid from 'ol/tilegrid/WMTS';
 import type { Overlay } from '@/config/runtime';
 import { infoFormat, layerMeta, restMeta, wmtsMeta } from './meta';
+import { PROJECTION } from '@/map/projection';
 import type { OverlayLayer } from './layers';
 
 /**
@@ -66,7 +67,7 @@ function queryParams(
 ): URLSearchParams | undefined {
   const source = layer.getSource();
   if (source instanceof ImageWMS) {
-    const url = source.getFeatureInfoUrl(coordinate, resolution, 'EPSG:2180', {
+    const url = source.getFeatureInfoUrl(coordinate, resolution, PROJECTION, {
       // Non-queryable layers in LAYERS make some servers reject the whole request.
       LAYERS: layers.join(','),
       QUERY_LAYERS: layers.join(','),

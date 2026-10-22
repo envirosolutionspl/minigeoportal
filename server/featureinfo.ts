@@ -78,10 +78,10 @@ function mapWindow(query: URLSearchParams) {
 }
 
 /** Validated query of one known service: WMS 1.3.0, WMTS 1.0.0 or ArcGIS REST identify. */
-function buildParams(def: QueryTarget | undefined, query: URLSearchParams): string {
+function buildParams(def: QueryTarget | undefined, query: URLSearchParams, crs: string): string {
   if (!def) throw new RequestError('Unknown service');
   if (def.kind === 'wmts') return wmtsParams(def, query);
-  if (def.kind === 'rest') return identifyParams(def, query);
+  if (def.kind === 'rest') return identifyParams(def, query, crs);
 
   const layers = queryLayers(def, query);
   const { bbox, width, height, i, j } = mapWindow(query);
@@ -94,7 +94,7 @@ function buildParams(def: QueryTarget | undefined, query: URLSearchParams): stri
     SERVICE: 'WMS',
     REQUEST: 'GetFeatureInfo',
     VERSION: '1.3.0',
-    CRS: 'EPSG:2180',
+    CRS: crs,
     LAYERS: layers.join(','),
     QUERY_LAYERS: layers.join(','),
     STYLES: '',
@@ -144,8 +144,8 @@ function wmtsParams(def: QueryTarget, query: URLSearchParams): string {
   return serviceUrl(def.url, params);
 }
 
-/** ArcGIS identify at the clicked point, for the given layer ids, in PL-1992. */
-function identifyParams(def: QueryTarget, query: URLSearchParams): string {
+/** ArcGIS identify at the clicked point, for the given layer ids, in the map's system. */
+function identifyParams(def: QueryTarget, query: URLSearchParams, crs: string): string {
   const layers = queryLayers(def, query);
   const { bbox, width, height, i, j } = mapWindow(query);
   const [minX, minY, maxX, maxY] = bbox;
@@ -155,7 +155,7 @@ function identifyParams(def: QueryTarget, query: URLSearchParams): string {
     f: 'json',
     geometry: `${x.toFixed(2)},${y.toFixed(2)}`,
     geometryType: 'esriGeometryPoint',
-    sr: '2180',
+    sr: crs.split(':')[1],
     layers: `visible:${layers.join(',')}`,
     tolerance: '5',
     mapExtent: bbox.map((n) => n.toFixed(2)).join(','),
@@ -169,9 +169,11 @@ export async function featureInfo(
   serviceId: string,
   query: URLSearchParams,
   lookup: (id: string) => QueryTarget | undefined,
+  /** The map's coordinate system, e.g. EPSG:2180: the BBOX is in it. */
+  crs: string,
   abort?: AbortSignal,
 ): Promise<FeatureInfoResult> {
-  const url = buildParams(lookup(serviceId), query);
+  const url = buildParams(lookup(serviceId), query, crs);
   const deadline = AbortSignal.timeout(DEADLINE_MS);
   const signal = abort ? AbortSignal.any([deadline, abort]) : deadline;
   // Catalog addresses come from the geoportal configuration: checked like redirects.

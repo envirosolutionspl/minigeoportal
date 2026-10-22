@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 // Upstream hosts resolve to a public address, so the address check lets them through.
 vi.mock('node:dns/promises', () => ({ lookup: vi.fn(async () => [{ address: '203.0.113.10', family: 4 }]) }));
-import { arcgisCapabilities, buildCache, wmtsCapabilities } from './capabilities.ts';
+import { PL1992, arcgisCapabilities, buildCache, wmtsCapabilities } from './capabilities.ts';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
 import { defaults } from './testSite.ts';
 
@@ -131,10 +131,10 @@ describe('catalog services', () => {
 
   it('takes the named WMTS layer with its EPSG:2180 grid, an image format and the default style', async () => {
     stub(() => new Response(GWC));
-    const meta = await wmtsCapabilities('https://iung.example/gwc/service/wmts', 'Susza:gleby');
+    const meta = await wmtsCapabilities('https://iung.example/gwc/service/wmts', PL1992, 'Susza:gleby');
     expect(meta).toMatchObject({ layer: 'Susza:gleby', format: 'image/png', style: 'susza', infoFormats: ['text/html'] });
     expect(meta.matrixSet).toMatchObject({ id: 'EPSG:2180v1', origin: [144693.3, 908411.0], tileSize: 512 });
-    await expect(wmtsCapabilities('https://iung.example/gwc/service/wmts', 'common:drogi')).rejects.toThrow(
+    await expect(wmtsCapabilities('https://iung.example/gwc/service/wmts', PL1992, 'common:drogi')).rejects.toThrow(
       'Unsupported: no EPSG:2180 tile matrix set',
     );
   });
@@ -157,7 +157,7 @@ describe('catalog services', () => {
       ],
     };
     stub(() => Response.json(info));
-    const meta = await arcgisCapabilities('https://gugik.example/MapServer/');
+    const meta = await arcgisCapabilities('https://gugik.example/MapServer/', PL1992);
     expect(meta.layers).toEqual({
       '0': { title: 'Gleby', queryable: false, group: true },
       '1': { title: 'Kontury', queryable: true, maxScale: 50000, minScale: 500 },
@@ -165,10 +165,10 @@ describe('catalog services', () => {
     expect(meta.tiles).toEqual({ origin: [100000, 850000], tileSize: 512, resolutions: [100, 50] });
 
     stub(() => Response.json({ ...info, spatialReference: { wkid: 102100, latestWkid: 3857 } }));
-    await expect(arcgisCapabilities('https://gugik.example/MapServer')).rejects.toThrow('Unsupported: EPSG:3857');
+    await expect(arcgisCapabilities('https://gugik.example/MapServer', PL1992)).rejects.toThrow('Unsupported: EPSG:3857');
     stub(() => new Response('<h1>Unauthorized.</h1><p>Token Require</p>', { status: 401 }));
-    await expect(arcgisCapabilities('https://gugik.example/MapServer')).rejects.toThrow('HTTP 499');
+    await expect(arcgisCapabilities('https://gugik.example/MapServer', PL1992)).rejects.toThrow('HTTP 499');
     stub(() => Response.json({ error: { code: 499, message: 'Token Required' } }));
-    await expect(arcgisCapabilities('https://gugik.example/MapServer')).rejects.toThrow('HTTP 499');
+    await expect(arcgisCapabilities('https://gugik.example/MapServer', PL1992)).rejects.toThrow('HTTP 499');
   });
 });

@@ -218,7 +218,8 @@ export function PrintSheet() {
           )}
           <p className="print-note">
             Źródło warstw mapy: geoportal.gov.pl (Główny Urząd Geodezji i Kartografii) oraz udostępniane przez niego usługi starostw, gmin i
-            innych instytucji. Mapa poglądowa, nie jest dokumentem urzędowym. Układ współrzędnych PL-1992 (EPSG:2180).
+            innych instytucji. Mapa poglądowa, nie jest dokumentem urzędowym. Układ współrzędnych {config.map.projection.name} (
+            {config.map.projection.code}).
           </p>
         </footer>
       )}

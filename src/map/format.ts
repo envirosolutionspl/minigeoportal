@@ -1,4 +1,6 @@
 import { toLonLat } from 'ol/proj';
+import { config } from '@/config/runtime';
+import { PROJECTION } from './projection';
 
 /** Polish number formats for coordinates and measurements. */
 
@@ -11,31 +13,37 @@ const four = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 4 });
 export const scaleText = (scale: number) => `1:${int.format(scale)}`;
 const deg = new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 5, maximumFractionDigits: 5 });
 
+const SYSTEM = config.map.projection.name;
+/** In a north-east system (PL-1992) X is the northing, as surveyors write it; otherwise the easting. */
+const NORTH_FIRST = config.map.projection.axisOrientation === 'neu';
+const SYSTEM_HTML = SYSTEM.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
+const unit = PROJECTION.getUnits() === 'degrees' ? deg : int;
+
 /**
- * A point in PL-1992 as surveyors write it (X = northing, Y = easting) and in WGS 84.
- * `coordinate` is the map coordinate [easting, northing].
+ * A point in the map's system and in WGS 84. `coordinate` is the map coordinate [easting, northing].
  */
 export function formatCoordinate(coordinate: number[]): string {
   const { x, y, lat, lon } = coordinateParts(coordinate);
-  return `PL-1992 X ${x}, Y ${y} · ${lat} N, ${lon} E`;
+  return `${SYSTEM} X ${x}, Y ${y} · ${lat} N, ${lon} E`;
 }
 
 function coordinateParts(coordinate: number[]) {
   const [e, n] = coordinate;
-  const [lon, lat] = toLonLat(coordinate, 'EPSG:2180');
-  return { x: int.format(n), y: int.format(e), lat: `${deg.format(lat)}°`, lon: `${deg.format(lon)}°` };
+  const [lon, lat] = toLonLat(coordinate, PROJECTION);
+  const [x, y] = NORTH_FIRST ? [n, e] : [e, n];
+  return { x: unit.format(x), y: unit.format(y), lat: `${deg.format(lat)}°`, lon: `${deg.format(lon)}°` };
 }
 
 /**
  * The same point for the bar under the map, as markup for OpenLayers' MousePosition: each
- * system and each value in its own box so they do not run together. Only digits and fixed
- * words go into it.
+ * system and each value in its own box so they do not run together. Only digits, fixed words
+ * and the escaped name of the system go into it.
  */
 export function coordinateBar(coordinate: number[]): string {
   const { x, y, lat, lon } = coordinateParts(coordinate);
   const value = (label: string, v: string) => `<span><span class="mp-label">${label}</span> ${v}</span>`;
   return (
-    `<span class="mp-system"><b>PL-1992</b>${value('X', x)}${value('Y', y)}</span>` +
+    `<span class="mp-system"><b>${SYSTEM_HTML}</b>${value('X', x)}${value('Y', y)}</span>` +
     `<span class="mp-system"><b>WGS 84</b><span>${lat} N</span><span>${lon} E</span></span>`
   );
 }

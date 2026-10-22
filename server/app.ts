@@ -165,7 +165,13 @@ export function createApp({ site, cache, refresh, mailer, origin, catalog, refre
   app.get('/api/featureinfo/:service', async (c) => {
     try {
       const result = await upstream(() =>
-        featureInfo(c.req.param('service'), new URL(c.req.url).searchParams, queryTarget, c.req.raw.signal),
+        featureInfo(
+          c.req.param('service'),
+          new URL(c.req.url).searchParams,
+          queryTarget,
+          site.defaults.map.projection.code,
+          c.req.raw.signal,
+        ),
       );
       if (!result) return c.text('Serwer jest zajęty, spróbuj za chwilę.', 503);
       // Upstream markup is returned as plain text and parsed by the app; it is never rendered as a page.

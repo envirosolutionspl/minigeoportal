@@ -6,7 +6,7 @@ import ImageWMS from 'ol/source/ImageWMS';
 import ImageArcGISRest from 'ol/source/ImageArcGISRest';
 import TileGrid from 'ol/tilegrid/TileGrid';
 import WMTSTileGrid from 'ol/tilegrid/WMTS';
-import { EPSG2180, OGC_PIXEL, gugikWmtsGrid } from '@/map/projection';
+import { PROJECTION, scaleToResolution, sharedWmtsGrid } from '@/map/projection';
 import { config, overlayById, type Overlay, type TileService } from '@/config/runtime';
 import { useCatalog } from './catalog';
 import { cachedDrawOrder, layerMeta, restMeta, wmtsMeta, type WmtsMeta } from './meta';
@@ -14,40 +14,44 @@ import { useStatusStore } from './status';
 
 const report = (id: string, ok: boolean) => useStatusStore.getState().reportLoad(id, ok);
 
+type WmtsService = Extract<TileService, { kind: 'wmts' }>;
+
 /**
  * Tile grid from the cached capabilities. Matrix sizes keep the map from requesting
- * tiles outside the published coverage. Without the cache the shared GUGiK grid is used.
+ * tiles outside the published coverage. Without the cache the shared grid of map.yaml is used.
  */
-function tileGrid(def: TileService): WMTSTileGrid {
+function tileGrid(def: WmtsService): WMTSTileGrid {
   const set = wmtsMeta(def.id)?.matrixSet;
-  return set ? gridOf(set) : gugikWmtsGrid(def.firstLevel, def.levels);
+  return set ? gridOf(set) : sharedWmtsGrid(def.firstLevel, def.levels);
 }
 
 function gridOf(set: WmtsMeta['matrixSet']): WMTSTileGrid {
   return new WMTSTileGrid({
     origin: set.origin,
     tileSize: set.tileSize,
-    resolutions: set.matrices.map((m) => m.scale * OGC_PIXEL),
+    resolutions: set.matrices.map((m) => scaleToResolution(m.scale)),
     matrixIds: set.matrices.map((m) => m.id),
     sizes: set.matrices.map((m) => [m.width, m.height]),
   });
 }
 
 /** One tile service of a base map, drawn in the given resolution range. */
-export function createTileLayer(def: TileService, range: { minResolution?: number; maxResolution?: number } = {}): TileLayer<WMTS> {
-  const source = new WMTS({
-    url: def.url,
-    layer: def.layer,
-    matrixSet: wmtsMeta(def.id)?.matrixSet.id ?? 'EPSG:2180',
-    format: def.format,
-    style: 'default',
-    projection: EPSG2180,
-    tileGrid: tileGrid(def),
-    attributions: config.map.attribution,
-    // GUGiK WMTS sends CORS headers; readable tiles keep an image export possible.
-    crossOrigin: 'anonymous',
-    wrapX: false,
-  });
+export function createTileLayer(def: TileService, range: { minResolution?: number; maxResolution?: number } = {}): TileLayer<WMTS | XYZ> {
+  // Tile servers send CORS headers (GUGiK, OpenStreetMap); readable tiles keep an image export possible.
+  const common = { projection: PROJECTION, attributions: config.map.attribution, crossOrigin: 'anonymous' };
+  const source =
+    def.kind === 'xyz'
+      ? new XYZ({ ...common, url: def.url, maxZoom: def.maxZoom })
+      : new WMTS({
+          ...common,
+          url: def.url,
+          layer: def.layer,
+          matrixSet: wmtsMeta(def.id)?.matrixSet.id ?? config.map.tileGrid!.matrixSet,
+          format: def.format,
+          style: 'default',
+          tileGrid: tileGrid(def),
+          wrapX: false,
+        });
   source.on('tileloadend', () => report(def.id, true));
   source.on('tileloaderror', () => report(def.id, false));
   return new TileLayer({
@@ -110,7 +114,7 @@ export function createOverlayLayer(def: Overlay): OverlayLayer {
     tiles.on('tileloaderror', () => report(def.id, false));
     return new TileLayer({ source: tiles, ...options });
   }
-  const image = { url: def.url, projection: EPSG2180, ratio: 1.25, attributions: def.attribution ?? config.map.attribution };
+  const image = { url: def.url, projection: PROJECTION, ratio: 1.25, attributions: def.attribution ?? config.map.attribution };
   const source =
     def.kind === 'rest'
       ? new ImageArcGISRest({ ...image, params: { LAYERS: 'show:', FORMAT: 'png32', TRANSPARENT: true } })
@@ -122,7 +126,7 @@ export function createOverlayLayer(def: Overlay): OverlayLayer {
 
 /** Tiles of a catalog WMTS or ArcGIS tile cache, on the grid its server described. */
 function tileSource(def: Overlay): WMTS | XYZ | undefined {
-  const common = { projection: EPSG2180, attributions: def.attribution ?? config.map.attribution, wrapX: false };
+  const common = { projection: PROJECTION, attributions: def.attribution ?? config.map.attribution, wrapX: false };
   const wmts = def.kind === 'wmts' ? wmtsMeta(def.id) : undefined;
   if (wmts) {
     return new WMTS({
@@ -163,5 +167,5 @@ export function resolutionRange(def: Overlay, names: string[]): { min: number; m
   const meta = names.map((n) => layerMeta(def.id, n));
   const maxScale = Math.max(...meta.map((m) => m?.maxScale ?? Infinity));
   const minScale = Math.min(...meta.map((m) => m?.minScale ?? 0));
-  return { min: minScale * OGC_PIXEL, max: maxScale * OGC_PIXEL };
+  return { min: scaleToResolution(minScale), max: scaleToResolution(maxScale) };
 }

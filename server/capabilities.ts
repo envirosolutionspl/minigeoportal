@@ -93,26 +93,39 @@ export async function wmsCapabilities(url: string, fallbackTitle = ''): Promise<
   };
 }
 
+/** A coordinate system services are read for: the map's (map.yaml: projection). */
+export interface MapCrs {
+  code: string;
+  axisOrientation: 'enu' | 'neu';
+}
+
+/** PL-1992, the system of geoportal.gov.pl and every service of its catalog. */
+export const PL1992: MapCrs = { code: 'EPSG:2180', axisOrientation: 'neu' };
+
+const epsgNumber = (crs: MapCrs) => Number(crs.code.split(':')[1]);
+
 /**
- * Layer, image format, style and EPSG:2180 tile grid of a WMTS, from its GetCapabilities.
- * Without a layer name the first layer of the service is taken.
+ * Layer, image format, style and tile grid of a WMTS in the map's system, from its
+ * GetCapabilities. Without a layer name the first layer of the service is taken.
  */
-export async function wmtsCapabilities(url: string, layer?: string): Promise<WmtsMeta> {
+export async function wmtsCapabilities(url: string, crs: MapCrs, layer?: string): Promise<WmtsMeta> {
   const root = node((await fetchXml(serviceUrl(url, { SERVICE: 'WMTS', REQUEST: 'GetCapabilities', VERSION: '1.0.0' }))).Capabilities);
   const contents = node(root.Contents);
   const layers = list(contents.Layer);
   const found = layer === undefined ? layers[0] : layers.find((l) => text(l.Identifier) === layer);
   if (!found) throw new Error(`Layer ${layer ?? ''} not found`);
   const linked = new Set(list(found.TileMatrixSetLink).flatMap((l) => texts(l.TileMatrixSet)));
+  // EPSG:2180, urn:ogc:def:crs:EPSG::2180 and urn:ogc:def:crs:EPSG:6.18.3:3857 all name their system last.
+  const system = new RegExp(`EPSG:(?:[0-9.]*:)?${epsgNumber(crs)}$`);
   const set = list(contents.TileMatrixSet).find(
-    (s) =>
-      (linked.size === 0 || linked.has(text(s.Identifier) ?? '')) && /EPSG:+2180$/.test(text(s.SupportedCRS) ?? text(s.Identifier) ?? ''),
+    (s) => (linked.size === 0 || linked.has(text(s.Identifier) ?? '')) && system.test(text(s.SupportedCRS) ?? text(s.Identifier) ?? ''),
   );
-  if (!set) throw new Error('Unsupported: no EPSG:2180 tile matrix set');
+  if (!set) throw new Error(`Unsupported: no ${crs.code} tile matrix set`);
   const matrices = list(set.TileMatrix);
   if (matrices.length === 0) throw new Error('Empty tile matrix set');
-  // EPSG:2180 lists the top-left corner as northing, easting.
-  const [north, east] = (text(matrices[0].TopLeftCorner) ?? '').split(/\s+/).map(Number);
+  // The top-left corner follows the axis order of the system: northing first in PL-1992.
+  const corner = (text(matrices[0].TopLeftCorner) ?? '').split(/\s+/).map(Number);
+  const [east, north] = crs.axisOrientation === 'neu' ? [corner[1], corner[0]] : corner;
   const formats = texts(found.Format);
   const styles = list(found.Style);
   const style = styles.find((st) => st['@isDefault'] === 'true') ?? styles[0];
@@ -161,13 +174,13 @@ const wkid = (sr?: { wkid?: number; latestWkid?: number }) => sr?.latestWkid ?? 
  * A token request (HTTP 401 with a page, or error 499 inside the JSON) is reported as
  * "HTTP 499", the code the catalog reads as "token required" for every kind of service.
  */
-export async function arcgisCapabilities(url: string): Promise<RestMeta> {
+export async function arcgisCapabilities(url: string, crs: MapCrs): Promise<RestMeta> {
   const res = await fetchPublic(serviceUrl(url.replace(/\/+$/, ''), { f: 'json' }), { signal: AbortSignal.timeout(TIMEOUT_MS) });
   const body = new TextDecoder().decode(await readLimited(res, MAX_BYTES));
   if (!res.ok) throw new Error(res.status === 401 && /token/i.test(body) ? 'HTTP 499' : `HTTP ${res.status}`);
   const info = JSON.parse(body) as ArcgisInfo;
   if (info.error) throw new Error(`HTTP ${info.error.code ?? 500}`);
-  if (wkid(info.spatialReference) !== 2180) throw new Error(`Unsupported: EPSG:${wkid(info.spatialReference)}`);
+  if (wkid(info.spatialReference) !== epsgNumber(crs)) throw new Error(`Unsupported: EPSG:${wkid(info.spatialReference)}`);
   const layers: Record<string, WmsLayerMeta> = {};
   // Identify answers for the layers of a service that allows queries, except groups and pictures.
   const query = /\bQuery\b/.test(info.capabilities ?? '');
@@ -183,7 +196,7 @@ export async function arcgisCapabilities(url: string): Promise<RestMeta> {
   }
   const t = info.tileInfo;
   const tiles =
-    info.singleFusedMapCache && t && wkid(t.spatialReference) === 2180
+    info.singleFusedMapCache && t && wkid(t.spatialReference) === epsgNumber(crs)
       ? { origin: [t.origin.x, t.origin.y] as [number, number], tileSize: t.rows, resolutions: t.lods.map((l) => l.resolution) }
       : undefined;
   return {
@@ -203,16 +216,31 @@ async function safely(fetchMeta: () => Promise<ServiceMeta>): Promise<ServiceMet
   }
 }
 
+/** Metadata of a map service of any kind; a WMTS without a layer name gives its first layer. */
+export function serviceCapabilities(
+  s: { kind: 'wms' | 'wmts' | 'rest'; url: string; layer?: string },
+  crs: MapCrs,
+): Promise<WmsMeta | WmtsMeta | RestMeta> {
+  if (s.kind === 'wmts') return wmtsCapabilities(s.url, crs, s.layer);
+  return s.kind === 'rest' ? arcgisCapabilities(s.url, crs) : wmsCapabilities(s.url);
+}
+
 /**
  * Fetches capabilities of every configured service. A failed service keeps its previous
  * entry, so one unreachable server never wipes metadata that was already known.
  */
 export async function buildCache(config: ClientConfig, previous?: CapabilitiesCache): Promise<CapabilitiesCache> {
   const { overlays } = config.layers;
+  const crs = config.map.projection;
+  // A WMTS overlay draws its first sublayer; XYZ tiles have no capabilities to read.
+  const overlayMeta = (def: (typeof overlays)[number]) =>
+    def.kind === 'wms' ? wmsCapabilities(def.url, def.title) : serviceCapabilities({ ...def, layer: def.sublayers[0].name }, crs);
   const [entries, drawOrder] = await Promise.all([
     Promise.all([
-      ...overlays.map(async (def) => [def.id, await safely(() => wmsCapabilities(def.url, def.title))] as const),
-      ...config.map.tileServices.map(async (def) => [def.id, await safely(() => wmtsCapabilities(def.url, def.layer))] as const),
+      ...overlays.map(async (def) => [def.id, await safely(() => overlayMeta(def))] as const),
+      ...config.map.tileServices.flatMap((def) =>
+        def.kind === 'wmts' ? [(async () => [def.id, await safely(() => wmtsCapabilities(def.url, crs, def.layer))] as const)()] : [],
+      ),
     ]),
     // The layer order of geoportal.gov.pl; when it cannot be read, the last good one is kept.
     (config.modules.gugik?.drawOrder ? fetchDrawOrder(overlays) : Promise.resolve(undefined)).catch((e: unknown) => {

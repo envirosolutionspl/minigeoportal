@@ -1,6 +1,6 @@
 import Control from 'ol/control/Control';
 import type MapEvent from 'ol/MapEvent';
-import { OGC_PIXEL } from './projection';
+import { resolutionToScale } from './projection';
 import { scaleText } from './format';
 
 /**
@@ -42,7 +42,7 @@ export class MapStatus extends Control {
 
   override render(event: MapEvent): void {
     const resolution = event.frameState?.viewState.resolution;
-    const text = resolution ? scaleText(roundScale(resolution / OGC_PIXEL)) : '';
+    const text = resolution ? scaleText(roundScale(resolutionToScale(resolution))) : '';
     if (this.scale.textContent !== text) this.scale.textContent = text;
   }
 }

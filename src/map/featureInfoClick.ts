@@ -4,7 +4,7 @@ import VectorSource from 'ol/source/Vector';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import { Circle, Fill, Stroke, Style } from 'ol/style';
-import { OGC_PIXEL } from './projection';
+import { resolutionToScale } from './projection';
 import { HIGHLIGHT } from './style';
 import { selectedSublayers, type Overlay } from '@/config/runtime';
 import type { OverlayLayer } from '@/services/layers';
@@ -46,7 +46,7 @@ export function attachFeatureInfo(map: Map, overlays: () => { def: Overlay; laye
     const signal = controller.signal;
 
     const s = useMapStore.getState();
-    const scale = resolution / OGC_PIXEL;
+    const scale = resolutionToScale(resolution);
     const targets = overlays()
       .filter(({ def }) => s.overlays.includes(def.id))
       .map((o) => ({ ...o, layers: queryLayers(o.def, selectedSublayers(o.def, s.sublayers), scale) }))

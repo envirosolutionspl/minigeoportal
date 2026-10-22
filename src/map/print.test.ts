@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import OlMap from 'ol/Map';
 import View from 'ol/View';
 import { attachPrint, nearestPrintScale, printExtent, printLayout, serverScale } from './print';
-import { EPSG2180 } from './projection';
+import { PROJECTION } from './projection';
 import { useMapStore } from '@/state/store';
 
 describe('printLayout', () => {
@@ -110,7 +110,7 @@ describe('print preview', () => {
       printRequest: null,
       printSettings: { paper: 'A4', orientation: 'landscape', scale: 10000, title: '' },
     });
-    const map = new OlMap({ view: new View({ projection: EPSG2180, center: [500000, 500000], resolution: 10 }) });
+    const map = new OlMap({ view: new View({ projection: PROJECTION, center: [500000, 500000], resolution: 10 }) });
     map.setSize([1000, 800]);
     const detach = attachPrint(map);
     const frame = map.getViewport()!.querySelector<HTMLElement>('.print-preview')!;

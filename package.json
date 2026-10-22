@@ -11,6 +11,7 @@
     "build": "tsc -b && vite build && node scripts/precompress.ts",
     "start": "node --env-file-if-exists=.env server/index.ts",
     "update": "node --env-file-if-exists=.env server/update.ts",
+    "config:check": "node server/configCheck.ts",
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "format": "prettier --write --ignore-path .gitignore --ignore-path .prettierignore --ignore-path .git/info/exclude .",

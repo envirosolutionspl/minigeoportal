@@ -74,7 +74,7 @@ Każda warstwa z `overlays`:
 
 ## Sprawdzanie konfiguracji
 
-Serwer nie uruchomi się z konfiguracją, która ma problemy, i wypisze każdy z miejscem:
+`npm run config:check examples/osm` sprawdza katalog bez uruchamiania serwera. Sam serwer nie uruchomi się z konfiguracją, która ma problemy, i wypisze każdy z miejscem:
 
 ```
 Configuration has 2 problems:

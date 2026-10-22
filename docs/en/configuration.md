@@ -74,7 +74,7 @@ Each layer of `overlays`:
 
 ## Checking a configuration
 
-The server refuses to start with a configuration that has problems and lists each with its place:
+`npm run config:check examples/osm` checks a directory without starting the server. The server itself refuses to start with a configuration that has problems and lists each with its place:
 
 ```
 Configuration has 2 problems:

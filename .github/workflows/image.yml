@@ -1,5 +1,6 @@
 # Checks the code and publishes the container image as ghcr.io/<owner>/<repository>.
-# Runs only when something that goes into the image changes: documentation alone builds nothing.
+# Runs only when something that goes into the image changes: documentation, examples and the
+# compose and Caddy files alone build nothing.
 # Pushes to main publish the tags latest and sha-<commit>; tags v1.2.3 publish 1.2.3 and 1.2;
 # pull requests are checked and built, never published.
 name: Image
@@ -8,9 +9,9 @@ on:
   push:
     branches: [main]
     tags: ['v*']
-    paths-ignore: ['**.md', 'docs/**', 'examples/**', 'LICENSE', '.env.example']
+    paths-ignore: ['**.md', 'docs/**', 'examples/**', 'LICENSE', '.env.example', 'compose.yaml', 'deploy/**']
   pull_request:
-    paths-ignore: ['**.md', 'docs/**', 'examples/**', 'LICENSE', '.env.example']
+    paths-ignore: ['**.md', 'docs/**', 'examples/**', 'LICENSE', '.env.example', 'compose.yaml', 'deploy/**']
   workflow_dispatch:
 
 concurrency:

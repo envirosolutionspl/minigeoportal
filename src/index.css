@@ -401,6 +401,14 @@ html[data-printing] #print-sheet {
   }
 }
 
+/* Print preview: the printed area, with the map around it dimmed; the map moves under it. */
+.print-frame {
+  position: absolute;
+  pointer-events: none;
+  outline: 3px dashed #ff8142;
+  box-shadow: 0 0 0 100vmax rgb(37 51 38 / 0.18);
+}
+
 /* High contrast (switch in the display menu): yellow on black, outlined surfaces. */
 html[data-contrast='high'] {
   --text: #ffff00;

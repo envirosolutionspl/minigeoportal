@@ -1,8 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import OlMap from 'ol/Map';
 import View from 'ol/View';
-import type VectorLayer from 'ol/layer/Vector';
-import type Polygon from 'ol/geom/Polygon';
 import { attachPrint, nearestPrintScale, printExtent, printLayout, serverScale } from './print';
 import { EPSG2180 } from './projection';
 import { useMapStore } from '@/state/store';
@@ -54,8 +52,10 @@ describe('attachPrint', () => {
       setTarget: vi.fn(),
       once: vi.fn((_: string, cb: () => void) => (rendered = cb)),
       render: vi.fn(),
-      addLayer: vi.fn(),
-      removeLayer: vi.fn(),
+      getViewport: () => document.createElement('div'),
+      getOverlayContainer: () => undefined,
+      on: vi.fn(),
+      un: vi.fn(),
       getSize: () => undefined,
     } as unknown as OlMap;
     const print = vi.fn(() => {
@@ -87,25 +87,30 @@ describe('print preview', () => {
     vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
     useMapStore.setState({ tool: 'none', printRequest: null, printSettings: { paper: 'A4', orientation: 'landscape', scale: 10000, title: '' } });
     const map = new OlMap({ view: new View({ projection: EPSG2180, center: [500000, 500000], resolution: 10 }) });
+    map.setSize([1000, 800]);
     const detach = attachPrint(map);
-    const layer = map.getLayers().getArray().at(-1) as VectorLayer;
-    expect(layer.getVisible()).toBe(false);
-    // Redrawn during a drag and a glide, not only when the map stops.
-    expect([layer.getUpdateWhileInteracting(), layer.getUpdateWhileAnimating()]).toEqual([true, true]);
+    const frame = map.getViewport()!.querySelector<HTMLElement>('.print-frame')!;
+    expect(frame.hidden).toBe(true);
 
     useMapStore.getState().setTool('print');
-    expect(layer.getVisible()).toBe(true);
-    const hole = () => (layer.getSource()!.getFeatures()[0].getGeometry() as Polygon).getLinearRing(1)!.getExtent();
-    expect(hole()).toEqual(printExtent([500000, 500000], useMapStore.getState().printSettings));
+    expect(frame.hidden).toBe(false);
+    // A4 landscape at 1:10 000 is 2770 x 1400 m: 277 x 140 px at 10 m per pixel, in the middle of
+    // the map beside the panel (margins 88, 72, 56, 368 px on a wide screen).
+    const box = () => [frame.style.left, frame.style.top, frame.style.width, frame.style.height];
+    expect(box()).toEqual(['510px', '346px', '277px', '140px']);
 
-    // Follows the map and the chosen sheet.
+    // Stands still while the map pans; follows the scale and the chosen sheet.
     map.getView().setCenter([510000, 500000]);
+    expect(box()).toEqual(['510px', '346px', '277px', '140px']);
+    map.getView().setResolution(5);
     useMapStore.getState().setPrintSettings({ scale: 5000 });
-    expect(hole()).toEqual(printExtent([510000, 500000], { paper: 'A4', orientation: 'landscape', scale: 5000 }));
+    expect(box()).toEqual(['510px', '346px', '277px', '140px']);
+    map.getView().setResolution(10);
+    expect(box()).toEqual(['579px', '381px', '139px', '70px']);
 
     useMapStore.getState().setTool('none');
-    expect(layer.getVisible()).toBe(false);
+    expect(frame.hidden).toBe(true);
     detach();
-    expect(map.getLayers().getLength()).toBe(0);
+    expect(map.getViewport()!.querySelector('.print-frame')).toBeNull();
   });
 });

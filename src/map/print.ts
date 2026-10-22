@@ -1,10 +1,5 @@
 import type Map from 'ol/Map';
-import Feature from 'ol/Feature';
-import VectorLayer from 'ol/layer/Vector';
-import VectorSource from 'ol/source/Vector';
-import { fromExtent } from 'ol/geom/Polygon';
 import { containsExtent, type Extent } from 'ol/extent';
-import { Fill, Stroke, Style } from 'ol/style';
 import { OGC_PIXEL } from './projection';
 import { duration } from './motion';
 import { useMapStore } from '@/state/store';
@@ -92,14 +87,6 @@ export function openPrint(): void {
 
 const RENDER_TIMEOUT_MS = 20000;
 
-/** Dimmed map outside the frame, so the printed area stands out. */
-const FRAME_STYLE = new Style({
-  stroke: new Stroke({ color: '#FF8142', width: 3, lineDash: [10, 6] }),
-  fill: new Fill({ color: 'rgba(37, 51, 38, 0.18)' }),
-});
-/** Larger than Poland in EPSG:2180: the outer ring of the dimming mask. */
-const WORLD: Extent = [-1e6, -1e6, 2e6, 2e6];
-
 /** Margins (top, right, bottom, left) the print panel takes: the left on wide screens, the bottom on phones. */
 function panelMargins(): [number, number, number, number] {
   return window.innerWidth >= 640 ? [88, 72, 56, 368] : [132, 16, Math.round(window.innerHeight * 0.6) + 16, 16];
@@ -119,34 +106,31 @@ export function freeArea(map: Map): { extent: Extent; center: [number, number] }
 
 /**
  * While the print panel is open, the area that will be printed is outlined in the middle of the
- * map beside the panel and follows the map as it moves. When the frame does not fit, the map
- * zooms out.
+ * map beside the panel, and the map moves under it. The frame stands still on screen as the map
+ * pans, so it is a plain element over the map (styled in index.css) rather than a map feature:
+ * panning costs no redrawing, and only a change of scale or of the sheet resizes it. When the
+ * frame does not fit, the map zooms out.
  */
 function attachPreview(map: Map): () => void {
   const view = map.getView();
-  const frame = new Feature();
-  // Redrawn while the map is dragged or glides, so the frame stays in place instead of jumping at the end.
-  const layer = new VectorLayer({
-    source: new VectorSource({ features: [frame] }),
-    style: FRAME_STYLE,
-    zIndex: 120,
-    visible: false,
-    updateWhileInteracting: true,
-    updateWhileAnimating: true,
-  });
-  map.addLayer(layer);
+  const frame = document.createElement('div');
+  frame.className = 'print-frame';
+  frame.hidden = true;
+  // Above the map layers, below the map buttons.
+  map.getViewport()?.insertBefore(frame, map.getOverlayContainer() ?? null);
 
   const update = () => {
     const { tool, printSettings, printRequest } = useMapStore.getState();
-    const free = freeArea(map);
-    const on = tool === 'print' && !printRequest && Boolean(free);
-    layer.setVisible(on);
-    if (!on || !free) return;
-    const extent = printExtent(free.center, printSettings);
-    // The world with the frame cut out: everything outside the print is dimmed.
-    const mask = fromExtent(WORLD);
-    mask.appendLinearRing(fromExtent(extent).getLinearRing(0)!);
-    frame.setGeometry(mask);
+    const resolution = view.getResolution();
+    const size = map.getSize();
+    frame.hidden = !(tool === 'print' && !printRequest && resolution && size);
+    if (frame.hidden || !resolution || !size) return;
+    const [minX, minY, maxX, maxY] = printExtent([0, 0], printSettings);
+    const [width, height] = [(maxX - minX) / resolution, (maxY - minY) / resolution];
+    const [top, right, bottom, left] = panelMargins();
+    const [x, y] = [(left + size[0] - right) / 2, (top + size[1] - bottom) / 2];
+    const px = (n: number) => `${Math.round(n)}px`;
+    Object.assign(frame.style, { left: px(x - width / 2), top: px(y - height / 2), width: px(width), height: px(height) });
   };
 
   const fitIfHidden = () => {
@@ -162,11 +146,13 @@ function attachPreview(map: Map): () => void {
     if (s.tool !== prev.tool || s.printSettings !== prev.printSettings || s.printRequest !== prev.printRequest) update();
     if ((s.tool === 'print' && prev.tool !== 'print') || (s.tool === 'print' && s.printSettings !== prev.printSettings)) fitIfHidden();
   });
-  view.on('change:center', update);
+  view.on('change:resolution', update);
+  map.on('change:size', update);
   return () => {
     unsubscribe();
-    view.un('change:center', update);
-    map.removeLayer(layer);
+    view.un('change:resolution', update);
+    map.un('change:size', update);
+    frame.remove();
   };
 }
 

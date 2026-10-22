@@ -194,6 +194,7 @@ export function PrintSheet() {
       </header>
       <div className="print-frame" style={layout ? ({ '--print-zoom': layout.zoom } as React.CSSProperties) : undefined}>
         <div id="print-map" />
+        <span className="print-source">Warstwy mapy: geoportal.gov.pl (GUGiK)</span>
       </div>
       {request && (
         <footer className="print-footer">
@@ -216,8 +217,8 @@ export function PrintSheet() {
             </div>
           )}
           <p className="print-note">
-            Dane: GUGiK (geoportal.gov.pl), starostwa powiatowe i gminy. Mapa poglądowa, nie jest dokumentem urzędowym. Układ współrzędnych
-            PL-1992 (EPSG:2180).
+            Źródło warstw mapy: geoportal.gov.pl (Główny Urząd Geodezji i Kartografii) oraz udostępniane przez niego usługi starostw, gmin i
+            innych instytucji. Mapa poglądowa, nie jest dokumentem urzędowym. Układ współrzędnych PL-1992 (EPSG:2180).
           </p>
         </footer>
       )}

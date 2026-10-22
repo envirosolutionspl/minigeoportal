@@ -59,7 +59,9 @@ describe('PrintSheet', () => {
     expect(text).toContain('Moja działka');
     expect(text).toContain('Skala 1:1000');
     expect(text).toContain('Warstwy: Ewidencja gruntów i budynków');
-    expect(text).toContain('Dane: GUGiK');
+    // The source is named on the map itself and in the footer.
+    expect(container.querySelector('.print-frame .print-source')?.textContent).toBe('Warstwy mapy: geoportal.gov.pl (GUGiK)');
+    expect(text).toContain('Źródło warstw mapy: geoportal.gov.pl');
     expect(container.querySelector('#print-map')).toBeTruthy();
   });
 

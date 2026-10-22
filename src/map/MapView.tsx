@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import Map from 'ol/Map';
 import View from 'ol/View';
-import { defaults as defaultControls, MousePosition, ScaleLine, ZoomToExtent } from 'ol/control';
+import { defaults as defaultControls, MousePosition, ZoomToExtent } from 'ol/control';
 import { defaults as defaultInteractions } from 'ol/interaction/defaults';
 import { duration } from './motion';
 import { EPSG2180, GUGIK_RESOLUTIONS, OGC_PIXEL, POLAND_EXTENT } from './projection';
@@ -13,6 +13,7 @@ import { attachFeatureInfo } from './featureInfoClick';
 import { attachFocus } from './focus';
 import { attachMeasure } from './measure';
 import { attachPrint } from './print';
+import { ScaleLineWithRatio } from './scaleRatio';
 import { coordinateBar } from './format';
 
 export function MapView() {
@@ -61,7 +62,7 @@ export function MapView() {
         rotate: false,
         zoomOptions: { duration: duration(250), zoomInTipLabel: 'Przybliż', zoomOutTipLabel: 'Oddal' },
       }).extend([
-        new ScaleLine({ units: 'metric' }),
+        new ScaleLineWithRatio({ units: 'metric' }),
         new ZoomToExtent({ extent: POLAND_EXTENT, label: wholeCountryIcon(), tipLabel: 'Cała Polska' }),
         // Shown only with a mouse (CSS hides it on touch screens), without live announcements.
         new MousePosition({ projection: EPSG2180, coordinateFormat: (c) => (c ? coordinateBar(c) : ''), placeholder: '' }),

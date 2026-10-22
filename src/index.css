@@ -187,6 +187,15 @@ input[type='search']::-webkit-search-cancel-button {
   border-color: currentColor;
   font-size: 0.7rem;
 }
+/* Numeric scale above the bar, in the same box (scaleRatio.ts). */
+.scale-ratio {
+  color: var(--text);
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 0 0.15rem 0.1rem;
+  font-variant-numeric: tabular-nums;
+}
 .ol-attribution {
   left: 0;
   right: 0;
@@ -231,8 +240,21 @@ html[data-printing] #print-sheet {
   font-size: 14pt;
 }
 .print-frame {
+  position: relative;
   border: 0.3mm solid #1f2a20;
   width: max-content;
+}
+/* Source of the map layers in the corner of the printed map, as the attribution is on screen.
+   The frame is zoomed to paper size, so the text size is divided by the same factor. */
+.print-source {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: calc(0.6mm / var(--print-zoom, 1)) calc(1.2mm / var(--print-zoom, 1));
+  background: rgb(255 255 255 / 0.85);
+  color: #1f2a20;
+  font-size: calc(7pt / var(--print-zoom, 1));
+  line-height: 1.2;
 }
 .print-footer {
   height: var(--print-footer);

@@ -49,6 +49,9 @@ describe('validation against parent lists', () => {
     ['communes', '1499', 'Unknown county'],
     ['precincts', '149900_1', 'Unknown county'],
     ['precincts', 'abc', 'Invalid municipality'],
+    // Codes go into the ArcGIS where clause, so anything but digits is refused first.
+    ['counties', "14' OR '1'='1", 'Invalid voivodeship'],
+    ['communes', "14%' --", 'Invalid county'],
   ] as const)('%s(%s) is refused with "%s" and never reaches upstream', async (fn, code, message) => {
     const calls = stubUpstream({ '/2/query': VOIVODESHIPS, '/1/query': COUNTIES_14 });
     await expect(dict[fn](code)).rejects.toThrow(new RequestError(message));

@@ -13,14 +13,11 @@ beforeAll(() => {
 });
 
 describe('WelcomeDialog', () => {
-  it('says what the service is for, why it was made and where the data come from', () => {
+  it('says what the service is for and where the data come from, briefly', () => {
     render(<WelcomeDialog />);
     act(() => useWelcome.getState().setOpen(true));
     expect(screen.getByText('Dane z geoportal.gov.pl – prościej i szybciej')).toBeTruthy();
-    for (const heading of ['Po co jest ten serwis', 'Skąd ten pomysł', 'Skąd są dane', 'Ważne']) {
-      expect(screen.getByRole('heading', { name: heading })).toBeTruthy();
-    }
-    expect(screen.getAllByRole('listitem')).toHaveLength(5);
-    expect(screen.getByText(/aplikacja mobilna często nie wczytuje map/)).toBeTruthy();
+    expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual(['Po co jest ten serwis', 'Skąd są dane', 'Ważne']);
+    expect(screen.getByText(/Wyszukaj i przejrzyj oficjalne dane szybciej i łatwiej/)).toBeTruthy();
   });
 });

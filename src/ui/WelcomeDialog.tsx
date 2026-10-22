@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { create } from 'zustand';
-import { APP_DOMAIN, APP_NAME, AUTHOR_URL, AuthorLogo, BrandMark } from './Brand';
+import { APP_NAME, AUTHOR_URL, AuthorLogo, BrandMark } from './Brand';
 import { useReport } from './ReportDialog';
 import { useAccessibility } from './AccessibilityDialog';
 
@@ -64,47 +64,29 @@ export function WelcomeDialog() {
       onClose={close}
       onClick={(e) => e.target === dialog.current && close()}
       aria-labelledby="welcome-title"
-      className="m-auto w-[min(36rem,calc(100%-2rem))] rounded-3xl outline-none bg-[var(--surface)] p-0 text-[var(--text)] shadow-2xl backdrop:bg-[#253326]/50 backdrop:backdrop-blur-[2px]"
+      className="m-auto w-[min(42rem,calc(100%-2rem))] rounded-3xl outline-none bg-[var(--surface)] p-0 text-[var(--text)] shadow-2xl backdrop:bg-[#253326]/50 backdrop:backdrop-blur-[2px]"
     >
-      <div className="max-h-[85dvh] overflow-y-auto p-6 sm:p-8">
+      <div className="max-h-[calc(100dvh-2rem)] overflow-y-auto p-5 sm:p-6">
         <header className="flex items-center gap-3">
-          <BrandMark className="h-11 w-11 shrink-0" />
+          <BrandMark className="h-10 w-10 shrink-0" />
           <div>
-            <h1 id="welcome-title" className="text-xl font-bold tracking-tight">
+            <h1 id="welcome-title" className="text-lg font-bold tracking-tight">
               {APP_NAME}
             </h1>
             <p className="text-sm text-[var(--muted)]">Dane z geoportal.gov.pl – prościej i szybciej</p>
           </div>
         </header>
 
-        <div className="mt-6 space-y-5 text-sm leading-relaxed">
+        <div className="mt-4 space-y-3 text-sm leading-normal">
           <section>
             <h2 className="mb-1 font-semibold">Po co jest ten serwis</h2>
             <p>
               {APP_NAME} pokazuje te same publiczne dane co krajowy geoportal.gov.pl, ale w formie przyjaznej dla
-              osób, które nie zajmują się mapami zawodowo. Wpisz adres, miejscowość albo numer działki i kliknij mapę.
+              osób, które nie zajmują się mapami zawodowo. Wyszukaj i przejrzyj oficjalne dane szybciej i łatwiej.
+            </p>
+            <p className="mt-2">
               Zobaczysz granice i numer działki, przeznaczenie w planie miejscowym lub ogólnym, ceny transakcyjne w
               okolicy, uzbrojenie terenu i zdjęcia lotnicze. Bez logowania i bez opłat, na komputerze i na telefonie.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="mb-1 font-semibold">Skąd ten pomysł</h2>
-            <p>
-              Serwis powstał w odpowiedzi na głosy użytkowników geoportal.gov.pl, z którego co roku korzysta ponad 9 mln
-              osób. W opiniach i na forach najczęściej powtarza się, że:
-            </p>
-            <ul className="mt-1 list-disc space-y-0.5 pl-5">
-              <li>trudno się w nim odnaleźć i nie wiadomo, co kliknąć,</li>
-              <li>granice działek widać dopiero po dużym przybliżeniu, a numery są słabo czytelne,</li>
-              <li>żeby znaleźć działkę, trzeba znać obręb albo jej identyfikator,</li>
-              <li>plany miejscowe i ceny transakcyjne są rozrzucone po osobnych modułach,</li>
-              <li>aplikacja mobilna często nie wczytuje map.</li>
-            </ul>
-            <p className="mt-2">
-              Dlatego tutaj masz jedną mapę zamiast modułów i wyszukiwarkę, która rozumie zwykły adres. Najpotrzebniejsze
-              warstwy są pod ręką, a ponad 400 pozostałych z geoportal.gov.pl czeka w katalogu z prostym podziałem na
-              tematy. Mapa wczytuje się kilka razy szybciej niż oficjalna.
             </p>
           </section>
 
@@ -120,7 +102,7 @@ export function WelcomeDialog() {
             </p>
           </section>
 
-          <section className="rounded-2xl bg-[var(--field)] p-4">
+          <section className="rounded-2xl bg-[var(--field)] px-4 py-3">
             <h2 className="mb-1 font-semibold">Ważne</h2>
             <p>
               Informacje mają charakter poglądowy i nie są dokumentem urzędowym. Wiążące dane wydaje starostwo
@@ -130,7 +112,7 @@ export function WelcomeDialog() {
           </section>
         </div>
 
-        <footer className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <footer className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <label className="flex cursor-pointer items-center gap-2 text-sm text-[var(--muted)]">
             <input
               type="checkbox"
@@ -150,26 +132,21 @@ export function WelcomeDialog() {
           </button>
         </footer>
 
-        <p className="mt-4 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
+        {/* Links and the author in one row, so the window fits a laptop screen without scrolling. */}
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-[var(--hover)] pt-2 text-sm sm:justify-between">
           <button type="button" onClick={report} className="min-h-6 text-[var(--accent)] underline underline-offset-2">
             Zgłoś błąd w serwisie
           </button>
           <button type="button" onClick={accessibility} className="min-h-6 text-[var(--accent)] underline underline-offset-2">
             Deklaracja dostępności
           </button>
-        </p>
-
-        <a
-          href={AUTHOR_URL}
-          target="_blank"
-          rel="noopener"
-          className="mt-6 flex items-center justify-center gap-2 border-t border-[var(--hover)] pt-4 text-xs text-[var(--muted)]"
-        >
-          {APP_DOMAIN} · stworzone przez
-          <span className="rounded-lg bg-white px-1">
-            <AuthorLogo className="h-8" />
-          </span>
-        </a>
+          <a href={AUTHOR_URL} target="_blank" rel="noopener" className="flex items-center gap-2 text-xs text-[var(--muted)]">
+            Stworzone przez
+            <span className="rounded-lg bg-white px-1">
+              <AuthorLogo className="h-7" />
+            </span>
+          </a>
+        </div>
       </div>
     </dialog>
   );

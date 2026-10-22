@@ -15,6 +15,7 @@ export type Topic =
   | 'zagrozenia'
   | 'zabytki'
   | 'archiwalne'
+  | 'pobieranie'
   | 'geodezja'
   | 'inne';
 
@@ -30,6 +31,7 @@ export const TOPICS: Record<Topic, string> = {
   zagrozenia: 'Zagrożenia',
   zabytki: 'Zabytki i turystyka',
   archiwalne: 'Archiwalne',
+  pobieranie: 'Dane do pobrania',
   geodezja: 'Geodezja',
   inne: 'Inne',
 };

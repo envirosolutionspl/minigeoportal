@@ -77,6 +77,25 @@ describe('catalogEntries', () => {
     const entries = mod.catalogEntries(twice);
     expect(entries.filter((e) => e.url === 'https://nid.example/wms').map((e) => e.id)).toEqual(['msZabytki']);
   });
+
+  it('keeps different sublayers of one service apart even under one name, and only the new of an old and new version', () => {
+    const sozo = config();
+    const url = 'https://gugik.example/sozo';
+    sozo.services.set('msSozoArch', { id: 'msSozoArch', label: 'Mapy sozologiczne', type: 'wms', url, sublayers: [{ name: 'Mapy', title: 'Mapy' }] });
+    sozo.services.set('msSkorowidzeSozo', { id: 'msSkorowidzeSozo', label: 'Mapy sozologiczne', type: 'wms', url, sublayers: [{ name: 'Skorowidze', title: 'Skorowidze' }] });
+    sozo.services.set('msSkorowidzeSozo_new', { id: 'msSkorowidzeSozo_new', label: 'Mapy sozologiczne', type: 'wms', url: 'https://gugik.example/sozo2', sublayers: [{ name: 'Skorowidze', title: 'Skorowidze' }] });
+    sozo.services.set('groupSkor', { id: 'groupSkor', label: 'Skorowidze', type: 'group', children: ['msSkorowidzeSozo', 'msSkorowidzeSozo_new'] });
+    sozo.services.set('msSozoRaster', { id: 'msSozoRaster', label: 'Mapy sozologiczne', type: 'wms', url: 'https://gugik.example/sozo-raster' });
+    sozo.services.set('msSozoNajnowsze', { id: 'msSozoNajnowsze', label: 'Mapy sozologiczne', type: 'wms', url: 'https://gugik.example/sozo3', sublayers: [{ name: 'M', title: 'Najnowsze mapy sozologiczne' }] });
+    sozo.services.set('groupArch', { id: 'groupArch', label: 'Dane archiwalne', type: 'group', children: ['msSozoRaster', 'msSozoNajnowsze'] });
+    sozo.modules.push({ id: 'modulGiK', label: 'Geodezja', layers: ['msSozoArch', 'groupSkor', 'groupArch'] });
+    expect(mod.catalogEntries(sozo).filter((e) => e.title === 'Mapy sozologiczne').map((e) => e.id)).toEqual(['msSozoArch', 'msSkorowidzeSozo_new', 'msSozoNajnowsze']);
+  });
+
+  it('puts maps of downloadable data in a group of their own', () => {
+    expect(mod.topicOf('Działki', ['Dane do pobrania', 'Dane powiatowe'])).toBe('pobieranie');
+    expect(mod.topicOf('Działki LPIS', ['Dane innych instytucji'])).toBe('dzialki');
+  });
 });
 
 describe('failureStatus', () => {

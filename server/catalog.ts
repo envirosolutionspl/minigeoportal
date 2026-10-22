@@ -63,6 +63,8 @@ const TOPIC_RULES: [Topic, RegExp][] = [
 ];
 
 export function topicOf(title: string, path: string[]): Topic {
+  // Maps of where data can be downloaded look like the data itself ("Działki"): kept apart.
+  if (normalize(path[0] ?? '') === 'dane do pobrania') return 'pobieranie';
   const text = normalize([title, ...path].join(' '));
   return TOPIC_RULES.find(([, re]) => re.test(text))?.[0] ?? 'inne';
 }
@@ -78,8 +80,8 @@ export function catalogEntries(config: GeoportalConfig): Omit<CatalogEntry, 'sta
   const modules = [...config.modules].sort((a, b) => (a.id === MAIN_MODULE ? -1 : b.id === MAIN_MODULE ? 1 : 0));
   const out = new Map<string, Omit<CatalogEntry, 'status' | 'detail' | 'checked'>>();
   /**
-   * Modules define the same layer under different ids: one entry per service and sublayers, and
-   * one per service and name, as the same name on one service is one layer shown two ways.
+   * Modules define the same layer under different ids: one entry per service and sublayers. The
+   * same name on one service is also one layer when one of the entries draws the whole service.
    */
   const sameLayer = new Map<string, Omit<CatalogEntry, 'status' | 'detail' | 'checked'>>();
   const visit = (id: string, path: string[], module: string, seen: Set<string>) => {
@@ -94,7 +96,9 @@ export function catalogEntries(config: GeoportalConfig): Omit<CatalogEntry, 'sta
     const url = s.url.replace(/\?$/, '');
     const key = `${url} ${s.layer ?? ''} ${(s.sublayers ?? []).map((l) => l.name).join(',')}`;
     const named = `${url} ${normalize(s.label || id)}`;
-    const known = out.get(id) ?? sameLayer.get(key) ?? sameLayer.get(named);
+    const byName = sameLayer.get(named);
+    const wholeService = !s.sublayers?.length || !byName?.sublayers?.length;
+    const known = out.get(id) ?? sameLayer.get(key) ?? (wholeService ? byName : undefined);
     if (known) {
       if (!known.modules.includes(module)) known.modules.push(module);
       return;
@@ -105,7 +109,19 @@ export function catalogEntries(config: GeoportalConfig): Omit<CatalogEntry, 'sta
     sameLayer.set(named, entry);
   };
   for (const m of modules) for (const id of m.layers) visit(id, [], m.label, new Set());
-  return [...out.values()];
+  return withoutReplaced([...out.values()]);
+}
+
+/**
+ * The geoportal keeps some layers in an old and a new version under one name in one group: an
+ * id ending in _new (msSkorowidzeSozo_new) or a sublayer called "Najnowsze ..." (msSozoArch).
+ * Only the new one is listed; neither carries edition dates that a time view could use.
+ */
+function withoutReplaced<T extends Pick<CatalogEntry, 'id' | 'title' | 'path' | 'sublayers'>>(entries: T[]): T[] {
+  const place = (e: T) => normalize([...e.path, e.title].join(' › '));
+  const isNew = (e: T) => /_?new$/i.test(e.id) || (e.sublayers ?? []).some((l) => /^najnowsz/i.test(normalize(l.title)));
+  const renewed = new Set(entries.filter(isNew).map(place));
+  return entries.filter((e) => isNew(e) || !renewed.has(place(e)));
 }
 
 function entryFor(s: ConfigService, path: string[], module: string, order: number): Omit<CatalogEntry, 'status' | 'detail' | 'checked'> {

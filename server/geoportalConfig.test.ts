@@ -31,6 +31,13 @@ const PART = `export const config = {
     /* { id: 'msOld', type: 'wms', url: 'https://old' }, */
     { id: 'msPodkl', label: 'Podkład', type: 'tiled', url: '\${msPodkl}' },
     { id: 'msHttp', label: 'Bez https', type: 'wms', url: 'http://example.com/wms' },
+    {
+      id: 'msTopo65',
+      label: 'Skala 1:10 000_1965',
+      type: 'wms',
+      url: 'https://mapy.geoportal.gov.pl/wss/service/img/guest/TOPO_SERIA/MapServer/WMSServer',
+      params: { visibleLayers: ['Raster_10_1965'] },
+    },
   ],
   gpmaps: [
     {
@@ -54,7 +61,9 @@ describe('geoportal configuration parser', () => {
   it('reads services, groups, sublayers and formats, skipping comments and plain-http addresses', () => {
     const services = parseServices(PART, { msPodkl: 'https://mapy.geoportal.gov.pl/gprest/services/G2/MapServer' });
     const byId = Object.fromEntries(services.map((s) => [s.id, s]));
-    expect(Object.keys(byId)).toEqual(['groupPlanowanie', 'msMPZP', 'msPodkl', 'msHttp']);
+    expect(Object.keys(byId)).toEqual(['groupPlanowanie', 'msMPZP', 'msPodkl', 'msHttp', 'msTopo65']);
+    // A plain list of visible layers stands for sublayers, so only that layer is drawn.
+    expect(byId.msTopo65.sublayers).toEqual([{ name: 'Raster_10_1965', title: 'Raster_10_1965' }]);
     expect(byId.groupPlanowanie).toEqual({ id: 'groupPlanowanie', label: 'Pomocnicze dane planistyczne', type: 'group', children: ['msMPZP'] });
     expect(byId.msMPZP).toMatchObject({
       type: 'wms',

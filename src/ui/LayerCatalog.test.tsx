@@ -36,7 +36,7 @@ describe('LayerCatalog', () => {
   it('lists starters first, then every geoportal layer by topic, without repeating our own', async () => {
     stubFetch([['/api/catalog', CATALOG]]);
     render(<LayerCatalog />);
-    expect(screen.getByText('Na start')).toBeTruthy();
+    expect(screen.getByText('Najpopularniejsze')).toBeTruthy();
     expect(screen.getByLabelText('Plany ogólne gmin (POG)')).toBeTruthy();
     fireEvent.click(await section(/Zabytki i turystyka/));
     expect(screen.getByLabelText('Rejestr zabytków nieruchomych')).toBeTruthy();

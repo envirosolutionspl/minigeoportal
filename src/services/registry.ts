@@ -91,7 +91,7 @@ export interface Overlay {
   description: string;
   topic: Topic;
   keywords: string[];
-  /** Shown in the "Na start" group of the catalog. */
+  /** Shown in the "Najpopularniejsze" group of the catalog. */
   starter?: boolean;
   url: string;
   /** Id of the same layer in the geoportal.gov.pl configuration, which gives the drawing order. */

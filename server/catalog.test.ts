@@ -69,6 +69,14 @@ describe('catalogEntries', () => {
     expect(entries.filter((e) => e.title === 'Rejestr zabytków')).toHaveLength(1);
     expect(entries.find((e) => e.id === 'msZabytki')?.modules).toEqual(['Geoportal Krajowy', 'Ochrona środowiska', 'Turystyka']);
   });
+
+  it('lists the same name on the same service once, with or without a sublayer', () => {
+    const twice = config();
+    twice.services.set('msZabytkiNieruchome', { id: 'msZabytkiNieruchome', label: 'Rejestr Zabytków', type: 'wms', url: 'https://nid.example/wms', sublayers: [{ name: 'nieruchome', title: 'Nieruchome' }] });
+    twice.modules.push({ id: 'modulTur', label: 'Turystyka', layers: ['msZabytkiNieruchome'] });
+    const entries = mod.catalogEntries(twice);
+    expect(entries.filter((e) => e.url === 'https://nid.example/wms').map((e) => e.id)).toEqual(['msZabytki']);
+  });
 });
 
 describe('failureStatus', () => {

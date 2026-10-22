@@ -146,7 +146,7 @@ export function LayerCatalog() {
           </Group>
         ) : (
           <>
-            <Group title="Na start">
+            <Group title="Najpopularniejsze">
               {starters.map(({ s, hits }) => (
                 <OverlayItem key={s.id} s={s} hits={hits} />
               ))}

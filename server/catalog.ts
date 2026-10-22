@@ -77,7 +77,10 @@ const CURATED = new Map(OVERLAYS.flatMap((o) => (o.geoportalId ? [[o.geoportalId
 export function catalogEntries(config: GeoportalConfig): Omit<CatalogEntry, 'status' | 'detail' | 'checked'>[] {
   const modules = [...config.modules].sort((a, b) => (a.id === MAIN_MODULE ? -1 : b.id === MAIN_MODULE ? 1 : 0));
   const out = new Map<string, Omit<CatalogEntry, 'status' | 'detail' | 'checked'>>();
-  /** Modules define the same layer under different ids: one entry per service and sublayers. */
+  /**
+   * Modules define the same layer under different ids: one entry per service and sublayers, and
+   * one per service and name, as the same name on one service is one layer shown two ways.
+   */
   const sameLayer = new Map<string, Omit<CatalogEntry, 'status' | 'detail' | 'checked'>>();
   const visit = (id: string, path: string[], module: string, seen: Set<string>) => {
     const s = config.services.get(id);
@@ -88,8 +91,10 @@ export function catalogEntries(config: GeoportalConfig): Omit<CatalogEntry, 'sta
       return;
     }
     if (!s.url || s.type === 'basemap') return;
-    const key = `${s.url.replace(/\?$/, '')} ${s.layer ?? ''} ${(s.sublayers ?? []).map((l) => l.name).join(',')}`;
-    const known = out.get(id) ?? sameLayer.get(key);
+    const url = s.url.replace(/\?$/, '');
+    const key = `${url} ${s.layer ?? ''} ${(s.sublayers ?? []).map((l) => l.name).join(',')}`;
+    const named = `${url} ${normalize(s.label || id)}`;
+    const known = out.get(id) ?? sameLayer.get(key) ?? sameLayer.get(named);
     if (known) {
       if (!known.modules.includes(module)) known.modules.push(module);
       return;
@@ -97,6 +102,7 @@ export function catalogEntries(config: GeoportalConfig): Omit<CatalogEntry, 'sta
     const entry = entryFor(s, path, module, out.size);
     out.set(id, entry);
     sameLayer.set(key, entry);
+    sameLayer.set(named, entry);
   };
   for (const m of modules) for (const id of m.layers) visit(id, [], m.label, new Set());
   return [...out.values()];
@@ -116,7 +122,7 @@ function entryFor(s: ConfigService, path: string[], module: string, order: numbe
     order,
     ...(s.sublayers ? { sublayers: s.sublayers } : {}),
     ...(s.featureInfoFormat ? { infoFormat: s.featureInfoFormat } : {}),
-    ...(kind === 'wmts' && s.layer ? { layer: s.layer } : {}),
+    ...(kind === 'wmts' && (s.layer ?? s.sublayers?.[0]) ? { layer: s.layer ?? s.sublayers![0].name } : {}),
     ...(CURATED.has(s.id) ? { curated: CURATED.get(s.id) } : {}),
   };
 }

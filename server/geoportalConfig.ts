@@ -115,9 +115,11 @@ export function parseServices(source: string, prefixes: Record<string, string> =
     if (!id) return [];
     const url = field(own, 'url')?.replace(/\$\{(\w+)\}/g, (all, key: string) => prefixes[key] ?? all);
     const sublayers = obj.match(/sublayers:\s*\[([\s\S]*?)\]\s*,?\s*(?:\w+:|\})/)?.[1];
+    // Some entries name their layers in a plain list instead: visibleLayers: ['Raster_10_1965'].
+    const visible = obj.match(/visibleLayers:\s*\[([^\]]*)\]/)?.[1];
     const subs = sublayers
       ? [...sublayers.matchAll(/name:\s*'([^']+)'[^}]*?title:\s*'([^']*)'/g)].map(([, name, title]) => ({ name, title }))
-      : [];
+      : [...(visible ?? '').matchAll(/'([^']+)'/g)].map(([, name]) => ({ name, title: name }));
     const children = [...obj.matchAll(/layerId:\s*'([^']+)'/g)].map((x) => x[1]);
     const type = field(own, 'type') ?? (children.length ? 'group' : '');
     return [

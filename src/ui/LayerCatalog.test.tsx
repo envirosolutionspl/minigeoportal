@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { LayerCatalog } from './LayerCatalog';
 import { useMapStore } from '@/state/store';
 import { useStatusStore } from '@/services/status';
@@ -126,6 +126,25 @@ describe('LayerCatalog', () => {
     fireEvent.click(await screen.findByLabelText('Rejestr zabytków nieruchomych: Ruchome'));
     expect(useMapStore.getState().overlays).toContain('msZabytki');
     expect(useMapStore.getState().sublayers.msZabytki).toEqual(['ruchome']);
+  });
+
+  it('shows only the layers switched on, ours and the geoportal ones, when asked', async () => {
+    useMapStore.setState({ overlays: ['kieg', 'msZabytki'] });
+    stubFetch([['/api/catalog', CATALOG]]);
+    render(<LayerCatalog />);
+    await section(/Zabytki i turystyka/);
+    fireEvent.click(screen.getByRole('button', { name: 'Tylko włączone (2)' }));
+    expect(screen.getByText('Włączone warstwy')).toBeTruthy();
+    expect(screen.getByLabelText('Ewidencja gruntów i budynków')).toBeTruthy();
+    expect(screen.getByLabelText('Rejestr zabytków nieruchomych')).toBeTruthy();
+    expect(screen.queryByLabelText('Plany ogólne gmin (POG)')).toBeNull();
+    expect(screen.queryByLabelText('Corine Land Cover 2018')).toBeNull();
+
+    // Nothing on: the panel says so.
+    act(() => useMapStore.setState({ overlays: [] }));
+    expect(screen.getByText('Żadna warstwa nie jest włączona.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Tylko włączone (0)' }));
+    expect(screen.getByText('Najpopularniejsze')).toBeTruthy();
   });
 
   it('says when the full list is still being prepared', async () => {

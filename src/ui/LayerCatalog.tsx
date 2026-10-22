@@ -1,5 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ExternalLink, HelpCircle, LoaderCircle, Search, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { Check, ChevronDown, ExternalLink, HelpCircle, LoaderCircle, Search, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { GEOPORTAL_MAP, OVERLAYS, TOPICS, type Overlay, type SubLayer, type Topic } from '@/services/registry';
 import { layerMeta, serviceError, visibleAtScale } from '@/services/meta';
 import { normalize } from '@/services/text';
@@ -63,6 +63,9 @@ export function LayerCatalog() {
   const close = useMapStore((m) => m.setPanel);
   const [query, setQuery] = useState('');
   const [topic, setTopic] = useState<Topic | null>(null);
+  /** Only the layers switched on: a short list to adjust what is on the map. */
+  const [onlyActive, setOnlyActive] = useState(false);
+  const active = useMapStore((m) => m.overlays);
   // Typing stays quick: the list filters after the keystroke is shown.
   const deferred = useDeferredValue(query);
   const q = useMemo(() => words(deferred), [deferred]);
@@ -81,14 +84,14 @@ export function LayerCatalog() {
   /** Our services matching the filter; matching sublayers open the service with those rows highlighted. */
   const results = useMemo(
     () =>
-      OVERLAYS.filter((s) => topic === null || s.topic === topic)
+      OVERLAYS.filter((s) => (topic === null || s.topic === topic) && (!onlyActive || active.includes(s.id)))
         .map((s) => {
           if (q.length === 0) return { s, hits: [] as string[] };
           const hits = s.sublayers.filter((l) => textMatches(l.title, q)).map((l) => l.name);
           return hits.length > 0 || textMatches(serviceText(s), q) ? { s, hits } : null;
         })
         .filter((r): r is { s: Overlay; hits: string[] } => r !== null),
-    [q, topic],
+    [q, topic, onlyActive, active],
   );
 
   /** Geoportal layers that our own entries do not already show. */
@@ -96,13 +99,17 @@ export function LayerCatalog() {
     () =>
       entries
         .filter(
-          (e) => !e.curated && (topic === null || e.topic === topic) && (q.length === 0 || q.every((w) => texts.get(e.id)?.includes(w))),
+          (e) =>
+            !e.curated &&
+            (topic === null || e.topic === topic) &&
+            (!onlyActive || active.includes(e.id)) &&
+            (q.length === 0 || q.every((w) => texts.get(e.id)?.includes(w))),
         )
         .sort(byAvailability),
-    [entries, texts, q, topic],
+    [entries, texts, q, topic, onlyActive, active],
   );
 
-  const filtering = q.length > 0 || topic !== null;
+  const filtering = q.length > 0 || topic !== null || onlyActive;
   const starters = results.filter((r) => r.s.starter);
 
   return (
@@ -137,6 +144,17 @@ export function LayerCatalog() {
           )}
         </label>
         <div className="mt-2 flex flex-wrap gap-1.5">
+          <button
+            type="button"
+            onClick={() => setOnlyActive(!onlyActive)}
+            aria-pressed={onlyActive}
+            className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ring-1 ring-[var(--accent)] transition ${
+              onlyActive ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'text-[var(--accent)] hover:bg-[var(--hover)]'
+            }`}
+          >
+            {onlyActive && <Check className="h-3.5 w-3.5" aria-hidden="true" />}
+            Tylko włączone ({active.length})
+          </button>
           {(Object.keys(TOPICS) as Topic[]).map((t) => (
             <button
               key={t}
@@ -155,13 +173,15 @@ export function LayerCatalog() {
 
       <div className="flex-1 overflow-y-auto px-2 pb-4">
         {filtering ? (
-          <Group title="Wyniki">
+          <Group title={onlyActive && q.length === 0 && topic === null ? 'Włączone warstwy' : 'Wyniki'}>
             {results.map(({ s, hits }) => (
               <OverlayItem key={s.id} s={s} hits={hits} />
             ))}
             <CatalogList entries={others} />
             {results.length === 0 && others.length === 0 && (
-              <p className="px-3 py-6 text-center text-sm text-[var(--muted)]">Brak warstw dla tego filtru.</p>
+              <p className="px-3 py-6 text-center text-sm text-[var(--muted)]">
+                {onlyActive && active.length === 0 ? 'Żadna warstwa nie jest włączona.' : 'Brak warstw dla tego filtru.'}
+              </p>
             )}
           </Group>
         ) : (

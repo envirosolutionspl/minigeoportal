@@ -4,13 +4,34 @@
  * Adding a service means adding one entry here.
  */
 
-export type Topic = 'dzialki' | 'planowanie' | 'ceny' | 'uzbrojenie';
+export type Topic =
+  | 'dzialki'
+  | 'planowanie'
+  | 'ceny'
+  | 'uzbrojenie'
+  | 'granice'
+  | 'teren'
+  | 'srodowisko'
+  | 'zagrozenia'
+  | 'zabytki'
+  | 'archiwalne'
+  | 'geodezja'
+  | 'inne';
 
+/** Topics of the catalog; geoportal.gov.pl layers are sorted into them by the server (catalog.ts). */
 export const TOPICS: Record<Topic, string> = {
   dzialki: 'Działki i budynki',
   planowanie: 'Planowanie',
   ceny: 'Ceny',
-  uzbrojenie: 'Uzbrojenie',
+  uzbrojenie: 'Uzbrojenie i drogi',
+  granice: 'Granice i adresy',
+  teren: 'Teren i zdjęcia',
+  srodowisko: 'Środowisko',
+  zagrozenia: 'Zagrożenia',
+  zabytki: 'Zabytki i turystyka',
+  archiwalne: 'Archiwalne',
+  geodezja: 'Geodezja',
+  inne: 'Inne',
 };
 
 /**
@@ -195,6 +216,7 @@ export const OVERLAYS: Overlay[] = [
     description: 'Strefy planistyczne z uchwalonych planów ogólnych.',
     topic: 'planowanie',
     keywords: ['pog', 'plan ogólny', 'strefy', 'planistyczne'],
+    starter: true,
     url: `${EXT}PlanyOgolneGmin`,
     opacity: 0.8,
     sublayers: [
@@ -242,6 +264,77 @@ export const OVERLAYS: Overlay[] = [
       { name: 'przewod_specjalny', title: 'Sieć specjalna', default: true },
       { name: 'przewod_niezidentyfikowany', title: 'Sieci niezidentyfikowane', default: true },
       { name: 'przewod_urzadzenia', title: 'Urządzenia', default: true },
+    ],
+  },
+  {
+    id: 'kibdot',
+    geoportalId: 'msKIBDOT',
+    kind: 'wms',
+    title: 'Obiekty topograficzne (BDOT500)',
+    description: 'Szczegółowa mapa zasadnicza: budowle, ogrodzenia, chodniki, drogi, skarpy.',
+    topic: 'dzialki',
+    keywords: ['bdot500', 'mapa zasadnicza', 'topografia', 'ogrodzenia', 'budowle', 'chodniki', 'drogi', 'skarpy', 'kibdot'],
+    starter: true,
+    url: `${INTEGRACJA}KrajowaIntegracjaBazDanychObiektowTopograficznych`,
+    sublayers: [
+      { name: 'wdrozenia', title: 'Powiaty z danymi', default: true },
+      { name: 'bdot', title: 'Obiekty topograficzne', default: true },
+    ],
+  },
+  {
+    id: 'suikzp',
+    geoportalId: 'msSUiKZP',
+    kind: 'wms',
+    title: 'Studium zagospodarowania',
+    description: 'Studium uwarunkowań i kierunków zagospodarowania gminy, gdzie nie ma planu.',
+    topic: 'planowanie',
+    keywords: ['studium', 'suikzp', 'kierunki', 'zagospodarowanie', 'gmina', 'przeznaczenie'],
+    starter: true,
+    url: `${EXT}KrajowaIntegracjaStudiumKierunkowZagospodarowaniaPrzestrzennego`,
+    opacity: 0.8,
+    sublayers: [
+      { name: 'gminy', title: 'Gminy z danymi', default: true },
+      { name: 'studium', title: 'Studium', default: true },
+    ],
+  },
+  {
+    id: 'kina',
+    geoportalId: 'msAdresyUlice',
+    kind: 'wms',
+    title: 'Adresy i ulice',
+    description: 'Punkty adresowe z numerami i osie ulic z gminnych ewidencji.',
+    topic: 'granice',
+    keywords: ['adresy', 'numery', 'ulice', 'emuia', 'punkty adresowe', 'kina'],
+    starter: true,
+    url: `${EXT}KrajowaIntegracjaNumeracjiAdresowej`,
+    sublayers: [
+      { name: 'A08_Ulice_Powierzchnie', title: 'Ulice: obszary' },
+      { name: 'A08_Ulice_Linie', title: 'Ulice: osie', default: true },
+      { name: 'A07_Punkty_adresowe', title: 'Punkty adresowe', default: true },
+    ],
+  },
+  {
+    id: 'prg',
+    geoportalId: 'msPRG',
+    kind: 'wms',
+    title: 'Granice administracyjne (PRG)',
+    description: 'Granice województw, powiatów, gmin i obrębów, a także sądów, urzędów i nadleśnictw.',
+    topic: 'granice',
+    keywords: ['granice', 'prg', 'gmina', 'powiat', 'województwo', 'obręb', 'jednostka', 'sąd', 'urząd skarbowy', 'nadleśnictwo', 'spis'],
+    starter: true,
+    url: `${PZGIK}PRG/WMS/AdministrativeBoundaries`,
+    sublayers: [
+      { name: 'R01_Granice_rejonow_statystycznych', title: 'Rejony statystyczne' },
+      { name: 'U06_Nadlesnictwo', title: 'Nadleśnictwa' },
+      { name: 'U02_Urzad_skarbowy', title: 'Urzędy skarbowe' },
+      { name: 'S03_Sad_rejonowy', title: 'Sądy rejonowe' },
+      { name: 'A06_Granice_obrebow_ewidencyjnych', title: 'Obręby ewidencyjne' },
+      { name: 'A05_Granice_jednostek_ewidencyjnych', title: 'Jednostki ewidencyjne' },
+      { name: 'A04_Granice_miast', title: 'Miasta' },
+      { name: 'A03_Granice_gmin', title: 'Gminy', default: true },
+      { name: 'A02_Granice_powiatow', title: 'Powiaty', default: true },
+      { name: 'A01_Granice_wojewodztw', title: 'Województwa', default: true },
+      { name: 'A00_Granice_panstwa', title: 'Granica państwa', default: true },
     ],
   },
 ];

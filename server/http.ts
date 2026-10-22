@@ -80,6 +80,41 @@ export async function isPublicHost(hostname: string): Promise<boolean> {
   }
 }
 
+/** Ports of web servers; anything else (databases, admin consoles) is never contacted. */
+const WEB_PORTS = new Set(['', '80', '443', '8080', '8443']);
+
+/**
+ * The address resolved against `base` if it is a public web server: http(s), a web port and a
+ * host that resolves only to public addresses. Service addresses come from outside (the
+ * geoportal configuration, redirects of county servers), so the server checks every one before
+ * it connects, and cannot be made to reach its own network.
+ */
+export async function publicWebUrl(address: string, base?: string): Promise<URL | undefined> {
+  let url: URL;
+  try {
+    url = new URL(address, base);
+  } catch {
+    return undefined;
+  }
+  if ((url.protocol !== 'https:' && url.protocol !== 'http:') || !WEB_PORTS.has(url.port)) return undefined;
+  return (await isPublicHost(url.hostname)) ? url : undefined;
+}
+
+/** fetch() that checks the address and every redirect with publicWebUrl. */
+export async function fetchPublic(address: string, init: RequestInit = {}, maxRedirects = 5): Promise<Response> {
+  let url = address;
+  for (let hop = 0; hop <= maxRedirects; hop++) {
+    const target = await publicWebUrl(url);
+    if (!target) throw new Error('Address not allowed');
+    const res = await fetch(target.href, { ...init, redirect: 'manual' });
+    const location = res.headers.get('location');
+    if (res.status < 300 || res.status >= 400 || !location) return res;
+    await res.body?.cancel();
+    url = new URL(location, target).toString();
+  }
+  throw new Error('Too many redirects');
+}
+
 /** Socket address of the request; empty outside the Node server (e.g. in tests without a socket). */
 function remoteAddress(c: Context): string {
   try {
@@ -143,4 +178,19 @@ export function concurrencyGate(max: number) {
       active--;
     }
   };
+}
+
+/**
+ * A service URL with request parameters added. Some services carry their own parameters in the
+ * address (e.g. MapServer's `?map=...`) or end with a bare `?`; those are kept, and parameters
+ * given here replace any of the same name, case-insensitively, as OGC parameter names are.
+ */
+export function serviceUrl(base: string, params: URLSearchParams | Record<string, string>): string {
+  const url = new URL(base);
+  const extra = params instanceof URLSearchParams ? params : new URLSearchParams(params);
+  for (const key of [...url.searchParams.keys()]) {
+    if ([...extra.keys()].some((k) => k.toLowerCase() === key.toLowerCase())) url.searchParams.delete(key);
+  }
+  for (const [k, v] of extra) url.searchParams.append(k, v);
+  return url.toString();
 }

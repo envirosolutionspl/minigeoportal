@@ -4,7 +4,8 @@ import WMTS from 'ol/source/WMTS';
 import ImageWMS from 'ol/source/ImageWMS';
 import WMTSTileGrid from 'ol/tilegrid/WMTS';
 import { EPSG2180, OGC_PIXEL, gugikWmtsGrid } from '@/map/projection';
-import { GUGIK_ATTRIBUTION, type Overlay, type TileService } from './registry';
+import { GUGIK_ATTRIBUTION, OVERLAY_BY_ID, type Overlay, type TileService } from './registry';
+import { useCatalog } from './catalog';
 import { cachedDrawOrder, layerMeta, wmtsMeta } from './meta';
 import { useStatusStore } from './status';
 
@@ -63,13 +64,27 @@ export function createTileLayer(
  * networks over them, land register parcels and buildings over both, transaction prices on
  * top. The catalog keeps its own order; this one only decides what covers what.
  */
-export const DRAW_ORDER = ['kimpzp', 'pog', 'kiut', 'kieg', 'rcn'];
+export const DRAW_ORDER = ['suikzp', 'kimpzp', 'pog', 'kibdot', 'kiut', 'kieg', 'rcn', 'kina', 'prg'];
 
-/** Overlays missing from the list are drawn above the listed ones. */
+/**
+ * Place of an overlay in the drawing order. Our own overlays follow the order above; a layer of
+ * the geoportal catalog goes just above the highest of ours that the geoportal draws below it,
+ * so the two lists interleave as on geoportal.gov.pl. Unknown layers go on top.
+ */
 export const drawIndex = (id: string) => {
   const order = cachedDrawOrder() ?? DRAW_ORDER;
   const i = order.indexOf(id);
-  return i < 0 ? order.length : i;
+  if (i >= 0) return i;
+  const { byId } = useCatalog.getState();
+  const entry = byId.get(id);
+  if (!entry) return order.length;
+  const ranks = order.map((own) => {
+    const gid = OVERLAY_BY_ID.get(own)?.geoportalId;
+    return gid ? byId.get(gid)?.order : undefined;
+  });
+  if (ranks.every((r) => r === undefined)) return order.length + entry.order / 1e5;
+  const below = ranks.reduce<number>((top, r, k) => (r !== undefined && r < entry.order ? k : top), -1);
+  return below + 0.5 + entry.order / 1e5;
 };
 
 /**

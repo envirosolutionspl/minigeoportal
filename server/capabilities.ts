@@ -1,5 +1,5 @@
 import { XMLParser } from 'fast-xml-parser';
-import { readLimited } from './http.ts';
+import { fetchPublic, readLimited, serviceUrl } from './http.ts';
 import { fetchDrawOrder } from './drawOrder.ts';
 import { OVERLAYS, TILE_SERVICES, type Overlay, type TileService } from '../src/services/registry.ts';
 import type {
@@ -41,7 +41,7 @@ const TIMEOUT_MS = 30000;
 const MAX_BYTES = 5_000_000;
 
 async function fetchXml(url: string): Promise<Node> {
-  const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+  const res = await fetchPublic(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return node(parser.parse(new TextDecoder().decode(await readLimited(res, MAX_BYTES))));
 }
@@ -66,8 +66,11 @@ function collectLayers(
   for (const child of list(layer.Layer)) collectLayers(child, own, out);
 }
 
-async function wms(def: Overlay): Promise<WmsMeta> {
-  const root = node((await fetchXml(`${def.url}?SERVICE=WMS&REQUEST=GetCapabilities&VERSION=1.3.0`)).WMS_Capabilities);
+const wms = (def: Overlay) => wmsCapabilities(def.url, def.title);
+
+/** Layers, scale limits, legends and GetFeatureInfo formats of any WMS, from its GetCapabilities. */
+export async function wmsCapabilities(url: string, fallbackTitle = ''): Promise<WmsMeta> {
+  const root = node((await fetchXml(serviceUrl(url, { SERVICE: 'WMS', REQUEST: 'GetCapabilities', VERSION: '1.3.0' }))).WMS_Capabilities);
   const capability = node(root.Capability);
   const layers: Record<string, WmsLayerMeta> = {};
   for (const top of list(capability.Layer)) collectLayers(top, { queryable: false }, layers);
@@ -76,7 +79,7 @@ async function wms(def: Overlay): Promise<WmsMeta> {
   return {
     kind: 'wms',
     fetchedAt: new Date().toISOString(),
-    title: text(node(root.Service).Title) ?? def.title,
+    title: text(node(root.Service).Title) ?? fallbackTitle,
     infoFormats: texts(gfi.Format),
     layers,
   };

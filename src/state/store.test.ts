@@ -15,6 +15,13 @@ describe('defaults', () => {
     return (await import('./store')).useMapStore.getState();
   };
 
+  it('keeps geoportal catalog layers from a link, and drops ids that cannot be layer ids', async () => {
+    window.history.replaceState(null, '', '?l=kieg,msINSPIRERejZabNieruch,a b,../x');
+    const s = await fresh(false);
+    expect(s.overlays).toEqual(['kieg', 'msINSPIRERejZabNieruch']);
+    window.history.replaceState(null, '', '/');
+  });
+
   it('starts on the general map on a computer and on the simple map on a phone', async () => {
     expect((await fresh(false)).base).toBe('mapa');
     expect((await fresh(true)).base).toBe('prosta');

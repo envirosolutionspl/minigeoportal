@@ -1,5 +1,5 @@
 import { OVERLAY_BY_ID } from '../src/services/registry.ts';
-import { RequestError, isPublicHost, readLimited } from './http.ts';
+import { RequestError, publicWebUrl, readLimited, serviceUrl } from './http.ts';
 
 /**
  * GetFeatureInfo proxy. The browser cannot query integration services directly: they
@@ -18,7 +18,6 @@ const DEADLINE_MS = 12000;
 const MAX_FEATURES = 50;
 const MAX_PIXELS = 4096;
 const INFO_FORMATS = new Set(['text/xml', 'text/html', 'application/vnd.ogc.gml', 'text/plain']);
-const PORTS = new Set(['', '80', '443', '8080', '8443']);
 
 export interface FeatureInfoResult {
   contentType: string;
@@ -31,12 +30,23 @@ const int = (value: string | null, min: number, max: number): number | undefined
   return n >= min && n <= max ? n : undefined;
 };
 
-/** Validated WMS 1.3.0 GetFeatureInfo parameters for one registered overlay. */
-function buildParams(serviceId: string, query: URLSearchParams): { url: string } {
+/** A WMS that may be queried and the layer names it may be asked about. */
+export interface QueryTarget {
+  url: string;
+  layers: ReadonlySet<string>;
+}
+
+/** Overlays of our registry; other layers (the geoportal catalog) come from the caller's lookup. */
+export function registryTarget(serviceId: string): QueryTarget | undefined {
   const def = OVERLAY_BY_ID.get(serviceId);
+  return def ? { url: def.url, layers: new Set(def.sublayers.map((l) => l.name)) } : undefined;
+}
+
+/** Validated WMS 1.3.0 GetFeatureInfo parameters for one known service. */
+function buildParams(def: QueryTarget | undefined, query: URLSearchParams): { url: string } {
   if (!def) throw new RequestError('Unknown service');
 
-  const known = new Set(def.sublayers.map((l) => l.name));
+  const known = def.layers;
   const layers = (query.get('QUERY_LAYERS') ?? '').split(',').filter(Boolean);
   if (layers.length === 0 || layers.length > known.size || !layers.every((l) => known.has(l))) {
     throw new RequestError('Invalid QUERY_LAYERS');
@@ -75,20 +85,21 @@ function buildParams(serviceId: string, query: URLSearchParams): { url: string }
     INFO_FORMAT: infoFormat,
     FEATURE_COUNT: String(featureCount),
   });
-  return { url: `${def.url}?${params}` };
+  return { url: serviceUrl(def.url, params) };
 }
 
-/** Where a redirect is allowed to go: public web hosts on web ports, nothing else. */
-async function allowedTarget(location: string, from: string): Promise<URL | undefined> {
-  const next = new URL(location, from);
-  if ((next.protocol !== 'https:' && next.protocol !== 'http:') || !PORTS.has(next.port)) return undefined;
-  if (!(await isPublicHost(next.hostname))) return undefined;
-  return next;
-}
+/** Where a request or redirect is allowed to go: public web hosts on web ports, nothing else. */
+const allowedTarget = (location: string, from: string) => publicWebUrl(location, from);
 
-export async function featureInfo(serviceId: string, query: URLSearchParams): Promise<FeatureInfoResult> {
-  let { url } = buildParams(serviceId, query);
+export async function featureInfo(
+  serviceId: string,
+  query: URLSearchParams,
+  lookup: (id: string) => QueryTarget | undefined = registryTarget,
+): Promise<FeatureInfoResult> {
+  let { url } = buildParams(lookup(serviceId), query);
   const signal = AbortSignal.timeout(DEADLINE_MS);
+  // Catalog addresses come from the geoportal configuration: checked like redirects.
+  if (!(await allowedTarget(url, url))) throw new Error('Address not allowed');
 
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
     const res = await fetch(url, { redirect: 'manual', signal });

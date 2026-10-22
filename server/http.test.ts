@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 
 vi.mock('node:dns/promises', () => ({ lookup: vi.fn() }));
 import { lookup } from 'node:dns/promises';
-import { clientAddress, concurrencyGate, isLoopback, isPublicHost, rateLimit, readLimited } from './http.ts';
+import { clientAddress, concurrencyGate, fetchPublic, isLoopback, isPublicHost, publicWebUrl, rateLimit, readLimited, serviceUrl } from './http.ts';
 
 const resolveTo = (addresses: string[]) =>
   vi.mocked(lookup).mockResolvedValue(addresses.map((address) => ({ address, family: address.includes(':') ? 6 : 4 })) as never);
@@ -114,5 +114,46 @@ describe('concurrencyGate', () => {
     release();
     expect(await first).toBe('first');
     expect(await gate(async () => 'third')).toBe('third');
+  });
+});
+
+describe('serviceUrl', () => {
+  it('adds request parameters to addresses with their own parameters or a bare question mark', () => {
+    expect(serviceUrl('https://a.example/wms', { SERVICE: 'WMS' })).toBe('https://a.example/wms?SERVICE=WMS');
+    expect(serviceUrl('https://a.example/wms?', { SERVICE: 'WMS' })).toBe('https://a.example/wms?SERVICE=WMS');
+    expect(serviceUrl('https://a.example/mapserv?map=/srv/x.map', { SERVICE: 'WMS' })).toBe('https://a.example/mapserv?map=%2Fsrv%2Fx.map&SERVICE=WMS');
+  });
+
+  it('replaces parameters of the same name whatever their case', () => {
+    expect(serviceUrl('https://a.example/wms?service=WFS&request=GetCapabilities', { SERVICE: 'WMS', REQUEST: 'GetMap' })).toBe(
+      'https://a.example/wms?SERVICE=WMS&REQUEST=GetMap',
+    );
+  });
+});
+
+describe('publicWebUrl and fetchPublic', () => {
+  it('accepts public web servers only', async () => {
+    resolveTo(['93.184.216.34']);
+    expect((await publicWebUrl('https://a.example/wms'))?.href).toBe('https://a.example/wms');
+    expect(await publicWebUrl('https://a.example:5432/db')).toBeUndefined();
+    expect(await publicWebUrl('file:///etc/passwd')).toBeUndefined();
+    expect(await publicWebUrl('not a url')).toBeUndefined();
+    resolveTo(['10.1.2.3']);
+    expect(await publicWebUrl('https://intranet.example/')).toBeUndefined();
+  });
+
+  it('checks every redirect and stops at one into a private network', async () => {
+    vi.mocked(lookup).mockImplementation((async (host: string) =>
+      host === 'inside.example' ? [{ address: '192.168.0.2', family: 4 }] : [{ address: '93.184.216.34', family: 4 }]) as never);
+    const calls: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        calls.push(url);
+        return url.includes('a.example') ? new Response(null, { status: 302, headers: { location: 'https://inside.example/x' } }) : new Response('x');
+      }),
+    );
+    await expect(fetchPublic('https://a.example/caps')).rejects.toThrow('Address not allowed');
+    expect(calls).toEqual(['https://a.example/caps']);
   });
 });

@@ -8,3 +8,4 @@ dist/
 Thumbs.db
 *.tsbuildinfo
 server/data/dict/
+server/data/catalog/

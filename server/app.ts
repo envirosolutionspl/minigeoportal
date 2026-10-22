@@ -2,7 +2,8 @@ import { Hono, type Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { secureHeaders } from 'hono/secure-headers';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
-import { featureInfo } from './featureinfo.ts';
+import { featureInfo, registryTarget, type QueryTarget } from './featureinfo.ts';
+import { catalogIndex, type Catalog } from './catalog.ts';
 import { communes, counties, findUnits, precincts, unitNames, voivodeships, type DictEntry } from './dictionaries.ts';
 import { RequestError, concurrencyGate, isLoopback, rateLimit } from './http.ts';
 import { parseReport, type Mailer } from './report.ts';
@@ -18,6 +19,10 @@ export interface AppOptions {
   refresh(): Promise<CapabilitiesCache>;
   /** Sends bug reports; without it the report form answers 503. */
   mailer?: Mailer;
+  /** The geoportal layer catalog as last built; undefined while the first build runs. */
+  catalog?: () => Catalog | undefined;
+  /** Rebuilds the catalog (loopback only, like the capabilities refresh). */
+  refreshCatalog?: () => Promise<Catalog>;
   /** Public address of the app; links in reports must point here. Defaults to the request's Origin. */
   origin?: string;
   /** Overridable in tests so bursts can be exercised quickly. */
@@ -29,7 +34,7 @@ export interface AppOptions {
   };
 }
 
-export function createApp({ cache, refresh, mailer, origin, limits }: AppOptions): Hono {
+export function createApp({ cache, refresh, mailer, origin, catalog, refreshCatalog, limits }: AppOptions): Hono {
   let current = cache;
   const app = new Hono();
 
@@ -65,10 +70,20 @@ export function createApp({ cache, refresh, mailer, origin, limits }: AppOptions
 
   app.get('/api/health', (c) => c.json({ ok: true, capabilitiesGeneratedAt: current.generatedAt }));
 
-  app.get('/api/capabilities', (c) => {
-    c.header('Cache-Control', 'public, max-age=3600');
-    return c.json(current);
-  });
+  /**
+   * Answers that change only when the server refreshes its caches: the browser keeps them but
+   * asks every time whether they are current (ETag), so a refresh reaches people at once and an
+   * unchanged answer costs a 304 with no body.
+   */
+  const revalidated = (c: Context, version: string, body: () => unknown) => {
+    const etag = `"${version}"`;
+    c.header('Cache-Control', 'no-cache');
+    c.header('ETag', etag);
+    if (c.req.header('if-none-match') === etag) return c.body(null, 304);
+    return c.json(body());
+  };
+
+  app.get('/api/capabilities', (c) => revalidated(c, current.generatedAt, () => current));
 
   /**
    * Rebuilds the cache on demand, only from the machine the server runs on. The custom header
@@ -126,7 +141,7 @@ export function createApp({ cache, refresh, mailer, origin, limits }: AppOptions
   app.use('/api/featureinfo/*', rateLimit(...(limits?.featureInfo ?? [40, 60])));
   app.get('/api/featureinfo/:service', async (c) => {
     try {
-      const result = await upstream(() => featureInfo(c.req.param('service'), new URL(c.req.url).searchParams));
+      const result = await upstream(() => featureInfo(c.req.param('service'), new URL(c.req.url).searchParams, queryTarget));
       if (!result) return c.text('Serwer jest zajęty, spróbuj za chwilę.', 503);
       // Upstream markup is returned as plain text and parsed by the app; it is never rendered as a page.
       c.header('Content-Type', 'text/plain; charset=utf-8');
@@ -137,6 +152,38 @@ export function createApp({ cache, refresh, mailer, origin, limits }: AppOptions
       if (e instanceof RequestError) return c.text(e.message, 400);
       return upstreamFailure(c, 'featureinfo', e);
     }
+  });
+
+  /**
+   * A layer of the catalog may be queried when its WMS answered the last check; the layer names
+   * allowed are those of its capabilities and of the geoportal configuration.
+   */
+  const queryTarget = (id: string): QueryTarget | undefined => {
+    const own = registryTarget(id);
+    if (own) return own;
+    const current = catalog?.();
+    const entry = current?.entries.find((e) => e.id === id);
+    if (!current || !entry || entry.kind !== 'wms' || entry.status !== 'ok') return undefined;
+    const meta = current.services[entry.url]?.meta;
+    return { url: entry.url, layers: new Set([...Object.keys(meta?.layers ?? {}), ...(entry.sublayers ?? []).map((l) => l.name)]) };
+  };
+
+  /** Every layer of geoportal.gov.pl with its topic and availability; metadata come per layer. */
+  app.get('/api/catalog', (c) => {
+    const current = catalog?.();
+    if (!current) return c.text('Katalog warstw jest w przygotowaniu, spróbuj za chwilę.', 503);
+    return revalidated(c, current.generatedAt, () => catalogIndex(current));
+  });
+  app.get('/api/catalog/:id', (c) => {
+    const current = catalog?.();
+    const entry = current?.entries.find((e) => e.id === c.req.param('id'));
+    if (!current || !entry) return c.text('Not found', 404);
+    return revalidated(c, `${current.generatedAt}-${entry.id}`, () => ({ entry, meta: current.services[entry.url]?.meta }));
+  });
+  app.post('/api/catalog/refresh', async (c) => {
+    if (!refreshCatalog || !isLoopback(c) || c.req.header('x-refresh') !== 'catalog') return c.text('Forbidden', 403);
+    const built = await refreshCatalog();
+    return c.json({ generatedAt: built.generatedAt, layers: built.entries.length });
   });
 
   /** Date and pixel size of the aerial photo at a map click; one request per click. */

@@ -1,4 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
+
+// Upstream hosts resolve to a public address, so the address check lets them through.
+vi.mock('node:dns/promises', () => ({ lookup: vi.fn(async () => [{ address: '203.0.113.10', family: 4 }]) }));
 import { buildCache } from './capabilities.ts';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
 
@@ -84,11 +87,12 @@ describe('buildCache', () => {
 
   it('stores the geoportal drawing order and keeps the last good one when it cannot be read', async () => {
     const config = `gpmaps: [{ id: 'modulGK', layers: [
-      { layerId: 'msMPZP' }, { layerId: 'msPlanyOgolneGmin' }, { layerId: 'msKIEG' }, { layerId: 'msKIUT' }, { layerId: 'msRejestrCenNieruchomosci' },
+      { layerId: 'msSUiKZP' }, { layerId: 'msMPZP' }, { layerId: 'msPlanyOgolneGmin' }, { layerId: 'msKIBDOT' }, { layerId: 'msKIEG' },
+      { layerId: 'msKIUT' }, { layerId: 'msRejestrCenNieruchomosci' }, { layerId: 'msAdresyUlice' }, { layerId: 'msPRG' },
     ] }]`;
     stub((url) => new Response(url.includes('part_GeoportalKrajowy') ? config : url.includes('WMTS') ? WMTS : WMS));
     const cache = await buildCache();
-    expect(cache.drawOrder).toEqual(['kimpzp', 'pog', 'kieg', 'kiut', 'rcn']);
+    expect(cache.drawOrder).toEqual(['suikzp', 'kimpzp', 'pog', 'kibdot', 'kieg', 'kiut', 'rcn', 'kina', 'prg']);
 
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     stub((url) => (url.includes('part_GeoportalKrajowy') ? new Response('gone', { status: 404 }) : new Response(url.includes('WMTS') ? WMTS : WMS)));

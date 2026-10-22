@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { BASE_MAPS, OVERLAY_BY_ID, selectedSublayers } from '@/services/registry';
+import { CATALOG_ID, overlayDef } from '@/services/catalog';
 import { POLAND_EXTENT } from '@/map/projection';
 import { readUrl, writeUrl } from './url';
 import type { PrintOptions } from '@/map/print';
@@ -86,7 +87,8 @@ export const useMapStore = create<MapStore>((set, get) => ({
   zoom: initial.zoom ?? 3,
   scale: Infinity,
   base: BASE_MAPS.find((s) => s.id === initial.base)?.id ?? DEFAULT_BASE,
-  overlays: (initial.overlays ?? DEFAULT_OVERLAYS).filter((id) => OVERLAY_BY_ID.has(id)),
+  // Catalog layers in a link are loaded by the map; unknown ids simply draw nothing.
+  overlays: (initial.overlays ?? DEFAULT_OVERLAYS).filter((id) => OVERLAY_BY_ID.has(id) || CATALOG_ID.test(id)),
   sublayers: initial.sublayers ?? {},
   opacity: {},
   panel: 'none',
@@ -108,7 +110,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
     }),
   toggleSublayer: (id, name) =>
     set((s) => {
-      const def = OVERLAY_BY_ID.get(id);
+      const def = overlayDef(id);
       if (!def) return {};
       if (!s.overlays.includes(id)) {
         return { overlays: [...s.overlays, id], sublayers: { ...s.sublayers, [id]: [name] } };
@@ -148,7 +150,7 @@ useMapStore.subscribe((s, prev) => {
 export const hasInitialView = initial.center !== undefined;
 
 export function overlayOpacity(id: string, opacity: Record<string, number>): number {
-  return opacity[id] ?? OVERLAY_BY_ID.get(id)?.opacity ?? 1;
+  return opacity[id] ?? overlayDef(id)?.opacity ?? 1;
 }
 
 /**

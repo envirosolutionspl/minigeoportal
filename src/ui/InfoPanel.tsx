@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Bug, Camera, Download, ExternalLink, FileText, Layers, LoaderCircle, MapPin, X } from 'lucide-react';
 import { formatCoordinate } from '@/map/format';
-import { BASE_MAPS, GEOPORTAL_MAP, OVERLAY_BY_ID, parcelReportUrl } from '@/services/registry';
+import { BASE_MAPS, GEOPORTAL_MAP, parcelReportUrl } from '@/services/registry';
+import { overlayDef } from '@/services/catalog';
 import type { InfoRecord } from '@/services/featureinfo';
 import { useInfoStore, type InfoResult } from '@/state/info';
 import { useMapStore } from '@/state/store';
@@ -88,7 +89,7 @@ export function InfoPanel() {
 }
 
 function ServiceResult({ id, result }: { id: string; result: InfoResult | undefined }) {
-  const def = OVERLAY_BY_ID.get(id);
+  const def = overlayDef(id);
   if (!def || !result) return null;
   return (
     <div className="mb-4 last:mb-0">

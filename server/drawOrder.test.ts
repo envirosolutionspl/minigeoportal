@@ -11,6 +11,7 @@ const CONFIG = `export const config = {
         //{
         //  layerId: 'msBudynkiBDOT10k',
         //},
+        { layerId: 'msSUiKZP', visible: false },
         { layerId: 'msMPZP', visible: false },
         { layerId: 'msPlanyOgolneGmin', visible: false },
       ],
@@ -28,9 +29,11 @@ const CONFIG = `export const config = {
       layers: [
         { layerId: 'groupPlanowanie', visible: false },
         /* { layerId: 'msOld' }, */
+        { layerId: 'msKIBDOT', visible: true },
         { layerId: 'msKIUT', visible: true },
         { layerId: 'msKIEG', visible: true },
         { layerId: 'msRejestrCenNieruchomosci', visible: false },
+        { layerId: 'msAdresyUlice', visible: false },
         { layerId: 'msPRG', visible: false },
       ],
     },
@@ -41,11 +44,14 @@ describe('geoportalLayerOrder', () => {
   it('lists the map layers bottom to top with groups expanded and comments ignored', () => {
     expect(geoportalLayerOrder(CONFIG)).toEqual([
       'msBDOO_BDOT10k_base',
+      'msSUiKZP',
       'msMPZP',
       'msPlanyOgolneGmin',
+      'msKIBDOT',
       'msKIUT',
       'msKIEG',
       'msRejestrCenNieruchomosci',
+      'msAdresyUlice',
       'msPRG',
     ]);
     expect(geoportalLayerOrder('not a config')).toEqual([]);
@@ -54,12 +60,12 @@ describe('geoportalLayerOrder', () => {
 
 describe('overlayOrder', () => {
   it('orders our overlays as the geoportal draws them', () => {
-    expect(overlayOrder(CONFIG)).toEqual(['kimpzp', 'pog', 'kiut', 'kieg', 'rcn']);
+    expect(overlayOrder(CONFIG)).toEqual(['suikzp', 'kimpzp', 'pog', 'kibdot', 'kiut', 'kieg', 'rcn', 'kina', 'prg']);
   });
 
   it('follows a changed order', () => {
     const swapped = CONFIG.replace("{ layerId: 'msKIUT', visible: true },\n        { layerId: 'msKIEG', visible: true },", "{ layerId: 'msKIEG', visible: true },\n        { layerId: 'msKIUT', visible: true },");
-    expect(overlayOrder(swapped)).toEqual(['kimpzp', 'pog', 'kieg', 'kiut', 'rcn']);
+    expect(overlayOrder(swapped)).toEqual(['suikzp', 'kimpzp', 'pog', 'kibdot', 'kieg', 'kiut', 'rcn', 'kina', 'prg']);
   });
 
   it('gives up when an overlay is missing, so the built-in order is used', () => {

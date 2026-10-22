@@ -5,7 +5,10 @@ import { defaults as defaultControls, MousePosition, ScaleLine, ZoomToExtent } f
 import { defaults as defaultInteractions } from 'ol/interaction/defaults';
 import { duration } from './motion';
 import { EPSG2180, GUGIK_RESOLUTIONS, OGC_PIXEL, POLAND_EXTENT } from './projection';
-import { BASE_MAPS, OVERLAYS, TILE_SERVICE_BY_ID, selectedSublayers } from '@/services/registry';
+import { BASE_MAPS, TILE_SERVICE_BY_ID, selectedSublayers, type Overlay } from '@/services/registry';
+import { loadCatalogLayer, overlayDef } from '@/services/catalog';
+import type ImageLayer from 'ol/layer/Image';
+import type ImageWMS from 'ol/source/ImageWMS';
 import { createOverlayLayer, createTileLayer, resolutionRange } from '@/services/layers';
 import { hasInitialView, overlayOpacity, useMapStore } from '@/state/store';
 import { attachFeatureInfo } from './featureInfoClick';
@@ -34,7 +37,11 @@ export function MapView() {
         return [{ def, layer }];
       }),
     );
-    const overlays = OVERLAYS.map((def) => ({ def, layer: createOverlayLayer(def) }));
+    /**
+     * Overlay layers are made when first switched on, not upfront: the catalog has hundreds of
+     * layers. They stay on the map, hidden, when switched off.
+     */
+    const overlays = new globalThis.Map<string, { def: Overlay; layer: ImageLayer<ImageWMS> }>();
 
     const view = new View({
       projection: EPSG2180,
@@ -47,7 +54,7 @@ export function MapView() {
 
     const map = new Map({
       target: el,
-      layers: [...bases.map((b) => b.layer), ...overlays.map((o) => o.layer)],
+      layers: bases.map((b) => b.layer),
       view,
       interactions: defaultInteractions({ zoomDuration: duration(250) }),
       controls: defaultControls({
@@ -64,10 +71,24 @@ export function MapView() {
 
     if (!hasInitialView) view.fit(POLAND_EXTENT, { padding: [24, 24, 24, 24] });
 
+    /** The layer of an overlay, made now if its definition is known; catalog layers load first. */
+    const ensureOverlay = (id: string) => {
+      if (overlays.has(id)) return;
+      const def = overlayDef(id);
+      if (!def) {
+        void loadCatalogLayer(id).then((loaded) => loaded && applyState());
+        return;
+      }
+      const layer = createOverlayLayer(def);
+      overlays.set(id, { def, layer });
+      map.addLayer(layer);
+    };
+
     const applyState = () => {
       const s = useMapStore.getState();
       for (const { def, layer } of bases) layer.setVisible(def.id === s.base);
-      for (const { def, layer } of overlays) {
+      for (const id of s.overlays) ensureOverlay(id);
+      for (const { def, layer } of overlays.values()) {
         const names = selectedSublayers(def, s.sublayers);
         const visible = s.overlays.includes(def.id) && names.length > 0;
         layer.setVisible(visible);
@@ -96,7 +117,7 @@ export function MapView() {
       if (c && z !== undefined && r !== undefined) setView([c[0], c[1]], z, r / OGC_PIXEL);
     });
 
-    const detachFeatureInfo = attachFeatureInfo(map, overlays);
+    const detachFeatureInfo = attachFeatureInfo(map, () => [...overlays.values()]);
     const detachFocus = attachFocus(map);
     const detachMeasure = attachMeasure(map);
     const detachPrint = attachPrint(map);

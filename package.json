@@ -13,7 +13,8 @@
     "capabilities": "node --env-file-if-exists=.env server/refresh.ts",
     "typecheck": "tsc -b",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "catalog": "node --env-file-if-exists=.env server/refreshCatalog.ts"
   },
   "dependencies": {
     "@fontsource-variable/figtree": "^5.3.0",

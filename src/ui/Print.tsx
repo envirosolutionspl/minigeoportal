@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from 'react';
 import { LoaderCircle, Printer, X } from 'lucide-react';
-import { BASE_MAPS, OVERLAY_BY_ID, selectedSublayers, type Overlay } from '@/services/registry';
+import { BASE_MAPS, selectedSublayers, type Overlay } from '@/services/registry';
+import { overlayDef } from '@/services/catalog';
 import { layerMeta, visibleAtScale } from '@/services/meta';
 import { useMapStore } from '@/state/store';
 import { formatCoordinate } from '@/map/format';
@@ -148,7 +149,7 @@ export function printedLayers(
 ): { def: Overlay; names: string[] }[] {
   const scale = serverScale(options);
   return overlays.flatMap((id) => {
-    const def = OVERLAY_BY_ID.get(id);
+    const def = overlayDef(id);
     if (!def) return [];
     const names = selectedSublayers(def, sublayers).filter((name) => visibleAtScale(id, name, scale));
     return names.length > 0 ? [{ def, names }] : [];

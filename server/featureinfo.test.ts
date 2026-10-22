@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('node:dns/promises', () => ({ lookup: vi.fn() }));
 import { lookup } from 'node:dns/promises';
@@ -8,6 +8,9 @@ import { RequestError } from './http.ts';
 const KIEG = 'https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow';
 const VALID = 'QUERY_LAYERS=dzialki&BBOX=482449,656835,482475,656861&WIDTH=101&HEIGHT=101&I=50&J=50&INFO_FORMAT=text/xml';
 const query = (q: string) => new URLSearchParams(q);
+
+/** Every host resolves to a public address unless a test says otherwise. */
+beforeEach(() => vi.mocked(lookup).mockResolvedValue([{ address: '93.184.216.34', family: 4 }] as never));
 
 /** fetch stub: each entry answers one hop; `calls` records the URLs in order. */
 function stubHops(hops: (() => Response)[]) {
@@ -52,6 +55,25 @@ describe('featureInfo validation', () => {
     expect(url.searchParams.get('FEATURE_COUNT')).toBe('10');
     expect(url.searchParams.has('EXTRA')).toBe(false);
   });
+
+  it('asks a catalog layer through the lookup, keeping parameters carried in its address', async () => {
+    const calls = stubHops([ok('<x/>')]);
+    const find = (id: string) =>
+      id === 'msSiatka' ? { url: 'https://wms02.example/cgi-bin/mapserv?map=/srv/siatka92.map', layers: new Set(['dzialki']) } : undefined;
+    await featureInfo('msSiatka', query(VALID), find);
+    const url = new URL(calls[0]);
+    expect(url.searchParams.get('map')).toBe('/srv/siatka92.map');
+    expect(url.searchParams.get('REQUEST')).toBe('GetFeatureInfo');
+    await expect(featureInfo('msOther', query(VALID), find)).rejects.toThrow(new RequestError('Unknown service'));
+  });
+
+  it('never contacts a catalog address in a private network', async () => {
+    const calls = stubHops([ok('secret')]);
+    vi.mocked(lookup).mockResolvedValue([{ address: '192.168.1.10', family: 4 }] as never);
+    const find = () => ({ url: 'https://router.example/wms', layers: new Set(['dzialki']) });
+    await expect(featureInfo('msRouter', query(VALID), find)).rejects.toThrow('Address not allowed');
+    expect(calls).toHaveLength(0);
+  });
 });
 
 describe('featureInfo redirects', () => {
@@ -69,7 +91,8 @@ describe('featureInfo redirects', () => {
   });
 
   it('stops at a redirect to a private address', async () => {
-    vi.mocked(lookup).mockResolvedValue([{ address: '10.0.0.5', family: 4 }] as never);
+    vi.mocked(lookup).mockImplementation((async (host: string) =>
+      host === 'internal.example' ? [{ address: '10.0.0.5', family: 4 }] : [{ address: '93.184.216.34', family: 4 }]) as never);
     const calls = stubHops([redirect('https://internal.example/admin'), ok('secret')]);
     await expect(featureInfo('kieg', query(VALID))).rejects.toThrow(/Redirect chain rejected/);
     expect(calls).toHaveLength(1);

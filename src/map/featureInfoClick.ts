@@ -20,7 +20,7 @@ const MARKER = new Style({
  * Map click queries every active overlay at that point and marks the spot. With the keyboard,
  * Enter on the focused map asks about the map centre (marked by a crosshair while focused).
  */
-export function attachFeatureInfo(map: Map, overlays: { def: Overlay; layer: ImageLayer<ImageWMS> }[]): () => void {
+export function attachFeatureInfo(map: Map, overlays: () => { def: Overlay; layer: ImageLayer<ImageWMS> }[]): () => void {
   const marker = new Feature<Point>();
   marker.setStyle(MARKER);
   const markerLayer = new VectorLayer({ source: new VectorSource<Feature<Point>>(), zIndex: 100 });
@@ -47,7 +47,7 @@ export function attachFeatureInfo(map: Map, overlays: { def: Overlay; layer: Ima
 
     const s = useMapStore.getState();
     const scale = resolution / OGC_PIXEL;
-    const targets = overlays
+    const targets = overlays()
       .filter(({ def }) => s.overlays.includes(def.id))
       .map((o) => ({ ...o, layers: queryLayers(o.def, selectedSublayers(o.def, s.sublayers), scale) }))
       .filter((t) => t.layers.length > 0);

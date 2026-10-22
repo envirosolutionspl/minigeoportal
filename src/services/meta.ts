@@ -74,6 +74,12 @@ export async function loadCapabilities(): Promise<void> {
   }
 }
 
+/** Metadata of a catalog layer, loaded when it is switched on (see catalog.ts). */
+export function registerMeta(id: string, meta: WmsMeta): void {
+  cache ??= { generatedAt: '', services: {} };
+  cache.services[id] = meta;
+}
+
 /** Test hook: forgets the loaded cache, so the next load fetches it again. */
 export const clearCapabilities = () => {
   cache = null;

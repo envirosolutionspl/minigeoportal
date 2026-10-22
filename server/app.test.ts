@@ -1,11 +1,14 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Hono } from 'hono';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
 
+// Upstream hosts resolve to a public address unless a test says otherwise.
 vi.mock('node:dns/promises', () => ({ lookup: vi.fn() }));
+import { lookup } from 'node:dns/promises';
+beforeEach(() => vi.mocked(lookup).mockResolvedValue([{ address: '203.0.113.10', family: 4 }] as never));
 
 const CACHE: CapabilitiesCache = { generatedAt: '2026-10-21T00:00:00.000Z', services: {} };
 const local = { incoming: { socket: { remoteAddress: '127.0.0.1', remoteFamily: 'IPv4', remotePort: 1 } } };
@@ -30,7 +33,12 @@ describe('routes', () => {
     expect(res.headers.get('content-security-policy')).toContain("frame-ancestors 'none'");
     expect(res.headers.get('x-content-type-options')).toBe('nosniff');
     const caps = await app.request('/api/capabilities', {}, remote);
-    expect(caps.headers.get('cache-control')).toBe('public, max-age=3600');
+    // Revalidated every time, so a refresh reaches the app at once; unchanged costs a 304.
+    expect(caps.headers.get('cache-control')).toBe('no-cache');
+    const etag = caps.headers.get('etag')!;
+    expect(etag).toBe(`"${CACHE.generatedAt}"`);
+    const again = await app.request('/api/capabilities', { headers: { 'if-none-match': etag } }, remote);
+    expect(again.status).toBe(304);
   });
 
   it('answers 404 for unknown API paths', async () => {
@@ -104,5 +112,61 @@ describe('routes', () => {
     expect(res.headers.get('cache-control')).toBe('no-store');
     expect(await res.text()).toBe('<a>x</a>');
     expect((await app.request('/api/featureinfo/kieg?QUERY_LAYERS=foo&BBOX=1,2,3,4&WIDTH=1&HEIGHT=1&I=0&J=0', {}, remote)).status).toBe(400);
+  });
+});
+
+describe('catalog routes', () => {
+  const CATALOG = {
+    generatedAt: 'built',
+    entries: [
+      { id: 'msZabytki', title: 'Zabytki', path: ['NID'], modules: ['GK'], topic: 'zabytki' as const, kind: 'wms' as const, url: 'https://nid.example/wms', order: 3, status: 'ok' as const, checked: 'x', sublayers: [{ name: 'monuments', title: 'Zabytki' }] },
+      { id: 'msCLC', title: 'Corine', path: [], modules: ['OS'], topic: 'srodowisko' as const, kind: 'wms' as const, url: 'https://gios.example/clc', order: 4, status: 'refused' as const, detail: 'HTTP 403', checked: 'x' },
+    ],
+    services: {
+      'https://nid.example/wms': { url: 'https://nid.example/wms', status: 'ok' as const, checked: 'x', meta: { kind: 'wms' as const, fetchedAt: 'x', title: 'NID', infoFormats: ['text/xml'], layers: { monuments: { title: 'Zabytki', queryable: true } } } },
+    },
+  };
+  const client = { incoming: { socket: { remoteAddress: '198.51.100.20', remoteFamily: 'IPv4', remotePort: 1 } } };
+
+  it('answers 503 while the first catalog is being built', async () => {
+    const { createApp } = await import('./app.ts');
+    const building = createApp({ cache: CACHE, refresh, catalog: () => undefined });
+    expect((await building.request('/api/catalog', {}, client)).status).toBe(503);
+  });
+
+  it('lists the layers without addresses and gives one layer with its metadata, revalidated by ETag', async () => {
+    const { createApp } = await import('./app.ts');
+    const withCatalog = createApp({ cache: CACHE, refresh, catalog: () => CATALOG });
+    const list = await withCatalog.request('/api/catalog', {}, client);
+    const body = (await list.json()) as { entries: Record<string, unknown>[] };
+    expect(body.entries.map((e) => e.id)).toEqual(['msZabytki', 'msCLC']);
+    expect(body.entries[0].url).toBeUndefined();
+    expect((await withCatalog.request('/api/catalog', { headers: { 'if-none-match': list.headers.get('etag')! } }, client)).status).toBe(304);
+
+    const one = (await (await withCatalog.request('/api/catalog/msZabytki', {}, client)).json()) as { entry: { url: string }; meta: { title: string } };
+    expect(one.entry.url).toBe('https://nid.example/wms');
+    expect(one.meta.title).toBe('NID');
+    expect((await withCatalog.request('/api/catalog/msNope', {}, client)).status).toBe(404);
+  });
+
+  it('queries available catalog layers through the proxy and refuses unavailable ones', async () => {
+    const { createApp } = await import('./app.ts');
+    const withCatalog = createApp({ cache: CACHE, refresh, catalog: () => CATALOG });
+    const fetchMock = vi.fn(async (_url: string) => new Response('<a/>', { headers: { 'content-type': 'text/xml' } }));
+    vi.stubGlobal('fetch', fetchMock);
+    const q = 'QUERY_LAYERS=monuments&BBOX=1,2,3,4&WIDTH=10&HEIGHT=10&I=1&J=1&INFO_FORMAT=text/xml';
+    expect((await withCatalog.request(`/api/featureinfo/msZabytki?${q}`, {}, client)).status).toBe(200);
+    expect(String(fetchMock.mock.calls[0][0])).toContain('https://nid.example/wms?');
+    expect((await withCatalog.request(`/api/featureinfo/msCLC?${q}`, {}, client)).status).toBe(400);
+  });
+
+  it('rebuilds the catalog only from the server machine with the header', async () => {
+    const { createApp } = await import('./app.ts');
+    const refreshCatalog = vi.fn(async () => CATALOG);
+    const withCatalog = createApp({ cache: CACHE, refresh, catalog: () => CATALOG, refreshCatalog });
+    expect((await withCatalog.request('/api/catalog/refresh', { method: 'POST' }, local)).status).toBe(403);
+    expect((await withCatalog.request('/api/catalog/refresh', { method: 'POST', headers: { 'x-refresh': 'catalog' } }, remote)).status).toBe(403);
+    const ok = await withCatalog.request('/api/catalog/refresh', { method: 'POST', headers: { 'x-refresh': 'catalog' } }, local);
+    expect(await ok.json()).toEqual({ generatedAt: 'built', layers: 2 });
   });
 });

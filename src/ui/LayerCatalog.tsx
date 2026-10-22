@@ -1,15 +1,17 @@
-import { useMemo, useState } from 'react';
-import { ChevronDown, ExternalLink, Search, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ChevronDown, ExternalLink, HelpCircle, LoaderCircle, Search, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { GEOPORTAL_MAP, OVERLAYS, TOPICS, selectedSublayers, type Overlay, type SubLayer, type Topic } from '@/services/registry';
-import { layerMeta, visibleAtScale } from '@/services/meta';
+import { layerMeta, serviceError, visibleAtScale } from '@/services/meta';
 import { normalize } from '@/services/text';
 import { statusOf, useStatusStore, type ServiceStatus } from '@/services/status';
+import { useCatalog } from '@/services/catalog';
+import type { CatalogIndexEntry, CatalogStatus } from '@/services/catalogTypes';
 import { overlayOpacity, useMapStore } from '@/state/store';
 
 const STATUS_LABEL: Record<ServiceStatus, string> = {
   unknown: 'Jeszcze nie wczytywana',
   ok: 'Dostępna',
-  blocked: 'Dostępna tylko na geoportal.gov.pl',
+  blocked: 'Niedostępna u nas',
   down: 'Usługa nie odpowiada',
   degraded: 'Część danych nie ładuje się w tym miejscu',
 };
@@ -23,6 +25,17 @@ const STATUS_DOT: Record<ServiceStatus, string> = {
   degraded: 'bg-[#FFBC42]',
 };
 
+/** Why a layer cannot be shown, in plain language, by the result of the last check. */
+const WHY: Record<Exclude<CatalogStatus, 'ok'> | 'degraded', string> = {
+  token: 'Usługa wymaga tokenu, który GUGiK wydaje tylko aplikacji geoportal.gov.pl.',
+  refused: 'Serwer tej usługi odrzuca zapytania spoza geoportal.gov.pl.',
+  down: 'Serwer usługi nie odpowiadał przy ostatnim sprawdzeniu. Sprawdzimy go ponownie przy kolejnym odświeżeniu listy warstw.',
+  unsupported: 'To usługa innego rodzaju (kafle WMTS lub ArcGIS REST), której ta wersja jeszcze nie wyświetla.',
+  degraded: 'Usługa kieruje do serwera powiatu lub gminy, który w tym miejscu nie odpowiada albo odrzuca zapytania.',
+};
+
+/** Shown at once for a long topic; the rest after "Pokaż więcej". */
+const PAGE = 60;
 
 /** Words of the query that every match must contain, ignoring case and Polish diacritics. */
 function words(query: string): string[] {
@@ -38,13 +51,26 @@ function serviceText(s: Overlay): string {
   return [s.title, s.description, ...s.keywords, TOPICS[s.topic]].join(' ');
 }
 
+const entryText = (e: CatalogIndexEntry) => [e.title, ...e.path, TOPICS[e.topic]].join(' ');
+
+/** Available layers first, then by title. */
+const byAvailability = (a: CatalogIndexEntry, b: CatalogIndexEntry) =>
+  Number(a.status !== 'ok') - Number(b.status !== 'ok') || a.title.localeCompare(b.title, 'pl');
+
 export function LayerCatalog() {
   const close = useMapStore((m) => m.setPanel);
   const [query, setQuery] = useState('');
   const [topic, setTopic] = useState<Topic | null>(null);
   const q = useMemo(() => words(query), [query]);
+  const catalogState = useCatalog((c) => c.state);
+  const entries = useCatalog((c) => c.entries);
 
-  /** Services matching the filter; matching sublayers open the service with those rows highlighted. */
+  // The geoportal list loads with the panel; our own layers work without it.
+  useEffect(() => {
+    void useCatalog.getState().load();
+  }, []);
+
+  /** Our services matching the filter; matching sublayers open the service with those rows highlighted. */
   const results = useMemo(
     () =>
       OVERLAYS.filter((s) => topic === null || s.topic === topic)
@@ -57,20 +83,23 @@ export function LayerCatalog() {
     [q, topic],
   );
 
+  /** Geoportal layers that our own entries do not already show. */
+  const others = useMemo(
+    () =>
+      entries
+        .filter((e) => !e.curated && (topic === null || e.topic === topic) && (q.length === 0 || textMatches(entryText(e), q)))
+        .sort(byAvailability),
+    [entries, q, topic],
+  );
+
   const filtering = q.length > 0 || topic !== null;
-  const starters = filtering ? [] : results.filter((r) => r.s.starter);
-  const rest = filtering ? results : results.filter((r) => !r.s.starter);
+  const starters = results.filter((r) => r.s.starter);
 
   return (
     <section className="flex h-full flex-col" aria-label="Katalog warstw">
       <header className="flex items-center gap-2 px-4 pt-4 pb-2">
         <h2 className="flex-1 text-base font-semibold">Warstwy</h2>
-        <button
-          type="button"
-          onClick={() => close('none')}
-          aria-label="Zamknij"
-          className="rounded-full p-2 hover:bg-[var(--hover)]"
-        >
+        <button type="button" onClick={() => close('none')} aria-label="Zamknij" className="rounded-full p-2 hover:bg-[var(--hover)]">
           <X className="h-5 w-5" />
         </button>
       </header>
@@ -83,7 +112,7 @@ export function LayerCatalog() {
             aria-label="Szukaj warstwy"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Szukaj warstwy: woda, gaz, plan, ceny…"
+            placeholder="Szukaj warstwy: woda, gaz, plan, zabytki…"
             className="w-full bg-transparent text-sm outline-none placeholder:text-[var(--muted)]"
           />
         </label>
@@ -105,26 +134,54 @@ export function LayerCatalog() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 pb-4">
-        {starters.length > 0 && (
-          <Group title="Na start">
-            {starters.map(({ s, hits }) => (
+        {filtering ? (
+          <Group title="Wyniki">
+            {results.map(({ s, hits }) => (
               <OverlayItem key={s.id} s={s} hits={hits} />
             ))}
+            <CatalogList entries={others} />
+            {results.length === 0 && others.length === 0 && (
+              <p className="px-3 py-6 text-center text-sm text-[var(--muted)]">Brak warstw dla tego filtru.</p>
+            )}
           </Group>
+        ) : (
+          <>
+            <Group title="Na start">
+              {starters.map(({ s, hits }) => (
+                <OverlayItem key={s.id} s={s} hits={hits} />
+              ))}
+            </Group>
+            <Group title="Wszystkie warstwy">
+              {(Object.keys(TOPICS) as Topic[]).map((t) => (
+                <TopicSection key={t} topic={t} own={results.filter((r) => !r.s.starter && r.s.topic === t).map((r) => r.s)} entries={others.filter((e) => e.topic === t)} />
+              ))}
+            </Group>
+          </>
         )}
-        {rest.length > 0 && (
-          <Group title={filtering ? 'Wyniki' : 'Pozostałe'}>
-            {rest.map(({ s, hits }) => (
-              <OverlayItem key={s.id} s={s} hits={hits} />
-            ))}
-          </Group>
-        )}
-        {results.length === 0 && (
-          <p className="px-3 py-6 text-center text-sm text-[var(--muted)]">Brak warstw dla tego filtru.</p>
-        )}
+        <CatalogNotice state={catalogState} />
       </div>
     </section>
   );
+}
+
+function CatalogNotice({ state }: { state: string }) {
+  if (state === 'loading') {
+    return (
+      <p role="status" className="flex items-center gap-2 px-3 py-2 text-xs text-[var(--muted)]">
+        <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> Wczytuję listę warstw geoportal.gov.pl…
+      </p>
+    );
+  }
+  if (state === 'preparing' || state === 'error') {
+    return (
+      <p role="status" className="px-3 py-2 text-xs text-[var(--muted)]">
+        {state === 'preparing'
+          ? 'Lista wszystkich warstw geoportal.gov.pl jest w przygotowaniu. Spróbuj za kilka minut.'
+          : 'Nie udało się wczytać listy warstw geoportal.gov.pl. Warstwy powyżej działają.'}
+      </p>
+    );
+  }
+  return null;
 }
 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
@@ -132,6 +189,125 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
     <div className="mb-3">
       <h3 className="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">{title}</h3>
       <div className="flex flex-col gap-0.5">{children}</div>
+    </div>
+  );
+}
+
+/** One topic of the full list, closed until opened: it can hold dozens of layers. */
+function TopicSection({ topic, own, entries }: { topic: Topic; own: Overlay[]; entries: CatalogIndexEntry[] }) {
+  const [open, setOpen] = useState(false);
+  const count = own.length + entries.length;
+  if (count === 0) return null;
+  const available = own.length + entries.filter((e) => e.status === 'ok').length;
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        className="flex min-h-10 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-medium hover:bg-[var(--hover)]"
+      >
+        <span className="flex-1">{TOPICS[topic]}</span>
+        <span className="text-xs font-normal text-[var(--muted)]" title={`${available} dostępnych z ${count}`}>
+          {available === count ? count : `${available} z ${count}`}
+        </span>
+        <ChevronDown className={`h-4 w-4 text-[var(--muted)] transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
+      </button>
+      {open && (
+        <div className="ml-2 flex flex-col gap-0.5 border-l border-[var(--hover)] pl-1">
+          {own.map((s) => (
+            <OverlayItem key={s.id} s={s} hits={[]} />
+          ))}
+          <CatalogList entries={entries} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CatalogList({ entries }: { entries: CatalogIndexEntry[] }) {
+  const [shown, setShown] = useState(PAGE);
+  return (
+    <>
+      {entries.slice(0, shown).map((e) => (
+        <CatalogItem key={e.id} entry={e} />
+      ))}
+      {entries.length > shown && (
+        <button type="button" onClick={() => setShown(shown + PAGE)} className="min-h-9 rounded-xl px-3 text-left text-xs text-[var(--accent)] hover:bg-[var(--hover)]">
+          Pokaż więcej ({entries.length - shown})
+        </button>
+      )}
+    </>
+  );
+}
+
+/**
+ * A layer of the geoportal catalog. Once switched on, its definition loads and it behaves like
+ * our own layers (sublayers, opacity). Layers we cannot show stay in their topic, greyed out.
+ */
+function CatalogItem({ entry }: { entry: CatalogIndexEntry }) {
+  const def = useCatalog((c) => c.defs.get(entry.id));
+  const active = useMapStore((m) => m.overlays.includes(entry.id));
+  const toggle = useMapStore((m) => m.toggleOverlay);
+  if (def) return <OverlayItem s={def} hits={[]} />;
+  const available = entry.status === 'ok';
+  const checkedOn = entry.checked.slice(0, 10).split('-').reverse().join('.');
+
+  return (
+    <div className={`rounded-xl px-3 py-2 ${active ? 'bg-[var(--accent-soft)]' : ''}`}>
+      <div className={`flex items-start gap-3 ${available ? '' : 'opacity-60'}`}>
+        <input
+          id={`gp-${entry.id}`}
+          type="checkbox"
+          checked={active}
+          disabled={!available}
+          onChange={() => toggle(entry.id)}
+          aria-label={entry.title}
+          className="mt-1 h-4 w-4 shrink-0 accent-[var(--accent)]"
+        />
+        <label htmlFor={`gp-${entry.id}`} className={`min-w-0 flex-1 ${available ? 'cursor-pointer' : ''}`}>
+          <span className="block text-sm font-medium">{entry.title}</span>
+          {entry.path.length > 0 && <span className="block text-xs text-[var(--muted)]">{entry.path.join(' › ')}</span>}
+          {active && (
+            <span className="mt-1 flex items-center gap-1.5 text-xs text-[var(--muted)]">
+              <LoaderCircle className="h-3 w-3 animate-spin" aria-hidden="true" /> Wczytuję warstwę…
+            </span>
+          )}
+        </label>
+      </div>
+      {!available && <Why status={entry.status as Exclude<CatalogStatus, 'ok'>} detail={entry.detail} checked={checkedOn} />}
+    </div>
+  );
+}
+
+/** "Dlaczego niedostępna?": the reason in plain words, what the server answered, and a link. */
+function Why({ status, detail, checked }: { status: keyof typeof WHY; detail?: string; checked?: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-1 ml-7">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        className="inline-flex min-h-6 items-center gap-1 text-xs text-[var(--accent)] underline-offset-2 hover:underline"
+      >
+        <HelpCircle className="h-3.5 w-3.5" aria-hidden="true" />
+        {status === 'degraded' ? 'Dlaczego dane się nie wczytują?' : 'Niedostępna u nas. Dlaczego?'}
+      </button>
+      {open && (
+        <div className="mt-1 rounded-lg bg-[var(--field)] px-3 py-2 text-xs leading-relaxed">
+          <p>{WHY[status]}</p>
+          {(detail || checked) && (
+            <p className="mt-1 text-[var(--muted)]">
+              {detail && <>Odpowiedź serwera: {detail}. </>}
+              {checked && <>Sprawdzono {checked}.</>}
+            </p>
+          )}
+          <a href={GEOPORTAL_MAP} target="_blank" rel="noopener" className="mt-1 inline-flex items-center gap-1 text-[var(--accent)]">
+            Zobacz w geoportal.gov.pl <ExternalLink className="h-3 w-3" aria-hidden="true" />
+          </a>
+        </div>
+      )}
     </div>
   );
 }
@@ -158,8 +334,8 @@ function OverlayItem({ s, hits }: { s: Overlay; hits: string[] }) {
   const open = expanded || hits.length > 0;
 
   return (
-    <div className={`rounded-xl px-3 py-2 ${active ? 'bg-[var(--accent-soft)]' : ''} ${blocked ? 'opacity-60' : ''}`}>
-      <div className="flex items-start gap-3">
+    <div className={`rounded-xl px-3 py-2 ${active ? 'bg-[var(--accent-soft)]' : ''}`}>
+      <div className={`flex items-start gap-3 ${blocked ? 'opacity-60' : ''}`}>
         <input
           id={`ov-${s.id}`}
           type="checkbox"
@@ -176,29 +352,24 @@ function OverlayItem({ s, hits }: { s: Overlay; hits: string[] }) {
           </span>
           <span className="block text-xs text-[var(--muted)]">{s.description}</span>
         </label>
-        <button
-          type="button"
-          onClick={() => setExpanded(!open)}
-          aria-expanded={open}
-          aria-label={`Warstwy usługi: ${s.title}`}
-          className="rounded-full p-1 text-[var(--muted)] hover:bg-[var(--hover)]"
-        >
-          <ChevronDown className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
-        </button>
+        {s.sublayers.length > 1 && (
+          <button
+            type="button"
+            onClick={() => setExpanded(!open)}
+            aria-expanded={open}
+            aria-label={`Warstwy usługi: ${s.title}`}
+            className="rounded-full p-1 text-[var(--muted)] hover:bg-[var(--hover)]"
+          >
+            <ChevronDown className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+          </button>
+        )}
       </div>
 
-      {(status === 'blocked' || status === 'degraded') && (
-        <a
-          href={GEOPORTAL_MAP}
-          target="_blank"
-          rel="noopener"
-          className="mt-1 ml-7 inline-flex items-center gap-1 text-xs text-[var(--accent)]"
-        >
-          {STATUS_LABEL[status]}: otwórz w geoportal.gov.pl <ExternalLink className="h-3 w-3" />
-        </a>
+      {(status === 'blocked' || status === 'down' || status === 'degraded') && (
+        <Why status={status === 'blocked' ? 'refused' : status} detail={serviceError(s.id)} />
       )}
 
-      {open && (
+      {open && s.sublayers.length > 1 && (
         <ul className="mt-2 ml-7 flex flex-col gap-1">
           {s.sublayers.map((l) => (
             <SublayerRow key={l.name} s={s} l={l} highlighted={hits.includes(l.name)} disabled={blocked} />

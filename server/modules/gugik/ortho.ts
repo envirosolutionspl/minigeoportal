@@ -1,5 +1,5 @@
-import { RequestError, fetchFixed, readLimited } from './http.ts';
-import type { OrthoInfo, OrthoSheet } from '../src/services/ortho.ts';
+import { RequestError, fetchFixed, readLimited } from '../../http.ts';
+import type { OrthoInfo, OrthoSheet } from '../../../src/services/ortho.ts';
 export type { OrthoInfo };
 
 /**

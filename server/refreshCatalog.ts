@@ -1,5 +1,5 @@
 /** Rebuilds the geoportal layer catalog: `npm run catalog`. */
-import { buildCatalog, readCatalog, writeCatalog } from './catalog.ts';
+import { buildCatalog, readCatalog, writeCatalog } from './modules/gugik/catalog.ts';
 import { config } from './config.ts';
 import { loadConfig } from './config/load.ts';
 import { createSite } from './html.ts';

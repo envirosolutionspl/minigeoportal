@@ -78,9 +78,9 @@ export function LayerCatalog() {
   const entries = useCatalog((c) => c.entries);
   const panel = useMapStore((m) => m.panel);
 
-  // The geoportal list loads when the panel is first opened; our own layers work without it.
+  // The geoportal list (gugik module) loads when the panel is first opened; our own layers work without it.
   useEffect(() => {
-    if (panel === 'catalog') void useCatalog.getState().load();
+    if (panel === 'catalog' && config.modules.gugik?.catalog) void useCatalog.getState().load();
   }, [panel]);
 
   /** Search text of every geoportal layer, normalized once instead of on each keystroke. */

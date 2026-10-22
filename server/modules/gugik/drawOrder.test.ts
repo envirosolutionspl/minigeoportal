@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { geoportalLayerOrder, overlayOrder } from './drawOrder.ts';
-import { defaults } from './testSite.ts';
+import { defaults } from '../../testSite.ts';
 
 /** Shape of the geoportal.gov.pl configuration: services with groups, then the map's layer list. */
 const CONFIG = `export const config = {

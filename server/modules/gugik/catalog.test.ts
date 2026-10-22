@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 // Upstream hosts resolve to a public address, so the address check lets them through.
 vi.mock('node:dns/promises', () => ({ lookup: vi.fn(async () => [{ address: '203.0.113.10', family: 4 }]) }));
 import type { GeoportalConfig } from './geoportalConfig.ts';
-import { defaults } from './testSite.ts';
+import { defaults } from '../../testSite.ts';
 
 let dir: string;
 let mod: typeof import('./catalog.ts');

@@ -2,7 +2,7 @@ import { mkdtemp, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { RequestError } from './http.ts';
+import { RequestError } from '../../http.ts';
 
 // The cache directory is read when the module loads, so it is set before the import.
 let dir: string;

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { RequestError } from './http.ts';
+import { RequestError } from '../../http.ts';
 import { latestPhoto, orthoAt, parseIndex } from './ortho.ts';
 
 const record = (fields: Record<string, string>) =>

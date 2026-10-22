@@ -1,6 +1,6 @@
-import { fetchFixed, readLimited } from './http.ts';
+import { fetchFixed, readLimited } from '../../http.ts';
 import { CONFIG_BASE, stripComments } from './geoportalConfig.ts';
-import type { Overlay } from '../shared/config.ts';
+import type { Overlay } from '../../../shared/config.ts';
 
 /**
  * Drawing order of the overlays as on geoportal.gov.pl, read from the configuration of its

@@ -1,12 +1,12 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import type { Overlay } from '../shared/config.ts';
-import type { CatalogEntry, CatalogIndex, CatalogMeta, CatalogStatus } from '../src/services/catalogTypes.ts';
-import { catalogSublayers } from '../src/services/catalogSublayers.ts';
-import { normalize } from '../src/services/text.ts';
-import { PL1992, serviceCapabilities } from './capabilities.ts';
+import type { Overlay } from '../../../shared/config.ts';
+import type { CatalogEntry, CatalogIndex, CatalogMeta, CatalogStatus } from '../../../src/services/catalogTypes.ts';
+import { catalogSublayers } from '../../../src/services/catalogSublayers.ts';
+import { normalize } from '../../../src/services/text.ts';
+import { PL1992, serviceCapabilities } from '../../capabilities.ts';
 import { fetchGeoportalConfig, type ConfigService, type GeoportalConfig } from './geoportalConfig.ts';
-import { dataPath, errorMessage } from './config.ts';
+import { dataPath, errorMessage } from '../../config.ts';
 
 /**
  * Catalog of every layer of geoportal.gov.pl, kept on disk and rebuilt on demand.

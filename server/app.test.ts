@@ -5,6 +5,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import type { Hono } from 'hono';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
 import { site } from './testSite.ts';
+import { createSite } from './html.ts';
 
 // Upstream hosts resolve to a public address unless a test says otherwise.
 vi.mock('node:dns/promises', () => ({ lookup: vi.fn() }));
@@ -28,6 +29,17 @@ beforeAll(async () => {
 afterAll(() => rm(dir, { recursive: true, force: true }));
 
 describe('routes', () => {
+  it('leaves out the gugik routes, and its search hosts in the CSP, without the module', async () => {
+    const { createApp } = await import('./app.ts');
+    const plain = createSite({ ...site.config, app: { ...site.config.app, modules: {}, search: { provider: 'none', parcel: false } } });
+    const bare = createApp({ site: plain, cache: CACHE, refresh, catalog: () => undefined });
+    for (const path of ['/api/catalog', '/api/dict/wojewodztwa', '/api/orto?x=1&y=1']) {
+      expect((await bare.request(path, {}, remote)).status).toBe(404);
+    }
+    const csp = (await bare.request('/api/health', {}, remote)).headers.get('content-security-policy')!;
+    expect(csp).toContain("connect-src 'self';");
+  });
+
   it('serves the configuration for the page, revalidated', async () => {
     const res = await app.request('/api/config', {}, remote);
     expect(res.headers.get('cache-control')).toBe('no-cache');

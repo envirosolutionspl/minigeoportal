@@ -7,7 +7,7 @@ import type { Context } from 'hono';
 import { createApp } from './app.ts';
 import { readCache, refreshCache } from './cache.ts';
 import { mailerFromEnv } from './report.ts';
-import { buildCatalog, readCatalog, writeCatalog, type Catalog } from './catalog.ts';
+import { buildCatalog, readCatalog, writeCatalog, type Catalog } from './modules/gugik/catalog.ts';
 import { config, errorMessage, production } from './config.ts';
 import { loadConfig } from './config/load.ts';
 import { createSite, renderPage } from './html.ts';
@@ -19,11 +19,12 @@ const site = createSite(loadConfig(config.configDir));
 const overlays = site.defaults.layers.overlays;
 
 /**
- * The geoportal layer catalog: read from disk, or built in the background on the first start
- * (a minute or two: every service is checked), so the server answers at once and the app works
- * on its own layers meanwhile.
+ * The geoportal layer catalog (gugik module): read from disk, or built in the background on the
+ * first start (a minute or two: every service is checked), so the server answers at once and the
+ * app works on its own layers meanwhile.
  */
-let catalog: Catalog | undefined = await readCatalog();
+const withCatalog = site.defaults.modules.gugik?.catalog === true;
+let catalog: Catalog | undefined = withCatalog ? await readCatalog() : undefined;
 let building: Promise<Catalog> | undefined;
 const refreshCatalog = () => {
   building ??= buildCatalog(overlays, catalog)
@@ -37,7 +38,7 @@ const refreshCatalog = () => {
     });
   return building;
 };
-if (!catalog) refreshCatalog().catch((e: unknown) => console.warn(`catalog: ${errorMessage(e)}`));
+if (withCatalog && !catalog) refreshCatalog().catch((e: unknown) => console.warn(`catalog: ${errorMessage(e)}`));
 
 const mailer = mailerFromEnv(site.defaults);
 if (!mailer) console.log('Bug reports off: set SMTP_HOST and REPORT_TO to turn them on.');
@@ -48,8 +49,7 @@ const app = createApp({
   refresh,
   mailer,
   origin: config.origin,
-  catalog: () => catalog,
-  refreshCatalog,
+  ...(withCatalog ? { catalog: () => catalog, refreshCatalog } : {}),
 });
 
 if (production) {

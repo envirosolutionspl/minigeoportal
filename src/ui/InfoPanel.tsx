@@ -15,9 +15,11 @@ export function InfoPanel() {
   const query = useInfoStore((s) => s.query);
   const close = useInfoStore((s) => s.close);
   const setPanel = useMapStore((m) => m.setPanel);
-  // The photo date matters only when the photos are on screen.
+  // The photo date (gugik module) matters only when the photos are on screen.
   const showsPhotos = useMapStore(
-    (m) => config.map.baseMaps.find((b) => b.id === m.base)?.sources.some((s) => s.service === 'orto') ?? false,
+    (m) =>
+      Boolean(config.modules.gugik?.ortho) &&
+      (config.map.baseMaps.find((b) => b.id === m.base)?.sources.some((s) => s.service === 'orto') ?? false),
   );
   if (!query) return null;
 

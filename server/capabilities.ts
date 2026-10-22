@@ -1,6 +1,6 @@
 import { XMLParser } from 'fast-xml-parser';
 import { fetchPublic, readLimited, serviceUrl } from './http.ts';
-import { fetchDrawOrder } from './drawOrder.ts';
+import { fetchDrawOrder } from './modules/gugik/drawOrder.ts';
 import { errorMessage } from './config.ts';
 import type { ClientConfig } from '../shared/config.ts';
 import type { CapabilitiesCache, RestMeta, ServiceMeta, TileMatrixMeta, WmsLayerMeta, WmsMeta, WmtsMeta } from '../src/services/meta.ts';

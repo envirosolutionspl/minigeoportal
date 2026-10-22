@@ -1,5 +1,5 @@
-import { fetchFixed, readLimited } from './http.ts';
-import { errorMessage } from './config.ts';
+import { fetchFixed, readLimited } from '../../http.ts';
+import { errorMessage } from '../../config.ts';
 
 /**
  * The layer list of geoportal.gov.pl, read from the configuration of its map application.

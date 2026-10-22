@@ -1,10 +1,10 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { RequestError, fetchFixed, readLimited } from './http.ts';
-import { dataPath } from './config.ts';
-import { normalize } from '../src/services/text.ts';
-import type { DictEntry } from '../src/services/dictionaries.ts';
-import type { UnitHit, UnitLevel, UnitNames } from '../src/services/units.ts';
+import { RequestError, fetchFixed, readLimited } from '../../http.ts';
+import { dataPath } from '../../config.ts';
+import { normalize } from '../../../src/services/text.ts';
+import type { DictEntry } from '../../../src/services/dictionaries.ts';
+import type { UnitHit, UnitLevel, UnitNames } from '../../../src/services/units.ts';
 
 /**
  * Administrative dictionaries for the parcel search: voivodeships, counties and

@@ -25,13 +25,42 @@ export const scriptJson = (value: unknown) =>
     .replace(/\u2028/g, '\\u2028')
     .replace(/\u2029/g, '\\u2029');
 
+/** Hosts the GUGiK search reaches from the browser (src/services/geocoder.ts). */
+export const GUGIK_SEARCH_HOSTS = [
+  'https://services.gugik.gov.pl',
+  'https://uldk.gugik.gov.pl',
+  'https://capap.gugik.gov.pl',
+  'https://mapy.geoportal.gov.pl',
+];
+
+/** Where the page may fetch from (CSP connect-src): itself, and the services its search queries directly. */
+export function connectSources(client: ClientConfig): string[] {
+  return ["'self'", ...(client.search.provider === 'gugik' || client.search.parcel ? GUGIK_SEARCH_HOSTS : [])];
+}
+
+/**
+ * Connections opened while the page loads, for the first map: tile servers of the first base maps
+ * (tiles are read with CORS) and servers of the overlays switched on at the start.
+ */
+function preconnects(client: ClientConfig): string {
+  const { view, baseMaps, tileServices } = client.map;
+  const firstBases = baseMaps.filter((b) => b.id === view.base || b.id === view.baseMobile);
+  const tiles = firstBases.flatMap((b) => b.sources.flatMap((s) => tileServices.find((t) => t.id === s.service)?.url ?? []));
+  const images = client.layers.overlays.filter((o) => view.overlays.includes(o.id)).map((o) => o.url);
+  const links = new Set([
+    ...tiles.map((u) => `<link rel="preconnect" href="${escapeHtml(new URL(u).origin)}" crossorigin />`),
+    ...images.map((u) => `<link rel="preconnect" href="${escapeHtml(new URL(u).origin)}" />`),
+  ]);
+  return [...links].map((l) => `    ${l}\n`).join('');
+}
+
 /** index.html for one language: its lang, title and description, and the configuration inside. */
 export function renderPage(template: string, client: ClientConfig): string {
   return template
     .replace(/<html lang="[^"]*">/, `<html lang="${escapeHtml(client.locale)}">`)
     .replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(client.app.title)}</title>`)
     .replace(/(<meta\s+name="description"\s+content=")[^"]*"/, `$1${escapeHtml(client.app.description)}"`)
-    .replace('</head>', `  <script type="application/json" id="boot">${scriptJson(client)}</script>\n  </head>`);
+    .replace('</head>', `${preconnects(client)}    <script type="application/json" id="boot">${scriptJson(client)}</script>\n  </head>`);
 }
 
 /** The configuration for each language, built once. */

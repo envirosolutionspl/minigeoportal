@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { pickLocale, renderPage, scriptJson } from './html.ts';
+import { readFileSync } from 'node:fs';
+import { GUGIK_SEARCH_HOSTS, connectSources, pickLocale, renderPage, scriptJson } from './html.ts';
 import { defaults } from './testSite.ts';
 
 const TEMPLATE = `<!doctype html>
@@ -37,5 +38,21 @@ describe('renderPage', () => {
     const json = scriptJson({ text: '</script><script>alert(1)</script>\u2028' });
     expect(json).not.toContain('<');
     expect(JSON.parse(json)).toEqual({ text: '</script><script>alert(1)</script>\u2028' });
+  });
+});
+
+describe('connections', () => {
+  it('opens the first map servers early and allows the GUGiK search hosts only with that search', () => {
+    const page = renderPage(TEMPLATE, defaults);
+    expect(page).toContain('<link rel="preconnect" href="https://mapy.geoportal.gov.pl" crossorigin />');
+    expect(page).toContain('<link rel="preconnect" href="https://integracja.gugik.gov.pl" />');
+    expect(connectSources(defaults)).toEqual(["'self'", ...GUGIK_SEARCH_HOSTS]);
+    expect(connectSources({ ...defaults, search: { provider: 'none', parcel: false } })).toEqual(["'self'"]);
+  });
+
+  it('lists every host the GUGiK search reaches', () => {
+    const source = readFileSync('src/services/geocoder.ts', 'utf8');
+    const hosts = new Set([...source.matchAll(/https:\/\/[a-z0-9.-]+/g)].map((m) => m[0]));
+    for (const host of hosts) expect(GUGIK_SEARCH_HOSTS).toContain(host);
   });
 });

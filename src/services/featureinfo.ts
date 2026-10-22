@@ -116,7 +116,13 @@ export async function fetchFeatureInfo(
 ): Promise<InfoRecord[]> {
   const params = queryParams(def, layer, coordinate, resolution, layers);
   if (!params) return [];
-  const res = await fetch(`/api/featureinfo/${encodeURIComponent(def.id)}?${params.toString()}`, { signal });
+  const ask = () => fetch(`/api/featureinfo/${encodeURIComponent(def.id)}?${params.toString()}`, { signal });
+  let res = await ask();
+  // Some servers list XML among their formats and then fail on it: one more try in HTML.
+  if (res.status === 502 && params.has('INFO_FORMAT') && params.get('INFO_FORMAT') !== 'text/html') {
+    params.set('INFO_FORMAT', 'text/html');
+    res = await ask();
+  }
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const body = await res.text();
   return parseFeatureInfo(body, res.headers.get('X-Upstream-Content-Type') ?? '');

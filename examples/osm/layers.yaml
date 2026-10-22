@@ -1,0 +1,20 @@
+# One WMS overlay in Web Mercator, to show how overlays are described.
+
+topics:
+  - id: osm
+    title: OpenStreetMap
+
+overlays:
+  - id: labels
+    kind: wms
+    url: https://ows.terrestris.de/osm/service
+    title: { en: Labels and roads, pl: Opisy i drogi }
+    description: { en: Roads and place names from OpenStreetMap (terrestris), pl: Drogi i nazwy miejscowości z OpenStreetMap (terrestris) }
+    topic: osm
+    starter: true
+    attribution: '[terrestris](https://www.terrestris.de), © [OpenStreetMap](https://www.openstreetmap.org/copyright)'
+    keywords: { en: [roads, labels, names], pl: [drogi, opisy, nazwy] }
+    sublayers:
+      - name: OSM-Overlay-WMS
+        title: { en: Labels and roads, pl: Opisy i drogi }
+        default: true

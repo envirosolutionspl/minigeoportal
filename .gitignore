@@ -9,3 +9,4 @@ Thumbs.db
 *.tsbuildinfo
 server/data/dict/
 server/data/catalog/
+server/data/capabilities.json

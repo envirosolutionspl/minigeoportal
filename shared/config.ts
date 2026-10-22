@@ -146,6 +146,8 @@ export interface ClientConfig {
       base: string;
       /** Base map on phones, when it differs. */
       baseMobile?: string;
+      /** The base map the large thumbnail switches to (photos) and back from. */
+      toggleBase?: string;
       overlays: string[];
     };
     /** Source credit of the map as HTML (links only). */

@@ -137,6 +137,18 @@ describe('fetchFeatureInfo', () => {
     expect(records[0].fields[0].value).toBe('141708_2.0021.22/1');
   });
 
+  it('asks once more in HTML when the server fails on the structured format', async () => {
+    await withCapabilities();
+    const { calls } = stubFetch([
+      [/INFO_FORMAT=text%2Fxml/, 'Upstream', { status: 502 }],
+      [/INFO_FORMAT=text%2Fhtml/, KV_HTML, { headers: { 'X-Upstream-Content-Type': 'text/html' } }],
+    ]);
+    const kieg = overlayById.get('kieg')!;
+    const records = await fetchFeatureInfo(kieg, createOverlayLayer(kieg), [1, 2], 1, ['dzialki'], new AbortController().signal);
+    expect(calls).toHaveLength(2);
+    expect(records[0].fields[0]).toMatchObject({ label: 'Numer', value: '12/3' });
+  });
+
   it('turns a proxy error status into an exception', async () => {
     await withCapabilities();
     stubFetch([['/api/featureinfo/', 'busy', { status: 503 }]]);

@@ -114,7 +114,7 @@ function crossCheck(
           problems.push(`${at(map, 'map.yaml', ['baseMaps', i, 'sources', j, 'service'])} unknown tile service "${s.service}"`);
       }),
     );
-    for (const key of ['base', 'baseMobile'] as const) {
+    for (const key of ['base', 'baseMobile', 'toggleBase'] as const) {
       const value = m.view[key];
       if (value && !bases.has(value)) problems.push(`${at(map, 'map.yaml', ['view', key])} view.${key}: unknown base map "${value}"`);
     }

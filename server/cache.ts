@@ -1,16 +1,18 @@
 import { readFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import type { ClientConfig } from '../shared/config.ts';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
 import { buildCache } from './capabilities.ts';
-import { dataPath } from './config.ts';
+import { config, dataPath } from './config.ts';
 import { writeAtomic } from './files.ts';
 
 /** Metadata of the configured services, refreshed by `npm run update`. */
 export const CACHE_FILE = process.env.CAPABILITIES_FILE ?? dataPath('capabilities.json');
-/** The copy tracked in git, so a fresh checkout or an empty data volume starts with scale limits. */
-const SEED_FILE = resolve(dirname(fileURLToPath(import.meta.url)), 'data', 'capabilities.json');
+/**
+ * The copy that comes with the configuration (seed/ in its directory), so a fresh checkout or an
+ * empty data volume starts with scale limits before the first update.
+ */
+const SEED_FILE = resolve(config.configDir, 'seed', 'capabilities.json');
 
 export async function readCache(): Promise<CapabilitiesCache | undefined> {
   for (const file of new Set([CACHE_FILE, SEED_FILE])) {

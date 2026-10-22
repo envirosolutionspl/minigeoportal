@@ -47,6 +47,7 @@ view:
   homeLabel: { pl: 'Cała Polska', en: 'All of Poland' }
   base: mapa
   baseMobile: prosta # the simplified map loads fastest on mobile connections
+  toggleBase: orto # the large thumbnail switches to the photos and back
   overlays: [kieg]
 
 attribution: 'Dane: [GUGiK, geoportal.gov.pl](https://www.geoportal.gov.pl)'

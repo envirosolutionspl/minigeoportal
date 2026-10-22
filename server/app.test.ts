@@ -61,6 +61,17 @@ describe('routes', () => {
     expect((await app.request('/api/search?q=Krak%C3%B3w', {}, remote)).status).toBe(404);
   });
 
+  it('runs the example deployment without GUGiK: no catalog or dictionaries, Nominatim search, no outside hosts', async () => {
+    const { createApp } = await import('./app.ts');
+    const { loadConfig } = await import('./config/load.ts');
+    const osm = createApp({ site: createSite(loadConfig('examples/osm')), cache: () => CACHE });
+    expect((await osm.request('/api/catalog', {}, remote)).status).toBe(404);
+    expect((await osm.request('/api/dict/wojewodztwa', {}, remote)).status).toBe(404);
+    expect(await (await osm.request('/api/search?q=ab', {}, remote)).json()).toEqual([]);
+    const page = (await osm.request('/api/config', {}, remote)).headers.get('content-security-policy')!;
+    expect(page).toContain("connect-src 'self';");
+  });
+
   it('serves the configuration for the page, revalidated', async () => {
     const res = await app.request('/api/config', {}, remote);
     expect(res.headers.get('cache-control')).toBe('no-cache');

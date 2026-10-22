@@ -4,6 +4,10 @@ import { config, type BaseMap } from '@/config/runtime';
 import { t } from '@/i18n';
 import { useMapStore } from '@/state/store';
 
+const { view, baseMaps } = config.map;
+/** The base map one click switches to (map.yaml: view.toggleBase, the photos), and back from. */
+const TOGGLE = view.toggleBase ?? baseMaps.find((b) => b.id !== view.base)?.id ?? view.base;
+
 /**
  * Base map switcher as in Google Maps: the thumbnail shows the base map one click switches to
  * (photos, or back to the last map used). Every base map is listed on hover or keyboard focus;
@@ -13,11 +17,11 @@ export function BasemapSwitcher() {
   const base = useMapStore((m) => m.base);
   const setBase = useMapStore((m) => m.setBase);
   // The map to go back to from the photos: the last one that was not the photos.
-  const [lastMap, setLastMap] = useState(base === 'orto' ? 'mapa' : base);
+  const [lastMap, setLastMap] = useState(base === TOGGLE ? view.base : base);
   useEffect(() => {
-    if (base !== 'orto') setLastMap(base);
+    if (base !== TOGGLE) setLastMap(base);
   }, [base]);
-  const target = config.map.baseMaps.find((b) => b.id === (base === 'orto' ? lastMap : 'orto'))!;
+  const target = baseMaps.find((b) => b.id === (base === TOGGLE ? lastMap : TOGGLE)) ?? baseMaps[0];
 
   /** Opened with the touch button. */
   const [open, setOpen] = useState(false);

@@ -120,7 +120,7 @@ export function ReportDialog() {
               <p className="text-[var(--muted)]">{t('report.intro')}</p>
               <label className="block">
                 <span className="mb-1 block font-medium">{t('report.category')}</span>
-                <select name="category" required defaultValue="mapa" className={field}>
+                <select name="category" required defaultValue={config.report.categories[0].id} className={field}>
                   {config.report.categories.map(({ id: value, label }) => (
                     <option key={value} value={value}>
                       {label}

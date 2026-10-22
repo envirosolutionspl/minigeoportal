@@ -1,0 +1,61 @@
+# Web Mercator, the system of web tile maps: OpenStreetMap tiles are drawn as they are.
+
+projection:
+  code: EPSG:3857
+  name: Web Mercator
+  axisOrientation: enu
+  extent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34]
+
+zoom:
+  # The levels of the standard tile grid, 0 to 19.
+  scales:
+    [
+      559082264.0287,
+      279541132.0144,
+      139770566.0072,
+      69885283.0036,
+      34942641.5018,
+      17471320.7509,
+      8735660.3754,
+      4367830.1877,
+      2183915.0939,
+      1091957.5469,
+      545978.7735,
+      272989.3867,
+      136494.6934,
+      68247.3467,
+      34123.6733,
+      17061.8367,
+      8530.9183,
+      4265.4592,
+      2132.7296,
+      1066.3648,
+    ]
+
+view:
+  center: [2159598, 6818227]
+  zoom: 6
+  home: [-1113195, 4163881, 3562224, 11402272]
+  homeLabel: { en: Europe, pl: Europa }
+  base: osm
+  overlays: []
+
+attribution: '© [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors'
+
+tileServices:
+  # Mind the tile usage policy of openstreetmap.org: heavy use needs a tile server of your own.
+  - id: osm
+    kind: xyz
+    url: https://tile.openstreetmap.org/{z}/{x}/{y}.png
+    maxZoom: 19
+
+baseMaps:
+  - id: osm
+    title: OpenStreetMap
+    description: { en: The OpenStreetMap standard map, pl: Mapa standardowa OpenStreetMap }
+    sources:
+      - service: osm
+  - id: none
+    title: { en: None, pl: Brak }
+    description: { en: No base map, pl: Bez podkładu mapowego }
+    sources: []

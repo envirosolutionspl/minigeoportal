@@ -120,6 +120,8 @@ export const mapSchema = z.strictObject({
     homeLabel: text,
     base: id,
     baseMobile: id.optional(),
+    /** The base map the large thumbnail switches to (photos) and back from; another than `base` by default. */
+    toggleBase: id.optional(),
     overlays: z.array(id).default([]),
   }),
   attribution: text,

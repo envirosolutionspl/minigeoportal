@@ -1,0 +1,33 @@
+# An example deployment without GUGiK: OpenStreetMap tiles in Web Mercator, the Nominatim search
+# and one WMS overlay. Start it with CONFIG_DIR=examples/osm (see docs/en/deployment.md).
+
+id: osm-example
+name: OSM Map
+title: { en: 'OSM Map: an example deployment', pl: 'Mapa OSM: przykładowe wdrożenie' }
+description:
+  en: An example deployment of Prosty Geoportal on OpenStreetMap, without GUGiK services.
+  pl: Przykładowe wdrożenie Prostego Geoportalu na OpenStreetMap, bez usług GUGiK.
+domain: localhost
+contact: admin@example.org
+
+author:
+  name: EnviroSolutions
+  url: https://envirosolutions.pl
+
+locales:
+  default: en
+  available: [en, pl]
+
+report:
+  categories:
+    - id: map
+      label: { en: Map or layers, pl: Mapa lub warstwy }
+    - id: other
+      label: { en: Other, pl: Inne }
+
+search:
+  # The public Nominatim allows one request a second: the server asks for everyone, after Enter.
+  provider: nominatim
+  parcel: false
+  nominatim:
+    countryCodes: [pl, de, cz, sk, lt]

@@ -161,7 +161,7 @@ Opis każdego pola: [docs/pl/konfiguracja.md](docs/pl/konfiguracja.md); treści 
 
 ### Docker Compose (zalecane)
 
-Gotowy obraz publikuje GitHub Actions: `ghcr.io/envirosolutionspl/minigeoportal` (tagi `latest`, `sha-<commit>` i numery wersji), dla serwerów x86 i ARM. Obraz powstaje tylko wtedy, gdy zmienia się coś, co do niego trafia; zmiany w dokumentacji go nie przebudowują. Serwer niczego nie buduje, tylko pobiera obraz.
+Gotowy obraz publikuje GitHub Actions: `ghcr.io/envirosolutionspl/minigeoportal` (tagi `latest`, `sha-<commit>` i numery wersji) dla serwerów x86 (64-bit). Obraz powstaje tylko wtedy, gdy zmienia się coś, co do niego trafia; zmiany w dokumentacji go nie przebudowują. Serwer niczego nie buduje, tylko pobiera obraz.
 
 1. Na serwerze sklonuj repozytorium (potrzebne są `compose.yaml`, `deploy/` i katalog konfiguracji) i umieść w nim swój katalog konfiguracji.
 2. W `compose.yaml` zamień montowany katalog `./config` na swój (w usługach `app` i `updater`): `- ./moja-mapa:/app/config:ro`.

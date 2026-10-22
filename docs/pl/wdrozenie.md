@@ -44,7 +44,7 @@ docker compose up -d --build # obraz zbudowany z lokalnej kopii zamiast pobraneg
 
 Własną konfigurację podłącza się, zastępując w `compose.yaml` montowany katalog `./config` swoim. Ustawienia poczty i inne sekrety trafiają do `.env` obok `compose.yaml`; plik jest opcjonalny.
 
-Obraz publikuje GitHub Actions jako `ghcr.io/envirosolutionspl/minigeoportal` (tagi `latest`, `sha-<commit>` i numery wersji), dla serwerów x86 i ARM. Powstaje tylko wtedy, gdy zmienia się coś, co do niego trafia; zmiany w dokumentacji go nie przebudowują. Obraz działa bez uprawnień roota, nie potrzebuje w działaniu narzędzi do budowania i poprawnie kończy pracę na SIGTERM. Samodzielnie:
+Obraz publikuje GitHub Actions jako `ghcr.io/envirosolutionspl/minigeoportal` (tagi `latest`, `sha-<commit>` i numery wersji) dla serwerów x86 (64-bit). Powstaje tylko wtedy, gdy zmienia się coś, co do niego trafia; zmiany w dokumentacji go nie przebudowują. Obraz działa bez uprawnień roota, nie potrzebuje w działaniu narzędzi do budowania i poprawnie kończy pracę na SIGTERM. Samodzielnie:
 
 ```bash
 docker run -p 8787:8787 -v minigeoportal-data:/data ghcr.io/envirosolutionspl/minigeoportal

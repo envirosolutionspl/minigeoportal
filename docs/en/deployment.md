@@ -44,7 +44,7 @@ docker compose up -d --build # built from this checkout instead of pulled
 
 Your own configuration goes in by replacing the `./config` mount of `compose.yaml` with your directory. Mail settings and other secrets go into `.env` next to `compose.yaml`; it is optional.
 
-The image is published by GitHub Actions as `ghcr.io/envirosolutionspl/minigeoportal` (tags `latest`, `sha-<commit>` and version numbers), for x86 and ARM servers. It is built only when something that goes into it changes; documentation alone builds nothing. The image runs without root, needs no build tools at runtime and stops cleanly on SIGTERM. Run alone:
+The image is published by GitHub Actions as `ghcr.io/envirosolutionspl/minigeoportal` (tags `latest`, `sha-<commit>` and version numbers) for x86 (64-bit) servers. It is built only when something that goes into it changes; documentation alone builds nothing. The image runs without root, needs no build tools at runtime and stops cleanly on SIGTERM. Run alone:
 
 ```bash
 docker run -p 8787:8787 -v minigeoportal-data:/data ghcr.io/envirosolutionspl/minigeoportal

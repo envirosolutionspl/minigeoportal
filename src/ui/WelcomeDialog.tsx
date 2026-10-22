@@ -81,7 +81,7 @@ export function WelcomeDialog() {
             <section>
               <h2 className="mb-1 font-semibold">Po co jest ten serwis</h2>
               <p>
-                {APP_NAME} pokazuje te same publiczne dane co krajowy geoportal.gov.pl, ale w formie przyjaznej dla osób, które nie zajmują
+                {APP_NAME} pokazuje te same publiczne dane co krajowy <GeoportalLink />, ale w formie przyjaznej dla osób, które nie zajmują
                 się mapami zawodowo. Wyszukaj i przejrzyj oficjalne dane szybciej i łatwiej.
               </p>
               <p className="mt-2">
@@ -94,11 +94,8 @@ export function WelcomeDialog() {
               <h2 className="mb-1 font-semibold">Skąd są dane</h2>
               <p>
                 Wszystkie dane pochodzą z publicznych usług Głównego Urzędu Geodezji i Kartografii (
-                <a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener" className="text-[var(--accent)] underline">
-                  geoportal.gov.pl
-                </a>
-                ) oraz serwerów starostw, gmin i innych instytucji, z którymi te usługi się łączą. Mapa pobiera je na bieżąco i niczego nie
-                zmienia ani nie przechowuje. Aktualność danych zależy od urzędu, który je prowadzi.
+                <GeoportalLink />) oraz serwerów starostw, gmin i innych instytucji, z którymi te usługi się łączą. Mapa pobiera je na
+                bieżąco i niczego nie zmienia ani nie przechowuje. Aktualność danych zależy od urzędu, który je prowadzi.
               </p>
             </section>
 
@@ -151,5 +148,14 @@ export function WelcomeDialog() {
         </div>
       </dialog>
     </>
+  );
+}
+
+/** The national geoportal, linked wherever the text names it. */
+function GeoportalLink() {
+  return (
+    <a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener" className="text-[var(--accent)] underline">
+      geoportal.gov.pl
+    </a>
   );
 }

@@ -23,5 +23,9 @@ describe('WelcomeDialog', () => {
       'Ważne',
     ]);
     expect(screen.getByText(/Wyszukaj i przejrzyj oficjalne dane szybciej i łatwiej/)).toBeTruthy();
+    // Every mention of the national geoportal in the text is a link to it.
+    const links = screen.getAllByRole('link', { name: 'geoportal.gov.pl' });
+    expect(links).toHaveLength(2);
+    for (const link of links) expect(link.getAttribute('href')).toBe('https://www.geoportal.gov.pl');
   });
 });

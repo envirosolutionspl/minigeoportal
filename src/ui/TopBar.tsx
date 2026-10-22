@@ -139,7 +139,7 @@ export function TopBar() {
 
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start gap-2 p-3 sm:p-4">
-      <div className="pointer-events-auto relative w-full max-w-lg">
+      <div className="search-box pointer-events-auto relative w-full max-w-lg">
         <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface)] py-1.5 pr-3 pl-1.5 shadow-lg ring-1 ring-black/5 has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-[var(--accent)]">
           <button
             type="button"
@@ -244,7 +244,8 @@ export function TopBar() {
       </div>
 
       {/* On phones the buttons form a column under the search bar, leaving it the full width. */}
-      <div className="map-tools pointer-events-auto ml-auto flex gap-2 max-sm:absolute max-sm:top-[4.25rem] max-sm:right-3 max-sm:flex-col">
+      {/* One column on every screen, under the search bar on phones, so the tools never change shape. */}
+      <div className="map-tools pointer-events-auto absolute top-[4.25rem] right-3 flex flex-col gap-2 sm:top-4 sm:right-4">
         <DisplayMenu />
         <IconButton label="O serwisie" onClick={() => openWelcome(true)}>
           <Info className="h-5 w-5" />

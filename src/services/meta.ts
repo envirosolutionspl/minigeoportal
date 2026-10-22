@@ -11,6 +11,8 @@ export interface WmsLayerMeta {
   /** Visible at scales up to 1:maxScale (zoomed in at least that far). */
   maxScale?: number;
   legend?: string;
+  /** Has named layers inside it: a group, drawn by asking for its members. */
+  group?: boolean;
 }
 
 export interface WmsMeta {

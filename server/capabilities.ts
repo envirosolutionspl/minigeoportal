@@ -61,7 +61,8 @@ function collectLayers(
   if (name) {
     const legend = list(list(layer.Style)[0]?.LegendURL)[0];
     const href = text(node(legend?.OnlineResource)['@href']);
-    out[name] = { title: text(layer.Title) ?? name, ...own, ...(href ? { legend: href } : {}) };
+    const group = list(layer.Layer).length > 0;
+    out[name] = { title: text(layer.Title) ?? name, ...own, ...(href ? { legend: href } : {}), ...(group ? { group } : {}) };
   }
   for (const child of list(layer.Layer)) collectLayers(child, own, out);
 }

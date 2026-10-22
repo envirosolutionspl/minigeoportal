@@ -104,7 +104,7 @@ export function DisplayMenu() {
           id="display-menu"
           role="group"
           aria-label="Ułatwienia"
-          className="display-menu absolute top-0 right-full z-40 mr-2 w-64 space-y-3 rounded-2xl bg-[var(--surface)] p-3 text-sm shadow-lg ring-1 ring-black/5 sm:top-full sm:right-0 sm:mt-2 sm:mr-0"
+          className="display-menu absolute top-0 right-full z-40 mr-2 w-64 space-y-3 rounded-2xl bg-[var(--surface)] p-3 text-sm shadow-lg ring-1 ring-black/5"
         >
           <div>
             <p className="mb-1.5 font-medium">Wielkość tekstu</p>

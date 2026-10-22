@@ -149,6 +149,14 @@ describe('catalog routes', () => {
     expect((await withCatalog.request('/api/catalog/msNope', {}, client)).status).toBe(404);
   });
 
+  it('serves layers whose geoportal id has Polish letters', async () => {
+    const { createApp } = await import('./app.ts');
+    const polish = { ...CATALOG, entries: [{ ...CATALOG.entries[0], id: 'msWyłozeniaModernizacja' }] };
+    const res = await createApp({ cache: CACHE, refresh, catalog: () => polish }).request(`/api/catalog/${encodeURIComponent('msWyłozeniaModernizacja')}`, {}, client);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('etag')).toMatch(/^"[ -~]+"$/);
+  });
+
   it('queries available catalog layers through the proxy and refuses unavailable ones', async () => {
     const { createApp } = await import('./app.ts');
     const withCatalog = createApp({ cache: CACHE, refresh, catalog: () => CATALOG });

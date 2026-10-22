@@ -22,7 +22,7 @@ const META = {
   fetchedAt: 'x',
   title: 'NID',
   infoFormats: ['text/xml'],
-  layers: { Root: { title: 'NID', queryable: false }, monuments: { title: 'Zabytki', queryable: true, maxScale: 50000 } },
+  layers: { Root: { title: 'NID', queryable: false, group: true }, monuments: { title: 'Zabytki', queryable: true, maxScale: 50000 } },
 };
 
 beforeEach(async () => {
@@ -32,9 +32,27 @@ beforeEach(async () => {
 
 describe('catalogSublayers', () => {
   it('takes the sublayers the geoportal names, or else the named layers below the root', () => {
-    expect(catalogSublayers({ ...ENTRY, sublayers: [{ name: 'a', title: 'A' }] }, META)).toEqual([{ name: 'a', title: 'A', default: true }]);
+    expect(catalogSublayers({ ...ENTRY, sublayers: [{ name: 'monuments', title: 'Zabytki nieruchome' }] }, META)).toEqual([
+      { name: 'monuments', title: 'Zabytki nieruchome', default: true },
+    ]);
     expect(catalogSublayers(ENTRY, META)).toEqual([{ name: 'monuments', title: 'Zabytki', default: true }]);
     expect(catalogSublayers(ENTRY, undefined)).toEqual([]);
+  });
+
+  it('skips sublayers the service no longer has, and keeps groups only when there is nothing else', () => {
+    const configured = { ...ENTRY, sublayers: [{ name: 'gone', title: 'Usunięta' }, { name: 'monuments', title: 'Zabytki' }] };
+    expect(catalogSublayers(configured, META).map((l) => l.name)).toEqual(['monuments']);
+    const onlyGone = { ...ENTRY, sublayers: [{ name: 'gone', title: 'Usunięta' }] };
+    expect(catalogSublayers(onlyGone, META).map((l) => l.name)).toEqual(['monuments']);
+    const onlyGroup = { ...META, layers: { Root: { title: 'R', queryable: false, group: true } } };
+    expect(catalogSublayers(ENTRY, onlyGroup).map((l) => l.name)).toEqual(['Root']);
+  });
+
+  it('accepts geoportal ids with Polish letters and marks layers that fail to load', async () => {
+    expect(CATALOG_ID.test('groupDanePowPob_Działki')).toBe(true);
+    stubFetch([['/api/catalog/', 'gone', { status: 404 }]]);
+    expect(await loadCatalogLayer('msWyłozeniaModernizacja')).toBeUndefined();
+    expect(useCatalog.getState().failed.has('msWyłozeniaModernizacja')).toBe(true);
   });
 });
 

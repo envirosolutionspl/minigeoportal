@@ -1,9 +1,9 @@
 {
- "generatedAt": "2026-10-22T08:13:18.111Z",
+ "generatedAt": "2026-10-22T08:40:03.973Z",
  "services": {
   "kieg": {
    "kind": "wms",
-   "fetchedAt": "2026-10-22T08:13:16.808Z",
+   "fetchedAt": "2026-10-22T08:40:02.619Z",
    "title": "Krajowa Integracja Ewidencji Gruntów",
    "infoFormats": [
     "text/xml",
@@ -106,7 +106,7 @@
   },
   "kimpzp": {
    "kind": "wms",
-   "fetchedAt": "2026-10-22T08:13:16.885Z",
+   "fetchedAt": "2026-10-22T08:40:02.652Z",
    "title": "Krajowa Integracja Miejscowych Planów Zagospodarowania Przestrzennego",
    "infoFormats": [
     "text/html",
@@ -174,7 +174,7 @@
   },
   "pog": {
    "kind": "wms",
-   "fetchedAt": "2026-10-22T08:13:16.972Z",
+   "fetchedAt": "2026-10-22T08:40:03.433Z",
    "title": "Plany ogólne gmin - uchwalone",
    "infoFormats": [
     "text/html",
@@ -211,7 +211,7 @@
   },
   "rcn": {
    "kind": "wms",
-   "fetchedAt": "2026-10-22T08:13:16.977Z",
+   "fetchedAt": "2026-10-22T08:40:02.770Z",
    "title": "Rejestr Cen Nieruchomości",
    "infoFormats": [
     "text/xml",
@@ -248,7 +248,7 @@
   },
   "kiut": {
    "kind": "wms",
-   "fetchedAt": "2026-10-22T08:13:16.820Z",
+   "fetchedAt": "2026-10-22T08:40:02.623Z",
    "title": "Krajowa Integracja Uzbrojenia Terenu",
    "infoFormats": [
     "text/xml",
@@ -332,7 +332,7 @@
   },
   "kibdot": {
    "kind": "wms",
-   "fetchedAt": "2026-10-22T08:13:16.814Z",
+   "fetchedAt": "2026-10-22T08:40:02.650Z",
    "title": "Krajowa Integracja Baz Danych Obiektów Topograficznych",
    "infoFormats": [
     "text/html",
@@ -357,7 +357,7 @@
   },
   "suikzp": {
    "kind": "wms",
-   "fetchedAt": "2026-10-22T08:13:16.822Z",
+   "fetchedAt": "2026-10-22T08:40:03.057Z",
    "title": "Krajowa Integracja Studium Uwarunkowań i Kierunków Zagospodarowania Przestrzennego",
    "infoFormats": [
     "text/html",
@@ -383,7 +383,7 @@
   },
   "kina": {
    "kind": "wms",
-   "fetchedAt": "2026-10-22T08:13:17.859Z",
+   "fetchedAt": "2026-10-22T08:40:03.973Z",
    "title": "Krajowa Integracja Numeracji Adresowej",
    "infoFormats": [
     "text/xml",
@@ -400,7 +400,8 @@
     "A08_Ulice": {
      "title": "Ulice",
      "queryable": true,
-     "legend": "https://mapy.geoportal.gov.pl/wss/ext/KrajowaIntegracjaNumeracjiAdresowej?language=pol&version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=A08_Ulice&format=image/png&STYLE=default"
+     "legend": "https://mapy.geoportal.gov.pl/wss/ext/KrajowaIntegracjaNumeracjiAdresowej?language=pol&version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=A08_Ulice&format=image/png&STYLE=default",
+     "group": true
     },
     "A08_Ulice_Powierzchnie": {
      "title": "Ulice - obiekty powierzchniowe",
@@ -418,7 +419,7 @@
   },
   "prg": {
    "kind": "wms",
-   "fetchedAt": "2026-10-22T08:13:16.999Z",
+   "fetchedAt": "2026-10-22T08:40:02.718Z",
    "title": "Usługa przeglądania Państwowego Rejestru Granic",
    "infoFormats": [
     "text/xml",
@@ -716,7 +717,7 @@
   },
   "orto": {
    "kind": "wmts",
-   "fetchedAt": "2026-10-22T08:13:16.830Z",
+   "fetchedAt": "2026-10-22T08:40:02.609Z",
    "title": "Usługa przeglądania ortofotomap dla obszaru Polski. Profil kafelkowany (WMTS)",
    "matrixSet": {
     "id": "EPSG:2180",
@@ -833,7 +834,7 @@
   },
   "bdoo": {
    "kind": "wmts",
-   "fetchedAt": "2026-10-22T08:13:16.839Z",
+   "fetchedAt": "2026-10-22T08:40:02.640Z",
    "title": "Usługa przeglądania treści Bazy Danych Obiektów Ogólnogeograficznych. Profil kafelkowany (WMTS)",
    "matrixSet": {
     "id": "EPSG:2180",
@@ -926,7 +927,7 @@
   },
   "bdot10k": {
    "kind": "wmts",
-   "fetchedAt": "2026-10-22T08:13:18.111Z",
+   "fetchedAt": "2026-10-22T08:40:02.634Z",
    "title": "Usługa przeglądania danych Bazy Danych Obiektów Topograficznych BDOT10k. Profil kafelkowany (WMTS)",
    "matrixSet": {
     "id": "EPSG:2180",
@@ -1019,7 +1020,7 @@
   },
   "relief": {
    "kind": "wmts",
-   "fetchedAt": "2026-10-22T08:13:16.813Z",
+   "fetchedAt": "2026-10-22T08:40:02.602Z",
    "title": "Usługa przeglądania cieniowanej hipsometrii dla NMT o rozdzielczoćci 1m. Profil kafelkowany (WMTS)",
    "matrixSet": {
     "id": "EPSG:2180",
@@ -1112,7 +1113,7 @@
   },
   "g2mobile": {
    "kind": "wmts",
-   "fetchedAt": "2026-10-22T08:13:16.801Z",
+   "fetchedAt": "2026-10-22T08:40:02.616Z",
    "title": "Usługa przeglądania WMTS dla urządzeń mobilnych (G2_MOBILE500)",
    "matrixSet": {
     "id": "EPSG:2180",
@@ -1223,7 +1224,7 @@
   },
   "topo": {
    "kind": "wmts",
-   "fetchedAt": "2026-10-22T08:13:16.834Z",
+   "fetchedAt": "2026-10-22T08:40:02.654Z",
    "title": "Usługa przeglądania rastrowych map topograficznych dla Polski. Profil kafelkowany (WMTS)",
    "matrixSet": {
     "id": "EPSG:2180",

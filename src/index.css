@@ -343,10 +343,7 @@ html[data-printing] #print-sheet {
  */
 @media (min-width: 640px) {
   [data-panel='catalog'] .map-tools {
-    position: absolute;
-    top: 1rem;
     right: calc(24rem + 1rem);
-    flex-direction: column;
   }
   [data-panel='catalog'] .ol-zoom,
   [data-panel='catalog'] .ol-zoom-extent,
@@ -356,11 +353,51 @@ html[data-printing] #print-sheet {
   [data-panel='catalog'] .ol-mouse-position {
     left: calc((100% - 24rem) / 2);
   }
+  [data-panel='catalog'] .search-box {
+    max-width: min(32rem, calc(100vw - 24rem - 2rem));
+  }
+}
+/* Where the map beside the list is too narrow for the search bar and the tools side by side. */
+@media (min-width: 640px) and (max-width: 1023px) {
+  [data-panel='catalog'] .map-tools {
+    top: 4.75rem;
+  }
 }
 /* Where the map beside the list is narrow, the credit would cover the base map choices. */
 @media (min-width: 640px) and (max-width: 1199px) {
   [data-panel='catalog'] .author-credit {
     display: none;
+  }
+}
+
+/*
+ * Phones held sideways are too short for one column of tools above the zoom buttons: the tools
+ * form two columns growing leftwards, and the zoom buttons move to the left above the base map.
+ */
+@media (max-height: 500px) {
+  .map-tools {
+    display: grid;
+    grid-template-rows: repeat(4, auto);
+    grid-auto-flow: column;
+    direction: rtl;
+  }
+  .map-tools > * {
+    direction: ltr;
+  }
+  .ol-zoom,
+  .ol-zoom-extent,
+  .ol-touch .ol-zoom-extent,
+  [data-panel='catalog'] .ol-zoom,
+  [data-panel='catalog'] .ol-zoom-extent {
+    right: auto;
+    left: 1rem;
+  }
+  .ol-zoom {
+    bottom: 7.75rem;
+  }
+  .ol-zoom-extent,
+  .ol-touch .ol-zoom-extent {
+    bottom: 13.5rem;
   }
 }
 
@@ -395,12 +432,4 @@ html[data-contrast='high'] .ol-attribution:not(.ol-collapsed),
 html[data-contrast='high'] .ol-scale-line {
   background: #000000;
 }
-@media (min-width: 640px) {
-  /* The tools form a column next to the layer list: the menu opens to their left. */
-  [data-panel='catalog'] .display-menu {
-    top: 0;
-    right: 100%;
-    margin-top: 0;
-    margin-right: 0.5rem;
-  }
-}
+

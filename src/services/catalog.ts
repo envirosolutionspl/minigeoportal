@@ -17,6 +17,8 @@ interface CatalogStore {
   byId: Map<string, CatalogIndexEntry>;
   /** Definitions of catalog layers loaded so far, by geoportal id. */
   defs: Map<string, Overlay>;
+  /** Layers whose definition could not be loaded, so the panel says so instead of waiting. */
+  failed: Set<string>;
   load(): Promise<void>;
 }
 
@@ -25,6 +27,7 @@ export const useCatalog = create<CatalogStore>((set, get) => ({
   entries: [],
   byId: new Map(),
   defs: new Map(),
+  failed: new Set(),
   load: async () => {
     if (get().state === 'loading' || get().state === 'ready') return;
     set({ state: 'loading' });
@@ -45,18 +48,24 @@ export function overlayDef(id: string): Overlay | undefined {
   return OVERLAY_BY_ID.get(id) ?? useCatalog.getState().defs.get(id);
 }
 
-/** Ids that may stand for a catalog layer in a link: geoportal ids such as msKIEG. */
-export const CATALOG_ID = /^[A-Za-z][A-Za-z0-9_-]{1,80}$/;
+/**
+ * Ids that may stand for a catalog layer in a link: geoportal ids such as msKIEG, which may
+ * contain Polish letters (groupDanePowPob_Działki).
+ */
+export const CATALOG_ID = /^\p{L}[\p{L}\p{N}_-]{1,80}$/u;
 
 /**
- * Sublayers of a catalog layer: those the geoportal configuration names, or else every named
- * layer of the capabilities except the service's root. All are switched on, as in the geoportal.
+ * Sublayers of a catalog layer: those the geoportal configuration names that the service still
+ * has, or else its named layers that are not groups. All are switched on, as in the geoportal.
  */
 export function catalogSublayers(entry: CatalogEntry, meta: WmsMeta | undefined): Overlay['sublayers'] {
-  if (entry.sublayers?.length) return entry.sublayers.map((l) => ({ ...l, default: true }));
-  const names = Object.entries(meta?.layers ?? {});
-  const leaves = names.length > 1 ? names.slice(1) : names;
-  return leaves.map(([name, l]) => ({ name, title: l.title, default: true }));
+  const layers = meta?.layers ?? {};
+  const known = (name: string) => !meta || name in layers;
+  const configured = (entry.sublayers ?? []).filter((l) => known(l.name));
+  if (configured.length) return configured.map((l) => ({ ...l, default: true }));
+  const named = Object.entries(layers);
+  const leaves = named.filter(([, l]) => !l.group);
+  return (leaves.length ? leaves : named).map(([name, l]) => ({ name, title: l.title, default: true }));
 }
 
 const pending = new Map<string, Promise<Overlay | undefined>>();
@@ -90,6 +99,10 @@ export function loadCatalogLayer(id: string): Promise<Overlay | undefined> {
         return def;
       })
       .catch(() => undefined)
+      .then((def) => {
+        if (!def) useCatalog.setState((s) => ({ failed: new Set(s.failed).add(id) }));
+        return def;
+      })
       .finally(() => pending.delete(id));
     pending.set(id, request);
   }
@@ -99,5 +112,5 @@ export function loadCatalogLayer(id: string): Promise<Overlay | undefined> {
 /** Test hook. */
 export const clearCatalog = () => {
   pending.clear();
-  useCatalog.setState({ state: 'idle', entries: [], byId: new Map(), defs: new Map() });
+  useCatalog.setState({ state: 'idle', entries: [], byId: new Map(), defs: new Map(), failed: new Set() });
 };

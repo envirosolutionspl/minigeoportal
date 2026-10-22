@@ -247,6 +247,7 @@ function CatalogList({ entries }: { entries: CatalogIndexEntry[] }) {
  */
 function CatalogItem({ entry }: { entry: CatalogIndexEntry }) {
   const def = useCatalog((c) => c.defs.get(entry.id));
+  const failed = useCatalog((c) => c.failed.has(entry.id));
   const active = useMapStore((m) => m.overlays.includes(entry.id));
   const toggle = useMapStore((m) => m.toggleOverlay);
   if (def) return <OverlayItem s={def} hits={[]} />;
@@ -268,7 +269,7 @@ function CatalogItem({ entry }: { entry: CatalogIndexEntry }) {
         <label htmlFor={`gp-${entry.id}`} className={`min-w-0 flex-1 ${available ? 'cursor-pointer' : ''}`}>
           <span className="block text-sm font-medium">{entry.title}</span>
           {entry.path.length > 0 && <span className="block text-xs text-[var(--muted)]">{entry.path.join(' › ')}</span>}
-          {active && (
+          {active && !failed && (
             <span className="mt-1 flex items-center gap-1.5 text-xs text-[var(--muted)]">
               <LoaderCircle className="h-3 w-3 animate-spin" aria-hidden="true" /> Wczytuję warstwę…
             </span>
@@ -276,6 +277,15 @@ function CatalogItem({ entry }: { entry: CatalogIndexEntry }) {
         </label>
       </div>
       {!available && <Why status={entry.status as Exclude<CatalogStatus, 'ok'>} detail={entry.detail} checked={checkedOn} />}
+      {available && failed && (
+        <p role="status" className="mt-1 ml-7 text-xs text-[#8a2c0d]">
+          Nie udało się wczytać tej warstwy. Spróbuj później albo zobacz ją w{' '}
+          <a href={GEOPORTAL_MAP} target="_blank" rel="noopener" className="underline">
+            geoportal.gov.pl
+          </a>
+          .
+        </p>
+      )}
     </div>
   );
 }

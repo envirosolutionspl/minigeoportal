@@ -178,7 +178,7 @@ export function createApp({ cache, refresh, mailer, origin, catalog, refreshCata
     const current = catalog?.();
     const entry = current?.entries.find((e) => e.id === c.req.param('id'));
     if (!current || !entry) return c.text('Not found', 404);
-    return revalidated(c, `${current.generatedAt}-${entry.id}`, () => ({ entry, meta: current.services[entry.url]?.meta }));
+    return revalidated(c, `${current.generatedAt}-${encodeURIComponent(entry.id)}`, () => ({ entry, meta: current.services[entry.url]?.meta }));
   });
   app.post('/api/catalog/refresh', async (c) => {
     if (!refreshCatalog || !isLoopback(c) || c.req.header('x-refresh') !== 'catalog') return c.text('Forbidden', 403);

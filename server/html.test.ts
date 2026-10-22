@@ -36,6 +36,13 @@ describe('renderPage', () => {
     expect(JSON.parse(boot)).toEqual({ ...defaults, app: { ...defaults.app, title: 'A & B', description: 'Opis "x"' } });
   });
 
+  it('names the canonical address and what a shared link shows', () => {
+    const page = renderPage(TEMPLATE, { ...defaults, app: { ...defaults.app, title: 'A & "B"' } });
+    expect(page).toContain('<link rel="canonical" href="https://minigeoportal.pl/" />');
+    expect(page).toContain('<meta property="og:title" content="A &amp; &quot;B&quot;" />');
+    expect(page).toContain('<meta property="og:image" content="https://minigeoportal.pl/apple-touch-icon.png" />');
+  });
+
   it('puts the skin into the page, unable to close its element', () => {
     const page = renderPage(TEMPLATE, defaults, ':root { --accent: #123456; } /* </style><script> */');
     expect(page).toContain('<style id="skin">:root { --accent: #123456; }');

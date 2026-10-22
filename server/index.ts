@@ -77,6 +77,8 @@ if (production) {
     c.header('Cache-Control', 'public, max-age=31536000, immutable');
   });
   app.use('/*', serveStatic({ root: './dist', precompressed: true }));
+  // A file that is not there (an old asset, a guessed icon) is a 404, not the page.
+  app.get('*', (c, next) => (/\.\w+$/.test(c.req.path) ? c.notFound() : next()));
   app.get('*', compress(), etag(), page);
 }
 

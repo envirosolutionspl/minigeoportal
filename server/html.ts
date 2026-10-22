@@ -62,8 +62,30 @@ function preconnects(client: ClientConfig): string {
 }
 
 /**
- * index.html for one language: its lang, title and description, the skin's colours and the
- * configuration inside.
+ * The address search engines should keep for the page, and what a shared link shows (Open
+ * Graph): name, title, description and the app's icon.
+ */
+function sharing(client: ClientConfig): string {
+  const e = escapeHtml;
+  const { name, title, description, domain } = client.app;
+  const site = `https://${e(domain)}`;
+  const tags = [
+    `<link rel="canonical" href="${site}/" />`,
+    `<meta property="og:type" content="website" />`,
+    `<meta property="og:site_name" content="${e(name)}" />`,
+    `<meta property="og:title" content="${e(title)}" />`,
+    `<meta property="og:description" content="${e(description)}" />`,
+    `<meta property="og:url" content="${site}/" />`,
+    `<meta property="og:image" content="${site}/apple-touch-icon.png" />`,
+    `<meta property="og:locale" content="${e(client.locale)}" />`,
+    `<meta name="twitter:card" content="summary" />`,
+  ];
+  return tags.map((t) => `    ${t}\n`).join('');
+}
+
+/**
+ * index.html for one language: its lang, title and description, links for search engines and
+ * sharing, the skin's colours and the configuration inside.
  */
 export function renderPage(template: string, client: ClientConfig, skin = ''): string {
   // The stylesheet comes from the configuration; it cannot end its own element early.
@@ -75,7 +97,7 @@ export function renderPage(template: string, client: ClientConfig, skin = ''): s
     .replace(/(<meta\s+name="description"\s+content=")[^"]*"/, `$1${escapeHtml(client.app.description)}"`)
     .replace(
       '</head>',
-      `${style}${preconnects(client)}    <script type="application/json" id="boot">${scriptJson(client)}</script>\n  </head>`,
+      `${sharing(client)}${style}${preconnects(client)}    <script type="application/json" id="boot">${scriptJson(client)}</script>\n  </head>`,
     );
 }
 

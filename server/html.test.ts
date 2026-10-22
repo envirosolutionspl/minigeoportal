@@ -34,6 +34,12 @@ describe('renderPage', () => {
     expect(JSON.parse(boot)).toEqual({ ...defaults, app: { ...defaults.app, title: 'A & B', description: 'Opis "x"' } });
   });
 
+  it('puts the skin into the page, unable to close its element', () => {
+    const page = renderPage(TEMPLATE, defaults, ':root { --accent: #123456; } /* </style><script> */');
+    expect(page).toContain('<style id="skin">:root { --accent: #123456; }');
+    expect(page.match(/<\/style>/g)).toHaveLength(1);
+  });
+
   it('keeps configuration text from closing its script', () => {
     const json = scriptJson({ text: '</script><script>alert(1)</script>\u2028' });
     expect(json).not.toContain('<');

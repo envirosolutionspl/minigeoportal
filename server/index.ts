@@ -63,7 +63,7 @@ if (production) {
   // The page carries the configuration in the visitor's language. It is always checked
   // (ETag), so a new release or configuration reaches everyone at once.
   const template = await readFile('./dist/index.html', 'utf8');
-  const pages = new Map(site.config.app.locales.available.map((l) => [l, renderPage(template, site.client(l))]));
+  const pages = new Map(site.config.app.locales.available.map((l) => [l, renderPage(template, site.client(l), site.config.skin)]));
   const page = (c: Context) => {
     c.header('Cache-Control', 'no-cache');
     if (site.multilingual) c.header('Vary', 'Accept-Language');

@@ -44,6 +44,8 @@ export const appSchema = z.strictObject({
   locales: z.strictObject({ default: locale, available: z.array(locale).min(1) }),
   /** A line under the name in the welcome window. */
   tagline: text.optional(),
+  /** Colours of the interface: skins/<name>/skin.css in the configuration directory or in the app. */
+  skin: id.default('default'),
   /**
    * Texts in Markdown, as paths in the configuration directory without the language:
    * content/welcome means content/welcome.pl.md, content/welcome.en.md and so on.
@@ -193,4 +195,6 @@ export interface AppConfig {
   layers: LayersFile;
   /** Markdown of each text in each language that has it (the default language always does). */
   content: Partial<Record<keyof AppFile['content'], Record<string, string>>>;
+  /** The stylesheet of the skin. */
+  skin: string;
 }

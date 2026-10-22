@@ -18,7 +18,7 @@ function configPage(): Plugin {
       handler(html, { originalUrl }) {
         const site = createSite(loadConfig(process.env.CONFIG_DIR ?? 'config'));
         const query = new URL(originalUrl ?? '/', 'http://localhost').searchParams.get('lang') ?? undefined;
-        return renderPage(html, site.client(site.locale(query)));
+        return renderPage(html, site.client(site.locale(query)), site.config.skin);
       },
     },
   };

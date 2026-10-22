@@ -55,13 +55,22 @@ function preconnects(client: ClientConfig): string {
   return [...links].map((l) => `    ${l}\n`).join('');
 }
 
-/** index.html for one language: its lang, title and description, and the configuration inside. */
-export function renderPage(template: string, client: ClientConfig): string {
+/**
+ * index.html for one language: its lang, title and description, the skin's colours and the
+ * configuration inside.
+ */
+export function renderPage(template: string, client: ClientConfig, skin = ''): string {
+  // The stylesheet comes from the configuration; it cannot end its own element early.
+  // In CSS "<\/" reads as "</", so the stylesheet keeps its meaning.
+  const style = skin ? `    <style id="skin">${skin.replace(/<\//g, '<\\/')}</style>\n` : '';
   return template
     .replace(/<html lang="[^"]*">/, `<html lang="${escapeHtml(client.locale)}">`)
     .replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(client.app.title)}</title>`)
     .replace(/(<meta\s+name="description"\s+content=")[^"]*"/, `$1${escapeHtml(client.app.description)}"`)
-    .replace('</head>', `${preconnects(client)}    <script type="application/json" id="boot">${scriptJson(client)}</script>\n  </head>`);
+    .replace(
+      '</head>',
+      `${style}${preconnects(client)}    <script type="application/json" id="boot">${scriptJson(client)}</script>\n  </head>`,
+    );
 }
 
 /** The configuration for each language, built once. */

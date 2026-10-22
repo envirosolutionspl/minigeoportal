@@ -1,4 +1,4 @@
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -95,6 +95,15 @@ describe('loadConfig', () => {
     expect(problems(missing).join('\n')).toMatch(/content\.welcome: content\/hello\.pl\.md not found/);
     const outside = broken('app.yaml', (s) => s.replace('welcome: content/welcome', 'welcome: ../secret'));
     expect(problems(outside).join('\n')).toMatch(/content\.welcome: a path inside the configuration directory/);
+  });
+
+  it('finds the skin in the configuration directory or among the built-in ones', () => {
+    expect(loadConfig('config').skin).toContain('--accent: #466946');
+    const own = broken('app.yaml', (s) => `${s}skin: moja\n`);
+    expect(problems(own).join(' ')).toMatch(/skin: skins\/moja\/skin\.css not found/);
+    mkdirSync(join(own, 'skins', 'moja'), { recursive: true });
+    writeFileSync(join(own, 'skins', 'moja', 'skin.css'), ':root { --accent: #123456; }');
+    expect(loadConfig(own).skin).toContain('#123456');
   });
 
   it('says which file is missing', () => {

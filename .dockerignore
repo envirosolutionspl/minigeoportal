@@ -11,6 +11,7 @@
 !server
 !shared
 !config
+!skins
 !scripts
 server/data/dict
 server/data/catalog

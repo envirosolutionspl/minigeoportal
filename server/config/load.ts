@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { LineCounter, parseDocument, isMap, isSeq, type Document, type Node as YamlNode } from 'yaml';
 import type { ZodType } from 'zod';
 import { appSchema, layersSchema, mapSchema, type AppConfig } from './schema.ts';
@@ -180,6 +181,23 @@ function readContent(root: string, app: Parsed<AppConfig['app']>, problems: stri
   return content;
 }
 
+/** Skins that come with the app; a deployment's own go to skins/ in its configuration directory. */
+const BUILT_IN_SKINS = resolve(dirname(fileURLToPath(import.meta.url)), '../../skins');
+
+function readSkin(root: string, app: Parsed<AppConfig['app']>, problems: string[]): string {
+  const name = app.value?.skin;
+  if (!name) return '';
+  for (const dir of [join(root, 'skins'), BUILT_IN_SKINS]) {
+    try {
+      return readFileSync(join(dir, name, 'skin.css'), 'utf8');
+    } catch {
+      // Not there: the next place.
+    }
+  }
+  problems.push(`${locate('app.yaml', app.doc, app.lines, ['skin'])} skin: skins/${name}/skin.css not found`);
+  return '';
+}
+
 /** The configuration in `dir`, checked; throws ConfigError listing every problem. */
 export function loadConfig(dir: string): AppConfig {
   const root = resolve(dir);
@@ -189,6 +207,7 @@ export function loadConfig(dir: string): AppConfig {
   const layers = readFile(root, 'layers.yaml', layersSchema, problems);
   crossCheck(app, map, layers, problems);
   const content = readContent(root, app, problems);
+  const skin = readSkin(root, app, problems);
   if (problems.length || !app.value || !map.value || !layers.value) throw new ConfigError(problems);
-  return { dir: root, app: app.value, map: map.value, layers: layers.value, content };
+  return { dir: root, app: app.value, map: map.value, layers: layers.value, content, skin };
 }

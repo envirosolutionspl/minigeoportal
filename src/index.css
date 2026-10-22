@@ -2,42 +2,9 @@
 @import 'ol/ol.css';
 @import '@fontsource-variable/figtree';
 
-/*
- * EnviroSolutions brand book palette:
- * Antracyt #444444 (text), Ciemna zieleń #253326, Mech #466946, Leśna zieleń #59705b,
- * Koniczyna #7da87f, Łąka #9db49e, Mięta #b3cbb4, Szron #d9e1d9, Szara biel #f2f4f5 (light background).
- */
 :root {
-  --text: #444444;
-  --surface: #ffffff;
-  --field: #f2f4f5;
-  --hover: #d9e1d9;
-  --muted: #59705b;
-  --danger: #8a2c0d;
-  --highlight: #ff8142;
-  --danger-soft: #fde8e0;
-  --accent: #466946;
-  --on-accent: #ffffff;
-  --accent-soft: #e6ede6;
-  /* Paper colour under transparent map tiles, the same in light and dark mode. */
-  --map-bg: #f2f4f5;
   color: var(--text);
   color-scheme: light dark;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #f2f4f5;
-    --surface: #253326;
-    --field: #2e3f2f;
-    --hover: #466946;
-    --muted: #b3cbb4;
-    --danger: #ffb59a;
-    --danger-soft: #4a2a1e;
-    --accent: #9db49e;
-    --on-accent: #253326;
-    --accent-soft: #34483a;
-  }
 }
 
 html,

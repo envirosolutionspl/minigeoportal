@@ -58,7 +58,7 @@ describe('geoportal configuration parser', () => {
     expect(arrayItems(code, 0)).toEqual(["{ a: '}' }", '{ b: [1, { c: 2 }] }']);
   });
 
-  it('reads services, groups, sublayers and formats, skipping comments and plain-http addresses', () => {
+  it('reads services, groups and sublayers, skipping comments and plain-http addresses', () => {
     const services = parseServices(PART, { msPodkl: 'https://mapy.geoportal.gov.pl/gprest/services/G2/MapServer' });
     const byId = Object.fromEntries(services.map((s) => [s.id, s]));
     expect(Object.keys(byId)).toEqual(['groupPlanowanie', 'msMPZP', 'msPodkl', 'msHttp', 'msTopo65']);
@@ -68,7 +68,6 @@ describe('geoportal configuration parser', () => {
     expect(byId.msMPZP).toMatchObject({
       type: 'wms',
       url: 'https://mapy.geoportal.gov.pl/wss/ext/KIMPZP',
-      featureInfoFormat: 'text/xml',
       sublayers: [
         { name: 'raster', title: 'Plany rastrowe' },
         { name: 'wektor', title: 'Plany wektorowe' },

@@ -5,7 +5,7 @@ import { POLAND_EXTENT } from '@/map/projection';
 import { readUrl, writeUrl } from './url';
 import type { PrintOptions } from '@/map/print';
 
-export type Panel = 'none' | 'catalog';
+type Panel = 'none' | 'catalog';
 
 /** A map tool that takes over clicks: while one is active, clicks do not ask for information. */
 export type Tool = 'none' | 'measure-line' | 'measure-area' | 'print';

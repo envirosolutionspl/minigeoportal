@@ -9,7 +9,9 @@ import { OGC_PIXEL } from './projection';
 import { duration } from './motion';
 import { useMapStore, type FocusTarget } from '@/state/store';
 
-const ORANGE = '#FF8142';
+import { HIGHLIGHT } from './style';
+
+const ORANGE = HIGHLIGHT;
 const SHOW_MS = 3500;
 const FADE_MS = 900;
 

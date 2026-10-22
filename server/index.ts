@@ -10,8 +10,8 @@ import { config, errorMessage, production } from './config.ts';
 
 /**
  * The geoportal layer catalog: read from disk, or built in the background on the first start
- * (a few minutes: every service is checked), so the server answers at once and the app works on
- * its own layers meanwhile.
+ * (a minute or two: every service is checked), so the server answers at once and the app works
+ * on its own layers meanwhile.
  */
 let catalog: Catalog | undefined = await readCatalog();
 let building: Promise<Catalog> | undefined;

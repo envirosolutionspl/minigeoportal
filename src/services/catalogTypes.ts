@@ -28,7 +28,6 @@ export interface CatalogEntry {
   order: number;
   /** Sublayers the geoportal shows, when its configuration names them. */
   sublayers?: { name: string; title: string }[];
-  infoFormat?: string;
   /** Layer of a WMTS named in the configuration; otherwise its first layer is drawn. */
   layer?: string;
   status: CatalogStatus;
@@ -41,7 +40,7 @@ export interface CatalogEntry {
 }
 
 /** Entry of the list the app loads first; the rest comes with the layer (/api/catalog/:id). */
-export type CatalogIndexEntry = Omit<CatalogEntry, 'url' | 'sublayers' | 'infoFormat' | 'modules' | 'layer'> & {
+export type CatalogIndexEntry = Omit<CatalogEntry, 'url' | 'sublayers' | 'modules' | 'layer'> & {
   /** Number of sublayers to choose from, when more than one. */
   parts?: number;
 };
@@ -54,8 +53,3 @@ export interface CatalogIndex {
   entries: CatalogIndexEntry[];
 }
 
-/** One layer with what is needed to draw and query it. */
-export interface CatalogLayer {
-  entry: CatalogEntry;
-  meta?: CatalogMeta;
-}

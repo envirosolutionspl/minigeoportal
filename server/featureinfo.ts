@@ -19,7 +19,7 @@ const MAX_FEATURES = 50;
 const MAX_PIXELS = 4096;
 const INFO_FORMATS = new Set(['text/xml', 'text/html', 'application/vnd.ogc.gml', 'text/plain']);
 
-export interface FeatureInfoResult {
+interface FeatureInfoResult {
   contentType: string;
   body: string;
 }
@@ -79,7 +79,7 @@ function mapWindow(query: URLSearchParams) {
 }
 
 /** Validated query of one known service: WMS 1.3.0, WMTS 1.0.0 or ArcGIS REST identify. */
-function buildParams(def: QueryTarget | undefined, query: URLSearchParams): { url: string } {
+function buildParams(def: QueryTarget | undefined, query: URLSearchParams): string {
   if (!def) throw new RequestError('Unknown service');
   if (def.kind === 'wmts') return wmtsParams(def, query);
   if (def.kind === 'rest') return identifyParams(def, query);
@@ -109,11 +109,11 @@ function buildParams(def: QueryTarget | undefined, query: URLSearchParams): { ur
     INFO_FORMAT: infoFormat,
     FEATURE_COUNT: String(featureCount),
   });
-  return { url: serviceUrl(def.url, params) };
+  return serviceUrl(def.url, params);
 }
 
 /** WMTS GetFeatureInfo names a pixel of one tile of the grid the server described. */
-function wmtsParams(def: QueryTarget, query: URLSearchParams): { url: string } {
+function wmtsParams(def: QueryTarget, query: URLSearchParams): string {
   const tiles = def.wmts;
   if (!tiles) throw new RequestError('Unknown service');
   const matrix = query.get('TILEMATRIX') ?? '';
@@ -142,11 +142,11 @@ function wmtsParams(def: QueryTarget, query: URLSearchParams): { url: string } {
     J: String(j),
     INFOFORMAT: infoFormat,
   });
-  return { url: serviceUrl(def.url, params) };
+  return serviceUrl(def.url, params);
 }
 
 /** ArcGIS identify at the clicked point, for the given layer ids, in PL-1992. */
-function identifyParams(def: QueryTarget, query: URLSearchParams): { url: string } {
+function identifyParams(def: QueryTarget, query: URLSearchParams): string {
   const layers = queryLayers(def, query);
   const { bbox, width, height, i, j } = mapWindow(query);
   const [minX, minY, maxX, maxY] = bbox;
@@ -163,7 +163,7 @@ function identifyParams(def: QueryTarget, query: URLSearchParams): { url: string
     imageDisplay: `${width},${height},96`,
     returnGeometry: 'false',
   });
-  return { url: serviceUrl(`${def.url.replace(/\/+$/, '')}/identify`, params) };
+  return serviceUrl(`${def.url.replace(/\/+$/, '')}/identify`, params);
 }
 
 export async function featureInfo(
@@ -172,7 +172,7 @@ export async function featureInfo(
   lookup: (id: string) => QueryTarget | undefined = registryTarget,
   abort?: AbortSignal,
 ): Promise<FeatureInfoResult> {
-  const { url } = buildParams(lookup(serviceId), query);
+  const url = buildParams(lookup(serviceId), query);
   const deadline = AbortSignal.timeout(DEADLINE_MS);
   const signal = abort ? AbortSignal.any([deadline, abort]) : deadline;
   // Catalog addresses come from the geoportal configuration: checked like redirects.

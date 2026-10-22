@@ -58,7 +58,7 @@ describe('InfoPanel', () => {
     store.start(point, ['kieg', 'kimpzp', 'rcn']);
     store.resolve(point, 'kieg', { status: 'done', records: [{ title: 'Działka', fields: [{ label: 'Numer', value: '22/1' }, { label: 'Raport', value: 'Pobierz', href: 'https://x/r' }] }] });
     store.resolve(point, 'kimpzp', { status: 'done', records: [] });
-    store.resolve(point, 'rcn', { status: 'error', error: 'HTTP 502' });
+    store.resolve(point, 'rcn', { status: 'error' });
     render(<InfoPanel />);
     expect(screen.getByText('22/1')).toBeTruthy();
     expect((screen.getByRole('link', { name: /Pobierz/ }) as HTMLAnchorElement).href).toBe('https://x/r');

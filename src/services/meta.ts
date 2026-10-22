@@ -65,7 +65,7 @@ export interface RestMeta {
   };
 }
 
-export interface MetaError {
+interface MetaError {
   kind: 'error';
   fetchedAt: string;
   error: string;
@@ -113,7 +113,7 @@ export const clearCapabilities = () => {
   cache = null;
 };
 
-export function wmsMeta(id: string): WmsMeta | undefined {
+function wmsMeta(id: string): WmsMeta | undefined {
   const m = cache?.services[id];
   return m?.kind === 'wms' ? m : undefined;
 }

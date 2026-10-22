@@ -19,7 +19,7 @@ import { dataPath, errorMessage } from './config.ts';
  * stays, and a service that does not answer keeps its last known metadata.
  */
 
-export interface CatalogService {
+interface CatalogService {
   url: string;
   status: CatalogStatus;
   /** What the server answered, e.g. "HTTP 403". */
@@ -137,7 +137,6 @@ function entryFor(s: ConfigService, path: string[], module: string, order: numbe
     url: s.url!,
     order,
     ...(s.sublayers ? { sublayers: s.sublayers } : {}),
-    ...(s.featureInfoFormat ? { infoFormat: s.featureInfoFormat } : {}),
     ...(kind === 'wmts' && (s.layer ?? s.sublayers?.[0]) ? { layer: s.layer ?? s.sublayers![0].name } : {}),
     ...(CURATED.has(s.id) ? { curated: CURATED.get(s.id) } : {}),
   };
@@ -223,7 +222,7 @@ export function catalogIndex(catalog: Catalog): CatalogIndex {
   return {
     generatedAt: catalog.generatedAt,
     entries: catalog.entries.map((e) => {
-      const { url: _u, sublayers: _s, infoFormat: _i, modules: _m, layer: _l, ...rest } = e;
+      const { url: _u, sublayers: _s, modules: _m, layer: _l, ...rest } = e;
       const parts = e.status === 'ok' ? catalogSublayers(e, catalog.services[serviceKey(e)]?.meta).length : 0;
       return parts > 1 ? { ...rest, parts } : rest;
     }),

@@ -6,7 +6,7 @@ import type { SearchHit } from '@/services/geocoder';
 import { useMapStore } from '@/state/store';
 
 /** Parcel ids zoom closer than other objects: a parcel is small. */
-const PARCEL_ZOOM = 15;
+export const PARCEL_ZOOM = 15;
 
 interface Choice {
   woj?: string;
@@ -81,7 +81,7 @@ export function ParcelSearch({ onClose }: { onClose(): void }) {
         aria-label="Znaleziona działka"
         className="absolute inset-x-0 mt-2 flex items-center gap-3 rounded-2xl bg-[var(--surface)] px-4 py-3 shadow-lg ring-1 ring-black/5"
       >
-        <SquareDashed className="h-5 w-5 shrink-0 text-[#FF8142]" />
+        <SquareDashed className="h-5 w-5 shrink-0 text-[var(--highlight)]" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">{shown.label}</p>
           <p className="truncate text-xs text-[var(--muted)]">{shown.detail}</p>
@@ -235,9 +235,12 @@ function Select({
       <span className="flex items-center justify-between">
         {label}
         {state.error && (
-          <button type="button" onClick={state.retry} className="text-[var(--accent)] underline">
-            Ponów
-          </button>
+          // Outside the label's control: a button inside a label would also toggle the field.
+          <span role="presentation" className="contents">
+            <button type="button" onClick={state.retry} aria-label={`Ponów: ${label}`} className="text-[var(--accent)] underline">
+              Ponów
+            </button>
+          </span>
         )}
       </span>
       <select

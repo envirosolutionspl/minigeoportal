@@ -2,6 +2,7 @@ import { findParcels, type SearchHit } from './geocoder';
 
 /** Administrative dictionaries served and cached by the backend (server/dictionaries.ts). */
 export interface DictEntry {
+  /** TERYT code as ULDK expects it in parcel ids: 14, 1417, 141708_2, 141708_2.0021. */
   id: string;
   name: string;
 }

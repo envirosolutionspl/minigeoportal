@@ -14,6 +14,7 @@
   --hover: #d9e1d9;
   --muted: #59705b;
   --danger: #8a2c0d;
+  --highlight: #ff8142;
   --danger-soft: #fde8e0;
   --accent: #466946;
   --on-accent: #ffffff;
@@ -217,7 +218,7 @@ html[data-printing] #print-sheet {
   align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
-  height: 14mm;
+  height: var(--print-header);
   font-size: 11pt;
 }
 .print-header strong {
@@ -228,7 +229,7 @@ html[data-printing] #print-sheet {
   width: max-content;
 }
 .print-footer {
-  height: 36mm;
+  height: var(--print-footer);
   overflow: hidden;
   padding-top: 2mm;
   line-height: 1.35;
@@ -409,7 +410,7 @@ html[data-printing] #print-sheet {
 .print-preview {
   position: absolute;
   pointer-events: none;
-  outline: 3px dashed #ff8142;
+  outline: 3px dashed var(--highlight);
   box-shadow: 0 0 0 100vmax rgb(37 51 38 / 0.18);
 }
 

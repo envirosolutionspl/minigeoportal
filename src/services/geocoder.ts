@@ -13,7 +13,8 @@ import { normalize } from './text';
  */
 
 export type HitKind = 'address' | 'street' | 'place' | 'unit' | 'nature' | 'parcel';
-export type UnitLevel = 'woj' | 'pow' | 'gm';
+import type { UnitLevel } from './units';
+export type { UnitLevel };
 
 export interface SearchHit {
   kind: HitKind;

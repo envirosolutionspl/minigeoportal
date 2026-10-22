@@ -5,7 +5,7 @@ import { compress } from 'hono/compress';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
 import { featureInfo, registryTarget, type QueryTarget } from './featureinfo.ts';
 import { catalogIndex, serviceKey, type Catalog } from './catalog.ts';
-import { communes, counties, findUnits, precincts, unitNames, voivodeships, type DictEntry } from './dictionaries.ts';
+import { MAX_QUERY, communes, counties, findUnits, precincts, unitNames, voivodeships, type DictEntry } from './dictionaries.ts';
 import { RequestError, concurrencyGate, isLoopback, rateLimit } from './http.ts';
 import { parseReport, type Mailer } from './report.ts';
 import { orthoAt } from './ortho.ts';
@@ -17,7 +17,7 @@ import { errorMessage } from './config.ts';
  * and bug reports by e-mail. `index.ts` adds static files and starts listening.
  */
 
-export interface AppOptions {
+interface AppOptions {
   cache: CapabilitiesCache;
   refresh(): Promise<CapabilitiesCache>;
   /** Sends bug reports; without it the report form answers 503. */
@@ -126,7 +126,7 @@ export function createApp({ cache, refresh, mailer, origin, catalog, refreshCata
   app.get('/api/dict/obreby/:parent', dictionary(precincts));
   app.get('/api/dict/szukaj', async (c) => {
     try {
-      const hits = await findUnits((c.req.query('q') ?? '').slice(0, 80));
+      const hits = await findUnits((c.req.query('q') ?? '').slice(0, MAX_QUERY));
       c.header('Cache-Control', 'public, max-age=86400');
       return c.json(hits);
     } catch (e) {

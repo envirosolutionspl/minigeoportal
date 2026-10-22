@@ -1,4 +1,6 @@
 import { RequestError, fetchFixed, readLimited } from './http.ts';
+import type { OrthoInfo, OrthoSheet } from '../src/services/ortho.ts';
+export type { OrthoInfo };
 
 /**
  * When and how sharp the aerial photo is at a point, from the GUGiK orthophoto index
@@ -17,25 +19,6 @@ const MAX_BYTES = 1_000_000;
 const BOUNDS = { minX: 100000, maxX: 900000, minY: 100000, maxY: 850000 };
 const DOWNLOAD_HOST = 'opendata.geoportal.gov.pl';
 
-export interface OrthoSheet {
-  /** Date of the flight, YYYY-MM-DD. */
-  date: string;
-  /** Ground size of a pixel in metres. */
-  pixel: number;
-  /** RGB (natural colour) or CIR (colour infrared). */
-  color: string;
-  sheet: string;
-  /** GeoTIFF of the sheet in the open data repository. */
-  download?: string;
-  sizeMb?: number;
-}
-
-export interface OrthoInfo {
-  /** Newest natural-colour photo, the one the orthophoto map shows. */
-  latest?: OrthoSheet;
-  /** Number of photos of this place in the archive, all years and colours. */
-  archived: number;
-}
 
 /** After a failed read the fallback list is used, and the index is asked again after this long. */
 const RETRY_AFTER_FAILURE_MS = 10 * 60000;

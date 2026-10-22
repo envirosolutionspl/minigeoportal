@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { CATALOG_ID, catalogSublayers, clearCatalog, loadCatalogLayer, overlayDef, useCatalog } from './catalog';
+import { CATALOG_ID, clearCatalog, loadCatalogLayer, overlayDef, useCatalog } from './catalog';
+import { catalogSublayers } from './catalogSublayers';
 import { layerMeta } from './meta';
 import { DRAW_ORDER, createOverlayLayer } from './layers';
 import type { CatalogEntry } from './catalogTypes';

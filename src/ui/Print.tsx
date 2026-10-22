@@ -5,7 +5,7 @@ import { overlayDef } from '@/services/catalog';
 import { layerMeta, visibleAtScale } from '@/services/meta';
 import { useMapStore } from '@/state/store';
 import { formatCoordinate, scaleText } from '@/map/format';
-import { PRINT_SCALES, printLayout, serverScale, type PrintOptions } from '@/map/print';
+import { PRINT_SCALES, SHEET_VARS, printLayout, serverScale, type PrintOptions } from '@/map/print';
 import { APP_DOMAIN, APP_NAME } from './Brand';
 
 /**
@@ -176,7 +176,7 @@ export function PrintSheet() {
   );
 
   return (
-    <div id="print-sheet" aria-hidden="true">
+    <div id="print-sheet" aria-hidden="true" style={SHEET_VARS}>
       <header className="print-header">
         <strong>{request?.title || 'Mapa'}</strong>
         <span>

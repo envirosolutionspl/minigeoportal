@@ -5,6 +5,7 @@ import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import { Circle, Fill, Stroke, Style } from 'ol/style';
 import { OGC_PIXEL } from './projection';
+import { HIGHLIGHT } from './style';
 import { selectedSublayers, type Overlay } from '@/services/registry';
 import type { OverlayLayer } from '@/services/layers';
 import { fetchFeatureInfo, queryLayers } from '@/services/featureinfo';
@@ -12,7 +13,7 @@ import { useInfoStore } from '@/state/info';
 import { useMapStore } from '@/state/store';
 
 const MARKER = new Style({
-  image: new Circle({ radius: 7, fill: new Fill({ color: '#FF8142' }), stroke: new Stroke({ color: '#ffffff', width: 2.5 }) }),
+  image: new Circle({ radius: 7, fill: new Fill({ color: HIGHLIGHT }), stroke: new Stroke({ color: '#ffffff', width: 2.5 }) }),
 });
 
 /**
@@ -60,9 +61,8 @@ export function attachFeatureInfo(map: Map, overlays: () => { def: Overlay; laye
     for (const t of targets) {
       fetchFeatureInfo(t.def, t.layer, coordinate, resolution, t.layers, signal)
         .then((records) => info.resolve(coordinate, t.def.id, { status: 'done', records }))
-        .catch((e: unknown) => {
-          if (signal.aborted) return;
-          info.resolve(coordinate, t.def.id, { status: 'error', error: e instanceof Error ? e.message : String(e) });
+        .catch(() => {
+          if (!signal.aborted) info.resolve(coordinate, t.def.id, { status: 'error' });
         });
     }
   };

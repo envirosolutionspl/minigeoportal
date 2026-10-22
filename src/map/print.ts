@@ -11,8 +11,8 @@ import { useMapStore } from '@/state/store';
  * Canvases print even when their tiles come from servers without CORS, so no image proxy is needed.
  */
 
-export type Paper = 'A4' | 'A3';
-export type Orientation = 'landscape' | 'portrait';
+type Paper = 'A4' | 'A3';
+type Orientation = 'landscape' | 'portrait';
 
 export interface PrintOptions {
   paper: Paper;
@@ -23,16 +23,23 @@ export interface PrintOptions {
 }
 
 const PAPER_MM: Record<Paper, [short: number, long: number]> = { A4: [210, 297], A3: [297, 420] };
-export const MARGIN_MM = 10;
-export const HEADER_MM = 14;
-export const FOOTER_MM = 36;
+/** Margin, header and footer of the sheet: the layout below and the sheet's CSS use the same numbers. */
+const MARGIN_MM = 10;
+const HEADER_MM = 14;
+const FOOTER_MM = 36;
 /** Map pixels per paper millimetre, about 150 dpi: sharper than the screen, still light to load. */
-export const PX_PER_MM = 6;
+const PX_PER_MM = 6;
 const CSS_PX_PER_MM = 96 / 25.4;
+
+/** The sheet's CSS reads these, so a change here moves the header and footer with the map frame. */
+export const SHEET_VARS = {
+  '--print-header': `${HEADER_MM}mm`,
+  '--print-footer': `${FOOTER_MM}mm`,
+} as React.CSSProperties;
 
 export const PRINT_SCALES = [500, 1000, 2000, 2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000, 2500000];
 
-export interface PrintLayout {
+interface PrintLayout {
   page: [width: number, height: number];
   /** Map frame on paper, in millimetres. */
   mapMm: [width: number, height: number];
@@ -94,7 +101,7 @@ function panelMargins(): [number, number, number, number] {
 }
 
 /** Map area left free by the print panel, and its middle: the centre of the printed sheet. */
-export function freeArea(map: Map): { extent: Extent; center: [number, number] } | undefined {
+function freeArea(map: Map): { extent: Extent; center: [number, number] } | undefined {
   const view = map.getView();
   const c = view.getCenter();
   const r = view.getResolution();

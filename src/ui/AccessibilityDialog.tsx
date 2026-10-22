@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from 'react';
 import { create } from 'zustand';
 import { X } from 'lucide-react';
+import { CONTACT_EMAIL } from '@/services/brand';
 import { APP_DOMAIN, APP_NAME } from './Brand';
 import { useReport } from './ReportDialog';
 
@@ -111,8 +112,8 @@ export function AccessibilityDialog() {
                 formularz zgłoszeń
               </button>{' '}
               (rodzaj „Dostępność”) albo e-mailem na adres{' '}
-              <a href="mailto:office@envirosolutions.pl" className="text-[var(--accent)] underline underline-offset-2">
-                office@envirosolutions.pl
+              <a href={`mailto:${CONTACT_EMAIL}`} className="text-[var(--accent)] underline underline-offset-2">
+                {CONTACT_EMAIL}
               </a>
               . Można też poprosić o informację z mapy w innej, dostępnej formie. Odpowiadamy niezwłocznie, nie później
               niż w ciągu 7 dni.

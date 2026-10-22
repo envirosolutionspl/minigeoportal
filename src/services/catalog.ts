@@ -4,7 +4,6 @@ import { registerMeta } from './meta';
 import { catalogSublayers } from './catalogSublayers';
 import type { CatalogEntry, CatalogIndex, CatalogIndexEntry, CatalogMeta } from './catalogTypes';
 
-export { catalogSublayers };
 
 /**
  * Layers of geoportal.gov.pl beyond our own registry, from the server's catalog. The list

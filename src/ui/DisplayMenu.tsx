@@ -9,9 +9,11 @@ import { useAccessibility } from './AccessibilityDialog';
  * who do not use the browser's own zoom or a system contrast theme. The choice is remembered.
  */
 
-export type TextSize = 0 | 1 | 2;
+type TextSize = 0 | 1 | 2;
 const ROOT_SIZE = ['100%', '112.5%', '125%'];
-const STORAGE_KEY = 'prostygeoportal.display.v1';
+import { STORAGE_PREFIX } from '@/services/brand';
+
+const STORAGE_KEY = `${STORAGE_PREFIX}display.v1`;
 
 interface Display {
   textSize: TextSize;
@@ -28,7 +30,7 @@ function load(): Display {
 }
 
 /** Applies the settings to the page: root font size (Tailwind sizes are in rem) and the theme. */
-export function applyDisplay({ textSize, contrast }: Display): void {
+function applyDisplay({ textSize, contrast }: Display): void {
   const root = document.documentElement;
   root.style.fontSize = ROOT_SIZE[textSize];
   if (contrast) root.dataset.contrast = 'high';

@@ -23,12 +23,11 @@ export interface ConfigService {
   sublayers?: { name: string; title: string }[];
   /** Ids of members, for groups. */
   children?: string[];
-  featureInfoFormat?: string;
   /** Layer of a WMTS, when the configuration names it. */
   layer?: string;
 }
 
-export interface ConfigModule {
+interface ConfigModule {
   id: string;
   label: string;
   /** Top-level entries of the module's layer list (groups or layers), bottom to top. */
@@ -132,7 +131,6 @@ export function parseServices(source: string, prefixes: Record<string, string> =
         ...(url && /^https:\/\//.test(url) ? { url } : {}),
         ...(subs.length ? { sublayers: subs } : {}),
         ...(type === 'group' && children.length ? { children } : {}),
-        ...(field(obj, 'featureInfoFormat') ? { featureInfoFormat: field(obj, 'featureInfoFormat') } : {}),
         ...(field(obj, 'identifier') ? { layer: field(obj, 'identifier') } : {}),
       },
     ];

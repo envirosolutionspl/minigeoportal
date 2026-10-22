@@ -1,5 +1,7 @@
 import nodemailer from 'nodemailer';
 import { RequestError } from './http.ts';
+import { CATEGORIES, EMAIL_MAX, MESSAGE, type Category } from '../src/services/reportTypes.ts';
+import { APP_NAME } from '../src/services/brand.ts';
 
 /**
  * Bug reports from the app, sent by e-mail to the administrator. The mail server and the
@@ -9,15 +11,6 @@ import { RequestError } from './http.ts';
  * category, the sender's address goes to Reply-To, and nothing from the form is rendered as HTML.
  */
 
-export const CATEGORIES = {
-  mapa: 'Mapa lub warstwy',
-  wyszukiwanie: 'Wyszukiwanie',
-  dzialki: 'Działki i informacje o miejscu',
-  dostepnosc: 'Dostępność',
-  inne: 'Inne',
-} as const;
-
-export type Category = keyof typeof CATEGORIES;
 
 export interface Report {
   category: Category;
@@ -31,7 +24,6 @@ export interface Mailer {
   send(report: Report, meta: { userAgent?: string }): Promise<void>;
 }
 
-const MESSAGE = { min: 10, max: 3000 };
 const EMAIL = /^[^\s@<>()",;:]{1,64}@[^\s@<>()",;:]+\.[^\s@<>()",;:]{2,}$/;
 
 /** Control characters except line breaks and tabs. */
@@ -57,7 +49,7 @@ export function parseReport(body: unknown, appOrigin: string): Report | null {
   let email: string | undefined;
   if (typeof b.email === 'string' && b.email.trim() !== '') {
     email = b.email.trim();
-    if (email.length > 254 || !EMAIL.test(email)) throw new RequestError('Nieprawidłowy adres e-mail');
+    if (email.length > EMAIL_MAX || !EMAIL.test(email)) throw new RequestError('Nieprawidłowy adres e-mail');
   }
 
   // Only a link to this app is kept, so the mail cannot carry arbitrary links.
@@ -83,7 +75,7 @@ export function formatReport(report: Report, meta: { userAgent?: string }): { su
     '',
     report.message,
   ];
-  return { subject: `[Prosty Geoportal] Zgłoszenie: ${CATEGORIES[report.category]}`, text: lines.join('\n') };
+  return { subject: `[${APP_NAME}] Zgłoszenie: ${CATEGORIES[report.category]}`, text: lines.join('\n') };
 }
 
 /** SMTP mailer from the environment, or undefined when the form is not configured. */

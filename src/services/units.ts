@@ -7,7 +7,20 @@
 export interface UnitNames {
   voivodeship: string;
   county: string;
+  /** Absent for codes without a municipality entry, e.g. cities listed by districts. */
   commune?: string;
+}
+
+export type UnitLevel = 'woj' | 'pow' | 'gm';
+
+/** A voivodeship, county or municipality found by name (server: findUnits). */
+export interface UnitHit {
+  level: UnitLevel;
+  /** PRG code: 2 digits, 4 digits, or 7 digits with the municipality type. */
+  teryt: string;
+  name: string;
+  county?: string;
+  voivodeship?: string;
 }
 
 const known = new Map<string, UnitNames>();

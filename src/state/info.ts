@@ -4,9 +4,9 @@ import type { InfoRecord } from '@/services/featureinfo';
 export type InfoResult =
   | { status: 'loading' }
   | { status: 'done'; records: InfoRecord[] }
-  | { status: 'error'; error: string };
+  | { status: 'error' };
 
-export interface InfoQuery {
+interface InfoQuery {
   /** EPSG:2180 [easting, northing]. */
   coordinate: [number, number];
   /** Overlay ids queried, in display order. */

@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { create } from 'zustand';
 import { APP_NAME, AUTHOR_URL, AuthorLogo, BrandMark } from './Brand';
 import { useReport } from './ReportDialog';
 import { useAccessibility } from './AccessibilityDialog';
 
-const STORAGE_KEY = 'prostygeoportal.welcome.v1';
+import { STORAGE_PREFIX } from '@/services/brand';
+
+const STORAGE_KEY = `${STORAGE_PREFIX}welcome.v1`;
 
 function dismissedBefore(): boolean {
   try {
@@ -35,6 +37,7 @@ export function WelcomeDialog() {
   const setOpen = useWelcome((s) => s.setOpen);
   const [hide, setHide] = useState(dismissedBefore);
   const dialog = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
 
   useEffect(() => {
     const d = dialog.current;
@@ -63,14 +66,14 @@ export function WelcomeDialog() {
       ref={dialog}
       onClose={close}
       onClick={(e) => e.target === dialog.current && close()}
-      aria-labelledby="welcome-title"
+      aria-labelledby={titleId}
       className="m-auto w-[min(42rem,calc(100%-2rem))] rounded-3xl outline-none bg-[var(--surface)] p-0 text-[var(--text)] shadow-2xl backdrop:bg-[#253326]/50 backdrop:backdrop-blur-[2px]"
     >
       <div className="max-h-[calc(100dvh-2rem)] overflow-y-auto p-5 sm:p-6">
         <header className="flex items-center gap-3">
           <BrandMark className="h-10 w-10 shrink-0" />
           <div>
-            <h1 id="welcome-title" className="text-lg font-bold tracking-tight">
+            <h1 id={titleId} className="text-lg font-bold tracking-tight">
               {APP_NAME}
             </h1>
             <p className="text-sm text-[var(--muted)]">Dane z geoportal.gov.pl – prościej i szybciej</p>

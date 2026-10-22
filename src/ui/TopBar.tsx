@@ -6,13 +6,13 @@ import { useMapStore } from '@/state/store';
 import { useInfoStore } from '@/state/info';
 import { openPrint } from '@/map/print';
 import { linkFor } from '@/state/url';
-import { BrandMark, Wordmark } from './Brand';
+import { APP_NAME, BrandMark, Wordmark } from './Brand';
 import { useWelcome } from './WelcomeDialog';
-import { ParcelSearch } from './ParcelSearch';
+import { PARCEL_ZOOM, ParcelSearch } from './ParcelSearch';
 import { DisplayMenu } from './DisplayMenu';
 
 /** Closest zoom per hit kind on the GUGiK scale series (13 = 1:1890, 14 = 1:945, 15 = 1:472). */
-const ZOOM: Record<HitKind, number> = { address: 14, street: 14, place: 12, unit: 14, nature: 12, parcel: 15 };
+const ZOOM: Record<HitKind, number> = { address: 14, street: 14, place: 12, unit: 14, nature: 12, parcel: PARCEL_ZOOM };
 const ICON: Record<HitKind, LucideIcon> = {
   address: Home,
   street: Route,
@@ -151,7 +151,7 @@ export function TopBar() {
             type="button"
             onClick={goHome}
             title="Cała Polska"
-            aria-label="Prosty Geoportal: pokaż całą Polskę"
+            aria-label={`${APP_NAME}: pokaż całą Polskę`}
             className="flex shrink-0 items-center gap-2 rounded-xl py-0.5 pr-2 pl-0.5 hover:bg-[var(--hover)]"
           >
             <BrandMark />
@@ -202,6 +202,7 @@ export function TopBar() {
             onClick={() => setParcelOpen(!parcelOpen)}
             aria-expanded={parcelOpen}
             title="Znajdź działkę po numerze i obrębie"
+            aria-label="Znajdź działkę po numerze i obrębie"
             className={`flex shrink-0 items-center gap-1.5 rounded-xl px-2 py-1 text-sm transition ${
               parcelOpen ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'text-[var(--accent)] hover:bg-[var(--hover)]'
             }`}

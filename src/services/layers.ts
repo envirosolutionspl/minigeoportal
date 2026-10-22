@@ -77,7 +77,7 @@ export const DRAW_ORDER = ['suikzp', 'kimpzp', 'pog', 'kibdot', 'kiut', 'kieg', 
  * the geoportal catalog goes just above the highest of ours that the geoportal draws below it,
  * so the two lists interleave as on geoportal.gov.pl. Unknown layers go on top.
  */
-export const drawIndex = (id: string) => {
+const drawIndex = (id: string) => {
   const order = cachedDrawOrder() ?? DRAW_ORDER;
   const i = order.indexOf(id);
   if (i >= 0) return i;

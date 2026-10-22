@@ -2,16 +2,10 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { create } from 'zustand';
 import { Bug, LoaderCircle, X } from 'lucide-react';
 
-const CATEGORIES = [
-  ['mapa', 'Mapa lub warstwy'],
-  ['wyszukiwanie', 'Wyszukiwanie'],
-  ['dzialki', 'Działki i informacje o miejscu'],
-  ['dostepnosc', 'Dostępność'],
-  ['inne', 'Inne'],
-] as const;
+import { CATEGORIES, EMAIL_MAX, MESSAGE } from '@/services/reportTypes';
 
-const MIN = 10;
-const MAX = 3000;
+const MIN = MESSAGE.min;
+const MAX = MESSAGE.max;
 
 /** Open state is shared so the info dialog and the place panel can open the form. */
 export const useReport = create<{ open: boolean; draft: string; openReport(draft?: string): void; close(): void }>((set) => ({
@@ -114,7 +108,7 @@ export function ReportDialog() {
             <label className="block">
               <span className="mb-1 block font-medium">Czego dotyczy</span>
               <select name="category" required defaultValue="mapa" className={field}>
-                {CATEGORIES.map(([value, label]) => (
+                {Object.entries(CATEGORIES).map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
                   </option>
@@ -143,7 +137,7 @@ export function ReportDialog() {
             </div>
             <label className="block">
               <span className="mb-1 block font-medium">E-mail do odpowiedzi (opcjonalnie)</span>
-              <input name="email" type="email" autoComplete="email" maxLength={254} className={field} />
+              <input name="email" type="email" autoComplete="email" maxLength={EMAIL_MAX} className={field} />
             </label>
             <label className="flex cursor-pointer items-start gap-2">
               <input name="attachView" type="checkbox" defaultChecked className="mt-0.5 h-4 w-4 accent-[var(--accent)]" />

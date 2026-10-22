@@ -3,6 +3,8 @@ import { resolve } from 'node:path';
 import { RequestError, fetchFixed, readLimited } from './http.ts';
 import { dataPath } from './config.ts';
 import { normalize } from '../src/services/text.ts';
+import type { DictEntry } from '../src/services/dictionaries.ts';
+import type { UnitHit, UnitLevel, UnitNames } from '../src/services/units.ts';
 
 /**
  * Administrative dictionaries for the parcel search: voivodeships, counties and
@@ -14,11 +16,7 @@ import { normalize } from '../src/services/text.ts';
  * is bounded by the real administrative division, not by what a client sends.
  */
 
-export interface DictEntry {
-  /** TERYT code as ULDK expects it in parcel ids: 14, 1417, 141708_2, 141708_2.0021. */
-  id: string;
-  name: string;
-}
+export type { DictEntry, UnitNames, UnitLevel, UnitHit };
 
 const PRG = 'https://mapy.geoportal.gov.pl/wss/ims/maps/PRG_gugik_wyszukiwarka/MapServer';
 const ULDK = 'https://uldk.gugik.gov.pl/';
@@ -205,12 +203,7 @@ export async function precincts(commune: string): Promise<DictEntry[]> {
   });
 }
 
-export interface UnitNames {
-  voivodeship: string;
-  county: string;
-  /** Absent for codes without a municipality entry, e.g. cities listed by districts. */
-  commune?: string;
-}
+
 
 const MAX_UNIT_CODES = 20;
 
@@ -238,16 +231,8 @@ export async function unitNames(codes: string[]): Promise<Record<string, UnitNam
   return out;
 }
 
-export type UnitLevel = 'woj' | 'pow' | 'gm';
 
-export interface UnitHit {
-  level: UnitLevel;
-  /** PRG code: 2 digits, 4 digits, or 7 digits with the municipality type. */
-  teryt: string;
-  name: string;
-  county?: string;
-  voivodeship?: string;
-}
+
 
 const LEVEL_ORDER: UnitLevel[] = ['woj', 'pow', 'gm'];
 /** "powiat otwocki", "gm. Wiązowna": a leading word limits the search to one level. */
@@ -270,6 +255,9 @@ const inCityCounty = (communeCode: string) => Number(communeCode.slice(2, 4)) >=
  * Voivodeships, counties and municipalities whose name starts with the query, from the
  * cached PRG lists of the whole country (a few upstream requests, then served from cache).
  */
+/** Longest unit name anyone types; the route cuts the query here before searching. */
+export const MAX_QUERY = 60;
+
 export async function findUnits(query: string): Promise<UnitHit[]> {
   let q = normalize(query);
   let only: UnitLevel | undefined;
@@ -279,7 +267,7 @@ export async function findUnits(query: string): Promise<UnitHit[]> {
       only = level;
     }
   }
-  if (q.length < 2 || q.length > 60 || !/^[\p{L}\s.-]+$/u.test(q)) return [];
+  if (q.length < 2 || q.length > MAX_QUERY || !/^[\p{L}\s.-]+$/u.test(q)) return [];
 
   const [woj, pow, gm] = await Promise.all([voivodeships(), allCounties(), allCommunes()]);
   const wojName = new Map(woj.map((e) => [e.id, e.name]));

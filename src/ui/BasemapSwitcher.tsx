@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Ban, ChevronUp } from 'lucide-react';
-import { BASE_MAPS, GEOPORTAL_MAP, type BaseMap } from '@/services/registry';
+import { BASE_MAPS, type BaseMap } from '@/services/registry';
 import { useMapStore } from '@/state/store';
 
 /**
@@ -115,21 +115,6 @@ function Thumb({
       {def.title}
     </span>
   );
-  // Restricted base maps stay visible but lead to geoportal.gov.pl, where they work.
-  if (def.restricted && size === 'sm') {
-    return (
-      <a
-        href={GEOPORTAL_MAP}
-        target="_blank"
-        rel="noopener"
-        title="Dostępne tylko na geoportal.gov.pl"
-        className={`relative shrink-0 overflow-hidden bg-[var(--field)] opacity-50 grayscale ${box} ring-transparent`}
-      >
-        {src && <img src={src} alt="" loading="lazy" className="h-full w-full object-cover" />}
-        {label}
-      </a>
-    );
-  }
   return (
     <button
       ref={ref}

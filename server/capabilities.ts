@@ -2,7 +2,7 @@ import { XMLParser } from 'fast-xml-parser';
 import { fetchPublic, readLimited, serviceUrl } from './http.ts';
 import { fetchDrawOrder } from './drawOrder.ts';
 import { errorMessage } from './config.ts';
-import { OVERLAYS, TILE_SERVICES, type Overlay, type TileService } from '../src/services/registry.ts';
+import { OVERLAYS, TILE_SERVICES } from '../src/services/registry.ts';
 import type {
   CapabilitiesCache,
   RestMeta,
@@ -85,8 +85,6 @@ function collectLayers(
   for (const child of list(layer.Layer)) collectLayers(child, own, out);
 }
 
-const wms = (def: Overlay) => wmsCapabilities(def.url, def.title);
-
 /** Layers, scale limits, legends and GetFeatureInfo formats of any WMS, from its GetCapabilities. */
 export async function wmsCapabilities(url: string, fallbackTitle = ''): Promise<WmsMeta> {
   const root = node((await fetchXml(serviceUrl(url, { SERVICE: 'WMS', REQUEST: 'GetCapabilities', VERSION: '1.3.0' }))).WMS_Capabilities);
@@ -103,8 +101,6 @@ export async function wmsCapabilities(url: string, fallbackTitle = ''): Promise<
     layers,
   };
 }
-
-const wmts = (def: TileService) => wmtsCapabilities(def.url, def.layer);
 
 /**
  * Layer, image format, style and EPSG:2180 tile grid of a WMTS, from its GetCapabilities.
@@ -172,7 +168,8 @@ const wkid = (sr?: { wkid?: number; latestWkid?: number }) => sr?.latestWkid ?? 
 
 /**
  * Layers and tile cache of an ArcGIS REST map service, from its description (?f=json).
- * ArcGIS asks for a token with HTTP 401 and a page, or with error 499 in the JSON.
+ * A token request (HTTP 401 with a page, or error 499 inside the JSON) is reported as
+ * "HTTP 499", the code the catalog reads as "token required" for every kind of service.
  */
 export async function arcgisCapabilities(url: string): Promise<RestMeta> {
   const res = await fetchPublic(serviceUrl(url.replace(/\/+$/, ''), { f: 'json' }), { signal: AbortSignal.timeout(TIMEOUT_MS) });
@@ -223,8 +220,8 @@ async function safely(fetchMeta: () => Promise<ServiceMeta>): Promise<ServiceMet
 export async function buildCache(previous?: CapabilitiesCache): Promise<CapabilitiesCache> {
   const [entries, drawOrder] = await Promise.all([
     Promise.all([
-      ...OVERLAYS.map(async (def) => [def.id, await safely(() => wms(def))] as const),
-      ...TILE_SERVICES.map(async (def) => [def.id, await safely(() => wmts(def))] as const),
+      ...OVERLAYS.map(async (def) => [def.id, await safely(() => wmsCapabilities(def.url, def.title))] as const),
+      ...TILE_SERVICES.map(async (def) => [def.id, await safely(() => wmtsCapabilities(def.url, def.layer))] as const),
     ]),
     // The layer order of geoportal.gov.pl; when it cannot be read, the last good one is kept.
     fetchDrawOrder().catch((e: unknown) => {

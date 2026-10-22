@@ -1,8 +1,7 @@
 import logoUrl from '@/assets/envirosolutions.svg';
 
-export const APP_NAME = 'Prosty Geoportal';
-export const APP_DOMAIN = 'prostygeoportal.pl';
-export const AUTHOR_URL = 'https://envirosolutions.pl';
+import { APP_DOMAIN, APP_NAME, AUTHOR_URL } from '@/services/brand';
+export { APP_DOMAIN, APP_NAME, AUTHOR_URL };
 
 /**
  * Sign of the app: a magnifying glass over parcel boundaries, one parcel picked out in the

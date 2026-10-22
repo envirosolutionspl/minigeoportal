@@ -37,7 +37,7 @@ export const TOPICS: Record<Topic, string> = {
 };
 
 /**
- * One WMS layer inside a service, with a title written for non-specialists.
+ * One layer inside a service, with a title written for non-specialists.
  * Scale limits, queryability and legends come from the capabilities cache (see meta.ts).
  */
 export interface SubLayer {
@@ -81,10 +81,9 @@ export interface BaseMap {
   /** Static preview in public/thumbs, made from one tile of the service. */
   thumb?: string;
   /** Requires a token on geoportal.gov.pl: listed, but disabled with a link. */
-  restricted?: boolean;
 }
 
-/** Overlay: dynamic WMS rendered as one image per view. */
+/** Overlay: a map service drawn over the base map, with sublayers to choose from. */
 export interface Overlay {
   id: string;
   /** Our own layers are WMS; the catalog adds WMTS and ArcGIS REST map services. */
@@ -98,12 +97,10 @@ export interface Overlay {
   url: string;
   /** Id of the same layer in the geoportal.gov.pl configuration, which gives the drawing order. */
   geoportalId: string;
-  /** Listed in drawing order, bottom to top. */
+  /** Listed in the order the catalog shows; the drawing order is DRAW_ORDER in layers.ts. */
   sublayers: SubLayer[];
   opacity?: number;
 }
-
-export type ServiceDef = TileService | Overlay;
 
 export const GUGIK_ATTRIBUTION =
   'Dane: <a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">GUGiK, geoportal.gov.pl</a>';

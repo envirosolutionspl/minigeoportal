@@ -4,7 +4,7 @@
  * An overlay without sublayers uses its defaults.
  */
 
-export interface UrlState {
+interface UrlState {
   center: [number, number];
   zoom: number;
   base: string;
@@ -39,7 +39,7 @@ export function readUrl(): Partial<UrlState> {
 }
 
 /** Query string of a view, e.g. "?x=637000&y=486000&z=12.0&b=orto&l=kieg". */
-export function queryFor(state: UrlState): string {
+function queryFor(state: UrlState): string {
   const q = new URLSearchParams();
   q.set('x', Math.round(state.center[0]).toString());
   q.set('y', Math.round(state.center[1]).toString());

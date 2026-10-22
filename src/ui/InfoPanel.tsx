@@ -28,7 +28,7 @@ export function InfoPanel() {
         sm:inset-x-auto sm:top-[4.75rem] sm:bottom-auto sm:left-4 sm:max-h-[calc(100dvh-9rem)] sm:w-[25rem] sm:rounded-2xl"
     >
       <header className="flex items-start gap-3 border-b border-[var(--hover)] px-4 pt-4 pb-3">
-        <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-[#FF8142]" />
+        <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-[var(--highlight)]" />
         <div className="min-w-0 flex-1">
           <h2 className="text-base font-semibold">Informacje o miejscu</h2>
           <p className="text-xs text-[var(--muted)]">
@@ -110,12 +110,12 @@ function ServiceResult({ id, result }: { id: string; result: InfoResult | undefi
       {result.status === 'done' && result.records.length === 0 && (
         <p className="text-sm text-[var(--muted)]">Brak danych w tym miejscu.</p>
       )}
-      {result.status === 'done' && result.records.map((r, i) => <Record key={i} record={r} />)}
+      {result.status === 'done' && result.records.map((r, i) => <RecordView key={i} record={r} />)}
     </div>
   );
 }
 
-function Record({ record }: { record: InfoRecord }) {
+function RecordView({ record }: { record: InfoRecord }) {
   return (
     <div className="mb-2 rounded-xl bg-[var(--field)] px-3 py-2 last:mb-0">
       {record.title && <p className="mb-1 text-sm font-medium">{record.title}</p>}

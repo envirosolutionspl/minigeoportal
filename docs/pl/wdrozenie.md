@@ -42,6 +42,8 @@ docker compose up -d --build # obraz zbudowany z lokalnej kopii zamiast pobraneg
 - **Repliki** (`SHARED_DATA=1`) nigdy same nie budują danych: czytają to, co zapisze proces aktualizujący, w ciągu minuty od zmiany. Każda odpowiada na `GET /api/health`, z którego korzysta kontrola zdrowia obrazu i Caddy.
 - **Proces aktualizujący** uruchamia `npm run update` przy starcie, a potem codziennie.
 
+Na serwerze, którego własny nginx lub Apache obsługuje kilka serwisów, `compose.proxy.yaml` pomija Caddy i uruchamia jedną replikę dostępną tylko pod `127.0.0.1:8787` (`COMPOSE_FILE=compose.yaml:compose.proxy.yaml` w `.env`); `deploy/nginx/minigeoportal.conf` to pasująca konfiguracja serwisu w nginx, a certyfikat dodaje `certbot --nginx`.
+
 Własną konfigurację podłącza się, zastępując w `compose.yaml` montowany katalog `./config` swoim. Ustawienia poczty i inne sekrety trafiają do `.env` obok `compose.yaml`; plik jest opcjonalny.
 
 Obraz publikuje GitHub Actions jako `ghcr.io/envirosolutionspl/minigeoportal` (tagi `latest`, `sha-<commit>` i numery wersji) dla serwerów x86 (64-bit). Powstaje tylko wtedy, gdy zmienia się coś, co do niego trafia; zmiany w dokumentacji go nie przebudowują. Obraz działa bez uprawnień roota, nie potrzebuje w działaniu narzędzi do budowania i poprawnie kończy pracę na SIGTERM. Samodzielnie:

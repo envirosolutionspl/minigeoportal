@@ -42,6 +42,8 @@ docker compose up -d --build # built from this checkout instead of pulled
 - **The replicas** (`SHARED_DATA=1`) never build the caches themselves: they read what the updater writes, within a minute of a change. Each answers `GET /api/health`, which the image's health check and Caddy use.
 - **The updater** runs `npm run update` at start and then every day.
 
+On a server whose own nginx or Apache serves several sites, `compose.proxy.yaml` leaves Caddy out and runs one replica reachable only on `127.0.0.1:8787` (`COMPOSE_FILE=compose.yaml:compose.proxy.yaml` in `.env`); `deploy/nginx/minigeoportal.conf` is the matching nginx site, and `certbot --nginx` adds the certificate.
+
 Your own configuration goes in by replacing the `./config` mount of `compose.yaml` with your directory. Mail settings and other secrets go into `.env` next to `compose.yaml`; it is optional.
 
 The image is published by GitHub Actions as `ghcr.io/envirosolutionspl/minigeoportal` (tags `latest`, `sha-<commit>` and version numbers) for x86 (64-bit) servers. It is built only when something that goes into it changes; documentation alone builds nothing. The image runs without root, needs no build tools at runtime and stops cleanly on SIGTERM. Run alone:

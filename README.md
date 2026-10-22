@@ -186,6 +186,17 @@ Co uruchamia `compose.yaml`:
 
 Wolumeny: `data` (dane serwera, `/data` w kontenerach), `caddy-data` i `caddy-config` (certyfikaty Caddy). Konfiguracja jest montowana tylko do odczytu; po jej zmianie wystarczy `docker compose restart app updater`.
 
+### Docker za istniejącym proxy (nginx)
+
+Gdy na serwerze działa już nginx (albo Apache) obsługujący kilka serwisów, Caddy nie jest potrzebny. Nakładka `compose.proxy.yaml` uruchamia jedną replikę aplikacji dostępną tylko lokalnie, na `127.0.0.1:8787`, bez Caddy:
+
+```bash
+printf 'DOMAIN=mapa.example.org\nCOMPOSE_FILE=compose.yaml:compose.proxy.yaml\n' > .env
+docker compose up -d
+```
+
+Wzór konfiguracji nginx (z przekierowaniem `www`) jest w `deploy/nginx/minigeoportal.conf`; certyfikat daje `certbot --nginx -d mapa.example.org -d www.mapa.example.org --redirect`.
+
 ### Jeden serwer bez Dockera
 
 ```bash

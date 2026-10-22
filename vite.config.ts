@@ -11,7 +11,8 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
-    proxy: { '/api': `http://localhost:${process.env.PORT ?? 8787}` },
+    // The API in development; API_PORT is separate from PORT, which dev tooling may set for Vite itself.
+    proxy: { '/api': `http://localhost:${process.env.API_PORT ?? 8787}` },
   },
   build: {
     target: 'es2022',

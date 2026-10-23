@@ -42,7 +42,7 @@ export const appSchema = z.strictObject({
   domain: z.string().min(1),
   contact: z.email(),
   author: z.strictObject({ name: z.string().min(1), url }),
-  locales: z.strictObject({ default: locale, available: z.array(locale).min(1) }),
+  locales: z.strictObject({ default: locale, available: z.array(locale).min(1), root: locale.optional() }),
   /** A line under the name in the welcome window. */
   tagline: text.optional(),
   /** Colours of the interface: skins/<name>/skin.css in the configuration directory or in the app. */

@@ -7,6 +7,13 @@ import { escapeHtml, renderMarkdown } from './markdown.ts';
  * app needs (no file paths, no server settings). Built once per language when the server starts.
  */
 
+/**
+ * Address of the page in a language: /en/, /de/; the language of locales.root, and the only one
+ * of a deployment with one language, at the bare address /.
+ */
+export const pagePath = (locales: { available: string[]; root?: string }, locale: string) =>
+  locales.available.length === 1 || locale === locales.root ? '/' : `/${locale}/`;
+
 /** Text in `locale`, else in the default language, else the first one given. */
 export function textIn(value: Text, locale: string, fallback: string): string {
   if (typeof value === 'string') return value;
@@ -44,6 +51,7 @@ export function clientConfig({ app, map, layers, content, messages }: AppConfig,
     content: Object.fromEntries(Object.entries(content).map(([name, texts]) => [name, renderMarkdown(texts[locale] ?? texts[fallback])])),
     locale,
     locales: app.locales.available,
+    localePaths: Object.fromEntries(app.locales.available.map((l) => [l, pagePath(app.locales, l)])),
     messages: messages[locale],
     map: {
       projection: map.projection,

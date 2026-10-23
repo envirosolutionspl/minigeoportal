@@ -122,6 +122,8 @@ export interface ClientConfig {
   content: { welcome?: string; accessibility?: string };
   locale: string;
   locales: string[];
+  /** Address of the page in each language: '/' or '/en/' (server/html.ts pagePath). */
+  localePaths: Record<string, string>;
   /** Texts of the interface in `locale`, by dotted key (i18n/<lang>.yaml). */
   messages: Record<string, Message>;
   map: {

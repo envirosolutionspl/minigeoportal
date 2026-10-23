@@ -28,11 +28,13 @@ content:
   welcome: content/welcome
   accessibility: content/accessibility
 
-# Every language has its own address (/pl/, /en/); the bare address opens the browser's language,
-# or the default one when the app does not have it.
+# Every language has its own address (/en/), Polish (root) the bare one. The bare address shows
+# Polish to browsers that want it and sends the others to their language, or to the default one
+# when the app does not have it.
 locales:
   default: en
   available: [pl, en]
+  root: pl
 
 links:
   # Where to send people when a layer cannot be shown here, and what to call it in links

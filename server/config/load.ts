@@ -155,6 +155,9 @@ function crossCheck(
     if (!a.locales.available.includes(a.locales.default)) {
       problems.push(`${at(app, 'app.yaml', ['locales', 'default'])} locales.default must be one of locales.available`);
     }
+    if (a.locales.root && !a.locales.available.includes(a.locales.root)) {
+      problems.push(`${at(app, 'app.yaml', ['locales', 'root'])} locales.root must be one of locales.available`);
+    }
     if (a.report.locale && !a.locales.available.includes(a.report.locale)) {
       problems.push(`${at(app, 'app.yaml', ['report', 'locale'])} report.locale must be one of locales.available`);
     }

@@ -1,7 +1,7 @@
 import type { Context } from 'hono';
 import { getCookie } from 'hono/cookie';
 import type { ClientConfig } from '../shared/config.ts';
-import { clientConfig } from './config/client.ts';
+import { clientConfig, pagePath } from './config/client.ts';
 import { escapeHtml } from './config/markdown.ts';
 import type { AppConfig } from './config/schema.ts';
 import { GUGIK_SEARCH_HOSTS } from './modules/gugik/searchHosts.ts';
@@ -62,12 +62,12 @@ function sharing(client: ClientConfig): string {
   const e = escapeHtml;
   const { name, title, description, domain } = client.app;
   const site = `https://${e(domain)}`;
-  const here = `${site}${pagePath(client.locales, client.locale)}`;
+  const here = `${site}${client.localePaths[client.locale]}`;
   // Every language has its own address; the bare domain picks one for the visitor.
   const languages =
     client.locales.length > 1
       ? [
-          ...client.locales.map((l) => `<link rel="alternate" hreflang="${e(l)}" href="${site}/${e(l)}/" />`),
+          ...client.locales.map((l) => `<link rel="alternate" hreflang="${e(l)}" href="${site}${e(client.localePaths[l])}" />`),
           `<link rel="alternate" hreflang="x-default" href="${site}/" />`,
         ]
       : [];
@@ -104,26 +104,31 @@ export function renderPage(template: string, client: ClientConfig, skin = ''): s
     );
 }
 
-/** Address of the page in a language: /pl/, /en/; a deployment with one language lives at /. */
-export const pagePath = (available: string[], locale: string) => (available.length > 1 ? `/${locale}/` : '/');
-
 /**
  * What a request for the page gets: the page in the language its address names, or a redirect.
- * The bare domain (and any other address) goes to the visitor's language; /en goes to /en/; an
- * old link with ?lang=en goes to /en/. The view in the query string travels along.
+ * The bare domain (and any other address) shows the language of locales.root to visitors who
+ * want it and sends everyone else to their language (/en/); /en goes to /en/, /pl/ to / when
+ * Polish is the root language, and an old link with ?lang=en to /en/. The view in the query
+ * string travels along.
  */
 export function routePage(site: Site, c: Context): { locale: string } | { redirect: string; permanent: boolean } {
-  const { available } = site.config.app.locales;
-  if (!site.multilingual) return { locale: available[0] };
+  const { locales } = site.config.app;
+  if (!site.multilingual) return { locale: locales.available[0] };
   const url = new URL(c.req.url);
-  const named = url.pathname.split('/')[1];
+  const segment = url.pathname.split('/')[1];
   const asked = url.searchParams.get('lang');
   url.searchParams.delete('lang');
-  const to = (locale: string, permanent: boolean) => ({ redirect: `${pagePath(available, locale)}${url.search}`, permanent });
-  if (asked && available.includes(asked) && asked !== named) return to(asked, false);
-  if (!available.includes(named)) return to(site.locale(c), false);
-  if (url.pathname !== `/${named}/` || asked) return to(named, true);
-  return { locale: named };
+  const to = (locale: string, permanent: boolean) => ({ redirect: `${pagePath(locales, locale)}${url.search}`, permanent });
+  if (asked && locales.available.includes(asked)) {
+    // The bare address cannot name the root language, so such a link is served as it is.
+    return asked === locales.root && url.pathname === '/' ? { locale: asked } : to(asked, false);
+  }
+  if (locales.available.includes(segment)) {
+    const path = pagePath(locales, segment);
+    return url.pathname === path ? { locale: segment } : to(segment, true);
+  }
+  const locale = site.locale(c);
+  return locale === locales.root && url.pathname === '/' ? { locale } : to(locale, false);
 }
 
 /** The configuration for each language, built once. */

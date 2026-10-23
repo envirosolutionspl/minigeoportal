@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import { Hono } from 'hono';
-import { connectSources, pickLocale, renderPage, routePage, scriptJson } from './html.ts';
+import { connectSources, createSite, pickLocale, renderPage, routePage, scriptJson } from './html.ts';
 import { GUGIK_SEARCH_HOSTS } from './modules/gugik/searchHosts.ts';
 import { defaults, site } from './testSite.ts';
 
@@ -32,26 +32,38 @@ describe('routePage', () => {
   const app = new Hono().get('*', (c) => c.json(routePage(site, c)));
   const route = async (path: string, headers: Record<string, string> = {}) => (await app.request(path, { headers })).json();
 
-  it('opens the bare address in the browser language, English when the app does not have it', async () => {
-    expect(await route('/', { 'accept-language': 'pl-PL,pl;q=0.9,en;q=0.8' })).toEqual({ redirect: '/pl/', permanent: false });
+  it('shows Polish (locales.root) at the bare address to Polish browsers, English elsewhere', async () => {
+    expect(await route('/', { 'accept-language': 'pl-PL,pl;q=0.9,en;q=0.8' })).toEqual({ locale: 'pl' });
     expect(await route('/', { 'accept-language': 'de-DE,de;q=0.9' })).toEqual({ redirect: '/en/', permanent: false });
     expect(await route('/')).toEqual({ redirect: '/en/', permanent: false });
   });
 
   it('prefers the language chosen with the switch (its cookie) to the browser', async () => {
     expect(await route('/', { cookie: 'lang=en', 'accept-language': 'pl' })).toEqual({ redirect: '/en/', permanent: false });
+    expect(await route('/', { cookie: 'lang=pl', 'accept-language': 'en' })).toEqual({ locale: 'pl' });
   });
 
   it('keeps the view and turns old ?lang= links into language addresses', async () => {
-    expect(await route('/?x=1&y=2&lang=pl', { 'accept-language': 'en' })).toEqual({ redirect: '/pl/?x=1&y=2', permanent: false });
-    expect(await route('/en/?lang=pl&x=1')).toEqual({ redirect: '/pl/?x=1', permanent: false });
+    expect(await route('/?x=1&lang=en', { 'accept-language': 'pl' })).toEqual({ redirect: '/en/?x=1', permanent: false });
+    expect(await route('/?x=1&lang=pl', { 'accept-language': 'en' })).toEqual({ locale: 'pl' });
+    expect(await route('/en/?lang=pl&x=1')).toEqual({ redirect: '/?x=1', permanent: false });
     expect(await route('/en?x=1')).toEqual({ redirect: '/en/?x=1', permanent: true });
-    expect(await route('/de/', { 'accept-language': 'pl' })).toEqual({ redirect: '/pl/', permanent: false });
+    expect(await route('/pl/?x=1')).toEqual({ redirect: '/?x=1', permanent: true });
+    expect(await route('/de/', { 'accept-language': 'pl' })).toEqual({ redirect: '/', permanent: false });
+  });
+
+  it('without locales.root gives every language its own address, the bare one only redirects', async () => {
+    const { config } = site;
+    const general = createSite({ ...config, app: { ...config.app, locales: { ...config.app.locales, root: undefined } } });
+    const own = new Hono().get('*', (c) => c.json(routePage(general, c)));
+    const go = async (path: string, lang: string) => (await own.request(path, { headers: { 'accept-language': lang } })).json();
+    expect(await go('/', 'pl')).toEqual({ redirect: '/pl/', permanent: false });
+    expect(await go('/pl/', 'en')).toEqual({ locale: 'pl' });
+    expect(general.client('pl').localePaths).toEqual({ pl: '/pl/', en: '/en/' });
   });
 
   it('serves the page of the language its address names, whatever the browser prefers', async () => {
-    expect(await route('/pl/?x=1', { 'accept-language': 'en' })).toEqual({ locale: 'pl' });
-    expect(await route('/en/', { cookie: 'lang=pl' })).toEqual({ locale: 'en' });
+    expect(await route('/en/', { cookie: 'lang=pl', 'accept-language': 'pl' })).toEqual({ locale: 'en' });
   });
 });
 
@@ -69,10 +81,11 @@ describe('renderPage', () => {
     const page = renderPage(TEMPLATE, { ...defaults, app: { ...defaults.app, title: 'A & "B"' } });
     // Each language has its own address; the bare one is for search engines the visitor's choice.
     expect(page).toContain('<link rel="canonical" href="https://minigeoportal.pl/en/" />');
-    expect(page).toContain('<link rel="alternate" hreflang="pl" href="https://minigeoportal.pl/pl/" />');
+    expect(page).toContain('<link rel="alternate" hreflang="pl" href="https://minigeoportal.pl/" />');
+    expect(page).toContain('<link rel="alternate" hreflang="en" href="https://minigeoportal.pl/en/" />');
     expect(page).toContain('<link rel="alternate" hreflang="x-default" href="https://minigeoportal.pl/" />');
     expect(page).toContain('<meta property="og:url" content="https://minigeoportal.pl/en/" />');
-    const single = renderPage(TEMPLATE, { ...defaults, locales: ['en'] });
+    const single = renderPage(TEMPLATE, { ...defaults, locales: ['en'], localePaths: { en: '/' } });
     expect(single).toContain('<link rel="canonical" href="https://minigeoportal.pl/" />');
     expect(single).not.toContain('hreflang');
     expect(page).toContain('<meta property="og:title" content="A &amp; &quot;B&quot;" />');

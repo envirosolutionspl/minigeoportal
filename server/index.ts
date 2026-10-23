@@ -73,6 +73,8 @@ if (production) {
       return c.redirect(to.redirect, to.permanent ? 301 : 302);
     }
     c.header('Cache-Control', 'no-cache');
+    // The bare address shows the root language to some visitors and sends the others away.
+    if (site.multilingual && c.req.path === '/') c.header('Vary', 'Accept-Language, Cookie');
     return c.html(pages.get(to.locale)!);
   };
   app.get('/', compress(), etag(), page);

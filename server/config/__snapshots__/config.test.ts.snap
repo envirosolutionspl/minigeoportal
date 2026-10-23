@@ -554,6 +554,10 @@ exports[`default configuration > stays what the app was built with (any change s
     },
   },
   "locale": "pl",
+  "localePaths": {
+    "en": "/en/",
+    "pl": "/",
+  },
   "locales": [
     "pl",
     "en",

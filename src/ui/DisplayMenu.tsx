@@ -76,7 +76,7 @@ const languageName = (code: string) => {
 function switchLanguage(code: string) {
   document.cookie = `lang=${encodeURIComponent(code)}; path=/; max-age=31536000; samesite=lax`;
   const url = new URL(location.href);
-  url.pathname = `/${code}/`;
+  url.pathname = config.localePaths[code];
   url.searchParams.delete('lang');
   location.assign(url);
 }

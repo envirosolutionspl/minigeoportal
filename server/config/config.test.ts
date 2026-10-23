@@ -105,6 +105,11 @@ describe('loadConfig', () => {
     expect(problems(xyz('https://tile.openstreetmap.org/tiles.png')).join('\n')).toMatch(/an address with \{z\}, \{x\} and \{y\}/);
   });
 
+  it('needs the root language among the available ones', () => {
+    const dir = broken('app.yaml', (s) => s.replace('root: pl', 'root: de'));
+    expect(problems(dir).join(' ')).toMatch(/app\.yaml:\d+:\d+ locales\.root must be one of locales\.available/);
+  });
+
   it('needs every text in the default language, and keeps paths inside the directory', () => {
     const missing = broken('app.yaml', (s) => s.replace('welcome: content/welcome', 'welcome: content/hello'));
     expect(problems(missing).join('\n')).toMatch(/content\.welcome: content\/hello\.en\.md not found/);

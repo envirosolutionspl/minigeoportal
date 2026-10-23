@@ -62,17 +62,20 @@ The languages of a deployment are set in `app.yaml`:
 locales:
   default: en # for visitors whose browser asks for none of the available ones
   available: [pl, en] # order in the language switch
+  root: pl # optional: the language at the bare domain, without /pl/
 report:
   locale: pl # language of the report mails to the administrator (default: locales.default)
 ```
 
 A language code is two or three lowercase letters, optionally with a region: `pl`, `de`, `en-GB`.
 
-Each language has its own address: `https://your-domain/pl/`, `https://your-domain/en/`. The map view is in the query (`/en/?x=…&y=…`), so a link keeps both the view and the language. The bare domain redirects:
+Each language has its own address: `https://your-domain/pl/`, `https://your-domain/en/`. The map view is in the query (`/en/?x=…&y=…`), so a link keeps both the view and the language. A visit to the bare domain picks the visitor's language:
 
-1. to the language chosen earlier with the switch in the display menu (remembered in the `lang` cookie),
-2. without such a choice to the first language of the browser's preferences the app has (`de-AT` matches `de`),
-3. when the app has none of them, to `locales.default`.
+1. the language chosen earlier with the switch in the display menu (remembered in the `lang` cookie),
+2. without such a choice the first language of the browser's preferences the app has (`de-AT` matches `de`),
+3. when the app has none of them, `locales.default`.
+
+Without `root` the bare domain only redirects to the address of that language. With `root: pl` Polish has no code in the address: it lives at the bare domain, which shows it to visitors who pick Polish and redirects the others (`/en/`); `/pl/` then leads to `/`. The default deployment works this way: `https://minigeoportal.pl/` in Polish, `https://minigeoportal.pl/en/` in English.
 
 Old links with `?lang=en` lead to `/en/`, and an unknown code (`/xx/`) goes where the bare domain goes. The page tells search engines about every language version (`hreflang`). A deployment with one language lives at the bare domain, without `/en/`, and has no switch.
 

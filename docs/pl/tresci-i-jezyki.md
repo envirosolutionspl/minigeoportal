@@ -64,17 +64,20 @@ Języki wdrożenia ustawia `app.yaml`:
 locales:
   default: en # dla odwiedzających, których przeglądarka nie prosi o żaden z dostępnych
   available: [pl, en] # kolejność w przełączniku języka
+  root: pl # opcjonalnie: język pod samym adresem domeny, bez /pl/
 report:
   locale: pl # język maili ze zgłoszeniami do administratora (domyślnie locales.default)
 ```
 
 Kod języka to dwie lub trzy małe litery, opcjonalnie z regionem: `pl`, `de`, `en-GB`.
 
-Każdy język ma własny adres: `https://twoja-domena/pl/`, `https://twoja-domena/en/`. Widok mapy jest w parametrach (`/pl/?x=…&y=…`), więc link zachowuje i widok, i język. Sam adres domeny przekierowuje:
+Każdy język ma własny adres: `https://twoja-domena/pl/`, `https://twoja-domena/en/`. Widok mapy jest w parametrach (`/pl/?x=…&y=…`), więc link zachowuje i widok, i język. Wejście na sam adres domeny wybiera język odwiedzającego:
 
-1. na język wybrany wcześniej przełącznikiem w menu ułatwień (zapamiętany w ciasteczku `lang`),
-2. bez takiego wyboru na pierwszy język z preferencji przeglądarki, który aplikacja ma (`de-AT` pasuje do `de`),
-3. gdy aplikacja nie ma żadnego z nich, na `locales.default`.
+1. język wybrany wcześniej przełącznikiem w menu ułatwień (zapamiętany w ciasteczku `lang`),
+2. bez takiego wyboru pierwszy język z preferencji przeglądarki, który aplikacja ma (`de-AT` pasuje do `de`),
+3. gdy aplikacja nie ma żadnego z nich, `locales.default`.
+
+Bez `root` sam adres domeny tylko przekierowuje na adres wybranego języka. Z `root: pl` polski nie ma kodu w adresie: mieszka pod samym adresem domeny, który pokazuje go odwiedzającym wybierającym polski, a pozostałych przekierowuje (`/en/`); `/pl/` prowadzi wtedy pod `/`. Tak działa domyślne wdrożenie: `https://minigeoportal.pl/` po polsku, `https://minigeoportal.pl/en/` po angielsku.
 
 Stare linki z `?lang=en` prowadzą pod `/en/`, a nieznany kod (`/xx/`) jak sam adres domeny. Strona podaje wyszukiwarkom wszystkie wersje językowe (`hreflang`). Wdrożenie z jednym językiem działa pod samym adresem domeny, bez `/pl/`, i nie ma przełącznika.
 

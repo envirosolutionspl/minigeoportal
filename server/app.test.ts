@@ -33,7 +33,7 @@ describe('routes', () => {
       ...site.config,
       app: { ...site.config.app, modules: {}, search: { ...site.config.app.search, provider: 'none', parcel: false } },
     });
-    const bare = createApp({ site: plain, cache: () => CACHE, catalog: () => undefined });
+    const bare = createApp({ site: plain, cache: () => CACHE, moduleData: { catalog: () => undefined } });
     for (const path of ['/api/catalog', '/api/dict/wojewodztwa', '/api/orto?x=1&y=1']) {
       expect((await bare.request(path, {}, remote)).status).toBe(404);
     }
@@ -244,13 +244,13 @@ describe('catalog routes', () => {
 
   it('answers 503 while the first catalog is being built', async () => {
     const { createApp } = await import('./app.ts');
-    const building = createApp({ site, cache: () => CACHE, catalog: () => undefined });
+    const building = createApp({ site, cache: () => CACHE, moduleData: { catalog: () => undefined } });
     expect((await building.request('/api/catalog', {}, client)).status).toBe(503);
   });
 
   it('lists the layers without addresses and gives one layer with its metadata, revalidated by ETag', async () => {
     const { createApp } = await import('./app.ts');
-    const withCatalog = createApp({ site, cache: () => CACHE, catalog: () => CATALOG });
+    const withCatalog = createApp({ site, cache: () => CACHE, moduleData: { catalog: () => CATALOG } });
     const list = await withCatalog.request('/api/catalog', {}, client);
     const body = (await list.json()) as { entries: Record<string, unknown>[] };
     expect(body.entries.map((e) => e.id)).toEqual(['msZabytki', 'msCLC']);
@@ -271,7 +271,7 @@ describe('catalog routes', () => {
   it('serves layers whose geoportal id has Polish letters', async () => {
     const { createApp } = await import('./app.ts');
     const polish = { ...CATALOG, entries: [{ ...CATALOG.entries[0], id: 'msWyłozeniaModernizacja' }] };
-    const res = await createApp({ site, cache: () => CACHE, catalog: () => polish }).request(
+    const res = await createApp({ site, cache: () => CACHE, moduleData: { catalog: () => polish } }).request(
       `/api/catalog/${encodeURIComponent('msWyłozeniaModernizacja')}`,
       {},
       client,
@@ -282,7 +282,7 @@ describe('catalog routes', () => {
 
   it('queries available catalog layers through the proxy and refuses unavailable ones', async () => {
     const { createApp } = await import('./app.ts');
-    const withCatalog = createApp({ site, cache: () => CACHE, catalog: () => CATALOG });
+    const withCatalog = createApp({ site, cache: () => CACHE, moduleData: { catalog: () => CATALOG } });
     const fetchMock = vi.fn(async (_url: string) => new Response('<a/>', { headers: { 'content-type': 'text/xml' } }));
     vi.stubGlobal('fetch', fetchMock);
     const q = 'QUERY_LAYERS=monuments&BBOX=1,2,3,4&WIDTH=10&HEIGHT=10&I=1&J=1&INFO_FORMAT=text/xml';

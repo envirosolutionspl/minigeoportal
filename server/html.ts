@@ -4,7 +4,7 @@ import type { ClientConfig } from '../shared/config.ts';
 import { clientConfig, pagePath } from './config/client.ts';
 import { escapeHtml } from './config/markdown.ts';
 import type { AppConfig } from './config/schema.ts';
-import { GUGIK_SEARCH_HOSTS } from './modules/gugik/searchHosts.ts';
+import * as modules from './modules/index.ts';
 
 /**
  * The page and the configuration the app starts with. The configuration goes into index.html as
@@ -33,9 +33,9 @@ export const scriptJson = (value: unknown) =>
     .replace(/\u2028/g, '\\u2028')
     .replace(/\u2029/g, '\\u2029');
 
-/** Where the page may fetch from (CSP connect-src): itself, and the services its search queries directly. */
+/** Where the page may fetch from (CSP connect-src): itself, and the services the modules' search queries directly. */
 export function connectSources(client: ClientConfig): string[] {
-  return ["'self'", ...(client.search.provider === 'gugik' || client.search.parcel ? GUGIK_SEARCH_HOSTS : [])];
+  return ["'self'", ...modules.connectSources(client)];
 }
 
 /**

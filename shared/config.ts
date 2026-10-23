@@ -171,6 +171,7 @@ export interface ClientConfig {
   links: { fallbackMap?: { url: string; name: string } };
   report: { categories: { id: string; label: string }[] };
   modules: {
-    gugik?: { catalog: boolean; drawOrder: boolean; ortho: boolean; parcelReport: boolean };
+    /** `ortho.service`: the tile service that shows the aerial photos (map.tileServices). */
+    gugik?: { catalog: boolean; drawOrder: boolean; ortho: { service: string } | false; parcelReport: boolean };
   };
 }

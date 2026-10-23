@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import {
   Building2,
   Crosshair,
@@ -29,19 +29,19 @@ import { openPrint } from '@/map/print';
 import { linkFor } from '@/state/url';
 import { APP_NAME, BrandMark, Wordmark } from './Brand';
 import { useWelcome } from './WelcomeDialog';
-import { PARCEL_SCALE, ParcelSearch } from '@/modules/gugik/ParcelSearch';
+import { searchTool } from '@/modules';
 import { PROJECTION, zoomForScale } from '@/map/projection';
 import { DisplayMenu } from './DisplayMenu';
 import { MoreSheet } from './MoreSheet';
 
-/** Scale per hit kind; points zoom to it, outlines at most to it. */
+/** Scale per hit kind, unless the hit names its own; points zoom to it, outlines at most to it. */
 const SCALE: Record<HitKind, number> = {
   address: 1000,
   street: 1000,
   place: 5000,
   unit: 1000,
   nature: 5000,
-  parcel: PARCEL_SCALE,
+  parcel: 1000,
   point: 1000,
 };
 const ICON: Record<HitKind, LucideIcon> = {
@@ -64,7 +64,8 @@ export function TopBar() {
   const [active, setActive] = useState(-1);
   /** What screen readers hear once a search finishes. */
   const [announce, setAnnounce] = useState('');
-  const [parcelOpen, setParcelOpen] = useState(false);
+  /** The search tool of a module (the parcel search) is open in place of the results. */
+  const [toolOpen, setToolOpen] = useState(false);
   const abort = useRef<AbortController | null>(null);
   const picked = useRef(0);
   /** Set when choosing a hit writes its name into the box, which is not a new search. */
@@ -127,7 +128,7 @@ export function TopBar() {
     return () => window.clearTimeout(timer);
   }, [query]);
 
-  const listOpen = !parcelOpen && open && (hits.length > 0 || busy);
+  const listOpen = !toolOpen && open && (hits.length > 0 || busy);
 
   const pick = async (hit: SearchHit) => {
     const mine = ++picked.current;
@@ -136,11 +137,11 @@ export function TopBar() {
     chosen.current = text !== query;
     setQuery(text);
     setOpen(false);
-    setParcelOpen(false);
+    setToolOpen(false);
     const { wkt, persist } = provider.outline ? await provider.outline(hit) : { wkt: hit.wkt, persist: false };
     // A later pick wins, even when its outline arrives first.
     if (mine !== picked.current) return;
-    const zoom = zoomForScale(SCALE[hit.kind]);
+    const zoom = zoomForScale(hit.scale ?? SCALE[hit.kind]);
     focusOn(hit.extent && !wkt ? { extent: hit.extent, zoom } : { wkt, center: hit.center, zoom, persist });
   };
 
@@ -229,7 +230,7 @@ export function TopBar() {
             placeholder={provider.placeholder}
             aria-label={provider.label}
             autoComplete="off"
-            // 16 px on phones keeps iOS from zooming into the field; from sm up it matches the "Działka" toggle and the hits.
+            // 16 px on phones keeps iOS from zooming into the field; from sm up it matches the search tool's button and the hits.
             className="h-8 w-full bg-transparent text-base outline-none placeholder:text-[var(--muted)] sm:text-sm"
           />
           {query && (
@@ -237,23 +238,27 @@ export function TopBar() {
               <X className="h-4 w-4" />
             </button>
           )}
-          {config.search.parcel && (
+          {searchTool && (
             <button
               type="button"
-              onClick={() => setParcelOpen(!parcelOpen)}
-              aria-expanded={parcelOpen}
-              title={t('search.parcel')}
-              aria-label={t('search.parcel')}
+              onClick={() => setToolOpen(!toolOpen)}
+              aria-expanded={toolOpen}
+              title={searchTool.label}
+              aria-label={searchTool.label}
               className={`flex shrink-0 items-center gap-1.5 rounded-xl px-2 py-1 text-sm transition ${
-                parcelOpen ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'text-[var(--accent)] hover:bg-[var(--hover)]'
+                toolOpen ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'text-[var(--accent)] hover:bg-[var(--hover)]'
               }`}
             >
-              <SquareDashed className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('search.parcelShort')}</span>
+              <searchTool.icon className="h-4 w-4" />
+              <span className="hidden sm:inline">{searchTool.short}</span>
             </button>
           )}
         </div>
-        {parcelOpen && <ParcelSearch onClose={() => setParcelOpen(false)} />}
+        {searchTool && toolOpen && (
+          <Suspense fallback={null}>
+            <searchTool.Panel onClose={() => setToolOpen(false)} />
+          </Suspense>
+        )}
         <ul
           id="search-results"
           role="listbox"
@@ -297,7 +302,7 @@ export function TopBar() {
           )}
         </ul>
         <p role="status" className="sr-only">
-          {parcelOpen ? '' : announce}
+          {toolOpen ? '' : announce}
         </p>
       </div>
 

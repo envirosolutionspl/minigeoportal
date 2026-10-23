@@ -103,7 +103,8 @@ export const appSchema = z.strictObject({
           enabled: z.boolean(),
           catalog: z.boolean().default(true),
           drawOrder: z.boolean().default(true),
-          ortho: z.boolean().default(true),
+          /** The date of the aerial photo under the photo map: `service` is the tile service of map.yaml that shows the photos. */
+          ortho: z.union([z.literal(false), z.strictObject({ service: id })]).default({ service: 'orto' }),
           parcelReport: z.boolean().default(true),
         })
         .optional(),

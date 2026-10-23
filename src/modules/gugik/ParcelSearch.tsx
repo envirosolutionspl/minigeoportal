@@ -6,9 +6,7 @@ import type { SearchHit } from '@/search/provider';
 import { useMapStore } from '@/state/store';
 import { zoomForScale } from '@/map/projection';
 import { t } from '@/i18n';
-
-/** Parcel ids zoom closer than other objects: a parcel is small. */
-export const PARCEL_SCALE = 500;
+import { PARCEL_SCALE } from './geocoder';
 
 interface Choice {
   woj?: string;

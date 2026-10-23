@@ -44,7 +44,7 @@ describe('default configuration', () => {
     expect(config.map.view).toMatchObject({ center: [500000, 465000], zoom: 3, base: 'mapa', baseMobile: 'prosta', overlays: ['kieg'] });
     expect(config.map.view.home).toEqual([170000, 130000, 870000, 800000]);
     expect(config.search).toEqual({ provider: 'gugik', parcel: true });
-    expect(config.modules.gugik).toEqual({ catalog: true, drawOrder: true, ortho: true, parcelReport: true });
+    expect(config.modules.gugik).toEqual({ catalog: true, drawOrder: true, ortho: { service: 'orto' }, parcelReport: true });
   });
 });
 
@@ -96,6 +96,13 @@ describe('loadConfig', () => {
     ).join('\n');
     expect(found).toMatch(/modules\.gugik needs map\.yaml projection EPSG:2180/);
     expect(found).toMatch(/WMTS service "orto" needs map\.yaml tileGrid/);
+  });
+
+  it('finds the photos of the gugik module among the tile services, or leaves them out', () => {
+    const unknown = broken('app.yaml', (s) => s.replace('ortho: { service: orto }', 'ortho: { service: zdjecia }'));
+    expect(problems(unknown).join('\n')).toMatch(/app\.yaml:\d+:\d+ modules\.gugik\.ortho\.service: unknown tile service "zdjecia"/);
+    const off = broken('app.yaml', (s) => s.replace('ortho: { service: orto }', 'ortho: false'));
+    expect(clientConfig(loadConfig(off), 'pl').modules.gugik?.ortho).toBe(false);
   });
 
   it('accepts XYZ tiles only with {z}, {x} and {y} in the address', () => {

@@ -7,8 +7,8 @@ import type { Context } from 'hono';
 import { createApp } from './app.ts';
 import { CACHE_FILE, readCache, refreshCache } from './cache.ts';
 import { mailerFromEnv } from './report.ts';
-import { CATALOG_FILE, buildCatalog, readCatalog, writeCatalog, type Catalog } from './modules/gugik/catalog.ts';
-import { config, errorMessage, production } from './config.ts';
+import * as modules from './modules/index.ts';
+import { config, production } from './config.ts';
 import { loadConfig } from './config/load.ts';
 import { createSite, renderPage, routePage } from './html.ts';
 import { follow } from './files.ts';
@@ -18,35 +18,17 @@ import type { CapabilitiesCache } from '../src/services/meta.ts';
 
 /** A configuration with problems stops the server here, with every problem listed. */
 const site = createSite(loadConfig(config.configDir));
-const withCatalog = site.defaults.modules.gugik?.catalog === true;
 
 let capabilities: CapabilitiesCache = (await readCache()) ?? (await refreshCache(site.defaults));
 
-/**
- * The geoportal layer catalog (gugik module): read from disk. A single instance builds it in the
- * background on its first start (a minute or two: every service is checked), so it answers at
- * once and the app works on its own layers meanwhile; shared instances wait for the updater.
- */
-let catalog: Catalog | undefined = withCatalog ? await readCatalog() : undefined;
-if (withCatalog && !catalog && !config.sharedData) {
-  buildCatalog(site.defaults.layers.overlays)
-    .then(async (built) => {
-      catalog = built;
-      await writeCatalog(built);
-    })
-    .catch((e: unknown) => console.warn(`catalog: ${errorMessage(e)}`));
-}
+// The modules' data (the geoportal layer catalog): read from disk, or built in the background.
+const moduleData = await modules.start(site.defaults);
 
 // With a shared data directory the updater writes the caches; this instance reads them again.
 if (config.sharedData) {
   await follow(CACHE_FILE, async () => {
     capabilities = (await readCache()) ?? capabilities;
   });
-  if (withCatalog) {
-    await follow(CATALOG_FILE, async () => {
-      catalog = (await readCatalog()) ?? catalog;
-    });
-  }
 }
 
 const mailer = mailerFromEnv(site.mail);
@@ -56,7 +38,7 @@ const app = createApp({
   cache: () => capabilities,
   mailer,
   origin: config.origin,
-  ...(withCatalog ? { catalog: () => catalog } : {}),
+  moduleData,
 });
 
 if (production) {

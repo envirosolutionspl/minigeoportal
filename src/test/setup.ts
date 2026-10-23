@@ -4,8 +4,10 @@ import { initConfig } from '@/config/runtime';
 import { clientConfig } from '../../server/config/client.ts';
 import { loadConfig } from '../../server/config/load.ts';
 
-// The app's modules read the configuration as they load: the default deployment, in Polish.
+// The app's modules read the configuration as they load: the default deployment, in Polish,
+// with its search provider, as main.tsx starts the app.
 initConfig(clientConfig(loadConfig('config'), 'pl'));
+await (await import('@/search')).loadSearchProvider();
 
 // jsdom has <dialog> without the modal methods.
 HTMLDialogElement.prototype.showModal ??= function (this: HTMLDialogElement) {

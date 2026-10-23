@@ -1,27 +1,20 @@
-import { useEffect, useState } from 'react';
-import { Bug, Camera, Download, ExternalLink, FileText, Layers, LoaderCircle, MapPin, X } from 'lucide-react';
-import { dateText, formatCoordinate } from '@/map/format';
+import { Suspense } from 'react';
+import { Bug, ExternalLink, Layers, LoaderCircle, MapPin, X } from 'lucide-react';
+import { formatCoordinate } from '@/map/format';
 import { config } from '@/config/runtime';
-import { parcelReportUrl } from '@/modules/gugik/parcelReport';
+import { infoFooter, infoHeader, type InfoPart } from '@/modules';
 import { overlayDef } from '@/services/catalog';
 import type { InfoRecord } from '@/services/featureinfo';
 import { useInfoStore, type InfoResult } from '@/state/info';
 import { useMapStore } from '@/state/store';
 import { useReport } from './ReportDialog';
-import { orthoAt, pixelText, type OrthoInfo } from '@/modules/gugik/ortho';
-import { locale, t } from '@/i18n';
+import { t } from '@/i18n';
 
 /** Results of a map click: one section per queried overlay. */
 export function InfoPanel() {
   const query = useInfoStore((s) => s.query);
   const close = useInfoStore((s) => s.close);
   const setPanel = useMapStore((m) => m.setPanel);
-  // The photo date (gugik module) matters only when the photos are on screen.
-  const showsPhotos = useMapStore(
-    (m) =>
-      Boolean(config.modules.gugik?.ortho) &&
-      (config.map.baseMaps.find((b) => b.id === m.base)?.sources.some((s) => s.service === 'orto') ?? false),
-  );
   if (!query) return null;
 
   const loading = query.services.some((id) => query.results[id]?.status === 'loading');
@@ -37,19 +30,7 @@ export function InfoPanel() {
         <div className="min-w-0 flex-1">
           <h2 className="text-base font-semibold">{t('info.title')}</h2>
           <p className="text-xs text-[var(--muted)]">{formatCoordinate(query.coordinate)}</p>
-          {config.modules.gugik?.parcelReport && (
-            <a
-              href={parcelReportUrl(query.coordinate)}
-              target="_blank"
-              rel="noopener"
-              className="mt-1.5 inline-flex min-h-6 items-center gap-1.5 text-sm font-medium text-[var(--accent)] underline-offset-2 hover:underline"
-            >
-              <FileText className="h-4 w-4" aria-hidden="true" />
-              {t('info.parcelReport')}
-              <span className="sr-only">{t('info.parcelReportHint')}</span>
-              <ExternalLink className="h-3 w-3" aria-hidden="true" />
-            </a>
-          )}
+          <Parts parts={infoHeader} coordinate={query.coordinate} />
         </div>
         <button type="button" onClick={close} aria-label={t('common.close')} className="rounded-full p-2 hover:bg-[var(--hover)]">
           <X className="h-5 w-5" />
@@ -75,7 +56,7 @@ export function InfoPanel() {
           query.services.map((id) => <ServiceResult key={id} id={id} result={query.results[id]} />)
         )}
       </div>
-      {showsPhotos && <OrthoPhoto coordinate={query.coordinate} />}
+      <Parts parts={infoFooter} coordinate={query.coordinate} />
       <footer className="border-t border-[var(--hover)] px-4 py-2">
         <button
           type="button"
@@ -149,49 +130,11 @@ function RecordView({ record }: { record: InfoRecord }) {
   );
 }
 
-type OrthoState = { status: 'loading' } | { status: 'done'; info: OrthoInfo } | { status: 'error' };
-
-/** When the aerial photo here was taken and how sharp it is, with its sheet to download. */
-function OrthoPhoto({ coordinate }: { coordinate: [number, number] }) {
-  const [state, setState] = useState<OrthoState>({ status: 'loading' });
-
-  useEffect(() => {
-    const controller = new AbortController();
-    setState({ status: 'loading' });
-    orthoAt(coordinate, controller.signal)
-      .then((info) => setState({ status: 'done', info }))
-      .catch(() => !controller.signal.aborted && setState({ status: 'error' }));
-    return () => controller.abort();
-  }, [coordinate]);
-
-  const latest = state.status === 'done' ? state.info.latest : undefined;
-  if (state.status === 'error' || (state.status === 'done' && !latest)) return null;
-
-  return (
-    <div className="flex items-start gap-2 border-t border-[var(--hover)] px-4 py-2 text-xs">
-      <Camera className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" aria-hidden="true" />
-      {latest ? (
-        <p className="min-w-0">
-          {t('info.photoFrom')} <strong className="font-semibold">{dateText(latest.date)}</strong>, {t('info.pixel')}{' '}
-          <strong className="font-semibold">{pixelText(latest.pixel)}</strong>
-          {latest.download && (
-            <>
-              {' · '}
-              <a
-                href={latest.download}
-                className="inline-flex items-center gap-1 text-[var(--accent)] underline underline-offset-2"
-                download
-              >
-                <Download className="h-3 w-3" aria-hidden="true" />
-                {t('info.downloadSheet', { sheet: latest.sheet })} (GeoTIFF
-                {latest.sizeMb ? `, ${latest.sizeMb.toLocaleString(locale())} MB` : ''})
-              </a>
-            </>
-          )}
-        </p>
-      ) : (
-        <p className="text-[var(--muted)]">{t('info.photoLoading')}</p>
-      )}
-    </div>
-  );
+/** Parts of the place panel the modules add (src/modules), each loading on its own. */
+function Parts({ parts, coordinate }: { parts: InfoPart[]; coordinate: [number, number] }) {
+  return parts.map((Part, i) => (
+    <Suspense key={i} fallback={null}>
+      <Part coordinate={coordinate} />
+    </Suspense>
+  ));
 }

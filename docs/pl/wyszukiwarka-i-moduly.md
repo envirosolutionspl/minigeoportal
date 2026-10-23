@@ -28,7 +28,7 @@ modules:
     enabled: true
     catalog: true # wszystkie warstwy geoportal.gov.pl na liście warstw
     drawOrder: true # kolejność rysowania z geoportal.gov.pl dla skonfigurowanych warstw
-    ortho: true # data i rozdzielczość zdjęcia lotniczego w klikniętym miejscu
+    ortho: { service: orto } # data i rozdzielczość zdjęcia lotniczego w klikniętym miejscu
     parcelReport: true # link do raportu o działce w geoportal.gov.pl
 ```
 
@@ -36,10 +36,12 @@ Działa tylko w PL-1992: konfiguracja jest odrzucana, gdy moduł jest włączony
 
 - **catalog**: serwer czyta konfigurację geoportal.gov.pl (listę warstw i grupy), sprawdza każdą usługę i zapisuje wynik na dysku; lista warstw pokazuje je według tematów, a warstwy, których nie da się tu pokazać, są na liście wyszarzone z wyjaśnieniem. `npm run update` odświeża katalog (minuta lub dwie).
 - **drawOrder**: skonfigurowane warstwy z `catalogId` są rysowane w kolejności geoportal.gov.pl; gdy nie da się jej odczytać, obowiązuje `layers.drawOrder`.
-- **ortho**: data zdjęcia pod ortofotomapą i link do pobrania arkusza.
+- **ortho**: data zdjęcia pod ortofotomapą i link do pobrania arkusza. `service` to usługa kafli z `map.yaml`, która pokazuje zdjęcia: data pojawia się, gdy na ekranie jest rysowany przez nią podkład (domyślnie `orto`; `false` wyłącza tę część).
 - **parcelReport**: link w panelu informacji o miejscu do raportu o działce w geoportal.gov.pl.
 
 Wyszukiwarka GUGiK (`search.provider: gugik`) i wyszukiwarka działek (`search.parcel`) też wymagają modułu. Bez niego serwer nie ma jego tras, a strona nie łączy się bezpośrednio z żadnym serwerem GUGiK.
+
+Moduł ma własne katalogi: `src/modules/gugik/` (strona aplikacji, z napisami) i `server/modules/gugik/` (trasy, pamięć podręczna, reguły konfiguracji). Reszta aplikacji sięga do niego tylko przez dwa rejestry, `src/modules/index.ts` i `server/modules/index.ts`. Części modułu w aplikacji (wyszukiwarka, wyszukiwanie działki, części panelu miejsca) to osobne pliki, które przeglądarka pobiera tylko przy włączonym module, więc wdrożenie bez niego nigdy nie wczytuje jego kodu.
 
 ### Napisy modułu
 

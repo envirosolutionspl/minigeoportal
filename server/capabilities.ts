@@ -1,6 +1,6 @@
 import { XMLParser } from 'fast-xml-parser';
 import { fetchPublic, readLimited, serviceUrl } from './http.ts';
-import { fetchDrawOrder } from './modules/gugik/drawOrder.ts';
+import * as modules from './modules/index.ts';
 import { errorMessage } from './config.ts';
 import type { ClientConfig } from '../shared/config.ts';
 import type { CapabilitiesCache, RestMeta, ServiceMeta, TileMatrixMeta, WmsLayerMeta, WmsMeta, WmtsMeta } from '../src/services/meta.ts';
@@ -260,8 +260,8 @@ export async function buildCache(config: ClientConfig, previous?: CapabilitiesCa
         def.kind === 'wmts' ? [(async () => [def.id, await safely(() => wmtsCapabilities(def.url, crs, def.layer))] as const)()] : [],
       ),
     ]),
-    // The layer order of geoportal.gov.pl; when it cannot be read, the last good one is kept.
-    (config.modules.gugik?.drawOrder ? fetchDrawOrder(overlays) : Promise.resolve(undefined)).catch((e: unknown) => {
+    // A layer order from outside the configuration (the gugik module); when it cannot be read, the last good one is kept.
+    modules.drawOrder(config).catch((e: unknown) => {
       console.warn(`draw order: ${errorMessage(e)}`);
       return undefined;
     }),

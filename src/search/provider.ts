@@ -1,8 +1,8 @@
 import type { Extent } from '../../shared/config';
 
 /**
- * The search box asks one provider (app.yaml: search.provider): the GUGiK services, Nominatim
- * (OpenStreetMap) or none. Coordinates are understood whatever the provider (coordinates.ts).
+ * The search box asks one provider (app.yaml: search.provider), loaded with the app
+ * (src/modules/index.ts): Nominatim (OpenStreetMap), a module's own (gugik) or none. Coordinates are understood whatever the provider (coordinates.ts).
  */
 
 export type HitKind = 'address' | 'street' | 'place' | 'unit' | 'nature' | 'parcel' | 'point';
@@ -17,6 +17,8 @@ export interface SearchHit {
   wkt?: string;
   /** Area to show, for hits without a geometry that are too large for one point (a town). */
   extent?: Extent;
+  /** Scale denominator to show the hit at, when its kind's usual one does not fit (a parcel is small). */
+  scale?: number;
 }
 
 export interface SearchProvider {

@@ -28,7 +28,7 @@ modules:
     enabled: true
     catalog: true # every layer of geoportal.gov.pl in the layer list
     drawOrder: true # the drawing order of geoportal.gov.pl for the configured layers
-    ortho: true # the date and pixel size of the aerial photo at a clicked place
+    ortho: { service: orto } # the date and pixel size of the aerial photo at a clicked place
     parcelReport: true # a link to the parcel report of geoportal.gov.pl
 ```
 
@@ -36,10 +36,12 @@ It works in PL-1992 only: the configuration is refused when the module is enable
 
 - **catalog**: the server reads the configuration of geoportal.gov.pl (its layer list and groups), checks every service and keeps the result on disk; the layer list shows those layers by topic, and layers that cannot be shown here are listed greyed out with the reason. `npm run update` refreshes it (a minute or two).
 - **drawOrder**: configured layers with a `catalogId` follow the order geoportal.gov.pl draws them in; when it cannot be read, `layers.drawOrder` applies.
-- **ortho**: the date of the photo under the orthophoto map, with a link to download its sheet.
+- **ortho**: the date of the photo under the orthophoto map, with a link to download its sheet. `service` is the tile service of `map.yaml` that shows the photos: the date appears while a base map drawn by it is on screen (`orto` by default; `false` turns the part off).
 - **parcelReport**: a link in the place panel to the parcel report of geoportal.gov.pl.
 
 The GUGiK search (`search.provider: gugik`) and the parcel search (`search.parcel`) need the module too. Without it the server has none of its routes and the page connects to no GUGiK host directly.
+
+A module lives in its own directories: `src/modules/gugik/` (the app side, with its texts) and `server/modules/gugik/` (routes, caches, rules of the configuration). The rest of the app reaches it only through two registries, `src/modules/index.ts` and `server/modules/index.ts`. The app's parts of a module (the search, the parcel search, the parts of the place panel) are separate files the browser downloads only when the module is on, so a deployment without it never loads its code.
 
 ### Texts of the module
 

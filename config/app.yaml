@@ -72,5 +72,5 @@ modules:
     enabled: true
     catalog: true
     drawOrder: true
-    ortho: true
+    ortho: { service: orto } # the tile service of map.yaml that shows the aerial photos
     parcelReport: true

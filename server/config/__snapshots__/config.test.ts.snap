@@ -755,7 +755,9 @@ exports[`default configuration > stays what the app was built with (any change s
     "gugik": {
       "catalog": true,
       "drawOrder": true,
-      "ortho": true,
+      "ortho": {
+        "service": "orto",
+      },
       "parcelReport": true,
     },
   },

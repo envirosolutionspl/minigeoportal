@@ -35,12 +35,16 @@ describe('examples/osm', () => {
     expect(hit.label.replace(/\s/g, ' ')).toBe('Web Mercator X 2,338,455, Y 6,842,147 · 52.23180° N, 21.00670° E');
   });
 
-  it('searches with Nominatim after Enter, without the parcel search', async () => {
-    const { searchProvider } = await import('@/search');
+  it('searches with Nominatim after Enter, without the parcel search or any other part of the gugik module', async () => {
+    const { searchProvider, loadSearchProvider } = await import('@/search');
+    await loadSearchProvider();
     expect(searchProvider.instant).toBe(false);
     expect(searchProvider.placeholder).toBe('Address or place, Enter searches');
     expect(osm.search).toEqual({ provider: 'nominatim', parcel: false });
     expect(osm.modules).toEqual({});
+    const modules = await import('@/modules');
+    expect(modules.searchTool).toBeUndefined();
+    expect([...modules.infoHeader, ...modules.infoFooter]).toEqual([]);
   });
 
   it('builds its XYZ base map and the WMS overlay in Web Mercator', async () => {

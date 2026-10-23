@@ -6,6 +6,7 @@ import { LineCounter, parseDocument, isMap, isSeq, type Document, type Node as Y
 import type { ZodType } from 'zod';
 import { appSchema, layersSchema, mapSchema, type AppConfig } from './schema.ts';
 import { loadMessages } from './messages.ts';
+import * as modules from '../modules/index.ts';
 
 /**
  * Reads and checks the configuration directory. Every problem is reported with its file, line and
@@ -162,13 +163,8 @@ function crossCheck(
     if (a.report.locale && !a.locales.available.includes(a.report.locale)) {
       problems.push(`${at(app, 'app.yaml', ['report', 'locale'])} report.locale must be one of locales.available`);
     }
-    const gugik = a.modules.gugik?.enabled === true;
-    // GUGiK services, the parcel search and the photo index all work in PL-1992.
-    if (gugik && map.value && map.value.projection.code !== 'EPSG:2180')
-      problems.push(`${at(app, 'app.yaml', ['modules', 'gugik'])} modules.gugik needs map.yaml projection EPSG:2180`);
-    if (a.search.provider === 'gugik' && !gugik)
-      problems.push(`${at(app, 'app.yaml', ['search', 'provider'])} search.provider gugik needs modules.gugik.enabled`);
-    if (a.search.parcel && !gugik) problems.push(`${at(app, 'app.yaml', ['search', 'parcel'])} search.parcel needs modules.gugik.enabled`);
+    const parsed = { 'app.yaml': app, 'map.yaml': map, 'layers.yaml': layers };
+    for (const p of modules.validate(a, map.value)) problems.push(`${at(parsed[p.file], p.file, p.path)} ${p.message}`);
   }
 }
 
@@ -251,8 +247,7 @@ export function loadConfig(dir: string): AppConfig {
   const content = readContent(root, app, problems);
   const skin = readSkin(root, app, problems);
   const brand = readBrand(root, app, problems);
-  const modules = app.value?.modules.gugik?.enabled ? ['gugik'] : [];
-  const messages = app.value ? loadMessages(root, app.value.locales, problems, modules) : {};
+  const messages = app.value ? loadMessages(root, app.value.locales, problems, modules.enabled(app.value)) : {};
   if (problems.length || !app.value || !map.value || !layers.value) throw new ConfigError(problems);
   return { dir: root, app: app.value, map: map.value, layers: layers.value, content, skin, brand, messages };
 }

@@ -14,6 +14,9 @@ import { t } from '@/i18n';
  * it, so the map can zoom to it and outline it.
  */
 
+/** Parcel ids zoom closer than other objects: a parcel is small. */
+export const PARCEL_SCALE = 500;
+
 /** A hit with what this module needs to name and outline it. */
 export interface GugikHit extends SearchHit {
   /** 6-digit municipality TERYT code from the geocoder, used to name the units in `detail`. */
@@ -297,6 +300,7 @@ export async function findParcels(query: string, signal: AbortSignal): Promise<G
         label: t('search.parcelHit', { number: parcel }),
         detail: `obręb ${region}, gm. ${commune} · ${id}`,
         wkt: stripSrid(wkt),
+        scale: PARCEL_SCALE,
       },
     ];
   });

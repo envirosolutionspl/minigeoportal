@@ -4,7 +4,7 @@ A layer whose data has dates (orthophoto editions, plans in force in a given yea
 
 ## A dimension of one service
 
-A WMS or WMTS service that draws a given date when asked for it (`TIME=2020`, or another dimension `DIM_<name>`):
+A WMS or WMTS service that draws a given date when asked for it (`TIME=2020`, or another dimension `DIM_<name>`). `values: capabilities` works for WMS only; for WMTS give a list or a range:
 
 ```yaml
 time:
@@ -38,4 +38,4 @@ time:
       layer: ortho_2020
 ```
 
-Each edition has a `value` and, where it differs from the layer, its own `url` or `layer`. The layer's own `url` and sublayers show the newest edition.
+Each edition has a `value` and, where it differs from the layer, its own `url` or `layer`. The layer's own `url` and sublayers show the newest edition and are what the map draws today; the editions' `url` and `layer` wait for the view to choose one.

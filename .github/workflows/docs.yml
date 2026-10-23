@@ -1,0 +1,29 @@
+# Checks changes that build no image (documentation, examples, compose and proxy files): the
+# same checks as image.yml, so a field missing from the docs or a broken example still fails.
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    paths: ['README.md', 'docs/**', 'examples/**', '.env.example', 'compose*.yaml', 'deploy/**']
+  pull_request:
+    paths: ['README.md', 'docs/**', 'examples/**', '.env.example', 'compose*.yaml', 'deploy/**']
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run config:check examples/osm

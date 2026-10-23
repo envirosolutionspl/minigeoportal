@@ -1,6 +1,6 @@
 # Konfiguracja
 
-Wdrożenie to katalog z trzema plikami YAML: `app.yaml`, `map.yaml` i `layers.yaml`. Serwer czyta go z `CONFIG_DIR` (domyślnie `config`) i sprawdza każde pole; nieznane pola są błędem, więc literówka nie przejdzie niezauważona. Domyślne wdrożenie w `config/` i przykład w `examples/osm/` pokazują wszystkie pola w użyciu.
+Wdrożenie to katalog z trzema plikami YAML: `app.yaml`, `map.yaml` i `layers.yaml`. Serwer czyta go z `CONFIG_DIR` (domyślnie `config`) i sprawdza każde pole; nieznane pola są błędem, więc literówka nie przejdzie niezauważona. Domyślne wdrożenie w `config/` i przykład w `examples/osm/` pokazują większość pól w użyciu; pozostałe (`time`, `legend`, `search.nominatim.url` i `viewbox`, `skin`) opisuje ten dokument z przykładami.
 
 **Teksty.** Każde pole oznaczone jako _tekst_ to jeden napis albo napis dla każdego języka:
 
@@ -71,6 +71,47 @@ Każda warstwa z `overlays`:
 | `attribution`          | Źródło danych tej warstwy (_tekst_, linki Markdown dozwolone); w przeciwnym razie źródło mapy.                                                                                                                                                                                                        |
 | `sublayers`            | Warstwy usługi do wyboru, w kolejności listy: `name` (tak, jak nazywa ją usługa), `title` (_tekst_), `default` (`true` dla włączanych razem z warstwą) i `legend` (obraz legendy, opcjonalnie; w przeciwnym razie legenda z usługi). Zakresy skal i zapytania o punkt wynikają z capabilities usługi. |
 | `time`                 | Dla warstwy zmiennej w czasie, zob. [Warstwy zmienne w czasie](warstwy-czasowe.md).                                                                                                                                                                                                                   |
+
+### Warstwy każdego rodzaju
+
+Zakresy skal, legendy, formaty informacji o miejscu i wymiary czasu serwer odczytuje z capabilities usługi przy `npm run update` (i przy pierwszym starcie); w `layers.yaml` wystarczy adres i nazwy warstw.
+
+```yaml
+overlays:
+  # WMS: name to nazwa warstwy z GetCapabilities; informacja o miejscu przez GetFeatureInfo,
+  # gdy warstwa jest odpytywalna (queryable).
+  - id: plany
+    kind: wms
+    url: https://example.org/wms/plany
+    title: Plany miejscowe
+    topic: planowanie
+    sublayers:
+      - { name: strefy, title: Strefy, default: true }
+      - { name: granice, title: Granice planów }
+
+  # WMTS: usługa musi mieć zestaw macierzy kafli w układzie mapy (projection.code); warstwą WMTS
+  # jest pierwsza podwarstwa. Informacja o miejscu, gdy usługa podaje formaty GetFeatureInfo.
+  - id: orto2020
+    kind: wmts
+    url: https://example.org/wmts/orto
+    title: Ortofotomapa 2020
+    topic: teren
+    sublayers:
+      - { name: ORTO_2020, title: Zdjęcia 2020, default: true }
+
+  # ArcGIS REST (MapServer): name to numer warstwy usługi (0, 1, 2…); informacja o miejscu
+  # przez identify, gdy usługa ma możliwość Query.
+  - id: gleby
+    kind: rest
+    url: https://example.org/arcgis/rest/services/Gleby/MapServer
+    title: Mapa glebowa
+    topic: srodowisko
+    sublayers:
+      - { name: '2', title: Kompleksy, default: true }
+      - { name: '0', title: Granice }
+```
+
+Po dodaniu warstwy: `npm run config:check`, potem `npm run update` (albo restart), żeby serwer pobrał capabilities nowej usługi.
 
 ## Sprawdzanie konfiguracji
 

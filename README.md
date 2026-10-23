@@ -48,7 +48,7 @@ npm run dev                            # wdrożenie z config/
 CONFIG_DIR=examples/osm npm run dev    # inne wdrożenie
 ```
 
-`npm run dev` uruchamia aplikację (Vite, port 5173) i API (port 8787); oba przeładowują się po zmianach, także po zmianie konfiguracji.
+`npm run dev` uruchamia aplikację (Vite, port 5173) i API (port 8787); oba przeładowują się po zmianach kodu. Strona czyta konfigurację na nowo przy każdym wczytaniu, a API restartuje się sam po zmianach w `config/`; przy innym `CONFIG_DIR` API trzeba uruchomić ponownie.
 
 ## Własne wdrożenie krok po kroku
 
@@ -167,7 +167,7 @@ Opis każdego pola: [docs/pl/konfiguracja.md](docs/pl/konfiguracja.md); treści 
 
 ### Docker Compose (zalecane)
 
-Gotowy obraz publikuje GitHub Actions: `ghcr.io/envirosolutionspl/minigeoportal` (tagi `latest`, `sha-<commit>` i numery wersji) dla serwerów x86 (64-bit). Obraz powstaje tylko wtedy, gdy zmienia się coś, co do niego trafia; zmiany w dokumentacji go nie przebudowują. Serwer niczego nie buduje, tylko pobiera obraz.
+Gotowy obraz publikuje GitHub Actions: `ghcr.io/envirosolutionspl/minigeoportal` (tagi `latest`, `sha-<commit>` i numery wersji) dla serwerów x86 (64-bit). Obraz powstaje tylko wtedy, gdy zmienia się coś, co do niego trafia (także treści `config/content/*.md`); sama dokumentacja go nie przebudowuje, ale jest sprawdzana testami. Serwer niczego nie buduje, tylko pobiera obraz.
 
 1. Na serwerze sklonuj repozytorium (potrzebne są `compose.yaml`, `deploy/` i katalog konfiguracji) i umieść w nim swój katalog konfiguracji.
 2. W `compose.yaml` zamień montowany katalog `./config` na swój (w usługach `app` i `updater`): `- ./moja-mapa:/app/config:ro`.
@@ -190,7 +190,7 @@ Co uruchamia `compose.yaml`:
 | `app`     | Aplikacja i API (port 8787 w sieci Compose, niedostępny z zewnątrz), domyślnie 2 repliki z `SHARED_DATA=1` i `TRUSTED_PROXY=1`.                                       |
 | `updater` | Ten sam obraz; uruchamia `npm run update` przy starcie i potem co 24 godziny. Repliki wczytują nowe dane w ciągu minuty.                                              |
 
-Wolumeny: `data` (dane serwera, `/data` w kontenerach), `caddy-data` i `caddy-config` (certyfikaty Caddy). Konfiguracja jest montowana tylko do odczytu; po jej zmianie wystarczy `docker compose restart app updater`.
+Wolumeny: `data` (dane serwera, `/data` w kontenerach), `caddy-data` i `caddy-config` (certyfikaty Caddy). Konfiguracja jest montowana tylko do odczytu; po jej zmianie wystarczy `docker compose up -d --force-recreate app updater`.
 
 ### Docker za istniejącym proxy (nginx)
 
@@ -240,10 +240,10 @@ Ustawia się je w środowisku albo w pliku `.env` w katalogu aplikacji (wzór: `
 | `PORT`                                  | `8787`                                      | Port serwera.                                                                                                                    |
 | `HOST`                                  | `0.0.0.0` w produkcji, `127.0.0.1` poza nią | Adres nasłuchu. Za proxy na tej samej maszynie: `127.0.0.1`.                                                                     |
 | `NODE_ENV`                              |                                             | `production`: serwer udostępnia też zbudowaną aplikację z `dist/`.                                                               |
-| `APP_ORIGIN`                            |                                             | Publiczny adres aplikacji, np. `https://mapa.example.org`. Zgłoszenia mogą zawierać link tylko do niego; wymagany w produkcji.   |
+| `APP_ORIGIN`                            |                                             | Publiczny adres aplikacji, np. `https://mapa.example.org`. Zgłoszenia mogą zawierać link tylko do niego; bez niego są bez linku. |
 | `TRUSTED_PROXY`                         |                                             | `1` za reverse proxy dopisującym adres klienta do `X-Forwarded-For`; limity zapytań liczą się wtedy dla każdego klienta.         |
 | `SHARED_DATA`                           |                                             | `1`, gdy kilka instancji dzieli `DATA_DIR`: dane zapisuje tylko `npm run update`, instancje wczytują je ponownie w ciągu minuty. |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | `587`, STARTTLS                             | Serwer poczty dla formularza zgłoszeń (`SMTP_SECURE=true` dla portu 465).                                                        |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | `587`, STARTTLS                             | Serwer poczty dla formularza zgłoszeń; port 465 oznacza TLS od początku, `SMTP_SECURE` tylko to zmienia.                         |
 | `SMTP_USER`, `SMTP_PASS`                |                                             | Logowanie do serwera poczty. Tylko w `.env` lub w środowisku, nigdy w konfiguracji.                                              |
 | `REPORT_FROM`, `REPORT_TO`              |                                             | Nadawca (domyślnie `SMTP_USER`) i adresat zgłoszeń. Bez `SMTP_HOST`, `REPORT_TO` i nadawcy formularz jest wyłączony.             |
 | `API_PORT`                              | `8787`                                      | Tylko przy pracy nad aplikacją: gdzie serwer Vite znajduje API.                                                                  |
@@ -280,7 +280,7 @@ Punkty kontrolne serwera: `GET /api/health` (stan i data metadanych), `GET /api/
 - `server/`: lekki serwer (Hono) bez bazy danych: konfiguracja (`server/config/`), cache metadanych usług, pośrednik zapytań o punkt, wyszukiwarka Nominatim, wysyłka zgłoszeń.
 - `server/modules/gugik/` i `src/modules/gugik/`: opcjonalna integracja z geoportal.gov.pl: katalog wszystkich warstw geoportalu budowany z jego konfiguracji i sprawdzany usługa po usłudze, kolejność rysowania, słowniki wyszukiwarki działek, skorowidz ortofotomapy, wyszukiwarka GUGiK, link do raportu o działce.
 - `i18n/`: napisy interfejsu (pl, en); `skins/`: skórki dołączone do aplikacji.
-- `Dockerfile`, `compose.yaml`, `deploy/caddy/`: kontenery.
+- `Dockerfile`, `compose.yaml`, `deploy/caddy/`: kontenery z Caddy; `compose.proxy.yaml`, `deploy/nginx/`: wariant za istniejącym nginx.
 
 ## Jakość
 

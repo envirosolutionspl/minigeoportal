@@ -11,7 +11,7 @@ search:
 ```
 
 - **`gugik`**: adresy, miejscowości, jednostki administracyjne, rzeki, jeziora i szczyty oraz działki z usług Głównego Urzędu Geodezji i Kartografii. Wyniki pojawiają się podczas pisania; wybrany adres jest obrysowywany razem z budynkiem, miejscowość z granicą. Wymaga modułu `gugik`.
-- **`nominatim`**: miejsca i adresy z OpenStreetMap. Serwer pyta Nominatim w imieniu wszystkich, zgodnie z [zasadami korzystania](https://operations.osmfoundation.org/policies/nominatim/): najwyżej jedno zapytanie na sekundę dla całego serwisu, aplikacja przedstawiona w User-Agent, odpowiedzi zapamiętywane (to samo wyszukiwanie za drugim razem nic nie kosztuje). Dlatego szuka po naciśnięciu Enter, a nie podczas pisania. Zbyt długa kolejka odpowiada „spróbuj za chwilę”. Przy dużym ruchu warto mieć własny serwer Nominatim i ustawić `search.nominatim.url`. `countryCodes` ogranicza wyniki do wybranych krajów, `viewbox` stawia na początku wyniki z danego obszaru.
+- **`nominatim`**: miejsca i adresy z OpenStreetMap. Serwer pyta Nominatim w imieniu wszystkich, zgodnie z [zasadami korzystania](https://operations.osmfoundation.org/policies/nominatim/): najwyżej jedno zapytanie na sekundę dla całego serwisu, aplikacja przedstawiona w User-Agent, odpowiedzi zapamiętywane (to samo wyszukiwanie za drugim razem nic nie kosztuje). Dlatego szuka po naciśnięciu Enter, a nie podczas pisania. Przy zbyt długiej kolejce serwer odpowiada 503, a lista wyników zostaje pusta. Przy dużym ruchu warto mieć własny serwer Nominatim i ustawić `search.nominatim.url`. `countryCodes` ogranicza wyniki do wybranych krajów, `viewbox` stawia na początku wyniki z danego obszaru.
 - **`none`**: bez usługi wyszukiwania.
 
 Przy każdym dostawcy pole rozumie współrzędne: szerokość i długość geograficzną (`52.2318, 21.0067` albo `52,2318 21,0067`) albo punkt w układzie mapy zapisany tak, jak zapisują go jego użytkownicy (w PL-1992 najpierw X, czyli northing: `486980 637000`).
@@ -34,7 +34,7 @@ modules:
 
 Działa tylko w PL-1992: konfiguracja jest odrzucana, gdy moduł jest włączony przy innym `projection.code`.
 
-- **catalog**: serwer czyta konfigurację geoportal.gov.pl (listę warstw i grupy), sprawdza każdą usługę i zapisuje wynik na dysku; lista warstw pokazuje je według tematów, a warstwy, których nie da się tu pokazać, są na liście wyszarzone z wyjaśnieniem. `npm run update` odświeża katalog (minuta lub dwie).
+- **catalog**: serwer czyta konfigurację geoportal.gov.pl (listę warstw i grupy), sprawdza każdą usługę (po sześć naraz) i zapisuje wynik na dysku (`<DATA_DIR>/catalog/catalog.json`); lista warstw pokazuje je według tematów, a warstwy, których nie da się tu pokazać, są na liście wyszarzone z wyjaśnieniem. `npm run update` odświeża katalog (minuta lub dwie). Pojedynczy serwer buduje go w tle przy pierwszym starcie, a do tego czasu `/api/catalog` odpowiada 503 i lista pokazuje tylko warstwy z `layers.yaml`; repliki z `SHARED_DATA=1` czekają na proces aktualizujący. Katalog przydziela warstwy do tematów o identyfikatorach `dzialki`, `planowanie`, `ceny`, `uzbrojenie`, `granice`, `teren`, `srodowisko`, `zagrozenia`, `zabytki`, `archiwalne`, `pobieranie`, `geodezja` i `inne`, więc `layers.yaml` musi je zdefiniować w `topics`.
 - **drawOrder**: skonfigurowane warstwy z `catalogId` są rysowane w kolejności geoportal.gov.pl; gdy nie da się jej odczytać, obowiązuje `layers.drawOrder`.
 - **ortho**: data zdjęcia pod ortofotomapą i link do pobrania arkusza.
 - **parcelReport**: link w panelu informacji o miejscu do raportu o działce w geoportal.gov.pl.

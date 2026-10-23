@@ -4,7 +4,7 @@
 
 ```bash
 npm install
-npm run dev # aplikacja i API, odświeżane przy zmianach
+npm run dev # aplikacja i API, odświeżane przy zmianach kodu
 CONFIG_DIR=examples/osm npm run dev # inne wdrożenie
 ```
 
@@ -46,11 +46,19 @@ Na serwerze, którego własny nginx lub Apache obsługuje kilka serwisów, `comp
 
 Własną konfigurację podłącza się, zastępując w `compose.yaml` montowany katalog `./config` swoim. Ustawienia poczty i inne sekrety trafiają do `.env` obok `compose.yaml`; plik jest opcjonalny.
 
-Obraz publikuje GitHub Actions jako `ghcr.io/envirosolutionspl/minigeoportal` (tagi `latest`, `sha-<commit>` i numery wersji) dla serwerów x86 (64-bit). Powstaje tylko wtedy, gdy zmienia się coś, co do niego trafia; zmiany w dokumentacji go nie przebudowują. Obraz działa bez uprawnień roota, nie potrzebuje w działaniu narzędzi do budowania i poprawnie kończy pracę na SIGTERM. Samodzielnie:
+Obraz publikuje GitHub Actions jako `ghcr.io/envirosolutionspl/minigeoportal` (tagi `latest`, `sha-<commit>` i numery wersji) dla serwerów x86 (64-bit). Powstaje tylko wtedy, gdy zmienia się coś, co do niego trafia (także treści `config/content/*.md`); sama dokumentacja go nie przebudowuje, ale jest sprawdzana testami. Obraz działa bez uprawnień roota, nie potrzebuje w działaniu narzędzi do budowania i poprawnie kończy pracę na SIGTERM. Samodzielnie:
 
 ```bash
 docker run -p 8787:8787 -v minigeoportal-data:/data ghcr.io/envirosolutionspl/minigeoportal
 ```
+
+## Działanie serwera
+
+- **Limity zapytań** na adres klienta (IPv6 liczone po /64): informacja o miejscu 40 naraz i 60 na minutę, słowniki działek 30 i 60, skorowidz ortofotomapy 10 i 30, Nominatim 10 i 30, zgłoszenia 3 naraz i potem jedno na 10 minut. Do usług źródłowych serwer otwiera najwyżej 24 połączenia naraz, ponad to odpowiada 503. Limity liczy każda instancja osobno; Caddy kieruje jednego odwiedzającego zawsze do tej samej repliki. Za proxy ustaw `TRUSTED_PROXY=1`, inaczej wszyscy dzielą limit adresu proxy.
+- **Content Security Policy**: skrypty, style i czcionki tylko z serwisu, obrazy z dowolnego adresu https (kafle i obrazy usług), połączenia tylko do serwisu (i usług wyszukiwarki GUGiK, gdy moduł jest włączony). `frame-ancestors 'none'`: strony nie da się osadzić w ramce na innej stronie.
+- **Konfiguracja w kontenerze** jest w `/app/config`, tylko do odczytu; może zawierać `skins/`, `i18n/`, `content/` i `seed/`. Dane są w `/data` i są tylko pamięcią podręczną: wolumen można wyczyścić, serwer odbuduje je sam.
+- **Punkty kontrolne**: `GET /api/health` (`{ ok, capabilitiesGeneratedAt }`), `GET /api/report` (`{ enabled }`: czy formularz zgłoszeń działa), `GET /api/capabilities`, `GET /api/catalog` (moduł gugik).
+- **Logi**: na standardowym wyjściu; błędy usług źródłowych i powody wyłączenia formularza zgłoszeń (brak serwera poczty, nadawcy, `APP_ORIGIN`). Na SIGTERM serwer kończy trwające zapytania, najdłużej 10 sekund.
 
 ## Zmienne środowiskowe
 

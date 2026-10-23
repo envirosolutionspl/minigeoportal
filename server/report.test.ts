@@ -91,6 +91,48 @@ describe('POST /api/report', () => {
     expect(send).toHaveBeenCalledWith(valid, { userAgent: 'Test' });
   });
 
+  it('takes reports only from the app’s own page: JSON, and no other site in Sec-Fetch-Site', async () => {
+    const send = vi.fn<Mailer['send']>(async () => {});
+    const app = createApp({
+      site,
+      cache: () => CACHE,
+      mailer: { send },
+      origin: ORIGIN,
+      limits: { dict: [1, 1], featureInfo: [1, 1], report: [20, 60] },
+    });
+    // A form on another site can post only text/plain, form-urlencoded or multipart without a preflight.
+    for (const type of ['text/plain', 'application/x-www-form-urlencoded', 'multipart/form-data; boundary=x']) {
+      expect((await post(app, valid, { 'content-type': type })).status).toBe(403);
+    }
+    expect((await post(app, valid, { 'sec-fetch-site': 'cross-site' })).status).toBe(403);
+    expect((await post(app, valid, { 'sec-fetch-site': 'same-site' })).status).toBe(403);
+    expect(send).not.toHaveBeenCalled();
+    // The page itself, a typed request (none) and clients that send no such header pass.
+    for (const from of ['same-origin', 'none']) expect((await post(app, valid, { 'sec-fetch-site': from })).status).toBe(200);
+    expect((await post(app, valid, { 'content-type': 'application/json; charset=utf-8' })).status).toBe(200);
+    expect(send).toHaveBeenCalledTimes(3);
+  });
+
+  it('links to the map view only in the app’s own address; without APP_ORIGIN only from the machine itself', async () => {
+    const send = vi.fn<Mailer['send']>(async () => {});
+    const limits: { dict: [number, number]; featureInfo: [number, number]; report: [number, number] } = {
+      dict: [1, 1],
+      featureInfo: [1, 1],
+      report: [20, 60],
+    };
+    const bare = createApp({ site, cache: () => CACHE, mailer: { send }, limits });
+    // From the internet the page's Origin proves nothing: the link is dropped.
+    await post(bare, valid, { origin: ORIGIN });
+    expect(send.mock.lastCall![0].view).toBeUndefined();
+    // In development, from the same machine, the page's own Origin stands in for APP_ORIGIN.
+    await bare.request(
+      '/api/report',
+      { method: 'POST', body: JSON.stringify(valid), headers: { 'content-type': 'application/json', origin: ORIGIN } },
+      { incoming: { socket: { remoteAddress: '127.0.0.1', remoteFamily: 'IPv4', remotePort: 1 } } },
+    );
+    expect(send.mock.lastCall![0].view).toBe(valid.view);
+  });
+
   it('answers 400 for invalid input, 503 when off, 502 when mail fails, 413 for big bodies', async () => {
     const failing = createApp({
       site,

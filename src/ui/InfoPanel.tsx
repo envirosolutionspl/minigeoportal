@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Bug, Camera, Download, ExternalLink, FileText, Layers, LoaderCircle, MapPin, X } from 'lucide-react';
-import { formatCoordinate } from '@/map/format';
+import { dateText, formatCoordinate } from '@/map/format';
 import { config } from '@/config/runtime';
 import { parcelReportUrl } from '@/modules/gugik/parcelReport';
 import { overlayDef } from '@/services/catalog';
@@ -8,7 +8,7 @@ import type { InfoRecord } from '@/services/featureinfo';
 import { useInfoStore, type InfoResult } from '@/state/info';
 import { useMapStore } from '@/state/store';
 import { useReport } from './ReportDialog';
-import { dateText, orthoAt, pixelText, type OrthoInfo } from '@/services/ortho';
+import { orthoAt, pixelText, type OrthoInfo } from '@/modules/gugik/ortho';
 import { locale, t } from '@/i18n';
 
 /** Results of a map click: one section per queried overlay. */
@@ -108,8 +108,8 @@ function ServiceResult({ id, result }: { id: string; result: InfoResult | undefi
         <p className="text-sm text-[var(--muted)]">
           {t('info.error')}{' '}
           {config.links.fallbackMap && (
-            <a href={config.links.fallbackMap} target="_blank" rel="noopener" className="text-[var(--accent)] underline">
-              {t('info.checkFallback', { name: t('layers.fallbackName') })}
+            <a href={config.links.fallbackMap.url} target="_blank" rel="noopener" className="text-[var(--accent)] underline">
+              {t('info.checkFallback', { name: config.links.fallbackMap.name })}
             </a>
           )}
         </p>

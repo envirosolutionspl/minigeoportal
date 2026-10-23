@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { TopBar } from './TopBar';
 import { useMapStore } from '@/state/store';
-import { clearUnitNames } from '@/services/units';
+import { clearUnitNames } from '@/modules/gugik/units';
 import { stubFetch } from '@/test/helpers';
 
 const UUG = {

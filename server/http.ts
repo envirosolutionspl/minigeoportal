@@ -224,7 +224,7 @@ export function rateLimit(burst: number, perMinute: number, maxClients = 20000):
   setInterval(() => sweep(10 * 60000), 5 * 60000).unref();
   const refuse = (c: Context) => {
     c.header('Retry-After', '10');
-    return c.text('Za dużo zapytań, spróbuj za chwilę.', 429);
+    return c.text('Too many requests', 429);
   };
 
   return async (c, next) => {

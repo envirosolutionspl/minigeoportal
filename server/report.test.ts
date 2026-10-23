@@ -20,7 +20,7 @@ describe('parseReport', () => {
 
   it('rejects unknown categories, too short or long messages and bad e-mails', () => {
     expect(() => parseReport({ ...valid, category: 'toString' }, ORIGIN, defaults)).toThrow(RequestError);
-    expect(() => parseReport({ ...valid, message: 'krótko' }, ORIGIN, defaults)).toThrow(/od 10 do 3000/);
+    expect(() => parseReport({ ...valid, message: 'krótko' }, ORIGIN, defaults)).toThrow(/10 to 3000/);
     expect(() => parseReport({ ...valid, message: 'x'.repeat(3001) }, ORIGIN, defaults)).toThrow(RequestError);
     expect(() => parseReport({ ...valid, email: 'a@b\nBcc: x@y.pl' }, ORIGIN, defaults)).toThrow(/e-mail/);
     expect(() => parseReport(null, ORIGIN, defaults)).toThrow(RequestError);

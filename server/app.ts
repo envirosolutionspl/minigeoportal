@@ -106,10 +106,10 @@ export function createApp({ site, cache, mailer, origin, catalog, limits }: AppO
     return revalidated(c, current.generatedAt, () => current);
   });
 
-  /** Upstream errors are logged here and reported to the client in one generic sentence. */
+  /** Upstream errors are logged here and reported to the client in one generic sentence; the app shows its own text. */
   const upstreamFailure = (c: Context, where: string, e: unknown) => {
     console.warn(`${where}: ${errorMessage(e)}`);
-    return c.text('Usługa źródłowa nie odpowiada. Spróbuj ponownie za chwilę.', 502);
+    return c.text('Upstream service unavailable', 502);
   };
 
   const dictionary = (load: (parent: string) => Promise<DictEntry[]>) => async (c: Context) => {
@@ -167,7 +167,7 @@ export function createApp({ site, cache, mailer, origin, catalog, limits }: AppO
           c.req.raw.signal,
         ),
       );
-      if (!result) return c.text('Serwer jest zajęty, spróbuj za chwilę.', 503);
+      if (!result) return c.text('Busy, try again shortly', 503);
       // Upstream markup is returned as plain text and parsed by the app; it is never rendered as a page.
       c.header('Content-Type', 'text/plain; charset=utf-8');
       c.header('X-Upstream-Content-Type', result.contentType);
@@ -221,7 +221,7 @@ export function createApp({ site, cache, mailer, origin, catalog, limits }: AppO
     let index: { of: Catalog; body: ReturnType<typeof catalogIndex> } | undefined;
     app.get('/api/catalog', (c) => {
       const current = catalog?.();
-      if (!current) return c.text('Katalog warstw jest w przygotowaniu, spróbuj za chwilę.', 503);
+      if (!current) return c.text('Catalog not ready yet', 503);
       // The index is built once per catalog, not per request.
       if (index?.of !== current) index = { of: current, body: catalogIndex(current) };
       return revalidated(c, current.generatedAt, () => index!.body);
@@ -243,7 +243,7 @@ export function createApp({ site, cache, mailer, origin, catalog, limits }: AppO
     app.get('/api/orto', async (c) => {
       try {
         const info = await upstream(() => orthoAt(c.req.query('x'), c.req.query('y'), c.req.raw.signal));
-        if (!info) return c.text('Serwer jest zajęty, spróbuj za chwilę.', 503);
+        if (!info) return c.text('Busy, try again shortly', 503);
         c.header('Cache-Control', 'public, max-age=86400');
         return c.json(info);
       } catch (e) {
@@ -263,7 +263,7 @@ export function createApp({ site, cache, mailer, origin, catalog, limits }: AppO
       if (q.trim().length < 3) return c.json([]);
       try {
         const hits = await places(q, site.locale(c));
-        if (!hits) return c.text('Wyszukiwarka jest zajęta, spróbuj za chwilę.', 503);
+        if (!hits) return c.text('Busy, try again shortly', 503);
         c.header('Cache-Control', 'public, max-age=86400');
         return c.json(hits);
       } catch (e) {
@@ -277,9 +277,9 @@ export function createApp({ site, cache, mailer, origin, catalog, limits }: AppO
   app.post(
     '/api/report',
     rateLimit(...(limits?.report ?? [3, 0.1])),
-    bodyLimit({ maxSize: 16 * 1024, onError: (c) => c.text('Zgłoszenie jest za długie', 413) }),
+    bodyLimit({ maxSize: 16 * 1024, onError: (c) => c.text('Report too long', 413) }),
     async (c) => {
-      if (!mailer) return c.text('Formularz zgłoszeń jest wyłączony.', 503);
+      if (!mailer) return c.text('Reports are off', 503);
       // Only the app's own page sends JSON: a form on another site cannot post a report
       // (a JSON body needs a CORS preflight, which no other origin passes).
       const from = c.req.header('sec-fetch-site');
@@ -296,7 +296,7 @@ export function createApp({ site, cache, mailer, origin, catalog, limits }: AppO
         // The message for people reading the API, the code for the form, which translates it.
         if (e instanceof RequestError) return c.json({ error: e.code ?? 'invalid', message: e.message }, 400);
         console.warn(`report: ${errorMessage(e)}`);
-        return c.text('Nie udało się wysłać zgłoszenia. Spróbuj ponownie później.', 502);
+        return c.text('Report could not be sent', 502);
       }
     },
   );

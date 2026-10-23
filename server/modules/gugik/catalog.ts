@@ -3,7 +3,7 @@ import type { Overlay } from '../../../shared/config.ts';
 import type { CatalogEntry, CatalogIndex, CatalogMeta, CatalogStatus } from '../../../src/services/catalogTypes.ts';
 import { catalogSublayers } from '../../../src/services/catalogSublayers.ts';
 import { normalize } from '../../../src/services/text.ts';
-import { PL1992, serviceCapabilities } from '../../capabilities.ts';
+import { serviceCapabilities, type MapCrs } from '../../capabilities.ts';
 import { fetchGeoportalConfig, type ConfigService, type GeoportalConfig } from './geoportalConfig.ts';
 import { dataPath, errorMessage } from '../../config.ts';
 import { writeAtomic } from '../../files.ts';
@@ -191,6 +191,9 @@ export function failureStatus(error: unknown): { status: CatalogStatus; detail: 
   if (/HTTP 40[13]/.test(message)) return { status: 'refused', detail: message };
   return { status: 'down', detail: code ?? message.slice(0, 120) };
 }
+
+/** PL-1992, the system of geoportal.gov.pl and every service of its catalog. */
+const PL1992: MapCrs = { code: 'EPSG:2180', axisOrientation: 'neu' };
 
 const capabilities = (e: Pick<CatalogEntry, 'kind' | 'url' | 'layer'>): Promise<CatalogMeta> => serviceCapabilities(e, PL1992);
 

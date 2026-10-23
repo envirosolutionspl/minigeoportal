@@ -189,6 +189,11 @@ export function PrintSheet() {
       return url ? [{ key: `${def.id}-${name}`, url, label: sublayer?.title ?? name }] : [];
     }),
   );
+  // Credits of what is printed, as the attribution on screen: the base map's and each layer's own.
+  const baseMap = config.map.baseMaps.find((b) => b.id === base);
+  const sources = [
+    ...new Set([...(baseMap ? [config.map.attribution] : []), ...layers.map(({ def }) => def.attribution ?? config.map.attribution)]),
+  ];
 
   return (
     <div id="print-sheet" aria-hidden="true" style={SHEET_VARS}>
@@ -200,7 +205,8 @@ export function PrintSheet() {
       </header>
       <div className="print-frame" style={layout ? ({ '--print-zoom': layout.zoom } as React.CSSProperties) : undefined}>
         <div id="print-map" />
-        <span className="print-source">{t('print.source')}</span>
+        {/* Credits are links only, escaped by the server (creditHtml). */}
+        {sources.length > 0 && <span className="print-source" dangerouslySetInnerHTML={{ __html: sources.join(' · ') }} />}
       </div>
       {request && (
         <footer className="print-footer">
@@ -209,7 +215,7 @@ export function PrintSheet() {
             {t('print.center')} {center && formatCoordinate(center)}
           </p>
           <p>
-            {t('print.base', { title: config.map.baseMaps.find((b) => b.id === base)?.title ?? t('print.noBase') })}
+            {t('print.base', { title: baseMap?.title ?? t('print.noBase') })}
             {layers.length > 0 && ` · ${t('print.layers', { titles: layers.map(({ def }) => def.title).join(', ') })}`}
           </p>
           {legends.length > 0 && (

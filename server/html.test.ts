@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
-import { GUGIK_SEARCH_HOSTS, connectSources, pickLocale, renderPage, scriptJson } from './html.ts';
+import { connectSources, pickLocale, renderPage, scriptJson } from './html.ts';
+import { GUGIK_SEARCH_HOSTS } from './modules/gugik/searchHosts.ts';
 import { defaults } from './testSite.ts';
 
 const TEMPLATE = `<!doctype html>

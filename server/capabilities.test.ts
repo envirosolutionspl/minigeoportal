@@ -2,9 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 
 // Upstream hosts resolve to a public address, so the address check lets them through.
 vi.mock('node:dns/promises', () => ({ lookup: vi.fn(async () => [{ address: '203.0.113.10', family: 4 }]) }));
-import { PL1992, arcgisCapabilities, buildCache, wmtsCapabilities } from './capabilities.ts';
+import { arcgisCapabilities, buildCache, wmtsCapabilities, type MapCrs } from './capabilities.ts';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
 import { defaults } from './testSite.ts';
+
+const PL1992: MapCrs = { code: 'EPSG:2180', axisOrientation: 'neu' };
 
 const WMS = `<?xml version="1.0"?>
 <WMS_Capabilities xmlns="http://www.opengis.net/wms">

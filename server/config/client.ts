@@ -94,7 +94,15 @@ export function clientConfig({ app, map, layers, content, messages }: AppConfig,
       drawOrder: layers.drawOrder ?? layers.overlays.map((o) => o.id),
     },
     search: { provider: app.search.provider, parcel: app.search.parcel },
-    links: app.links,
+    links: app.links.fallbackMap
+      ? {
+          fallbackMap: {
+            url: app.links.fallbackMap,
+            // Without a name the link is called after its host: mapy.example.org.
+            name: app.links.fallbackName ? t(app.links.fallbackName) : new URL(app.links.fallbackMap).hostname.replace(/^www\./, ''),
+          },
+        }
+      : {},
     report: { categories: app.report.categories.map((c) => ({ id: c.id, label: t(c.label) })) },
     modules: app.modules.gugik?.enabled
       ? {

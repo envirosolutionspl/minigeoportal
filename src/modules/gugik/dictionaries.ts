@@ -1,7 +1,7 @@
-import { findParcels } from '@/modules/gugik/geocoder';
+import { findParcels } from './geocoder';
 import type { SearchHit } from '@/search/provider';
 
-/** Administrative dictionaries served and cached by the backend (server/dictionaries.ts). */
+/** Administrative dictionaries served and cached by the backend (server/modules/gugik/dictionaries.ts). */
 export interface DictEntry {
   /** TERYT code as ULDK expects it in parcel ids: 14, 1417, 141708_2, 141708_2.0021. */
   id: string;

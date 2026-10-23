@@ -38,7 +38,7 @@ describe('ReportDialog', () => {
     expect(send.disabled).toBe(true);
     fireEvent.change(screen.getByLabelText('Opis problemu'), { target: { value: 'Coś nie działa dobrze.' } });
     expect(send.disabled).toBe(false);
-    stubFetch([[/\/api\/report$/, { error: 'email', message: 'Nieprawidłowy adres e-mail' }, { status: 400 }]]);
+    stubFetch([[/\/api\/report$/, { error: 'email', message: 'Invalid e-mail address' }, { status: 400 }]]);
     fireEvent.click(send);
     expect(await screen.findByText('Nieprawidłowy adres e-mail.')).toBeTruthy();
   });

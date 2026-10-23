@@ -30,9 +30,3 @@ export async function orthoAt([x, y]: [number, number], signal: AbortSignal): Pr
 
 /** "5 cm", "25 cm", "1 m". */
 export const pixelText = (metres: number) => (metres < 1 ? `${Math.round(metres * 100)} cm` : `${metres.toLocaleString(locale())} m`);
-
-/** "2025-04-27" as the language writes dates: 27.04.2025 in Polish, 04/27/2025 in English. */
-export const dateText = (iso: string) =>
-  new Intl.DateTimeFormat(locale(), { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }).format(
-    new Date(`${iso}T00:00:00Z`),
-  );

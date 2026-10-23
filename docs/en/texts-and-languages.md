@@ -35,6 +35,14 @@ layers:
   popular: Start here
 ```
 
+The same way a deployment gives readable names to technical fields in the answers of its services (`info.fields`, keyed by the field name) and names its data source in the footer of a printout (`print.note`); the default configuration does this for the GUGiK services in `config/i18n/`:
+
+```yaml
+info:
+  fields:
+    opis_oznac: Designation
+```
+
 `{name}` in a text is filled in by the app. Texts that depend on a number have a form per plural category of the language (`one`, `few`, `many`, `other`, as `Intl.PluralRules` names them); English needs `one` and `other`, Polish also `few` and `many`:
 
 ```yaml

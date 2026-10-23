@@ -162,7 +162,8 @@ export interface ClientConfig {
     drawOrder: string[];
   };
   search: { provider: 'gugik' | 'nominatim' | 'none'; parcel: boolean };
-  links: { fallbackMap?: string };
+  /** Another map to send people to when a layer cannot be shown here. */
+  links: { fallbackMap?: { url: string; name: string } };
   report: { categories: { id: string; label: string }[] };
   modules: {
     gugik?: { catalog: boolean; drawOrder: boolean; ortho: boolean; parcelReport: boolean };

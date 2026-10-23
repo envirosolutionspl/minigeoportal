@@ -11,6 +11,10 @@ const four = new Intl.NumberFormat(config.locale, { maximumFractionDigits: 4 });
 
 /** Scale denominator as shown to people: 1:10 000. */
 export const scaleText = (scale: number) => `1:${int.format(scale)}`;
+
+const day = new Intl.DateTimeFormat(config.locale, { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+/** "2025-04-27" as the language writes dates: 27.04.2025 in Polish, 04/27/2025 in English. */
+export const dateText = (iso: string) => day.format(new Date(`${iso}T00:00:00Z`));
 const deg = new Intl.NumberFormat(config.locale, { minimumFractionDigits: 5, maximumFractionDigits: 5 });
 
 const SYSTEM = config.map.projection.name;

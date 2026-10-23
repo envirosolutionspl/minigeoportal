@@ -63,7 +63,7 @@ export const appSchema = z.strictObject({
         .optional(),
     })
     .default({}),
-  links: z.strictObject({ fallbackMap: url.optional() }).default({}),
+  links: z.strictObject({ fallbackMap: url.optional(), fallbackName: text.optional() }).default({}),
   report: z.strictObject({
     categories: z.array(z.strictObject({ id, label: text })).min(1),
   }),

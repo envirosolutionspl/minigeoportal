@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { LoaderCircle, SquareDashed, X } from 'lucide-react';
-import { dictionary, parcelInPrecinct, type DictEntry, type DictLevel } from '@/services/dictionaries';
+import { dictionary, parcelInPrecinct, type DictEntry, type DictLevel } from './dictionaries';
 import type { SearchHit } from '@/search/provider';
 import { useMapStore } from '@/state/store';
 import { zoomForScale } from '@/map/projection';

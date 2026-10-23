@@ -38,23 +38,23 @@ const clean = (s: string) => s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\
  * such a report is accepted silently but not sent (returns null).
  */
 export function parseReport(body: unknown, appOrigin: string, form: ReportForm): Report | null {
-  if (!body || typeof body !== 'object') throw new RequestError('Nieprawidłowe zgłoszenie', 'invalid');
+  if (!body || typeof body !== 'object') throw new RequestError('Invalid report', 'invalid');
   const b = body as Record<string, unknown>;
   if (typeof b.website === 'string' && b.website !== '') return null;
 
   const category = b.category;
   if (typeof category !== 'string' || !form.report.categories.some((c) => c.id === category))
-    throw new RequestError('Wybierz rodzaj zgłoszenia', 'category');
+    throw new RequestError('Unknown category', 'category');
 
   const message = typeof b.message === 'string' ? clean(b.message) : '';
   if (message.length < MESSAGE.min || message.length > MESSAGE.max) {
-    throw new RequestError(`Opis powinien mieć od ${MESSAGE.min} do ${MESSAGE.max} znaków`, 'message');
+    throw new RequestError(`Message must have ${MESSAGE.min} to ${MESSAGE.max} characters`, 'message');
   }
 
   let email: string | undefined;
   if (typeof b.email === 'string' && b.email.trim() !== '') {
     email = b.email.trim();
-    if (email.length > EMAIL_MAX || !EMAIL.test(email)) throw new RequestError('Nieprawidłowy adres e-mail', 'email');
+    if (email.length > EMAIL_MAX || !EMAIL.test(email)) throw new RequestError('Invalid e-mail address', 'email');
   }
 
   // Only a link to this app is kept, so the mail cannot carry arbitrary links.

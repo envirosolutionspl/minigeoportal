@@ -33,8 +33,10 @@ locales:
   available: [pl, en]
 
 links:
-  # Where to send people when a layer cannot be shown here.
+  # Where to send people when a layer cannot be shown here, and what to call it in links
+  # (without a name: the host of the address).
   fallbackMap: https://mapy.geoportal.gov.pl/imap/Imgp_2.html
+  fallbackName: geoportal.gov.pl
 
 report:
   # Kinds of problems people can choose in the bug report form.

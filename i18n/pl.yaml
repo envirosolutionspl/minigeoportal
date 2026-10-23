@@ -102,7 +102,6 @@ layers:
   serviceLayers: 'Warstwy usługi: {title}'
   failed: Nie udało się wczytać tej warstwy. Spróbuj później
   failedFallback: albo zobacz ją w
-  fallbackName: geoportal.gov.pl
   whyDegraded: Dlaczego dane się nie wczytują?
   whyBlocked: Niedostępna u nas. Dlaczego?
   serverAnswer: 'Odpowiedź serwera: {detail}.'
@@ -178,13 +177,12 @@ print:
   preparingStatus: Przygotowuję wydruk, wczytuję mapę.
   print: Drukuj
   defaultTitle: Mapa
-  source: 'Warstwy mapy: geoportal.gov.pl (GUGiK)'
   scaleLine: Skala {scale}
   center: 'środek:'
   base: 'Podkład: {title}'
   noBase: brak
   layers: 'Warstwy: {titles}'
-  note: 'Źródło warstw mapy: geoportal.gov.pl (Główny Urząd Geodezji i Kartografii) oraz udostępniane przez niego usługi starostw, gmin i innych instytucji. Mapa poglądowa, nie jest dokumentem urzędowym. Układ współrzędnych {system} ({code}).'
+  note: 'Mapa poglądowa, nie jest dokumentem urzędowym. Układ współrzędnych {system} ({code}).'
 
 report:
   title: Zgłoś błąd w serwisie

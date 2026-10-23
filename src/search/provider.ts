@@ -1,5 +1,4 @@
 import type { Extent } from '../../shared/config';
-import type { UnitLevel } from '@/services/units';
 
 /**
  * The search box asks one provider (app.yaml: search.provider): the GUGiK services, Nominatim
@@ -18,12 +17,6 @@ export interface SearchHit {
   wkt?: string;
   /** Area to show, for hits without a geometry that are too large for one point (a town). */
   extent?: Extent;
-  /** GUGiK: 6-digit municipality TERYT code from the geocoder, used to name the units in `detail`. */
-  teryt?: string;
-  /** GUGiK: a town (miasto), listed before villages, units and objects of a similar name. */
-  town?: boolean;
-  /** GUGiK: administrative unit; its boundary is fetched when the hit is chosen. */
-  unit?: { level: UnitLevel; teryt: string; name: string };
 }
 
 export interface SearchProvider {

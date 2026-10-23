@@ -148,7 +148,7 @@ describe('LayerCatalog', () => {
   });
 
   it('says when the full list is still being prepared', async () => {
-    stubFetch([['/api/catalog', 'w przygotowaniu', { status: 503 }]]);
+    stubFetch([['/api/catalog', 'Catalog not ready yet', { status: 503 }]]);
     render(<LayerCatalog />);
     expect(await screen.findByText(/jest w przygotowaniu/)).toBeTruthy();
     expect(screen.getByLabelText('Plany ogólne gmin (POG)')).toBeTruthy();

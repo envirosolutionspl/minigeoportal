@@ -4,6 +4,7 @@ import type { ClientConfig } from '../shared/config.ts';
 import { clientConfig } from './config/client.ts';
 import { escapeHtml } from './config/markdown.ts';
 import type { AppConfig } from './config/schema.ts';
+import { GUGIK_SEARCH_HOSTS } from './modules/gugik/searchHosts.ts';
 
 /**
  * The page and the configuration the app starts with. The configuration goes into index.html as
@@ -31,14 +32,6 @@ export const scriptJson = (value: unknown) =>
     .replace(/</g, '\\u003c')
     .replace(/\u2028/g, '\\u2028')
     .replace(/\u2029/g, '\\u2029');
-
-/** Hosts the GUGiK search reaches from the browser (src/modules/gugik/geocoder.ts). */
-export const GUGIK_SEARCH_HOSTS = [
-  'https://services.gugik.gov.pl',
-  'https://uldk.gugik.gov.pl',
-  'https://capap.gugik.gov.pl',
-  'https://mapy.geoportal.gov.pl',
-];
 
 /** Where the page may fetch from (CSP connect-src): itself, and the services its search queries directly. */
 export function connectSources(client: ClientConfig): string[] {

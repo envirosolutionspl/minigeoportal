@@ -35,6 +35,14 @@ layers:
   popular: Na start
 ```
 
+Tak wdrożenie podaje też czytelne nazwy technicznych pól z odpowiedzi usług (`info.fields`, kluczem jest nazwa pola) i dopisuje źródło danych do stopki wydruku (`print.note`); domyślna konfiguracja robi to dla usług GUGiK w `config/i18n/`:
+
+```yaml
+info:
+  fields:
+    opis_oznac: Przeznaczenie
+```
+
 `{nazwa}` w napisie wypełnia aplikacja. Napisy zależne od liczby mają formę dla każdej kategorii liczby mnogiej języka (`one`, `few`, `many`, `other`, jak nazywa je `Intl.PluralRules`); angielski potrzebuje `one` i `other`, polski także `few` i `many`:
 
 ```yaml

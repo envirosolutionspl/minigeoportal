@@ -7,8 +7,7 @@ import { statusOf, useStatusStore, type ServiceStatus } from '@/services/status'
 import { loadCatalogLayer, useCatalog } from '@/services/catalog';
 import type { CatalogIndexEntry, CatalogStatus } from '@/services/catalogTypes';
 import { overlayOpacity, useMapStore } from '@/state/store';
-import { dateText } from '@/services/ortho';
-import { scaleText } from '@/map/format';
+import { dateText, scaleText } from '@/map/format';
 import { locale, t } from '@/i18n';
 
 const STATUS_LABEL = (status: ServiceStatus) => t(`layers.status.${status}`);
@@ -350,8 +349,8 @@ function CatalogItem({ entry }: { entry: CatalogIndexEntry }) {
             <>
               {' '}
               {t('layers.failedFallback')}{' '}
-              <a href={FALLBACK} target="_blank" rel="noopener" className="underline">
-                {t('layers.fallbackName')}
+              <a href={FALLBACK.url} target="_blank" rel="noopener" className="underline">
+                {FALLBACK.name}
               </a>
             </>
           )}
@@ -386,8 +385,8 @@ function Why({ status, detail, checked }: { status: WhyStatus; detail?: string; 
             </p>
           )}
           {FALLBACK && (
-            <a href={FALLBACK} target="_blank" rel="noopener" className="mt-1 inline-flex items-center gap-1 text-[var(--accent)]">
-              {t('layers.seeFallback', { name: t('layers.fallbackName') })} <ExternalLink className="h-3 w-3" aria-hidden="true" />
+            <a href={FALLBACK.url} target="_blank" rel="noopener" className="mt-1 inline-flex items-center gap-1 text-[var(--accent)]">
+              {t('layers.seeFallback', { name: FALLBACK.name })} <ExternalLink className="h-3 w-3" aria-hidden="true" />
             </a>
           )}
         </div>

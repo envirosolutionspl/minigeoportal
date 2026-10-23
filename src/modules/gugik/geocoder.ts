@@ -1,6 +1,6 @@
 import { fromLonLat } from 'ol/proj';
 import { PROJECTION } from '@/map/projection';
-import { unitNames, type UnitNames, type UnitLevel } from '@/services/units';
+import { unitNames, type UnitNames, type UnitLevel } from './units';
 import { normalize } from '@/services/text';
 import type { HitKind, SearchHit } from '@/search/provider';
 import { t } from '@/i18n';
@@ -13,6 +13,16 @@ import { t } from '@/i18n';
  * from the parcel location service (ULDK). Every hit carries its geometry, or a way to fetch
  * it, so the map can zoom to it and outline it.
  */
+
+/** A hit with what this module needs to name and outline it. */
+export interface GugikHit extends SearchHit {
+  /** 6-digit municipality TERYT code from the geocoder, used to name the units in `detail`. */
+  teryt?: string;
+  /** A town (miasto), listed before villages, units and objects of a similar name. */
+  town?: boolean;
+  /** Administrative unit; its boundary is fetched when the hit is chosen. */
+  unit?: { level: UnitLevel; teryt: string; name: string };
+}
 
 const UUG = 'https://services.gugik.gov.pl/uug/';
 const ULDK = 'https://uldk.gugik.gov.pl/';
@@ -40,7 +50,7 @@ interface UugResult {
   geometry_wkt?: string;
 }
 
-async function uug(query: string, signal: AbortSignal): Promise<SearchHit[]> {
+async function uug(query: string, signal: AbortSignal): Promise<GugikHit[]> {
   const url = `${UUG}?request=GetAddress&address=${encodeURIComponent(query)}&srid=2180`;
   const res = await fetch(url, { signal });
   if (!res.ok) return [];
@@ -69,7 +79,7 @@ async function uug(query: string, signal: AbortSignal): Promise<SearchHit[]> {
  * name can be told apart. Parts equal to the place name itself (a town that is its own
  * municipality or county) are left out.
  */
-function withUnits(hit: SearchHit, units: Map<string, UnitNames>): SearchHit {
+function withUnits(hit: GugikHit, units: Map<string, UnitNames>): GugikHit {
   const u = hit.teryt && units.get(hit.teryt);
   if (!u) return hit;
   const place = hit.kind === 'place' ? hit.label : hit.detail?.split(', ').pop();
@@ -110,7 +120,7 @@ async function ftsFeatures<P>(query: string, index: 'prngjo' | 'prngof', signal:
   return data.features ?? [];
 }
 
-async function fts(query: string, signal: AbortSignal): Promise<SearchHit[]> {
+async function fts(query: string, signal: AbortSignal): Promise<GugikHit[]> {
   const q = normalize(query);
   return (await ftsFeatures<FtsPlace>(query, 'prngjo', signal))
     .filter((f) => {
@@ -172,7 +182,7 @@ async function communeAt([x, y]: [number, number], signal: AbortSignal): Promise
  * names. A word of the name may start with the query ("hańcza" finds Czarna Hańcza). The
  * register has points only: one for a lake or a peak, a series along a river.
  */
-async function nature(query: string, signal: AbortSignal): Promise<SearchHit[]> {
+async function nature(query: string, signal: AbortSignal): Promise<GugikHit[]> {
   const q = normalize(query);
   const hits = (await ftsFeatures<FtsNature>(query, 'prngof', signal)).flatMap((f) => {
     const name = f.properties.NAZWAGLOWNA;
@@ -225,7 +235,7 @@ export function unitLabel(level: UnitLevel, teryt: string, name: string): string
   return `gmina ${name}`;
 }
 
-async function units(query: string, signal: AbortSignal): Promise<SearchHit[]> {
+async function units(query: string, signal: AbortSignal): Promise<GugikHit[]> {
   const res = await fetch(`/api/dict/szukaj?q=${encodeURIComponent(query)}`, { signal });
   if (!res.ok) return [];
   return ((await res.json()) as UnitAnswer[]).map((u) => ({
@@ -243,7 +253,7 @@ const PRG_LAYER: Record<UnitLevel, number> = { woj: 2, pow: 1, gm: 0 };
 const PRG_OFFSET: Record<UnitLevel, number> = { woj: 100, pow: 20, gm: 5 };
 
 /** Boundary of a voivodeship, county or municipality from PRG, as WKT in EPSG:2180. */
-export async function unitOutline(unit: NonNullable<SearchHit['unit']>, signal: AbortSignal): Promise<string | undefined> {
+export async function unitOutline(unit: NonNullable<GugikHit['unit']>, signal: AbortSignal): Promise<string | undefined> {
   if (!/^\d{2}(\d{2}(\d{3})?)?$/.test(unit.teryt)) return undefined;
   const params = new URLSearchParams({
     where: `teryt='${unit.teryt}'`,
@@ -264,7 +274,7 @@ export async function unitOutline(unit: NonNullable<SearchHit['unit']>, signal: 
 }
 
 /** The same place from both sources: same name in the same municipality. */
-const samePlace = (a: SearchHit, b: SearchHit) =>
+const samePlace = (a: GugikHit, b: GugikHit) =>
   a.kind === 'place' && b.kind === 'place' && normalize(a.label) === normalize(b.label) && a.teryt === b.teryt;
 
 /** ULDK answers in text: first line is a count or "-1 brak wyników", then one "|"-separated row per hit. */
@@ -277,7 +287,7 @@ async function uldkRows(params: Record<string, string>, signal: AbortSignal): Pr
 }
 
 /** Parcels by full id or "precinct name number"; several hits when precinct names repeat. */
-export async function findParcels(query: string, signal: AbortSignal): Promise<SearchHit[]> {
+export async function findParcels(query: string, signal: AbortSignal): Promise<GugikHit[]> {
   const rows = await uldkRows({ request: 'GetParcelByIdOrNr', id: query, result: 'id,commune,region,parcel,geom_wkt' }, signal);
   return rows.flatMap(([id, commune, region, parcel, wkt]) => {
     if (!wkt) return [];
@@ -292,12 +302,12 @@ export async function findParcels(query: string, signal: AbortSignal): Promise<S
   });
 }
 
-export async function search(query: string, signal: AbortSignal): Promise<SearchHit[]> {
+export async function search(query: string, signal: AbortSignal): Promise<GugikHit[]> {
   const q = query.trim();
   if (PARCEL_ID.test(q)) return findParcels(q, signal);
   // Names have no digits or commas; anything else is an address or a parcel.
   const byName = !/[\d,]/.test(q);
-  const none = Promise.resolve<SearchHit[]>([]);
+  const none = Promise.resolve<GugikHit[]>([]);
   const settled = await Promise.allSettled([
     PRECINCT_AND_NUMBER.test(q) ? findParcels(q, signal) : none,
     uug(q, signal),
@@ -311,8 +321,8 @@ export async function search(query: string, signal: AbortSignal): Promise<Search
   const allPlaces = [...places, ...geocoded.filter((o) => o.kind === 'place' && !places.some((p) => samePlace(o, p)))];
   // Towns and exact names first: Gorzów Wielkopolski, then the village Gorzów; Wisła the town,
   // then the river; "mazowieckie" finds the voivodeship before streets and parts of towns.
-  const exact = (h: SearchHit) => normalize(h.unit?.name ?? h.label) === normalize(q);
-  const first = (h: SearchHit) => h.town || exact(h);
+  const exact = (h: GugikHit) => normalize(h.unit?.name ?? h.label) === normalize(q);
+  const first = (h: GugikHit) => h.town || exact(h);
   const others = [unitHits, natureHits].flat();
   const merged = [
     ...parcels,
@@ -334,7 +344,7 @@ export async function search(query: string, signal: AbortSignal): Promise<Search
  * Outline of a place: a town that is its own municipality gets the municipal boundary,
  * a village gets the cadastral precinct of the same name. Otherwise there is no outline.
  */
-export async function placeOutline(hit: SearchHit, signal: AbortSignal): Promise<string | undefined> {
+export async function placeOutline(hit: GugikHit, signal: AbortSignal): Promise<string | undefined> {
   if (!hit.center) return undefined;
   const xy = `${hit.center[0]},${hit.center[1]},2180`;
   const name = hit.label.toLowerCase();

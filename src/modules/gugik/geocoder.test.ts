@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { buildingAt, findParcels, placeOutline, search, stripSrid, unitLabel, unitOutline } from './geocoder';
-import { clearUnitNames } from '@/services/units';
+import { clearUnitNames } from './units';
 import { stubFetch } from '@/test/helpers';
 
 beforeEach(() => clearUnitNames());

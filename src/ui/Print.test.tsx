@@ -60,10 +60,27 @@ describe('PrintSheet', () => {
     expect(text).toContain('Moja działka');
     expect(text).toContain('Skala 1:1000');
     expect(text).toContain('Warstwy: Ewidencja gruntów i budynków');
-    // The source is named on the map itself and in the footer.
-    expect(container.querySelector('.print-frame .print-source')?.textContent).toBe('Warstwy mapy: geoportal.gov.pl (GUGiK)');
+    // The map's credit is on the map itself, as on screen; the footer note comes from the deployment's texts.
+    expect(container.querySelector('.print-frame .print-source')?.textContent).toBe('Dane: GUGiK, geoportal.gov.pl');
     expect(text).toContain('Źródło warstw mapy: geoportal.gov.pl');
     expect(container.querySelector('#print-map')).toBeTruthy();
+  });
+
+  it('credits a layer with its own source next to the map', () => {
+    const kieg = overlayById.get('kieg')!;
+    kieg.attribution = '<a href="https://powiat.example">Powiat</a>';
+    useMapStore.setState({ printRequest: { paper: 'A4', orientation: 'landscape', scale: 1000, title: '' } });
+    const { container } = render(<PrintSheet />);
+    const source = container.querySelector('.print-source')!;
+    expect(source.textContent).toBe('Dane: GUGiK, geoportal.gov.pl · Powiat');
+    expect(source.querySelector('a[href="https://powiat.example"]')).toBeTruthy();
+    delete kieg.attribution;
+  });
+
+  it('names no source when nothing is printed', () => {
+    useMapStore.setState({ base: 'none', printRequest: { paper: 'A4', orientation: 'landscape', scale: 1000000, title: '' } });
+    const { container } = render(<PrintSheet />);
+    expect(container.querySelector('.print-source')).toBeNull();
   });
 
   it('prints the legend layers.yaml names before the one from the capabilities', () => {

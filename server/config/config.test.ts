@@ -146,4 +146,24 @@ describe('texts and credits', () => {
     );
     expect(creditHtml('[x](javascript:alert(1))')).toBe('[x](javascript:alert(1))');
   });
+
+  it('names the fallback map as configured, else after its host', () => {
+    const named = clientConfig(loadConfig('config'), 'pl');
+    expect(named.links.fallbackMap).toEqual({ url: 'https://mapy.geoportal.gov.pl/imap/Imgp_2.html', name: 'geoportal.gov.pl' });
+    const unnamed = broken('app.yaml', (s) =>
+      s.replace(/^ {2}fallbackName: .*\n/m, '').replace('https://mapy.geoportal', 'https://www.geoportal'),
+    );
+    expect(clientConfig(loadConfig(unnamed), 'pl').links.fallbackMap?.name).toBe('geoportal.gov.pl');
+    const none = broken('app.yaml', (s) => s.replace(/^links:\n[\s\S]*?\n\n/m, ''));
+    expect(clientConfig(loadConfig(none), 'pl').links).toEqual({});
+  });
+
+  it('keeps the GUGiK texts in the deployment, not in the app', () => {
+    const own = clientConfig(loadConfig('config'), 'pl').messages;
+    expect(own['info.fields.opis_oznac']).toBe('Przeznaczenie');
+    expect(own['print.note']).toContain('geoportal.gov.pl');
+    const plain = clientConfig(loadConfig('examples/osm'), 'pl').messages;
+    expect(plain['info.fields.opis_oznac']).toBeUndefined();
+    expect(plain['print.note']).not.toMatch(/geoportal\.gov\.pl|GUGiK/);
+  });
 });

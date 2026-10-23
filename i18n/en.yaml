@@ -101,7 +101,6 @@ layers:
   serviceLayers: 'Layers of the service: {title}'
   failed: This layer could not be loaded. Try again later
   failedFallback: or see it on
-  fallbackName: geoportal.gov.pl
   whyDegraded: Why does the data not load?
   whyBlocked: Not available here. Why?
   serverAnswer: 'Server answer: {detail}.'
@@ -177,13 +176,12 @@ print:
   preparingStatus: Preparing the print, loading the map.
   print: Print
   defaultTitle: Map
-  source: 'Map layers: geoportal.gov.pl (GUGiK)'
   scaleLine: Scale {scale}
   center: 'centre:'
   base: 'Base map: {title}'
   noBase: none
   layers: 'Layers: {titles}'
-  note: 'Source of the map layers: geoportal.gov.pl (Head Office of Geodesy and Cartography) and the services of counties, municipalities and other institutions it publishes. An overview map, not an official document. Coordinate system {system} ({code}).'
+  note: 'An overview map, not an official document. Coordinate system {system} ({code}).'
 
 report:
   title: Report a problem

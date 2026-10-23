@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fromLonLat } from 'ol/proj';
 import '@/map/projection';
-import { coordinateBar, formatArea, formatCoordinate, formatLength } from './format';
+import { coordinateBar, dateText, formatArea, formatCoordinate, formatLength } from './format';
 
 // Intl in pl-PL groups with a narrow no-break space; compare with plain spaces.
 const plain = (s: string) => s.replace(/\s/g, ' ');
@@ -27,6 +27,12 @@ describe('formatArea', () => {
     expect(plain(formatArea(850))).toBe('850 m²');
     expect(plain(formatArea(12500))).toBe('1,25 ha (12 500 m²)');
     expect(plain(formatArea(2_500_000))).toBe('2,50 km²');
+  });
+});
+
+describe('dateText', () => {
+  it('writes an ISO date the Polish way', () => {
+    expect(dateText('2025-04-27')).toBe('27.04.2025');
   });
 });
 

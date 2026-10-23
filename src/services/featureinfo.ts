@@ -137,14 +137,11 @@ function parseHtmlFragment(markup: string): Document {
   return doc;
 }
 
-/** Readable names for technical attribute names seen in GUGiK and local services. */
-const LABELS: Record<string, string> = {
-  opis_oznac: 'Przeznaczenie',
-  'opis oznac': 'Przeznaczenie',
-  'Rodzaj oznaczenia': 'Symbol przeznaczenia',
-  'Data DUWM': 'Data publikacji w dzienniku urzędowym',
-  'Data zasilenia': 'Data aktualizacji w GUGiK',
-  WWW: 'Strona uchwały',
+/** Readable name for a technical attribute name, when the deployment gives one (i18n: info.fields). */
+const fieldName = (label: string) => {
+  const key = `info.fields.${label}`;
+  const name = t(key);
+  return name === key ? label : name;
 };
 
 /**
@@ -154,7 +151,7 @@ const LABELS: Record<string, string> = {
 function field(label: string, raw: string | Element): InfoField | null {
   label = clean(label);
   if (!label || HIDDEN.test(label)) return null;
-  label = LABELS[label] ?? label;
+  label = fieldName(label);
   const el = typeof raw === 'string' ? (/<[a-z]/i.test(raw) ? parseHtmlFragment(raw).body : undefined) : raw;
   if (el) {
     const href = el.querySelector('a[href]')?.getAttribute('href') ?? '';

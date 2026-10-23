@@ -4,8 +4,8 @@ import { RequestError, fetchFixed, readLimited } from '../../http.ts';
 import { dataPath } from '../../config.ts';
 import { writeAtomic } from '../../files.ts';
 import { normalize } from '../../../src/services/text.ts';
-import type { DictEntry } from '../../../src/services/dictionaries.ts';
-import type { UnitHit, UnitLevel, UnitNames } from '../../../src/services/units.ts';
+import type { DictEntry } from '../../../src/modules/gugik/dictionaries.ts';
+import type { UnitHit, UnitLevel, UnitNames } from '../../../src/modules/gugik/units.ts';
 
 /**
  * Administrative dictionaries for the parcel search: voivodeships, counties and

@@ -120,9 +120,6 @@ export interface MapCrs {
   axisOrientation: 'enu' | 'neu';
 }
 
-/** PL-1992, the system of geoportal.gov.pl and every service of its catalog. */
-export const PL1992: MapCrs = { code: 'EPSG:2180', axisOrientation: 'neu' };
-
 const epsgNumber = (crs: MapCrs) => Number(crs.code.split(':')[1]);
 
 /**

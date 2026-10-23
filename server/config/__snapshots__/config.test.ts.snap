@@ -548,7 +548,10 @@ exports[`default configuration > stays what the app was built with (any change s
     ],
   },
   "links": {
-    "fallbackMap": "https://mapy.geoportal.gov.pl/imap/Imgp_2.html",
+    "fallbackMap": {
+      "name": "geoportal.gov.pl",
+      "url": "https://mapy.geoportal.gov.pl/imap/Imgp_2.html",
+    },
   },
   "locale": "pl",
   "locales": [

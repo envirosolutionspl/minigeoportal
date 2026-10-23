@@ -29,7 +29,7 @@ import { openPrint } from '@/map/print';
 import { linkFor } from '@/state/url';
 import { APP_NAME, BrandMark, Wordmark } from './Brand';
 import { useWelcome } from './WelcomeDialog';
-import { PARCEL_SCALE, ParcelSearch } from './ParcelSearch';
+import { PARCEL_SCALE, ParcelSearch } from '@/modules/gugik/ParcelSearch';
 import { PROJECTION, zoomForScale } from '@/map/projection';
 import { DisplayMenu } from './DisplayMenu';
 import { MoreSheet } from './MoreSheet';

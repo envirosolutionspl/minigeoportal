@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ParcelSearch } from './ParcelSearch';
 import { useMapStore } from '@/state/store';
 import { stubFetch } from '@/test/helpers';
-import { clearDictionaryCache } from '@/services/dictionaries';
+import { clearDictionaryCache } from './dictionaries';
 
 const PARCEL = '1\n141708_2.0021.22/1|Wiązowna|Wiązowna Gminna|22/1|SRID=2180;POLYGON((0 0,1 0,1 1,0 0))\n';
 

@@ -1,5 +1,3 @@
-import logoUrl from '@/assets/envirosolutions.svg';
-
 import { config } from '@/config/runtime';
 import { t } from '@/i18n';
 
@@ -8,22 +6,24 @@ export const APP_DOMAIN = config.app.domain;
 export const AUTHOR_URL = config.app.author.url;
 
 /**
- * Sign of the app: a magnifying glass over parcel boundaries, one parcel picked out in the
- * orange the map uses for found objects; EnviroSolutions greens. The lines inside the lens are
- * chords of its circle, so no clip path (and no id that could clash) is needed.
+ * Sign of the app: the configuration's own (app.yaml icon), or a magnifying glass over parcel
+ * boundaries, one parcel picked out in the colour the map uses for found objects, in the skin's
+ * colours (--mark and --mark-line, else the accent). The lines inside the lens are chords of its
+ * circle, so no clip path (and no id that could clash) is needed.
  */
 export function BrandMark({ className = 'h-7 w-7' }: { className?: string }) {
+  if (config.app.icon) return <img src={config.app.icon} alt="" className={className} />;
   return (
     <svg viewBox="0 0 104 104" className={className} aria-hidden="true">
-      <rect width="104" height="104" rx="22" fill="#466946" />
+      <rect width="104" height="104" rx="22" fill="var(--mark, var(--accent))" />
       <circle cx="46" cy="46" r="19" fill="#f2f4f5" />
       <path
         d="M28.6 41.3 62.9 39.8M41.3 28.6 42.9 63.7M29.1 52.2 63.4 50.7M50.7 28.6V63.4"
         fill="none"
-        stroke="#59705b"
+        stroke="var(--mark-line, var(--muted))"
         strokeWidth="2.5"
       />
-      <path d="M42.6 40.9 50.7 40.5V50.9L42.8 51.3Z" fill="#FF8142" />
+      <path d="M42.6 40.9 50.7 40.5V50.9L42.8 51.3Z" fill="var(--highlight)" />
       <circle cx="46" cy="46" r="21" fill="none" stroke="#fff" strokeWidth="6" />
       <path d="M62 62 79 79" stroke="#fff" strokeWidth="10" strokeLinecap="round" />
     </svg>
@@ -46,9 +46,11 @@ export function Wordmark() {
   );
 }
 
-/** Logo of the author, on a light background as the brand book requires. */
+/** Logo of the author (app.yaml author.logo) on the light plate around it, or the author's name. */
 export function AuthorLogo({ className = 'h-7' }: { className?: string }) {
-  return <img src={logoUrl} alt={config.app.author.name} className={className} />;
+  const { name, logo } = config.app.author;
+  if (logo) return <img src={logo} alt={name} className={className} />;
+  return <span className={`${className} flex items-center px-1 text-sm font-semibold text-[#444444]`}>{name}</span>;
 }
 
 export function AuthorCredit() {

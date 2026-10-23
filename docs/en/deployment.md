@@ -27,6 +27,19 @@ npm run update
 
 A fresh data directory starts with `seed/capabilities.json` of the configuration directory, when there is one, and a single server builds the geoportal catalog in the background on its first start.
 
+## Brand
+
+What makes a deployment look like its own, without touching the code:
+
+- **Name and texts**: `name`, `title`, `description` and `tagline` in `app.yaml`, the welcome window and the accessibility statement in Markdown (see [Texts and languages](texts-and-languages.md)).
+- **Colours**: a skin (see [Skins](skins.md)).
+- **The sign of the app**: `icon` in `app.yaml`, an image inside the configuration directory. It replaces the built-in sign in the bar and the welcome window, the browser tab icon, the home-screen icon and the image of link previews. Without it the app uses its own sign, drawn in the colours of the skin, and the icons in `public/` (`favicon.ico`, `favicon.svg`, `apple-touch-icon.png`).
+- **The author's logo**: `author.logo` in `app.yaml`, shown on a white plate next to "Made by" in the corner of the map, the welcome window and the "More" menu; without it the author's name.
+
+The server serves both images at `/brand/logo.<extension>` and `/brand/icon.<extension>` with the start of the file's hash in the address, so browsers keep them for good and a new file reaches everyone at once.
+
+Two things live in `public/` and go into the build: the thumbnails of the base maps (`public/thumbs/`, named by `thumb` in `map.yaml`; a full https address works too) and `robots.txt`, which lets search engines index everything. A deployment that wants other thumbnails or other rules replaces these files before `npm run build`.
+
 ## Containers
 
 `compose.yaml` runs the whole service: Caddy in front (certificates, HTTP/2 and HTTP/3), several replicas of the app on a shared data volume and one updater that refreshes the data once a day.

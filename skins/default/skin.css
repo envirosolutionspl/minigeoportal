@@ -25,6 +25,9 @@
   --accent-soft: #e6ede6;
   /* Paper colour under transparent map tiles, the same in light and dark mode. */
   --map-bg: #f2f4f5;
+  /* The sign of the app and the boundaries in its lens, the same in light and dark mode. */
+  --mark: #466946;
+  --mark-line: #59705b;
 }
 
 @media (prefers-color-scheme: dark) {

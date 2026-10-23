@@ -112,7 +112,10 @@ export interface ClientConfig {
     description: string;
     domain: string;
     contact: string;
-    author: { name: string; url: string };
+    /** `logo`: address of the author's logo; without it the name is shown. */
+    author: { name: string; url: string; logo?: string };
+    /** Address of the app's sign; without it the built-in one in the skin's colours. */
+    icon?: string;
     /** Prefix of everything the app keeps in the browser's storage. */
     storagePrefix: string;
     /** A line under the name in the welcome window. */

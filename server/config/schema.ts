@@ -16,6 +16,16 @@ const extent = z
   .tuple([z.number(), z.number(), z.number(), z.number()])
   .refine(([a, b, c, d]) => a < c && b < d, 'minX < maxX and minY < maxY');
 const scale = z.number().positive();
+/**
+ * An image of the brand: a path inside the configuration directory (no part starts with a dot, so
+ * none leads out of it), served by the app at /brand/<name>.<extension>.
+ */
+const image = z
+  .string()
+  .regex(
+    /^[a-z0-9_-][a-z0-9_.-]*(\/[a-z0-9_-][a-z0-9_.-]*)*\.(svg|png|webp|jpe?g)$/i,
+    'a path of an .svg, .png, .webp or .jpg file inside the configuration directory',
+  );
 
 const timeSpec = z.discriminatedUnion('type', [
   z.strictObject({
@@ -41,7 +51,10 @@ export const appSchema = z.strictObject({
   description: text,
   domain: z.string().min(1),
   contact: z.email(),
-  author: z.strictObject({ name: z.string().min(1), url }),
+  /** The author, linked in the corner of the map; `logo` is shown instead of the name when given. */
+  author: z.strictObject({ name: z.string().min(1), url, logo: image.optional() }),
+  /** The sign of the app: in the bar, the welcome window, the browser tab and link previews; the built-in one when left out. */
+  icon: image.optional(),
   locales: z.strictObject({ default: locale, available: z.array(locale).min(1), root: locale.optional() }),
   /** A line under the name in the welcome window. */
   tagline: text.optional(),
@@ -192,6 +205,16 @@ export type MapFile = z.infer<typeof mapSchema>;
 export type LayersFile = z.infer<typeof layersSchema>;
 export type Text = z.infer<typeof text>;
 
+/** An image of the brand as the server sends it. */
+export interface BrandImage {
+  /** Where the app serves it, e.g. /brand/logo.svg. */
+  path: string;
+  /** Start of the file's SHA-256: the address changes with the file, so browsers may keep it for good. */
+  version: string;
+  type: string;
+  body: Uint8Array<ArrayBuffer>;
+}
+
 /** The whole configuration directory, validated. */
 export interface AppConfig {
   dir: string;
@@ -202,6 +225,8 @@ export interface AppConfig {
   content: Partial<Record<keyof AppFile['content'], Record<string, string>>>;
   /** The stylesheet of the skin. */
   skin: string;
+  /** Images of the brand (app.yaml author.logo, icon), read once and served from memory. */
+  brand: Partial<Record<'logo' | 'icon', BrandImage>>;
   /** Texts of the interface per language, complete (server/config/messages.ts). */
   messages: Record<string, Record<string, Message>>;
 }

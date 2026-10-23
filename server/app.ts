@@ -86,6 +86,15 @@ export function createApp({ site, cache, mailer, origin, catalog, limits }: AppO
     return c.json(site.client(site.locale(c)));
   });
 
+  /** Images of the brand (app.yaml author.logo, icon): their address names the file's version, so they never go stale. */
+  for (const image of Object.values(site.config.brand)) {
+    app.get(image.path, (c) => {
+      c.header('Content-Type', image.type);
+      c.header('Cache-Control', c.req.query('v') === image.version ? 'public, max-age=31536000, immutable' : 'no-cache');
+      return c.body(image.body);
+    });
+  }
+
   app.get('/api/health', (c) => c.json({ ok: true, capabilitiesGeneratedAt: cache().generatedAt }));
 
   /**

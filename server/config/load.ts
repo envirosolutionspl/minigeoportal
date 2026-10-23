@@ -1,5 +1,6 @@
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { LineCounter, parseDocument, isMap, isSeq, type Document, type Node as YamlNode } from 'yaml';
 import type { ZodType } from 'zod';
@@ -210,6 +211,35 @@ function readSkin(root: string, app: Parsed<AppConfig['app']>, problems: string[
   return '';
 }
 
+const IMAGE_TYPES: Record<string, string> = {
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+};
+
+/** The author's logo and the app's icon, when app.yaml names them. */
+function readBrand(root: string, app: Parsed<AppConfig['app']>, problems: string[]): AppConfig['brand'] {
+  const brand: AppConfig['brand'] = {};
+  const wanted = [
+    ['logo', app.value?.author.logo, ['author', 'logo']],
+    ['icon', app.value?.icon, ['icon']],
+  ] as const;
+  for (const [name, file, at] of wanted) {
+    if (!file) continue;
+    try {
+      const body = readFileSync(join(root, file));
+      const ext = extname(file).toLowerCase();
+      const version = createHash('sha256').update(body).digest('hex').slice(0, 12);
+      brand[name] = { path: `/brand/${name}${ext}`, version, type: IMAGE_TYPES[ext], body };
+    } catch {
+      problems.push(`${locate('app.yaml', app.doc, app.lines, [...at])} ${at.join('.')}: ${file} not found`);
+    }
+  }
+  return brand;
+}
+
 /** The configuration in `dir`, checked; throws ConfigError listing every problem. */
 export function loadConfig(dir: string): AppConfig {
   const root = resolve(dir);
@@ -220,7 +250,8 @@ export function loadConfig(dir: string): AppConfig {
   crossCheck(app, map, layers, problems);
   const content = readContent(root, app, problems);
   const skin = readSkin(root, app, problems);
+  const brand = readBrand(root, app, problems);
   const messages = app.value ? loadMessages(root, app.value.locales, problems) : {};
   if (problems.length || !app.value || !map.value || !layers.value) throw new ConfigError(problems);
-  return { dir: root, app: app.value, map: map.value, layers: layers.value, content, skin, messages };
+  return { dir: root, app: app.value, map: map.value, layers: layers.value, content, skin, brand, messages };
 }

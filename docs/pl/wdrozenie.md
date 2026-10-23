@@ -27,6 +27,19 @@ npm run update
 
 Nowy katalog danych zaczyna od `seed/capabilities.json` z katalogu konfiguracji, jeśli jest, a pojedynczy serwer przy pierwszym starcie buduje w tle katalog geoportalu.
 
+## Marka
+
+Co sprawia, że wdrożenie wygląda jak własne, bez zmiany kodu:
+
+- **Nazwa i teksty**: `name`, `title`, `description` i `tagline` w `app.yaml`, okno powitalne i deklaracja dostępności w Markdownie (zob. [Treści i języki](tresci-i-jezyki.md)).
+- **Kolory**: skórka (zob. [Skórki](skorki.md)).
+- **Znak aplikacji**: `icon` w `app.yaml`, obraz w katalogu konfiguracji. Zastępuje wbudowany znak na pasku i w oknie powitalnym, ikonę karty przeglądarki, ikonę na ekranie głównym telefonu i obraz podglądu linku. Bez niego aplikacja używa własnego znaku, rysowanego w kolorach skórki, i ikon z `public/` (`favicon.ico`, `favicon.svg`, `apple-touch-icon.png`).
+- **Logo autora**: `author.logo` w `app.yaml`, pokazywane na białym tle obok „Stworzone przez” w rogu mapy, w oknie powitalnym i w menu „Więcej”; bez niego nazwa autora.
+
+Serwer udostępnia oba obrazy pod `/brand/logo.<rozszerzenie>` i `/brand/icon.<rozszerzenie>` z początkiem skrótu pliku w adresie, więc przeglądarki trzymają je na stałe, a nowy plik od razu trafia do wszystkich.
+
+Dwie rzeczy są w `public/` i trafiają do builda: miniatury map podkładowych (`public/thumbs/`, wskazywane przez `thumb` w `map.yaml`; działa też pełny adres https) i `robots.txt`, który pozwala wyszukiwarkom indeksować wszystko. Wdrożenie, które chce innych miniatur lub reguł, podmienia te pliki przed `npm run build`.
+
 ## Kontenery
 
 `compose.yaml` uruchamia cały serwis: Caddy na wejściu (certyfikaty, HTTP/2 i HTTP/3), kilka replik aplikacji na wspólnym wolumenie danych i jeden proces aktualizujący dane raz dziennie.

@@ -41,6 +41,17 @@ describe('routes', () => {
     expect(csp).toContain("connect-src 'self';");
   });
 
+  it('serves the brand images of the configuration, cached for good at their versioned address', async () => {
+    const logo = site.config.brand.logo!;
+    const res = await app.request(`/brand/logo.svg?v=${logo.version}`, {}, remote);
+    expect(res.headers.get('content-type')).toBe('image/svg+xml');
+    expect(res.headers.get('cache-control')).toBe('public, max-age=31536000, immutable');
+    expect(await res.text()).toBe(new TextDecoder().decode(logo.body));
+    // An old address gets the current file, but asks again next time.
+    expect((await app.request('/brand/logo.svg?v=old', {}, remote)).headers.get('cache-control')).toBe('no-cache');
+    expect((await app.request('/brand/icon.svg', {}, remote)).status).toBe(404);
+  });
+
   it('searches OpenStreetMap places through Nominatim only when configured to', async () => {
     const { createApp } = await import('./app.ts');
     const osm = createSite({ ...site.config, app: { ...site.config.app, search: { ...site.config.app.search, provider: 'nominatim' } } });

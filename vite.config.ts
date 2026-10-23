@@ -27,6 +27,8 @@ function configPage(): Plugin {
   };
 }
 
+const API = `http://localhost:${process.env.API_PORT ?? 8787}`;
+
 export default defineConfig({
   plugins: [react(), tailwindcss(), configPage()],
   resolve: {
@@ -35,8 +37,8 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
-    // The API in development; API_PORT is separate from PORT, which dev tooling may set for Vite itself.
-    proxy: { '/api': `http://localhost:${process.env.API_PORT ?? 8787}` },
+    // The API (and the brand images it serves) in development; API_PORT is separate from PORT, which dev tooling may set for Vite itself.
+    proxy: { '/api': API, '/brand': API },
   },
   build: {
     target: 'es2022',

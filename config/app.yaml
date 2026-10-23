@@ -17,6 +17,7 @@ contact: office@envirosolutions.pl
 author:
   name: EnviroSolutions
   url: https://envirosolutions.pl
+  logo: brand/envirosolutions.svg # shown instead of the name; without it, the name
 
 tagline:
   pl: Dane z geoportal.gov.pl – prościej i szybciej

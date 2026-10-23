@@ -126,6 +126,29 @@ describe('loadConfig', () => {
     expect(loadConfig(own).skin).toContain('#123456');
   });
 
+  it('reads the brand images and gives them addresses that change with the file', () => {
+    const config = loadConfig('config');
+    expect(config.brand.logo).toMatchObject({ path: '/brand/logo.svg', type: 'image/svg+xml' });
+    expect(config.brand.icon).toBeUndefined();
+    expect(clientConfig(config, 'pl').app.author.logo).toBe(`/brand/logo.svg?v=${config.brand.logo?.version}`);
+    const own = broken(
+      'app.yaml',
+      (s) => `${s}icon: brand/sign.png
+`,
+    );
+    expect(problems(own).join(' ')).toMatch(/app\.yaml:\d+:\d+ icon: brand\/sign\.png not found/);
+    writeFileSync(join(own, 'brand', 'sign.png'), 'one');
+    const first = loadConfig(own).brand.icon;
+    expect(first).toMatchObject({ path: '/brand/icon.png', type: 'image/png' });
+    writeFileSync(join(own, 'brand', 'sign.png'), 'two');
+    expect(loadConfig(own).brand.icon?.version).not.toBe(first?.version);
+    expect(clientConfig(loadConfig(own), 'pl').app.icon).toMatch(/^\/brand\/icon\.png\?v=[0-9a-f]{12}$/);
+    for (const path of ['../logo.svg', 'brand/../../logo.svg', '.hidden/logo.svg', 'brand/logo.gif']) {
+      const outside = broken('app.yaml', (s) => s.replace('logo: brand/envirosolutions.svg', `logo: ${path}`));
+      expect(problems(outside).join(' ')).toMatch(/author\.logo: a path of an \.svg, \.png, \.webp or \.jpg file/);
+    }
+  });
+
   it('needs https for every service the browser loads', () => {
     const dir = broken('layers.yaml', (s) => s.replace('url: https://integracja.gugik.gov.pl', 'url: http://integracja.gugik.gov.pl'));
     expect(problems(dir).join(' ')).toMatch(/layers\.yaml:\d+:\d+ layer "kieg" needs an https address/);

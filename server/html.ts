@@ -60,7 +60,7 @@ function preconnects(client: ClientConfig): string {
  */
 function sharing(client: ClientConfig): string {
   const e = escapeHtml;
-  const { name, title, description, domain } = client.app;
+  const { name, title, description, domain, icon = '/apple-touch-icon.png' } = client.app;
   const site = `https://${e(domain)}`;
   const here = `${site}${client.localePaths[client.locale]}`;
   // Every language has its own address; the bare domain picks one for the visitor.
@@ -79,22 +79,32 @@ function sharing(client: ClientConfig): string {
     `<meta property="og:title" content="${e(title)}" />`,
     `<meta property="og:description" content="${e(description)}" />`,
     `<meta property="og:url" content="${here}" />`,
-    `<meta property="og:image" content="${site}/apple-touch-icon.png" />`,
+    `<meta property="og:image" content="${site}${e(icon)}" />`,
     `<meta property="og:locale" content="${e(client.locale)}" />`,
     `<meta name="twitter:card" content="summary" />`,
   ];
   return tags.map((t) => `    ${t}\n`).join('');
 }
 
+/** The icons of the page: the app's own (public/), or the one of the configuration (app.yaml icon). */
+function icons(template: string, icon?: string): string {
+  if (!icon) return template;
+  const href = escapeHtml(icon);
+  return template.replace(
+    /<link rel="icon"[^>]*>\s*(?:<link rel="icon"[^>]*>\s*)*<link rel="apple-touch-icon"[^>]*>/,
+    `<link rel="icon" href="${href}" />\n    <link rel="apple-touch-icon" href="${href}" />`,
+  );
+}
+
 /**
- * index.html for one language: its lang, title and description, links for search engines and
- * sharing, the skin's colours and the configuration inside.
+ * index.html for one language: its lang, title and description, icons, links for search engines
+ * and sharing, the skin's colours and the configuration inside.
  */
 export function renderPage(template: string, client: ClientConfig, skin = ''): string {
   // The stylesheet comes from the configuration; it cannot end its own element early.
   // In CSS "<\/" reads as "</", so the stylesheet keeps its meaning.
   const style = skin ? `    <style id="skin">${skin.replace(/<\//g, '<\\/')}</style>\n` : '';
-  return template
+  return icons(template, client.app.icon)
     .replace(/<html lang="[^"]*">/, `<html lang="${escapeHtml(client.locale)}">`)
     .replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(client.app.title)}</title>`)
     .replace(/(<meta\s+name="description"\s+content=")[^"]*"/, `$1${escapeHtml(client.app.description)}"`)

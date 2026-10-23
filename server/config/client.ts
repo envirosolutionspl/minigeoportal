@@ -1,5 +1,5 @@
 import type { ClientConfig } from '../../shared/config.ts';
-import type { AppConfig, Text } from './schema.ts';
+import type { AppConfig, BrandImage, Text } from './schema.ts';
 import { escapeHtml, renderMarkdown } from './markdown.ts';
 
 /**
@@ -31,7 +31,10 @@ export function creditHtml(markdown: string): string {
   );
 }
 
-export function clientConfig({ app, map, layers, content, messages }: AppConfig, locale: string): ClientConfig {
+/** Address of a brand image: changes with the file, so it may be cached for good. */
+const brandUrl = (image: BrandImage) => `${image.path}?v=${image.version}`;
+
+export function clientConfig({ app, map, layers, content, brand, messages }: AppConfig, locale: string): ClientConfig {
   const fallback = app.locales.default;
   const t = (value: Text) => textIn(value, locale, fallback);
   const keywords = (k: string[] | Record<string, string[]>) => (Array.isArray(k) ? k : (k[locale] ?? k[fallback] ?? []));
@@ -44,7 +47,8 @@ export function clientConfig({ app, map, layers, content, messages }: AppConfig,
       description: t(app.description),
       domain: app.domain,
       contact: app.contact,
-      author: app.author,
+      author: { name: app.author.name, url: app.author.url, ...(brand.logo ? { logo: brandUrl(brand.logo) } : {}) },
+      ...(brand.icon ? { icon: brandUrl(brand.icon) } : {}),
       storagePrefix: `${app.id}.`,
       ...(app.tagline ? { tagline: t(app.tagline) } : {}),
     },

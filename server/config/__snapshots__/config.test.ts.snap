@@ -4,6 +4,7 @@ exports[`default configuration > stays what the app was built with (any change s
 {
   "app": {
     "author": {
+      "logo": "/brand/logo.svg?v=2199a361e767",
       "name": "EnviroSolutions",
       "url": "https://envirosolutions.pl",
     },

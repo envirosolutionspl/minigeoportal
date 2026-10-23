@@ -25,6 +25,8 @@ Start from a copy of `skins/default/skin.css` and change the values:
   --on-accent: #ffffff; /* text on the accent */
   --accent-soft: #e3eef5; /* background of switched-on layers */
   --map-bg: #f2f4f5; /* under transparent map tiles */
+  --mark: #0b5d8f; /* the built-in sign of the app; the accent when left out */
+  --mark-line: #52606d; /* boundaries in its lens; --muted when left out */
 }
 
 @media (prefers-color-scheme: dark) {

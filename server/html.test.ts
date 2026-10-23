@@ -95,7 +95,18 @@ describe('renderPage', () => {
     expect(single).toContain('<link rel="canonical" href="https://minigeoportal.pl/" />');
     expect(single).not.toContain('hreflang');
     expect(page).toContain('<meta property="og:title" content="A &amp; &quot;B&quot;" />');
-    expect(page).toContain('<meta property="og:image" content="https://minigeoportal.pl/apple-touch-icon.png" />');
+    expect(page).toContain(`<meta property="og:image" content="https://${defaults.app.domain}/apple-touch-icon.png" />`);
+  });
+
+  it('keeps the icons of the app, or puts in the icon of the configuration', () => {
+    const template = readFileSync('index.html', 'utf8');
+    expect(renderPage(template, defaults)).toContain('<link rel="icon" type="image/svg+xml" href="/favicon.svg" />');
+    const page = renderPage(template, { ...defaults, app: { ...defaults.app, icon: '/brand/icon.png?v=1&x' } });
+    expect(page.match(/<link rel="(icon|apple-touch-icon)"[^>]*>/g)).toEqual([
+      '<link rel="icon" href="/brand/icon.png?v=1&amp;x" />',
+      '<link rel="apple-touch-icon" href="/brand/icon.png?v=1&amp;x" />',
+    ]);
+    expect(page).toContain(`<meta property="og:image" content="https://${defaults.app.domain}/brand/icon.png?v=1&amp;x" />`);
   });
 
   it('puts the skin into the page, unable to close its element', () => {

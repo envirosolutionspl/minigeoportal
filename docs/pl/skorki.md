@@ -25,6 +25,8 @@ Zacznij od kopii `skins/default/skin.css` i zmień wartości:
   --on-accent: #ffffff; /* tekst na akcencie */
   --accent-soft: #e3eef5; /* tło włączonych warstw */
   --map-bg: #f2f4f5; /* pod przezroczystymi kaflami mapy */
+  --mark: #0b5d8f; /* wbudowany znak aplikacji; bez tego akcent */
+  --mark-line: #52606d; /* granice w jego lupie; bez tego --muted */
 }
 
 @media (prefers-color-scheme: dark) {

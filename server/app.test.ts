@@ -75,10 +75,22 @@ describe('routes', () => {
   it('serves the configuration for the page, revalidated', async () => {
     const res = await app.request('/api/config', {}, remote);
     expect(res.headers.get('cache-control')).toBe('no-cache');
+    // The language comes from the address, the cookie or the browser.
+    expect(res.headers.get('vary')).toContain('Accept-Language, Cookie');
     const body = (await res.json()) as typeof site.defaults;
     expect(body).toEqual(site.defaults);
     const again = await app.request('/api/config', { headers: { 'if-none-match': res.headers.get('etag')! } }, remote);
     expect(again.status).toBe(304);
+  });
+
+  it('answers 304 to the weak tag the compression middleware hands browsers', async () => {
+    const first = await app.request('/api/capabilities', { headers: { 'accept-encoding': 'gzip' } }, remote);
+    const etag = first.headers.get('etag')!;
+    expect(etag.startsWith('W/')).toBe(true);
+    const again = await app.request('/api/capabilities', { headers: { 'accept-encoding': 'gzip', 'if-none-match': etag } }, remote);
+    expect(again.status).toBe(304);
+    const list = await app.request('/api/capabilities', { headers: { 'if-none-match': `"other", ${etag}` } }, remote);
+    expect(list.status).toBe(304);
   });
 
   it('serves health and capabilities with security headers', async () => {

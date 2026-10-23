@@ -59,6 +59,23 @@ describe('writeUrl', () => {
     vi.useRealTimers();
   });
 
+  it('keeps a dot inside a layer name apart from the dots between names', () => {
+    vi.useFakeTimers();
+    const state = {
+      center: [1, 2] as [number, number],
+      zoom: 3,
+      base: 'orto',
+      overlays: ['ms.Gleby'],
+      sublayers: { 'ms.Gleby': ['a.b', 'c'] },
+    };
+    writeUrl(state);
+    vi.advanceTimersByTime(300);
+    expect(window.location.search).toBe('?x=1&y=2&z=3.0&b=orto&l=ms%252EGleby.a%252Eb.c');
+    expect(readUrl()).toEqual(state);
+    setSearch('');
+    vi.useRealTimers();
+  });
+
   it('round-trips through readUrl', () => {
     vi.useFakeTimers();
     const state = {

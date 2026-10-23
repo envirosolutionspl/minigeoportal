@@ -25,6 +25,16 @@ describe('defaults', () => {
     window.history.replaceState(null, '', '/');
   });
 
+  it('drops catalog layer ids from a link when the deployment has no catalog', async () => {
+    const { initConfig } = await import('@/config/runtime');
+    window.history.replaceState(null, '', '?l=kieg,msINSPIRERejZabNieruch');
+    vi.resetModules();
+    (await import('@/config/runtime')).initConfig({ ...config, modules: {} });
+    expect((await import('./store')).useMapStore.getState().overlays).toEqual(['kieg']);
+    initConfig(config);
+    window.history.replaceState(null, '', '/');
+  });
+
   it('starts on the general map on a computer and on the simple map on a phone', async () => {
     expect((await fresh(false)).base).toBe('mapa');
     expect((await fresh(true)).base).toBe('prosta');

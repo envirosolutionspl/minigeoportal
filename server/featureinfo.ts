@@ -100,7 +100,7 @@ function buildParams(def: QueryTarget | undefined, query: URLSearchParams, crs: 
     STYLES: '',
     FORMAT: 'image/png',
     TRANSPARENT: 'true',
-    BBOX: bbox.map((n) => n.toFixed(2)).join(','),
+    BBOX: bbox.map(String).join(','),
     WIDTH: String(width),
     HEIGHT: String(height),
     I: String(i),
@@ -153,12 +153,12 @@ function identifyParams(def: QueryTarget, query: URLSearchParams, crs: string): 
   const y = maxY - ((maxY - minY) * j) / height;
   const params = new URLSearchParams({
     f: 'json',
-    geometry: `${x.toFixed(2)},${y.toFixed(2)}`,
+    geometry: `${x},${y}`,
     geometryType: 'esriGeometryPoint',
     sr: crs.split(':')[1],
     layers: `visible:${layers.join(',')}`,
     tolerance: '5',
-    mapExtent: bbox.map((n) => n.toFixed(2)).join(','),
+    mapExtent: bbox.map(String).join(','),
     imageDisplay: `${width},${height},96`,
     returnGeometry: 'false',
   });

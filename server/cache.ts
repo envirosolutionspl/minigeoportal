@@ -7,7 +7,7 @@ import { config, dataPath } from './config.ts';
 import { writeAtomic } from './files.ts';
 
 /** Metadata of the configured services, refreshed by `npm run update`. */
-export const CACHE_FILE = process.env.CAPABILITIES_FILE ?? dataPath('capabilities.json');
+export const CACHE_FILE = dataPath('capabilities.json');
 /**
  * The copy that comes with the configuration (seed/ in its directory), so a fresh checkout or an
  * empty data volume starts with scale limits before the first update.

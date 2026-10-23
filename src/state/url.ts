@@ -32,7 +32,8 @@ export function readUrl(): Partial<UrlState> {
     state.overlays = [];
     state.sublayers = {};
     for (const part of l.split(',').filter(Boolean)) {
-      const [id, ...subs] = part.split('.');
+      // A dot inside a name (a catalog layer) travels as %2E (see queryFor).
+      const [id, ...subs] = part.split('.').map((s) => s.replace(/%2E/gi, '.'));
       state.overlays.push(id);
       if (subs.length > 0) state.sublayers[id] = subs;
     }
@@ -50,7 +51,8 @@ function queryFor(state: UrlState): string {
   q.set('y', state.center[1].toFixed(DIGITS));
   q.set('z', state.zoom.toFixed(1));
   q.set('b', state.base);
-  q.set('l', state.overlays.map((id) => [id, ...(state.sublayers[id] ?? [])].join('.')).join(','));
+  const named = (s: string) => s.replace(/\./g, '%2E');
+  q.set('l', state.overlays.map((id) => [id, ...(state.sublayers[id] ?? [])].map(named).join('.')).join(','));
   return `?${q.toString().replace(/%2C/g, ',')}`;
 }
 

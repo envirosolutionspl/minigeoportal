@@ -269,6 +269,8 @@ export async function buildCache(config: ClientConfig, previous?: CapabilitiesCa
   const services: Record<string, ServiceMeta> = {};
   for (const [id, meta] of entries) {
     const old = previous?.services[id];
+    // A service that does not answer keeps its previous metadata, said out loud rather than hidden.
+    if (meta.kind === 'error' && old && old.kind !== 'error') console.warn(`${id}: ${meta.error} (previous metadata kept)`);
     services[id] = meta.kind === 'error' && old && old.kind !== 'error' ? old : meta;
   }
   const order = drawOrder ?? previous?.drawOrder;

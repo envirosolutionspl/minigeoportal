@@ -9,7 +9,8 @@ import { brotliCompress, constants, gzip } from 'node:zlib';
 
 const brotli = promisify(brotliCompress);
 const gz = promisify(gzip);
-const COMPRESSIBLE = /\.(js|css|html|svg|json|txt|xml)$/;
+// index.html is rendered by the server for each language, never served from dist as it is.
+const COMPRESSIBLE = /\.(js|css|svg|json|txt|xml)$/;
 const MIN_BYTES = 1024;
 
 async function* walk(dir: string): AsyncGenerator<string> {

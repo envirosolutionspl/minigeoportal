@@ -66,14 +66,6 @@ export function createTileLayer(def: TileService, range: { minResolution?: numbe
 }
 
 /**
- * Drawing order of overlays, lowest first, as in the national geoportal (geoportal.gov.pl).
- * The server reads it from the geoportal configuration with the capabilities; this copy of it
- * is used when that fails: plans at the bottom (local plans under the general ones), utility
- * networks over them, land register parcels and buildings over both, transaction prices on
- * top. The catalog keeps its own order; this one only decides what covers what.
- */
-
-/**
  * Place of an overlay in the drawing order. Configured overlays follow the order geoportal.gov.pl
  * draws them in, else `layers.drawOrder`; a layer of the geoportal catalog goes just above the
  * highest of ours that the geoportal draws below it, so the two lists interleave as on

@@ -4,7 +4,7 @@ import type { InfoRecord } from '@/services/featureinfo';
 export type InfoResult = { status: 'loading' } | { status: 'done'; records: InfoRecord[] } | { status: 'error' };
 
 interface InfoQuery {
-  /** EPSG:2180 [easting, northing]. */
+  /** [x, y] in the map's projection. */
   coordinate: [number, number];
   /** Overlay ids queried, in display order. */
   services: string[];

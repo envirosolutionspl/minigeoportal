@@ -54,16 +54,16 @@ docker run -p 8787:8787 -v minigeoportal-data:/data ghcr.io/envirosolutionspl/mi
 
 ## Environment variables
 
-| Variable                                                                                      | Meaning                                                                                                                              |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `PORT`, `HOST`                                                                                | Where the server listens: 8787; `0.0.0.0` in production, `127.0.0.1` otherwise. Behind a proxy on the same machine keep `127.0.0.1`. |
-| `NODE_ENV`                                                                                    | `production` serves the built app from `dist/`.                                                                                      |
-| `CONFIG_DIR`                                                                                  | The configuration directory (`config`).                                                                                              |
-| `DATA_DIR`                                                                                    | The data directory (`server/data`).                                                                                                  |
-| `SHARED_DATA`                                                                                 | `1` when several instances share `DATA_DIR`: only `npm run update` writes the caches.                                                |
-| `TRUSTED_PROXY`                                                                               | `1` behind a reverse proxy that appends the client address to `X-Forwarded-For`; rate limits then count per client.                  |
-| `APP_ORIGIN`                                                                                  | Public address of the app, e.g. `https://example.org`; bug reports may link only to it.                                              |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `REPORT_FROM`, `REPORT_TO` | The mail server and recipient of bug reports. Without `SMTP_HOST` and `REPORT_TO` the form is off.                                   |
-| `API_PORT`                                                                                    | Development only: where the Vite server finds the API.                                                                               |
+| Variable                                                                                      | Meaning                                                                                                                                                   |
+| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`, `HOST`                                                                                | Where the server listens: 8787; `0.0.0.0` in production, `127.0.0.1` otherwise. Behind a proxy on the same machine keep `127.0.0.1`.                      |
+| `NODE_ENV`                                                                                    | `production` serves the built app from `dist/`.                                                                                                           |
+| `CONFIG_DIR`                                                                                  | The configuration directory (`config`).                                                                                                                   |
+| `DATA_DIR`                                                                                    | The data directory (`server/data`).                                                                                                                       |
+| `SHARED_DATA`                                                                                 | `1` when several instances share `DATA_DIR`: only `npm run update` writes the caches.                                                                     |
+| `TRUSTED_PROXY`                                                                               | `1` behind a reverse proxy that appends the client address to `X-Forwarded-For`; rate limits then count per client.                                       |
+| `APP_ORIGIN`                                                                                  | Public address of the app, e.g. `https://example.org`; bug reports may link only to it.                                                                   |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `REPORT_FROM`, `REPORT_TO` | The mail server, sender (`REPORT_FROM`, default `SMTP_USER`) and recipient of bug reports. Without `SMTP_HOST`, `REPORT_TO` and a sender the form is off. |
+| `API_PORT`                                                                                    | Development only: where the Vite server finds the API.                                                                                                    |
 
 `.env.example` lists them with examples.

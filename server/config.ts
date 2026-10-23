@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 
 /**
  * Server settings from the environment, read once at start (also from .env; every variable is
- * described in .env.example). Only TRUSTED_PROXY is read per request, in http.ts.
+ * described in .env.example, the test hooks CATALOG_FILE and DICT_CACHE_DIR in their modules). Only TRUSTED_PROXY is read per request, in http.ts.
  */
 
 export const production = process.env.NODE_ENV === 'production';

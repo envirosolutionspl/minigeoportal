@@ -212,7 +212,8 @@ describe('WMTS and ArcGIS queries', () => {
     await featureInfo('msGleby', query('QUERY_LAYERS=2,0&BBOX=559950,419950,560050,420050&WIDTH=100&HEIGHT=100&I=50&J=50'), lookup, CRS);
     const url = new URL(calls[0]);
     expect(url.pathname).toBe('/gprest/services/MapaGlebowoRolnicza/MapServer/identify');
-    expect(url.searchParams.get('geometry')).toBe('560000.00,420000.00');
+    // Full precision: a geographic map would lose up to a kilometre at two decimals.
+    expect(url.searchParams.get('geometry')).toBe('560000,420000');
     expect(url.searchParams.get('layers')).toBe('visible:2,0');
     expect(url.searchParams.get('sr')).toBe('2180');
     expect(url.searchParams.get('imageDisplay')).toBe('100,100,96');

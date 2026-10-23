@@ -1,16 +1,18 @@
 import { mkdir, rename, stat, writeFile } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
 import { dirname } from 'node:path';
 import { errorMessage } from './config.ts';
 
 /** Files in the data directory, which several instances may share (SHARED_DATA=1). */
 
 /**
- * Written next to the target under a name of this process and renamed, so a crash never leaves
- * half a file and instances sharing the data directory never write into each other's copy.
+ * Written next to the target under a unique name and renamed, so a crash never leaves half a
+ * file and instances sharing the data directory never write into each other's copy (containers
+ * may all run the server under the same pid, so the pid alone would not do).
  */
 export async function writeAtomic(file: string, text: string): Promise<void> {
   await mkdir(dirname(file), { recursive: true });
-  const temporary = `${file}.${process.pid}.tmp`;
+  const temporary = `${file}.${randomUUID()}.tmp`;
   await writeFile(temporary, text);
   await rename(temporary, file);
 }

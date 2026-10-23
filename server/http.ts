@@ -109,9 +109,6 @@ export async function isPublicHost(hostname: string): Promise<boolean> {
   return ok;
 }
 
-/** Test hook: forgets the remembered host answers. */
-export const forgetHosts = () => hosts.clear();
-
 /** Ports of web servers; anything else (databases, admin consoles) is never contacted. */
 const WEB_PORTS = new Set(['', '80', '443', '8080', '8443']);
 
@@ -148,7 +145,8 @@ export async function fetchPublic(address: string, init: RequestInit = {}, maxRe
 }
 
 /**
- * fetch() of a fixed GUGiK address: no redirects, and a failed answer is dropped at once
+ * fetch() of an address the operator fixed (a module's service endpoints, the configured
+ * Nominatim), never one a visitor supplied: no redirects, and a failed answer is dropped at once
  * instead of holding the connection until the body is collected.
  */
 export async function fetchFixed(url: string, init: RequestInit = {}): Promise<Response> {
@@ -185,8 +183,9 @@ export function clientAddress(c: Context): string {
 }
 
 /**
- * A request from the server's own machine, for the refresh routes. Behind a proxy every
- * request arrives from the machine, so nothing counts as local there.
+ * A request from the server's own machine: in development its own Origin may stand in for
+ * APP_ORIGIN (the report route). Behind a proxy every request arrives from the machine, so
+ * nothing counts as local there.
  */
 export function isLoopback(c: Context): boolean {
   return !behindProxy() && !c.req.header('x-forwarded-for') && /^(127\.|::1$|::ffff:127\.)/.test(remoteAddress(c));

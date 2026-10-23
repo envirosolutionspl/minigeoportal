@@ -50,6 +50,7 @@ if (config.sharedData) {
 }
 
 const mailer = mailerFromEnv(site.mail);
+if (production && !config.origin) console.warn('APP_ORIGIN not set: bug reports cannot link to the map view.');
 if (!mailer) console.log('Bug reports off: set SMTP_HOST and REPORT_TO to turn them on.');
 const app = createApp({
   site,
@@ -82,7 +83,8 @@ if (production) {
   // Hashed assets never change, so they are cached for a year; .br/.gz files come from the build.
   app.use('/assets/*', async (c, next) => {
     await next();
-    c.header('Cache-Control', 'public, max-age=31536000, immutable');
+    // A file that is not there (an old release's asset) must not be remembered for a year.
+    if (c.res.ok) c.header('Cache-Control', 'public, max-age=31536000, immutable');
   });
   app.use('/*', serveStatic({ root: './dist', precompressed: true }));
   // A file that is not there (an old asset, a guessed icon) is a 404, not the page.

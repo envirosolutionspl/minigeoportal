@@ -265,7 +265,7 @@ describe('WMTS and ArcGIS layers', () => {
         ],
       },
     ]);
-    expect(() => parseFeatureInfo('{"error":{"code":400}}', 'text/plain')).toThrow('Serwer odrzucił zapytanie');
+    expect(() => parseFeatureInfo('{"error":{"code":400}}', 'text/plain')).toThrow('The service rejected the query');
     const sheet = (category: string, name: string) =>
       `<h3>warstwa: <b>Arkusze</b></h3><table><tr><th>SHAPE</th><td>Polygon</td></tr><tr><th>LOWPS</th><td>0,8</td></tr><tr><th>CATEGORY</th><td>${category}</td></tr><tr><th>SERIA</th><td>TOPO_10_1992</td></tr><tr><th>NAME</th><td>${name}</td></tr></table>`;
     const wmts = `<html><body>${sheet('Primary', 'N-34-139-B-c-3')}${sheet('Overview', 'Ov_i281')}</body></html>`;

@@ -159,7 +159,7 @@ export function ReportDialog() {
               {/* Hidden from people; bots that fill it in are ignored by the server. */}
               <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
                 <label>
-                  Strona www <input name="website" type="text" tabIndex={-1} autoComplete="off" />
+                  Website <input name="website" type="text" tabIndex={-1} autoComplete="off" />
                 </label>
               </div>
               <p className="text-xs text-[var(--muted)]">{t('report.privacy')}</p>

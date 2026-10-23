@@ -14,5 +14,4 @@
 !skins
 !i18n
 !scripts
-server/data/dict
-server/data/catalog
+server/data

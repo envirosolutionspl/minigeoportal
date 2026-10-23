@@ -52,10 +52,19 @@ describe('formatReport in another language', () => {
 });
 
 describe('mailerFromEnv', () => {
-  it('is off without a mail server or recipient', () => {
+  it('is off without a mail server, a recipient or a sender address', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     expect(mailerFromEnv(defaults, {})).toBeUndefined();
     expect(mailerFromEnv(defaults, { SMTP_HOST: 'smtp.example.com' })).toBeUndefined();
-    expect(mailerFromEnv(defaults, { SMTP_HOST: 'smtp.example.com', REPORT_TO: 'a@example.com' })).toBeDefined();
+    // Without a sender every send would fail later: said at start instead.
+    expect(mailerFromEnv(defaults, { SMTP_HOST: 'smtp.example.com', REPORT_TO: 'a@example.com' })).toBeUndefined();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('REPORT_FROM'));
+    expect(
+      mailerFromEnv(defaults, { SMTP_HOST: 'smtp.example.com', REPORT_TO: 'a@example.com', SMTP_USER: 'u@example.com' }),
+    ).toBeDefined();
+    expect(
+      mailerFromEnv(defaults, { SMTP_HOST: 'smtp.example.com', REPORT_TO: 'a@example.com', REPORT_FROM: 'App <a@b.pl>' }),
+    ).toBeDefined();
   });
 });
 

@@ -18,6 +18,15 @@ describe('roundScale', () => {
 });
 
 describe('MapStatus', () => {
+  it('shows the scale on the ground, not the nominal one, in a Mercator map', async () => {
+    const { getPointResolution } = await import('ol/proj');
+    const { resolutionToScale } = await import('./projection');
+    // At 52° a Mercator metre is about 0.62 m on the ground: the bar must say the smaller scale.
+    const point = getPointResolution('EPSG:3857', 10, [2000000, 6800000]);
+    expect(point / 10).toBeCloseTo(0.62, 1);
+    expect(resolutionToScale(point)).toBeLessThan(resolutionToScale(10));
+  });
+
   it('shows the numeric scale in the bottom bar, with the cursor position beside it, and follows the zoom', () => {
     // OpenLayers watches the map size; jsdom has no ResizeObserver.
     vi.stubGlobal(

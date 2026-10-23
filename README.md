@@ -245,7 +245,7 @@ Ustawia się je w środowisku albo w pliku `.env` w katalogu aplikacji (wzór: `
 | `SHARED_DATA`                           |                                             | `1`, gdy kilka instancji dzieli `DATA_DIR`: dane zapisuje tylko `npm run update`, instancje wczytują je ponownie w ciągu minuty. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | `587`, STARTTLS                             | Serwer poczty dla formularza zgłoszeń (`SMTP_SECURE=true` dla portu 465).                                                        |
 | `SMTP_USER`, `SMTP_PASS`                |                                             | Logowanie do serwera poczty. Tylko w `.env` lub w środowisku, nigdy w konfiguracji.                                              |
-| `REPORT_FROM`, `REPORT_TO`              |                                             | Nadawca i adresat zgłoszeń. Bez `SMTP_HOST` i `REPORT_TO` formularz jest wyłączony.                                              |
+| `REPORT_FROM`, `REPORT_TO`              |                                             | Nadawca (domyślnie `SMTP_USER`) i adresat zgłoszeń. Bez `SMTP_HOST`, `REPORT_TO` i nadawcy formularz jest wyłączony.             |
 | `API_PORT`                              | `8787`                                      | Tylko przy pracy nad aplikacją: gdzie serwer Vite znajduje API.                                                                  |
 
 ## Ścieżki i pliki

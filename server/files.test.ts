@@ -22,6 +22,20 @@ describe('writeAtomic', () => {
   });
 });
 
+describe('writeAtomic from several writers', () => {
+  // Windows refuses to replace a file another rename is still touching; the server runs on Linux.
+  it.skipIf(process.platform === 'win32')(
+    'uses a temporary name of its own for each write, so writers sharing a directory never collide',
+    async () => {
+      const dir = await tempDir();
+      const file = join(dir, 'c.json');
+      await Promise.all(Array.from({ length: 8 }, (_, i) => writeAtomic(file, `{"n":${i}}`)));
+      expect(await readFile(file, 'utf8')).toMatch(/^\{"n":\d\}$/);
+      expect(await readdir(dir)).toEqual(['c.json']);
+    },
+  );
+});
+
 describe('follow', () => {
   it('reads a file again only after it changed', async () => {
     const file = join(await tempDir(), 'cache.json');

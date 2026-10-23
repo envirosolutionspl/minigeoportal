@@ -12,7 +12,7 @@ export type Tool = 'none' | 'measure-line' | 'measure-area' | 'print';
 
 /** Something the map should show: zoom to it and outline it. */
 export interface FocusTarget {
-  /** EPSG:2180 WKT; the view fits its extent. */
+  /** WKT in the map's projection; the view fits its extent. */
   wkt?: string;
   /** Used when there is no geometry. */
   center?: [number, number];
@@ -85,8 +85,10 @@ export const useMapStore = create<MapStore>((set, get) => ({
   zoom: initial.zoom ?? view.zoom,
   scale: Infinity,
   base: config.map.baseMaps.find((s) => s.id === initial.base)?.id ?? DEFAULT_BASE,
-  // Catalog layers in a link are loaded by the map; unknown ids simply draw nothing.
-  overlays: (initial.overlays ?? view.overlays).filter((id) => overlayById.has(id) || CATALOG_ID.test(id)),
+  // Catalog layers in a link are loaded by the map (with the catalog on); unknown ids simply draw nothing.
+  overlays: (initial.overlays ?? view.overlays).filter(
+    (id) => overlayById.has(id) || (config.modules.gugik?.catalog === true && CATALOG_ID.test(id)),
+  ),
   sublayers: initial.sublayers ?? {},
   opacity: {},
   panel: 'none',

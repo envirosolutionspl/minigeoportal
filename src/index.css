@@ -219,7 +219,10 @@ input[type='search']::-webkit-search-cancel-button {
   border-color: currentColor;
   font-size: 0.7rem;
 }
-.ol-attribution {
+/* OpenLayers gives the open credits a white background of its own (.ol-attribution:not(.ol-collapsed)),
+   which would hide the light text of dark mode: the bar takes the surface colour in every state. */
+.ol-attribution,
+.ol-attribution:not(.ol-collapsed) {
   left: 0;
   right: 0;
   bottom: 0;

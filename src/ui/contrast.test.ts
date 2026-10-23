@@ -19,6 +19,12 @@ const rules = (selector: string) =>
     )
     .join('}');
 
+describe('dark mode', () => {
+  it('gives the bottom bar the surface colour, not the white background OpenLayers gives open credits', () => {
+    expect(rules('.ol-attribution:not(.ol-collapsed)')).toContain('background: color-mix(in srgb, var(--surface)');
+  });
+});
+
 describe('high contrast theme', () => {
   it('turns the author credit, which has fixed light colours, yellow on black', () => {
     const credit = rules("html[data-contrast='high'] .author-credit");

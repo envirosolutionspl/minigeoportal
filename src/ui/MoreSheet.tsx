@@ -23,14 +23,15 @@ export function MoreSheet({ open, onClose, items }: { open: boolean; onClose: ()
   const row = 'flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left hover:bg-[var(--hover)]';
 
   return (
-    // The backdrop is the dialog itself; Escape closes it natively (see useModalDialog).
+    // The backdrop is the dialog itself; Escape closes it natively (see useModalDialog). It sits in
+    // the top bar, which lets taps through to the map: the sheet takes them back.
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
     <dialog
       ref={ref}
       onClose={onClose}
       onClick={onBackdropClick}
       aria-labelledby={titleId}
-      className="mx-auto mt-auto mb-0 w-full max-w-md rounded-t-3xl bg-[var(--surface)] p-0 pb-[var(--safe-bottom)] text-[var(--text)] shadow-2xl outline-none backdrop:bg-[#253326]/30"
+      className="pointer-events-auto mx-auto mt-auto mb-0 w-full max-w-md rounded-t-3xl bg-[var(--surface)] p-0 pb-[var(--safe-bottom)] text-[var(--text)] shadow-2xl outline-none backdrop:bg-[#253326]/30"
     >
       <div className="max-h-[85dvh] overflow-y-auto px-2 pt-3 pb-2">
         <header className="flex items-center justify-between px-3 pb-1">

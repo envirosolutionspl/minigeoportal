@@ -138,6 +138,9 @@ describe('tools on phones', () => {
     expect(more.parentElement?.className).toContain('phone:block');
     fireEvent.click(more);
     expect(more.getAttribute('aria-expanded')).toBe('true');
+    // The top bar lets taps through to the map; the sheet inside it must take them back.
+    expect(container.querySelector('.pointer-events-none')?.contains(screen.getByRole('dialog'))).toBe(true);
+    expect(screen.getByRole('dialog').className).toContain('pointer-events-auto');
   });
 });
 

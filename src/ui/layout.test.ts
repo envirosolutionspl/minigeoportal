@@ -21,7 +21,7 @@ describe('phone screens', () => {
 
   it('keeps the data credit, base maps and author credit above the bar', () => {
     expect(css).toMatch(/--safe-bottom:\s*env\(safe-area-inset-bottom/);
-    expect(css).toMatch(/\.ol-attribution\s*\{[^}]*padding:[^;]*var\(--safe-bottom\)/);
+    expect(css).toMatch(/\.ol-attribution:not\(\.ol-collapsed\)\s*\{[^}]*padding:[^;]*var\(--safe-bottom\)/);
     expect(source('src/ui/BasemapSwitcher.tsx')).toContain('bottom-[calc(2.25rem+var(--safe-bottom))]');
     expect(source('src/ui/Brand.tsx')).toContain('bottom-[calc(1.75rem+var(--safe-bottom))]');
   });

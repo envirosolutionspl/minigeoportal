@@ -23,9 +23,11 @@ Texts of the interface (buttons, messages, labels) come with the app in `i18n/pl
 
 ```yaml
 search:
-  gugik:
-    placeholder: Address, town, parcel…
+  coordinates:
+    placeholder: Coordinates, e.g. 52.2318 21.0067
 ```
+
+A module brings its own texts in `src/modules/<module>/i18n/<lang>.yaml`; they are added only when `app.yaml` enables the module (see [Search and modules](search-and-modules.md#texts-of-the-module)).
 
 A deployment changes single texts in `i18n/<lang>.yaml` of its configuration directory; only the changed keys need to be there:
 
@@ -35,7 +37,7 @@ layers:
   popular: Start here
 ```
 
-The same way a deployment gives readable names to technical fields in the answers of its services (`info.fields`, keyed by the field name) and names its data source in the footer of a printout (`print.note`); the default configuration does this for the GUGiK services in `config/i18n/`:
+The same way a deployment gives readable names to technical fields in the answers of its services (`info.fields`, keyed by the field name), names its data source in the footer of a printout (`print.note`) and words texts for its own data (the hint of the layer search, the reasons a layer cannot be shown, the place panel without layers, the introduction of the report form); the default configuration does this for the GUGiK services in `config/i18n/`:
 
 ```yaml
 info:
@@ -95,7 +97,7 @@ Example: German (`de`) in the configuration directory `config/`.
      available: [pl, en, de]
    ```
 
-2. **Interface texts.** Copy the app's `i18n/en.yaml` to `config/i18n/de.yaml` and translate the values, keeping the keys. Keep `{name}` placeholders, and give messages that depend on a number the forms the language needs (German: `one` and `other`). If the deployment's `config/i18n/en.yaml` has texts of its own (e.g. `info.fields`, `print.note`), translate them in the same `de.yaml`.
+2. **Interface texts.** Copy the app's `i18n/en.yaml` to `config/i18n/de.yaml` and translate the values, keeping the keys. Keep `{name}` placeholders, and give messages that depend on a number the forms the language needs (German: `one` and `other`). With the gugik module on, add the keys of `src/modules/gugik/i18n/en.yaml` to the same `de.yaml` and translate them too. If the deployment's `config/i18n/en.yaml` has texts of its own (e.g. `info.fields`, `print.note`), translate them in the same `de.yaml`.
 
 3. **Markdown content.** Add `content/welcome.de.md` and `content/accessibility.de.md` (translate the English ones). Without them the German page shows the content in the default language.
 

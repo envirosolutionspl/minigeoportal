@@ -1,0 +1,46 @@
+# Texts of the gugik module in English, added to the app's own (i18n/en.yaml) when app.yaml enables
+# the module. A deployment changes them in i18n/en.yaml of its configuration directory, as any other.
+
+search:
+  parcel: Find a parcel by its number and precinct
+  parcelShort: Parcel
+  parcelHit: Parcel {number}
+  gugik:
+    placeholder: Address, town, parcel…
+    label: Search for an address, town or parcel
+
+parcel:
+  title: Find a parcel
+  panel: Parcel search
+  found: Parcel found
+  change: Change
+  clearAndClose: Clear and close
+  voivodeship: Voivodeship
+  county: County
+  commune: Municipality
+  precinct: Precinct
+  number: Parcel number
+  numberPlaceholder: e.g. 22/1
+  search: Find the parcel
+  notFound: Parcel {number} was not found in precinct {precinct}. Check the number, including how it is written with a slash.
+  error: The GUGiK parcel service does not answer. Try again in a moment.
+  several:
+    one: '{count} parcel with this number found. Choose it.'
+    other: '{count} parcels with this number found. Choose one.'
+  choose: Choose
+  listFailed: List not loaded
+  retry: Retry
+  retryList: 'Retry: {label}'
+
+layers:
+  catalogLoading: Loading the list of geoportal.gov.pl layers…
+  catalogPreparing: The list of all geoportal.gov.pl layers is being prepared. Try again in a few minutes.
+  catalogError: The list of geoportal.gov.pl layers could not be loaded. The layers above work.
+
+info:
+  parcelReport: Parcel report
+  parcelReportHint: (geoportal.gov.pl, opens in a new tab)
+  photoFrom: Orthophoto map from a photo of
+  pixel: pixel
+  downloadSheet: download sheet {sheet}
+  photoLoading: Checking the date of the aerial photo…

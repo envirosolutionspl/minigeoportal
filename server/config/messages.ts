@@ -5,14 +5,16 @@ import { parse } from 'yaml';
 import type { Message } from '../../shared/config.ts';
 
 /**
- * Texts of the interface per language: i18n/<lang>.yaml of the app, with changes and new
- * languages from i18n/<lang>.yaml in the configuration directory. Keys are nested in the files
+ * Texts of the interface per language: i18n/<lang>.yaml of the app, those of each enabled module
+ * (src/modules/<module>/i18n/<lang>.yaml), then changes and new languages from i18n/<lang>.yaml
+ * in the configuration directory. Keys are nested in the files
  * and dotted in the app (search.placeholder). A message with forms per number is an object of
  * Intl.PluralRules categories: { one: 1 warstwa, few: '{count} warstwy', many: …, other: … }.
  * A key a language lacks falls back to the default language.
  */
 
 const BUILT_IN = resolve(dirname(fileURLToPath(import.meta.url)), '../../i18n');
+const MODULES = resolve(dirname(fileURLToPath(import.meta.url)), '../../src/modules');
 const PLURAL = new Set(['zero', 'one', 'two', 'few', 'many', 'other']);
 
 type Tree = { [key: string]: string | Tree };
@@ -51,11 +53,19 @@ function readMessages(file: string, problems: string[], required: boolean): Reco
 }
 
 /** Messages of every language, complete: what a language lacks comes from the default one. */
-export function loadMessages(configDir: string, locales: { default: string; available: string[] }, problems: string[]) {
+export function loadMessages(
+  configDir: string,
+  locales: { default: string; available: string[] },
+  problems: string[],
+  modules: string[] = [],
+) {
   const of = (locale: string) => {
-    const builtIn = readMessages(join(BUILT_IN, `${locale}.yaml`), problems, false);
-    const own = readMessages(join(configDir, 'i18n', `${locale}.yaml`), problems, false);
-    return { ...builtIn, ...own };
+    const files = [
+      join(BUILT_IN, `${locale}.yaml`),
+      ...modules.map((m) => join(MODULES, m, 'i18n', `${locale}.yaml`)),
+      join(configDir, 'i18n', `${locale}.yaml`),
+    ];
+    return Object.assign({}, ...files.map((f) => readMessages(f, problems, false))) as Record<string, Message>;
   };
   const fallback = of(locales.default);
   if (Object.keys(fallback).length === 0) problems.push(`i18n/${locales.default}.yaml: no texts for the default language`);

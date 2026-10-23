@@ -40,3 +40,9 @@ Działa tylko w PL-1992: konfiguracja jest odrzucana, gdy moduł jest włączony
 - **parcelReport**: link w panelu informacji o miejscu do raportu o działce w geoportal.gov.pl.
 
 Wyszukiwarka GUGiK (`search.provider: gugik`) i wyszukiwarka działek (`search.parcel`) też wymagają modułu. Bez niego serwer nie ma jego tras, a strona nie łączy się bezpośrednio z żadnym serwerem GUGiK.
+
+### Napisy modułu
+
+Moduł ma swoje napisy w `src/modules/gugik/i18n/pl.yaml` i `en.yaml`, dodawane do napisów aplikacji tylko przy włączonym module: `search.gugik.*` i `search.parcel*` (wyszukiwarka GUGiK i przycisk działki), `parcel.*` (wyszukiwanie działki), `layers.catalog*` (wczytywanie listy geoportal.gov.pl), `info.parcelReport*` (link do raportu o działce) oraz `info.photo*`, `info.pixel`, `info.downloadSheet` (data zdjęcia lotniczego). Wdrożenie zmienia je w swoim `i18n/<język>.yaml` jak każdy inny napis, a nowy język tłumaczy je tam (zob. [Treści i języki](tresci-i-jezyki.md#dodawanie-języka-krok-po-kroku)).
+
+Napisy samej aplikacji nie wymieniają żadnej usługi GUGiK; domyślna konfiguracja formułuje część z nich pod swoje dane w `config/i18n/` (`layers.searchPlaceholder`, `layers.why.token`, `layers.why.refused`, `info.noLayers`, `report.intro`).

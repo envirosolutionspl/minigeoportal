@@ -40,3 +40,9 @@ It works in PL-1992 only: the configuration is refused when the module is enable
 - **parcelReport**: a link in the place panel to the parcel report of geoportal.gov.pl.
 
 The GUGiK search (`search.provider: gugik`) and the parcel search (`search.parcel`) need the module too. Without it the server has none of its routes and the page connects to no GUGiK host directly.
+
+### Texts of the module
+
+The module brings its texts in `src/modules/gugik/i18n/pl.yaml` and `en.yaml`, added to the app's own only when the module is enabled: `search.gugik.*` and `search.parcel*` (the GUGiK search and the parcel button), `parcel.*` (the parcel search), `layers.catalog*` (loading the geoportal.gov.pl list), `info.parcelReport*` (the parcel report link) and `info.photo*`, `info.pixel`, `info.downloadSheet` (the date of the aerial photo). A deployment changes them in its `i18n/<lang>.yaml` like any other text, and a new language translates them there (see [Texts and languages](texts-and-languages.md#adding-a-language-step-by-step)).
+
+The app's own texts name no GUGiK service; the default configuration words some of them for its data in `config/i18n/` (`layers.searchPlaceholder`, `layers.why.token`, `layers.why.refused`, `info.noLayers`, `report.intro`).

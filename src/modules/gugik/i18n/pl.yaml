@@ -1,0 +1,48 @@
+# Texts of the gugik module in Polish, added to the app's own (i18n/pl.yaml) when app.yaml enables
+# the module. A deployment changes them in i18n/pl.yaml of its configuration directory, as any other.
+
+search:
+  parcel: Znajdź działkę po numerze i obrębie
+  parcelShort: Działka
+  parcelHit: Działka {number}
+  gugik:
+    placeholder: Adres, miejscowość, działka…
+    label: Szukaj adresu, miejscowości lub działki
+
+parcel:
+  title: Znajdź działkę
+  panel: Wyszukiwanie działki
+  found: Znaleziona działka
+  change: Zmień
+  clearAndClose: Wyczyść i zamknij
+  voivodeship: Województwo
+  county: Powiat
+  commune: Gmina
+  precinct: Obręb
+  number: Numer działki
+  numberPlaceholder: np. 22/1
+  search: Szukaj działki
+  notFound: Nie znaleziono działki {number} w obrębie {precinct}. Sprawdź numer, także zapis z ukośnikiem.
+  error: Usługa działek GUGiK nie odpowiada. Spróbuj ponownie za chwilę.
+  several:
+    one: Znaleziono {count} działkę o tym numerze. Wybierz ją.
+    few: Znaleziono {count} działki o tym numerze. Wybierz jedną.
+    many: Znaleziono {count} działek o tym numerze. Wybierz jedną.
+    other: Znaleziono {count} działki o tym numerze. Wybierz jedną.
+  choose: Wybierz
+  listFailed: Nie wczytano listy
+  retry: Ponów
+  retryList: 'Ponów: {label}'
+
+layers:
+  catalogLoading: Wczytuję listę warstw geoportal.gov.pl…
+  catalogPreparing: Lista wszystkich warstw geoportal.gov.pl jest w przygotowaniu. Spróbuj za kilka minut.
+  catalogError: Nie udało się wczytać listy warstw geoportal.gov.pl. Warstwy powyżej działają.
+
+info:
+  parcelReport: Raport o działce
+  parcelReportHint: (geoportal.gov.pl, otwiera się w nowej karcie)
+  photoFrom: Ortofotomapa ze zdjęcia z
+  pixel: piksel
+  downloadSheet: pobierz arkusz {sheet}
+  photoLoading: Sprawdzam datę zdjęcia lotniczego…

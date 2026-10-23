@@ -194,4 +194,13 @@ describe('texts and credits', () => {
     expect(plain['info.fields.opis_oznac']).toBeUndefined();
     expect(plain['print.note']).not.toMatch(/geoportal\.gov\.pl|GUGiK/);
   });
+
+  it('adds the texts of the gugik module only when the module is on', () => {
+    expect(clientConfig(loadConfig('config'), 'en').messages['parcel.title']).toBe('Find a parcel');
+    const plain = clientConfig(loadConfig('examples/osm'), 'pl').messages;
+    expect(
+      Object.keys(plain).filter((k) => /^(parcel|search\.gugik|search\.parcel)|^layers\.catalog|^info\.(parcelReport|photo)/.test(k)),
+    ).toEqual([]);
+    expect(Object.values(plain).filter((m) => typeof m === 'string' && /GUGiK|geoportal|działk/i.test(m))).toEqual([]);
+  });
 });

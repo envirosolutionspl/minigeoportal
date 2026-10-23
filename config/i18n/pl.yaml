@@ -1,6 +1,13 @@
 # Texts of this deployment that differ from the app's own (i18n/pl.yaml of the app).
 
+layers:
+  searchPlaceholder: 'Szukaj warstwy: woda, gaz, plan, zabytki…'
+  why:
+    token: Usługa wymaga tokenu, który GUGiK wydaje tylko aplikacji geoportal.gov.pl.
+    refused: Serwer tej usługi odrzuca zapytania spoza geoportal.gov.pl.
+
 info:
+  noLayers: Włącz warstwę, na przykład ewidencję gruntów albo plan miejscowy, aby zobaczyć informacje o tym miejscu.
   # Readable names of attributes the GUGiK integration services answer with.
   fields:
     opis_oznac: Przeznaczenie
@@ -9,6 +16,9 @@ info:
     Data DUWM: Data publikacji w dzienniku urzędowym
     Data zasilenia: Data aktualizacji w GUGiK
     WWW: Strona uchwały
+
+report:
+  intro: Opisz, co nie działa w serwisie. Błędy w samych danych (np. granice działek) zgłasza się urzędowi, który je prowadzi.
 
 print:
   note: 'Źródło warstw mapy: geoportal.gov.pl (Główny Urząd Geodezji i Kartografii) oraz udostępniane przez niego usługi starostw, gmin i innych instytucji. Mapa poglądowa, nie jest dokumentem urzędowym. Układ współrzędnych {system} ({code}).'

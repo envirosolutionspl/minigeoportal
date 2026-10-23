@@ -251,7 +251,8 @@ export function loadConfig(dir: string): AppConfig {
   const content = readContent(root, app, problems);
   const skin = readSkin(root, app, problems);
   const brand = readBrand(root, app, problems);
-  const messages = app.value ? loadMessages(root, app.value.locales, problems) : {};
+  const modules = app.value?.modules.gugik?.enabled ? ['gugik'] : [];
+  const messages = app.value ? loadMessages(root, app.value.locales, problems, modules) : {};
   if (problems.length || !app.value || !map.value || !layers.value) throw new ConfigError(problems);
   return { dir: root, app: app.value, map: map.value, layers: layers.value, content, skin, brand, messages };
 }

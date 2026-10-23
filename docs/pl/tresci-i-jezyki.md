@@ -23,9 +23,11 @@ Napisy interfejsu (przyciski, komunikaty, etykiety) są w aplikacji w `i18n/pl.y
 
 ```yaml
 search:
-  gugik:
-    placeholder: Adres, miejscowość, działka…
+  coordinates:
+    placeholder: Współrzędne, np. 52,2318 21,0067
 ```
+
+Moduł ma własne napisy w `src/modules/<moduł>/i18n/<język>.yaml`; są dodawane tylko wtedy, gdy `app.yaml` włącza moduł (zob. [Wyszukiwarka i moduły](wyszukiwarka-i-moduly.md#napisy-modułu)).
 
 Wdrożenie zmienia pojedyncze napisy w `i18n/<język>.yaml` swojego katalogu konfiguracji; wystarczą same zmienione klucze:
 
@@ -35,7 +37,7 @@ layers:
   popular: Na start
 ```
 
-Tak wdrożenie podaje też czytelne nazwy technicznych pól z odpowiedzi usług (`info.fields`, kluczem jest nazwa pola) i dopisuje źródło danych do stopki wydruku (`print.note`); domyślna konfiguracja robi to dla usług GUGiK w `config/i18n/`:
+Tak wdrożenie podaje też czytelne nazwy technicznych pól z odpowiedzi usług (`info.fields`, kluczem jest nazwa pola), dopisuje źródło danych do stopki wydruku (`print.note`) i formułuje napisy pod własne dane (podpowiedź wyszukiwania warstw, powody, dla których warstwy nie da się pokazać, panel miejsca bez warstw, wstęp formularza zgłoszeń); domyślna konfiguracja robi to dla usług GUGiK w `config/i18n/`:
 
 ```yaml
 info:
@@ -97,7 +99,7 @@ Przykład: niemiecki (`de`) w katalogu konfiguracji `config/`.
      available: [pl, en, de]
    ```
 
-2. **Napisy interfejsu.** Skopiuj z aplikacji `i18n/en.yaml` do `config/i18n/de.yaml` i przetłumacz wartości, nie zmieniając kluczy. Zachowaj `{nazwa}` w napisach, a napisom zależnym od liczby daj formy, których potrzebuje język (niemiecki: `one` i `other`). Jeśli `config/i18n/en.yaml` wdrożenia zawiera własne napisy (np. `info.fields`, `print.note`), przetłumacz je w tym samym pliku `de.yaml`.
+2. **Napisy interfejsu.** Skopiuj z aplikacji `i18n/en.yaml` do `config/i18n/de.yaml` i przetłumacz wartości, nie zmieniając kluczy. Zachowaj `{nazwa}` w napisach, a napisom zależnym od liczby daj formy, których potrzebuje język (niemiecki: `one` i `other`). Przy włączonym module gugik dopisz do tego samego `de.yaml` klucze z `src/modules/gugik/i18n/en.yaml` i też je przetłumacz. Jeśli `config/i18n/en.yaml` wdrożenia zawiera własne napisy (np. `info.fields`, `print.note`), przetłumacz je w tym samym pliku `de.yaml`.
 
 3. **Treści w Markdown.** Dodaj `content/welcome.de.md` i `content/accessibility.de.md` (przetłumacz wersję angielską). Bez nich niemiecka strona pokaże treści w języku domyślnym.
 

@@ -1,5 +1,6 @@
 # Texts of the interface in English, with the same keys as i18n/pl.yaml.
 # A deployment changes single texts in i18n/en.yaml of its configuration directory.
+# Texts of a module are in src/modules/<module>/i18n/en.yaml, added when app.yaml enables it.
 
 common:
   close: Close
@@ -40,12 +41,6 @@ search:
   results:
     one: '{count} result. Arrow keys down and up choose, Enter shows it on the map.'
     other: '{count} results. Arrow keys down and up choose, Enter shows it on the map.'
-  parcel: Find a parcel by its number and precinct
-  parcelShort: Parcel
-  parcelHit: Parcel {number}
-  gugik:
-    placeholder: Address, town, parcel…
-    label: Search for an address, town or parcel
   nominatim:
     placeholder: Address or place, Enter searches
     label: Search for an address or place
@@ -54,34 +49,11 @@ search:
     placeholder: Coordinates, e.g. 52.2318 21.0067
     label: Search by coordinates
 
-parcel:
-  title: Find a parcel
-  panel: Parcel search
-  found: Parcel found
-  change: Change
-  clearAndClose: Clear and close
-  voivodeship: Voivodeship
-  county: County
-  commune: Municipality
-  precinct: Precinct
-  number: Parcel number
-  numberPlaceholder: e.g. 22/1
-  search: Find the parcel
-  notFound: Parcel {number} was not found in precinct {precinct}. Check the number, including how it is written with a slash.
-  error: The GUGiK parcel service does not answer. Try again in a moment.
-  several:
-    one: '{count} parcel with this number found. Choose it.'
-    other: '{count} parcels with this number found. Choose one.'
-  choose: Choose
-  listFailed: List not loaded
-  retry: Retry
-  retryList: 'Retry: {label}'
-
 layers:
   title: Layers
   panel: Layer catalog
   search: Search for a layer
-  searchPlaceholder: 'Search for a layer: water, gas, plan, monuments…'
+  searchPlaceholder: Search for a layer…
   clearSearch: Clear the search
   onlyActive: Only switched on ({count})
   activeGroup: Layers switched on
@@ -90,9 +62,6 @@ layers:
   noneFound: No layers match this filter.
   popular: Most popular
   all: All layers
-  catalogLoading: Loading the list of geoportal.gov.pl layers…
-  catalogPreparing: The list of all geoportal.gov.pl layers is being prepared. Try again in a few minutes.
-  catalogError: The list of geoportal.gov.pl layers could not be loaded. The layers above work.
   available: '{available} of {count} available'
   availableShort: '{available} of {count}'
   more: Show more ({count})
@@ -121,8 +90,8 @@ layers:
     down: The service does not answer
     degraded: Part of the data does not load here
   why:
-    token: The service needs a token that GUGiK issues only to the geoportal.gov.pl application.
-    refused: The server of this service refuses requests from outside geoportal.gov.pl.
+    token: The service needs an access key this app does not have.
+    refused: The server of this service refuses requests from other sites.
     down: The server of the service did not answer at the last check. It will be checked again at the next refresh of the layer list.
     unsupported: The service does not give its map in {system} ({code}), the only system the map draws in, which keeps it fast.
     degraded: The service forwards to a county or municipal server that does not answer here or refuses the requests.
@@ -135,11 +104,9 @@ basemaps:
 
 info:
   title: About this place
-  parcelReport: Parcel report
-  parcelReportHint: (geoportal.gov.pl, opens in a new tab)
   loading: Loading information about the place…
   ready: Information about the place is ready.
-  noLayers: Switch on a layer, for example the land register or a local plan, to see information about this place.
+  noLayers: Switch on a layer to see information about this place.
   openLayers: Open the layers
   reportPlace: 'Place: {place}'
   report: Something wrong? Report a problem
@@ -147,10 +114,6 @@ info:
   checkFallback: Check on {name}
   empty: No data at this place.
   open: Open
-  photoFrom: Orthophoto map from a photo of
-  pixel: pixel
-  downloadSheet: download sheet {sheet}
-  photoLoading: Checking the date of the aerial photo…
 
 measure:
   title: Measurement
@@ -187,7 +150,7 @@ report:
   title: Report a problem
   sent: Thank you. The report has reached the administrator of the service.
   off: The report form is not available at the moment. Try again later.
-  intro: Describe what does not work in the service. Mistakes in the data itself (e.g. parcel boundaries) are reported to the office that keeps it.
+  intro: Describe what does not work in the service. Mistakes in the data itself are reported to the institution that keeps it.
   category: What it is about
   message: Description of the problem
   atLeast: At least {count} characters.

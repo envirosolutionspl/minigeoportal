@@ -6,14 +6,18 @@ import { flatten } from '../../server/config/messages.ts';
 import type { Message } from '../../shared/config';
 import { t } from './index';
 
-const read = (locale: string) => {
+/** The app's own texts (i18n/) and those of each module (src/modules/<module>/i18n/). */
+const SETS = ['i18n', 'src/modules/gugik/i18n'];
+
+const read = (dir: string, locale: string) => {
   const problems: string[] = [];
-  const messages = flatten(parse(readFileSync(`i18n/${locale}.yaml`, 'utf8')), problems, locale);
+  const messages = flatten(parse(readFileSync(`${dir}/${locale}.yaml`, 'utf8')), problems, locale);
   expect(problems).toEqual([]);
   return messages;
 };
-const pl = read('pl');
-const languages = readdirSync('i18n').map((f) => f.replace(/\.yaml$/, ''));
+const core = read('i18n', 'pl');
+const pl = Object.assign({}, ...SETS.map((dir) => read(dir, 'pl'))) as Record<string, Message>;
+const languages = (dir: string) => readdirSync(dir).map((f) => f.replace(/\.yaml$/, ''));
 
 /** Source files of the app, without tests. */
 function sources(dir: string): string[] {
@@ -44,10 +48,24 @@ describe('texts of the interface', () => {
     }
   });
 
-  it.each(languages.filter((l) => l !== 'pl'))('has the same keys and placeholders in %s as in Polish', (locale) => {
-    const other = read(locale);
-    expect(Object.keys(other).sort()).toEqual(Object.keys(pl).sort());
-    for (const key of Object.keys(pl)) expect(placeholders(other[key]), key).toEqual(placeholders(pl[key]));
+  it.each(SETS.flatMap((dir) => languages(dir).map((l) => [dir, l])))(
+    'has the same keys and placeholders in %s/%s.yaml as in Polish',
+    (dir, locale) => {
+      const polish = read(dir, 'pl');
+      const other = read(dir, locale);
+      expect(Object.keys(other).sort()).toEqual(Object.keys(polish).sort());
+      for (const key of Object.keys(polish)) expect(placeholders(other[key]), key).toEqual(placeholders(polish[key]));
+    },
+  );
+
+  it('keeps the texts of a module apart from those of the app, which name no GUGiK service', () => {
+    const module = read('src/modules/gugik/i18n', 'pl');
+    expect(Object.keys(module).filter((k) => k in core)).toEqual([]);
+    expect(
+      Object.values(core)
+        .flatMap((m) => (typeof m === 'string' ? [m] : Object.values(m)))
+        .filter((m) => /GUGiK|geoportal|działk/i.test(m)),
+    ).toEqual([]);
   });
 
   it('fills in values, writes numbers the way the language does and picks the plural form', () => {

@@ -1,5 +1,6 @@
 # Texts of the interface in Polish, the reference set of keys: every other language has the same.
 # A deployment changes single texts in i18n/pl.yaml of its configuration directory.
+# Texts of a module are in src/modules/<module>/i18n/pl.yaml, added when app.yaml enables it.
 # {name} is filled in by the app; texts per number use the forms one, few, many, other.
 
 common:
@@ -39,12 +40,6 @@ search:
   busy: Szukam…
   none: Brak wyników.
   results: 'Wyników: {count}. Strzałki w dół i w górę wybierają, Enter pokazuje na mapie.'
-  parcel: Znajdź działkę po numerze i obrębie
-  parcelShort: Działka
-  parcelHit: Działka {number}
-  gugik:
-    placeholder: Adres, miejscowość, działka…
-    label: Szukaj adresu, miejscowości lub działki
   nominatim:
     placeholder: Adres lub miejsce, Enter wyszukuje
     label: Szukaj adresu lub miejsca
@@ -53,36 +48,11 @@ search:
     placeholder: Współrzędne, np. 52,2318 21,0067
     label: Szukaj według współrzędnych
 
-parcel:
-  title: Znajdź działkę
-  panel: Wyszukiwanie działki
-  found: Znaleziona działka
-  change: Zmień
-  clearAndClose: Wyczyść i zamknij
-  voivodeship: Województwo
-  county: Powiat
-  commune: Gmina
-  precinct: Obręb
-  number: Numer działki
-  numberPlaceholder: np. 22/1
-  search: Szukaj działki
-  notFound: Nie znaleziono działki {number} w obrębie {precinct}. Sprawdź numer, także zapis z ukośnikiem.
-  error: Usługa działek GUGiK nie odpowiada. Spróbuj ponownie za chwilę.
-  several:
-    one: Znaleziono {count} działkę o tym numerze. Wybierz ją.
-    few: Znaleziono {count} działki o tym numerze. Wybierz jedną.
-    many: Znaleziono {count} działek o tym numerze. Wybierz jedną.
-    other: Znaleziono {count} działki o tym numerze. Wybierz jedną.
-  choose: Wybierz
-  listFailed: Nie wczytano listy
-  retry: Ponów
-  retryList: 'Ponów: {label}'
-
 layers:
   title: Warstwy
   panel: Katalog warstw
   search: Szukaj warstwy
-  searchPlaceholder: 'Szukaj warstwy: woda, gaz, plan, zabytki…'
+  searchPlaceholder: Szukaj warstwy…
   clearSearch: Wyczyść wyszukiwanie
   onlyActive: Tylko włączone ({count})
   activeGroup: Włączone warstwy
@@ -91,9 +61,6 @@ layers:
   noneFound: Brak warstw dla tego filtru.
   popular: Najpopularniejsze
   all: Wszystkie warstwy
-  catalogLoading: Wczytuję listę warstw geoportal.gov.pl…
-  catalogPreparing: Lista wszystkich warstw geoportal.gov.pl jest w przygotowaniu. Spróbuj za kilka minut.
-  catalogError: Nie udało się wczytać listy warstw geoportal.gov.pl. Warstwy powyżej działają.
   available: '{available} dostępnych z {count}'
   availableShort: '{available} z {count}'
   more: Pokaż więcej ({count})
@@ -122,8 +89,8 @@ layers:
     down: Usługa nie odpowiada
     degraded: Część danych nie ładuje się w tym miejscu
   why:
-    token: Usługa wymaga tokenu, który GUGiK wydaje tylko aplikacji geoportal.gov.pl.
-    refused: Serwer tej usługi odrzuca zapytania spoza geoportal.gov.pl.
+    token: Usługa wymaga klucza dostępu, którego ta aplikacja nie ma.
+    refused: Serwer tej usługi odrzuca zapytania z innych serwisów.
     down: Serwer usługi nie odpowiadał przy ostatnim sprawdzeniu. Sprawdzimy go ponownie przy kolejnym odświeżeniu listy warstw.
     unsupported: Usługa nie podaje mapy w układzie {system} ({code}), a tylko w nim rysujemy, żeby mapa była szybka.
     degraded: Usługa kieruje do serwera powiatu lub gminy, który w tym miejscu nie odpowiada albo odrzuca zapytania.
@@ -136,11 +103,9 @@ basemaps:
 
 info:
   title: Informacje o miejscu
-  parcelReport: Raport o działce
-  parcelReportHint: (geoportal.gov.pl, otwiera się w nowej karcie)
   loading: Wczytuję informacje o miejscu…
   ready: Informacje o miejscu są gotowe.
-  noLayers: Włącz warstwę, na przykład ewidencję gruntów albo plan miejscowy, aby zobaczyć informacje o tym miejscu.
+  noLayers: Włącz warstwę, aby zobaczyć informacje o tym miejscu.
   openLayers: Otwórz warstwy
   reportPlace: 'Miejsce: {place}'
   report: Coś nie działa? Zgłoś błąd
@@ -148,10 +113,6 @@ info:
   checkFallback: Sprawdź w {name}
   empty: Brak danych w tym miejscu.
   open: Otwórz
-  photoFrom: Ortofotomapa ze zdjęcia z
-  pixel: piksel
-  downloadSheet: pobierz arkusz {sheet}
-  photoLoading: Sprawdzam datę zdjęcia lotniczego…
 
 measure:
   title: Pomiar
@@ -188,7 +149,7 @@ report:
   title: Zgłoś błąd w serwisie
   sent: Dziękujemy. Zgłoszenie trafiło do administratora serwisu.
   off: Formularz zgłoszeń jest chwilowo niedostępny. Spróbuj ponownie później.
-  intro: Opisz, co nie działa w serwisie. Błędy w samych danych (np. granice działek) zgłasza się urzędowi, który je prowadzi.
+  intro: Opisz, co nie działa w serwisie. Błędy w samych danych zgłasza się instytucji, która je prowadzi.
   category: Czego dotyczy
   message: Opis problemu
   atLeast: Co najmniej {count} znaków.

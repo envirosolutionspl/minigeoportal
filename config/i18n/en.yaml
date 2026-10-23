@@ -1,6 +1,13 @@
 # Texts of this deployment that differ from the app's own (i18n/en.yaml of the app).
 
+layers:
+  searchPlaceholder: 'Search for a layer: water, gas, plan, monuments…'
+  why:
+    token: The service needs a token that GUGiK issues only to the geoportal.gov.pl application.
+    refused: The server of this service refuses requests from outside geoportal.gov.pl.
+
 info:
+  noLayers: Switch on a layer, for example the land register or a local plan, to see information about this place.
   # Readable names of attributes the GUGiK integration services answer with.
   fields:
     opis_oznac: Designation
@@ -9,6 +16,9 @@ info:
     Data DUWM: Date of publication in the official journal
     Data zasilenia: Date of update at GUGiK
     WWW: Resolution page
+
+report:
+  intro: Describe what does not work in the service. Mistakes in the data itself (e.g. parcel boundaries) are reported to the office that keeps it.
 
 print:
   note: 'Source of the map layers: geoportal.gov.pl (Head Office of Geodesy and Cartography) and the services of counties, municipalities and other institutions it publishes. An overview map, not an official document. Coordinate system {system} ({code}).'

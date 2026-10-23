@@ -49,6 +49,10 @@ describe('phone screens', () => {
     expect(css).toMatch(/@custom-variant phone\s*\{\s*@media \(max-width: 639px\), \(max-height: 500px\)/);
   });
 
+  it('shows the hand cursor over buttons, which Tailwind 4 gives the arrow', () => {
+    expect(css).toMatch(/button:not\(:disabled\),\s*\[role='button'\]:not\(:disabled\)\s*\{\s*cursor:\s*pointer/);
+  });
+
   it('draws the open search above the tool buttons', () => {
     expect(source('src/ui/TopBar.tsx')).toMatch(/search-box[^"]*\bz-10\b/);
   });

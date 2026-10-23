@@ -102,26 +102,31 @@ export function WelcomeDialog() {
             </button>
           </footer>
 
-          {/* Links and the author in one row, so the window fits a laptop screen without scrolling. */}
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-[var(--hover)] pt-2 text-sm sm:justify-between">
-            <button type="button" onClick={() => act('report')} className="min-h-6 text-[var(--accent)] underline underline-offset-2">
+          {/* Links and the author in one row, so the window fits a laptop screen without scrolling;
+              the author's logo in the middle, between the two links. */}
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-[var(--hover)] pt-2 text-sm sm:grid sm:grid-cols-[1fr_auto_1fr]">
+            <button
+              type="button"
+              onClick={() => act('report')}
+              className="min-h-6 text-[var(--accent)] underline underline-offset-2 hover:no-underline sm:justify-self-start"
+            >
               {t('report.title')}
             </button>
+            <a href={AUTHOR_URL} target="_blank" rel="noopener" className="flex items-center gap-2 text-xs text-[var(--muted)]">
+              {t('brand.madeBy')}
+              <span className="rounded-lg bg-white px-1">
+                <AuthorLogo className="h-10" />
+              </span>
+            </a>
             {config.content.accessibility && (
               <button
                 type="button"
                 onClick={() => act('accessibility')}
-                className="min-h-6 text-[var(--accent)] underline underline-offset-2"
+                className="min-h-6 text-[var(--accent)] underline underline-offset-2 hover:no-underline sm:justify-self-end"
               >
                 {t('accessibility.title')}
               </button>
             )}
-            <a href={AUTHOR_URL} target="_blank" rel="noopener" className="flex items-center gap-2 text-xs text-[var(--muted)]">
-              {t('brand.madeBy')}
-              <span className="rounded-lg bg-white px-1">
-                <AuthorLogo className="h-7" />
-              </span>
-            </a>
           </div>
         </div>
       </dialog>

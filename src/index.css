@@ -358,6 +358,11 @@ html[data-printing] #print-sheet {
     outline: 3px solid var(--accent);
     outline-offset: 2px;
   }
+  /* Tailwind 4 gives buttons the arrow cursor; here everything clickable shows the hand. */
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
 }
 /* The map's own layers would cover an outline, so the focus frame is drawn above them. */
 #map:focus-visible {

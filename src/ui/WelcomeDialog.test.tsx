@@ -18,4 +18,23 @@ describe('WelcomeDialog', () => {
     expect(links).toHaveLength(2);
     for (const link of links) expect(link.getAttribute('href')).toBe('https://www.geoportal.gov.pl');
   });
+
+  it('links to the source code of the project', () => {
+    render(<WelcomeDialog />);
+    act(() => useWelcome.getState().setOpen(true));
+    expect(screen.getByRole('link', { name: 'kod źródłowy na GitHubie' }).getAttribute('href')).toBe(
+      'https://github.com/envirosolutionspl/minigeoportal',
+    );
+  });
+
+  it('puts the author between the report form and the accessibility statement in its footer', () => {
+    render(<WelcomeDialog />);
+    act(() => useWelcome.getState().setOpen(true));
+    const footer = screen.getByRole('link', { name: /Stworzone przez/ }).parentElement!;
+    expect([...footer.children].map((el) => el.textContent)).toEqual([
+      'Zgłoś błąd w serwisie',
+      expect.stringMatching(/^Stworzone przez/),
+      'Deklaracja dostępności',
+    ]);
+  });
 });

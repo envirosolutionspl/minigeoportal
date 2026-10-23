@@ -47,7 +47,7 @@ exports[`default configuration > stays what the app was built with (any change s
 <p>Wszystkie dane pochodzą z publicznych usług Głównego Urzędu Geodezji i Kartografii (<a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">geoportal.gov.pl</a>) oraz serwerów starostw, gmin i innych instytucji, z którymi te usługi się łączą. Mapa pobiera je na bieżąco i niczego nie zmienia ani nie przechowuje. Aktualność danych zależy od urzędu, który je prowadzi.</p>
 <blockquote>
 <h2>Ważne</h2>
-<p>Informacje mają charakter poglądowy i nie są dokumentem urzędowym. Wiążące dane wydaje starostwo (ewidencja gruntów i budynków) lub gmina (plany zagospodarowania). MiniGeoportal to niezależny serwis open source, a nie serwis GUGiK.</p>
+<p>Informacje mają charakter poglądowy i nie są dokumentem urzędowym. Wiążące dane wydaje starostwo (ewidencja gruntów i budynków) lub gmina (plany zagospodarowania). MiniGeoportal to niezależny serwis open source (<a href="https://github.com/envirosolutionspl/minigeoportal" target="_blank" rel="noopener">kod źródłowy na GitHubie</a>), a nie serwis GUGiK.</p>
 </blockquote>
 ",
   },

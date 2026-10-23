@@ -10,4 +10,4 @@ Wszystkie dane pochodzą z publicznych usług Głównego Urzędu Geodezji i Kart
 
 > ## Ważne
 >
-> Informacje mają charakter poglądowy i nie są dokumentem urzędowym. Wiążące dane wydaje starostwo (ewidencja gruntów i budynków) lub gmina (plany zagospodarowania). MiniGeoportal to niezależny serwis open source, a nie serwis GUGiK.
+> Informacje mają charakter poglądowy i nie są dokumentem urzędowym. Wiążące dane wydaje starostwo (ewidencja gruntów i budynków) lub gmina (plany zagospodarowania). MiniGeoportal to niezależny serwis open source ([kod źródłowy na GitHubie](https://github.com/envirosolutionspl/minigeoportal)), a nie serwis GUGiK.

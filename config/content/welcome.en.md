@@ -10,4 +10,4 @@ All data comes from the public services of the Head Office of Geodesy and Cartog
 
 > ## Important
 >
-> The information is for orientation only and is not an official document. Binding data is issued by the county office (land and building register) or the municipality (development plans). MiniGeoportal is an independent open source service, not a service of GUGiK.
+> The information is for orientation only and is not an official document. Binding data is issued by the county office (land and building register) or the municipality (development plans). MiniGeoportal is an independent open source service ([source code on GitHub](https://github.com/envirosolutionspl/minigeoportal)), not a service of GUGiK.

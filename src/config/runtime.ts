@@ -21,7 +21,8 @@ export function initConfig(value: ClientConfig): void {
 export async function bootConfig(): Promise<ClientConfig> {
   const inline = document.getElementById('boot')?.textContent;
   if (inline) return JSON.parse(inline) as ClientConfig;
-  const lang = new URLSearchParams(location.search).get('lang');
+  // The language the address names: /en/.
+  const lang = location.pathname.split('/')[1];
   const res = await fetch(lang ? `/api/config?${new URLSearchParams({ lang })}` : '/api/config');
   if (!res.ok) throw new Error(`Configuration: HTTP ${res.status}`);
   return (await res.json()) as ClientConfig;

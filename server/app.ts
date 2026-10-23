@@ -289,7 +289,7 @@ export function createApp({ site, cache, mailer, origin, catalog, limits }: AppO
       try {
         // Without APP_ORIGIN the page's own origin is accepted only from the machine itself (development).
         const own = origin ?? (isLoopback(c) ? c.req.header('origin') : undefined) ?? '';
-        const report = parseReport(await c.req.json().catch(() => null), own, site.defaults);
+        const report = parseReport(await c.req.json().catch(() => null), own, site.mail);
         if (report) await mailer.send(report, { userAgent: c.req.header('user-agent') });
         return c.json({ ok: true });
       } catch (e) {

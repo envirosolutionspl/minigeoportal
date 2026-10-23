@@ -10,7 +10,7 @@ import { mailerFromEnv } from './report.ts';
 import { CATALOG_FILE, buildCatalog, readCatalog, writeCatalog, type Catalog } from './modules/gugik/catalog.ts';
 import { config, errorMessage, production } from './config.ts';
 import { loadConfig } from './config/load.ts';
-import { createSite, renderPage } from './html.ts';
+import { createSite, renderPage, routePage } from './html.ts';
 import { follow } from './files.ts';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
 
@@ -49,7 +49,7 @@ if (config.sharedData) {
   }
 }
 
-const mailer = mailerFromEnv(site.defaults);
+const mailer = mailerFromEnv(site.mail);
 if (!mailer) console.log('Bug reports off: set SMTP_HOST and REPORT_TO to turn them on.');
 const app = createApp({
   site,
@@ -65,9 +65,15 @@ if (production) {
   const template = await readFile('./dist/index.html', 'utf8');
   const pages = new Map(site.config.app.locales.available.map((l) => [l, renderPage(template, site.client(l), site.config.skin)]));
   const page = (c: Context) => {
+    const to = routePage(site, c);
+    if ('redirect' in to) {
+      // Which language the bare address leads to depends on the browser and the language switch.
+      c.header('Cache-Control', to.permanent ? 'public, max-age=86400' : 'no-store');
+      if (!to.permanent) c.header('Vary', 'Accept-Language, Cookie');
+      return c.redirect(to.redirect, to.permanent ? 301 : 302);
+    }
     c.header('Cache-Control', 'no-cache');
-    if (site.multilingual) c.header('Vary', 'Accept-Language');
-    return c.html(pages.get(site.locale(c))!);
+    return c.html(pages.get(to.locale)!);
   };
   app.get('/', compress(), etag(), page);
   app.get('/index.html', compress(), etag(), page);

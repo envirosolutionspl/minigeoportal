@@ -12,7 +12,7 @@ import { GUGIK_SEARCH_HOSTS } from './modules/gugik/searchHosts.ts';
  */
 
 /**
- * The visitor's language: the one chosen (?lang=, then the cookie the language switch sets),
+ * The visitor's language: the one chosen (the address, then the cookie the language switch sets),
  * then the browser's preferences, then the default.
  */
 export function pickLocale(available: string[], fallback: string, chosen: (string | undefined)[] = [], acceptLanguage?: string): string {
@@ -62,13 +62,23 @@ function sharing(client: ClientConfig): string {
   const e = escapeHtml;
   const { name, title, description, domain } = client.app;
   const site = `https://${e(domain)}`;
+  const here = `${site}${pagePath(client.locales, client.locale)}`;
+  // Every language has its own address; the bare domain picks one for the visitor.
+  const languages =
+    client.locales.length > 1
+      ? [
+          ...client.locales.map((l) => `<link rel="alternate" hreflang="${e(l)}" href="${site}/${e(l)}/" />`),
+          `<link rel="alternate" hreflang="x-default" href="${site}/" />`,
+        ]
+      : [];
   const tags = [
-    `<link rel="canonical" href="${site}/" />`,
+    `<link rel="canonical" href="${here}" />`,
+    ...languages,
     `<meta property="og:type" content="website" />`,
     `<meta property="og:site_name" content="${e(name)}" />`,
     `<meta property="og:title" content="${e(title)}" />`,
     `<meta property="og:description" content="${e(description)}" />`,
-    `<meta property="og:url" content="${site}/" />`,
+    `<meta property="og:url" content="${here}" />`,
     `<meta property="og:image" content="${site}/apple-touch-icon.png" />`,
     `<meta property="og:locale" content="${e(client.locale)}" />`,
     `<meta name="twitter:card" content="summary" />`,
@@ -94,18 +104,47 @@ export function renderPage(template: string, client: ClientConfig, skin = ''): s
     );
 }
 
+/** Address of the page in a language: /pl/, /en/; a deployment with one language lives at /. */
+export const pagePath = (available: string[], locale: string) => (available.length > 1 ? `/${locale}/` : '/');
+
+/**
+ * What a request for the page gets: the page in the language its address names, or a redirect.
+ * The bare domain (and any other address) goes to the visitor's language; /en goes to /en/; an
+ * old link with ?lang=en goes to /en/. The view in the query string travels along.
+ */
+export function routePage(site: Site, c: Context): { locale: string } | { redirect: string; permanent: boolean } {
+  const { available } = site.config.app.locales;
+  if (!site.multilingual) return { locale: available[0] };
+  const url = new URL(c.req.url);
+  const named = url.pathname.split('/')[1];
+  const asked = url.searchParams.get('lang');
+  url.searchParams.delete('lang');
+  const to = (locale: string, permanent: boolean) => ({ redirect: `${pagePath(available, locale)}${url.search}`, permanent });
+  if (asked && available.includes(asked) && asked !== named) return to(asked, false);
+  if (!available.includes(named)) return to(site.locale(c), false);
+  if (url.pathname !== `/${named}/` || asked) return to(named, true);
+  return { locale: named };
+}
+
 /** The configuration for each language, built once. */
 export function createSite(config: AppConfig) {
   const { default: fallback, available } = config.app.locales;
   const clients = new Map(available.map((l) => [l, clientConfig(config, l)]));
   return {
     config,
-    /** In the default language: what the server itself uses (layers it may query, mail texts). */
+    /** In the default language: what the server itself uses (layers it may query). */
     defaults: clients.get(fallback)!,
+    /** In the language bug report mails are written in (app.yaml report.locale). */
+    mail: clients.get(config.app.report.locale ?? fallback)!,
     multilingual: available.length > 1,
-    /** The language of a request: ?lang=, the lang cookie, Accept-Language. */
+    /** The language of a request: the address (/en/, ?lang=), the lang cookie, Accept-Language. */
     locale: (c?: Context) =>
-      pickLocale(available, fallback, c ? [c.req.query('lang'), getCookie(c, 'lang')] : [], c?.req.header('accept-language')),
+      pickLocale(
+        available,
+        fallback,
+        c ? [c.req.path.split('/')[1], c.req.query('lang'), getCookie(c, 'lang')] : [],
+        c?.req.header('accept-language'),
+      ),
     client: (locale: string) => clients.get(locale) ?? clients.get(fallback)!,
   };
 }

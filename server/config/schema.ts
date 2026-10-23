@@ -66,6 +66,8 @@ export const appSchema = z.strictObject({
   links: z.strictObject({ fallbackMap: url.optional(), fallbackName: text.optional() }).default({}),
   report: z.strictObject({
     categories: z.array(z.strictObject({ id, label: text })).min(1),
+    /** Language of the report mails; the default language when not given. */
+    locale: locale.optional(),
   }),
   search: z
     .strictObject({

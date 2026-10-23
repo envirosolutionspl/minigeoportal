@@ -197,6 +197,16 @@ report:
   attachView: Dołącz adres bieżącego widoku mapy, aby łatwiej odtworzyć problem.
   privacy: Zgłoszenie wysyłamy e-mailem do administratora serwisu razem z nazwą przeglądarki. Adres e-mail podaj tylko, jeśli chcesz otrzymać odpowiedź; używamy go wyłącznie w tym celu.
   send: Wyślij zgłoszenie
+  # The mail to the administrator, in the language of app.yaml report.locale.
+  mail:
+    subject: '[{app}] Zgłoszenie: {category}'
+    category: Rodzaj
+    contact: Kontakt
+    noContact: nie podano
+    view: Widok mapy
+    noView: nie dołączono
+    browser: Przeglądarka
+    noBrowser: nieznana
   failed: Nie udało się wysłać zgłoszenia.
   offline: Brak połączenia z serwerem. Spróbuj ponownie.
   invalid: Zgłoszenie ma nieprawidłowe dane. Sprawdź opis i adres e-mail.

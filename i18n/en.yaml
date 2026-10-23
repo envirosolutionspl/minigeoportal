@@ -196,6 +196,16 @@ report:
   attachView: Attach the address of the current map view, to make the problem easier to reproduce.
   privacy: The report goes by e-mail to the administrator of the service together with the name of your browser. Give an e-mail address only if you want a reply; it is used for nothing else.
   send: Send the report
+  # The mail to the administrator, in the language of app.yaml report.locale.
+  mail:
+    subject: '[{app}] Report: {category}'
+    category: Kind
+    contact: Contact
+    noContact: none given
+    view: Map view
+    noView: not attached
+    browser: Browser
+    noBrowser: unknown
   failed: The report could not be sent.
   offline: No connection to the server. Try again.
   invalid: The report has invalid data. Check the description and the e-mail address.

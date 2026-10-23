@@ -63,4 +63,6 @@ Liczby i daty są zapisywane tak, jak zapisuje je dany język (1 234,5 po polsku
 3. Nadaj tekstom w `app.yaml`, `map.yaml` i `layers.yaml` wersję w tym języku tam, gdzie to ważne: `title: { pl: Mapa, de: Karte }`.
 4. Dodaj pliki Markdown: `content/welcome.<kod>.md` i pozostałe.
 
-Język wynika z `?lang=` w adresie, potem z ciasteczka ustawianego przez przełącznik języka, potem z preferencji przeglądarki, a na końcu jest język domyślny. Przełącznik pojawia się w menu ułatwień, gdy są co najmniej dwa języki.
+Każdy język ma własny adres: `https://twoja-domena/pl/`, `https://twoja-domena/en/`, `https://twoja-domena/de/`. Widok mapy jest w parametrach (`/pl/?x=…&y=…`), więc link zachowuje i widok, i język. Sam adres domeny przekierowuje na język wybrany wcześniej przełącznikiem (zapamiętany w ciasteczku), a bez takiego wyboru na język przeglądarki; gdy aplikacja go nie ma, na język domyślny. Stare linki z `?lang=en` prowadzą pod `/en/`. Strona podaje wyszukiwarkom wszystkie wersje językowe (`hreflang`). Wdrożenie z jednym językiem działa pod samym adresem domeny.
+
+Przełącznik pojawia się w menu ułatwień, gdy są co najmniej dwa języki.

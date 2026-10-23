@@ -28,8 +28,10 @@ content:
   welcome: content/welcome
   accessibility: content/accessibility
 
+# Every language has its own address (/pl/, /en/); the bare address opens the browser's language,
+# or the default one when the app does not have it.
 locales:
-  default: pl
+  default: en
   available: [pl, en]
 
 links:
@@ -39,6 +41,8 @@ links:
   fallbackName: geoportal.gov.pl
 
 report:
+  # Language of the report mails to the administrator (default: locales.default).
+  locale: pl
   # Kinds of problems people can choose in the bug report form.
   categories:
     - id: mapa

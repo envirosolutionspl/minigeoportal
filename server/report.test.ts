@@ -33,13 +33,21 @@ describe('parseReport', () => {
 });
 
 describe('formatReport', () => {
-  it('writes a plain-text mail with a fixed subject', () => {
-    const { subject, text } = formatReport(parseReport(valid, ORIGIN, defaults)!, { userAgent: 'Chrome' }, defaults);
+  it('writes a plain-text mail with a fixed subject, in the language of report mails (report.locale: pl)', () => {
+    const { subject, text } = formatReport(parseReport(valid, ORIGIN, site.mail)!, { userAgent: 'Chrome' }, site.mail);
     expect(subject).toBe('[MiniGeoportal] Zgłoszenie: Mapa lub warstwy');
     expect(text).toContain('Kontakt: jan@example.com');
     expect(text).toContain(`Widok mapy: ${valid.view}`);
     expect(text).toContain('Przeglądarka: Chrome');
     expect(text.endsWith(valid.message)).toBe(true);
+  });
+});
+
+describe('formatReport in another language', () => {
+  it('takes the texts of the mail from that language', () => {
+    const { subject, text } = formatReport(parseReport(valid, ORIGIN, defaults)!, {}, defaults);
+    expect(subject).toBe('[MiniGeoportal] Report: Map or layers');
+    expect(text).toContain('Browser: unknown');
   });
 });
 

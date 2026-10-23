@@ -11,8 +11,8 @@ import { EMAIL_MAX, MESSAGE } from '../shared/report.ts';
  * category, the sender's address goes to Reply-To, and nothing from the form is rendered as HTML.
  */
 
-/** The app's name and the report categories, in the language mails are written in. */
-export type ReportForm = { app: Pick<ClientConfig['app'], 'name'>; report: ClientConfig['report'] };
+/** The app's name, the report categories and the texts of the mail, in the language mails are written in. */
+export type ReportForm = { app: Pick<ClientConfig['app'], 'name'>; report: ClientConfig['report']; messages: ClientConfig['messages'] };
 
 export interface Report {
   /** Id of one of the configured categories. */
@@ -73,15 +73,17 @@ export function parseReport(body: unknown, appOrigin: string, form: ReportForm):
 
 export function formatReport(report: Report, meta: { userAgent?: string }, form: ReportForm): { subject: string; text: string } {
   const category = form.report.categories.find((c) => c.id === report.category)?.label ?? report.category;
+  const say = (key: string, params: Record<string, string> = {}) =>
+    String(form.messages[`report.mail.${key}`] ?? key).replace(/\{(\w+)\}/g, (all, name: string) => params[name] ?? all);
   const lines = [
-    `Rodzaj: ${category}`,
-    `Kontakt: ${report.email ?? 'nie podano'}`,
-    `Widok mapy: ${report.view ?? 'nie dołączono'}`,
-    `Przeglądarka: ${meta.userAgent ? clean(meta.userAgent).slice(0, 300) : 'nieznana'}`,
+    `${say('category')}: ${category}`,
+    `${say('contact')}: ${report.email ?? say('noContact')}`,
+    `${say('view')}: ${report.view ?? say('noView')}`,
+    `${say('browser')}: ${meta.userAgent ? clean(meta.userAgent).slice(0, 300) : say('noBrowser')}`,
     '',
     report.message,
   ];
-  return { subject: `[${form.app.name}] Zgłoszenie: ${category}`, text: lines.join('\n') };
+  return { subject: say('subject', { app: form.app.name, category }), text: lines.join('\n') };
 }
 
 /** SMTP mailer from the environment, or undefined when the form is not configured. */

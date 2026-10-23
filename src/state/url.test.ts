@@ -47,14 +47,14 @@ describe('writeUrl', () => {
     vi.useRealTimers();
   });
 
-  it('keeps a language chosen in the address, in the page and in shared links', () => {
+  it('keeps the language of the page (its address, /en/) in the page and in shared links', () => {
     vi.useFakeTimers();
-    setSearch('?lang=en');
+    window.history.replaceState(null, '', '/en/');
     const state = { center: [1, 2] as [number, number], zoom: 3, base: 'orto', overlays: [], sublayers: {} };
     writeUrl(state);
     vi.advanceTimersByTime(300);
-    expect(window.location.search).toBe('?x=1&y=2&z=3.0&b=orto&l=&lang=en');
-    expect(linkFor(state)).toMatch(/\?x=1&y=2&z=3\.0&b=orto&l=&lang=en$/);
+    expect(window.location.pathname + window.location.search).toBe('/en/?x=1&y=2&z=3.0&b=orto&l=');
+    expect(linkFor(state)).toBe(`${window.location.origin}/en/?x=1&y=2&z=3.0&b=orto&l=`);
     setSearch('');
     vi.useRealTimers();
   });

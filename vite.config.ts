@@ -17,9 +17,11 @@ function configPage(): Plugin {
       order: 'pre',
       handler(html, { originalUrl }) {
         const site = createSite(loadConfig(process.env.CONFIG_DIR ?? 'config'));
-        const lang = new URL(originalUrl ?? '/', 'http://localhost').searchParams.get('lang') ?? undefined;
+        // The language the address names (/en/); the bare address shows the default one here.
+        const url = new URL(originalUrl ?? '/', 'http://localhost');
         const { available, default: fallback } = site.config.app.locales;
-        return renderPage(html, site.client(pickLocale(available, fallback, [lang])), site.config.skin);
+        const locale = pickLocale(available, fallback, [url.pathname.split('/')[1], url.searchParams.get('lang') ?? undefined]);
+        return renderPage(html, site.client(locale), site.config.skin);
       },
     },
   };

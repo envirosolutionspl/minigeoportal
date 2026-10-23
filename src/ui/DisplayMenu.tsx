@@ -69,11 +69,15 @@ const languageName = (code: string) => {
   return name.charAt(0).toLocaleUpperCase(code) + name.slice(1);
 };
 
-/** Another language: remembered in a cookie for the server, and named in the address of this page. */
+/**
+ * Another language: its own address (/en/, the same view), and a cookie, so that the bare address
+ * of the app opens in it next time too.
+ */
 function switchLanguage(code: string) {
   document.cookie = `lang=${encodeURIComponent(code)}; path=/; max-age=31536000; samesite=lax`;
   const url = new URL(location.href);
-  url.searchParams.set('lang', code);
+  url.pathname = `/${code}/`;
+  url.searchParams.delete('lang');
   location.assign(url);
 }
 

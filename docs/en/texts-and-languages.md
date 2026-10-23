@@ -61,4 +61,6 @@ Numbers and dates are written the way the language writes them (1 234,5 in Polis
 3. Give the texts of `app.yaml`, `map.yaml` and `layers.yaml` a version in the language where it matters: `title: { pl: Mapa, de: Karte }`.
 4. Add the Markdown files: `content/welcome.<code>.md` and the like.
 
-The language comes from `?lang=` in the address, then from a cookie the language switch sets, then from the browser's preferences, then the default language. The switch appears in the display menu once there are two languages or more.
+Each language has its own address: `https://your-domain/pl/`, `https://your-domain/en/`, `https://your-domain/de/`. The map view is in the query (`/en/?x=…&y=…`), so a link keeps both the view and the language. The bare domain redirects to the language chosen earlier with the switch (remembered in a cookie), without such a choice to the browser's language, and to the default language when the app does not have it. Old links with `?lang=en` lead to `/en/`. The page tells search engines about every language version (`hreflang`). A deployment with one language lives at the bare domain.
+
+The switch appears in the display menu once there are two languages or more.

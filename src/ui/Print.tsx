@@ -157,8 +157,9 @@ export function printedLayers(
   overlays: string[],
   sublayers: Record<string, string[]>,
   options: Pick<PrintOptions, 'paper' | 'orientation' | 'scale'>,
+  center?: number[],
 ): { def: Overlay; names: string[] }[] {
-  const scale = serverScale(options);
+  const scale = serverScale(options, center);
   return overlays.flatMap((id) => {
     const def = overlayDef(id);
     if (!def) return [];
@@ -178,9 +179,9 @@ export function PrintSheet() {
   const sublayers = useMapStore((m) => m.sublayers);
   // Read only while printing, so map moves do not re-render the sheet.
   const center = useMapStore((m) => (m.printRequest ? (m.printCenter ?? m.center) : null));
-  const layout = request ? printLayout(request) : null;
+  const layout = request ? printLayout(request, center ?? undefined) : null;
 
-  const layers = request ? printedLayers(overlays, sublayers, request) : [];
+  const layers = request ? printedLayers(overlays, sublayers, request, center ?? undefined) : [];
   const legends = layers.flatMap(({ def, names }) =>
     names.flatMap((name) => {
       // A legend named in layers.yaml wins over the one from the service's capabilities.

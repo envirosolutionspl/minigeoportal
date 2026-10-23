@@ -27,6 +27,23 @@ describe('examples/osm', () => {
     expect(zoomForScale(1000)).toBe(19);
   });
 
+  it('prints at the scale on the ground, not on the Mercator plane', async () => {
+    const { transform } = await import('ol/proj');
+    const { getDistance } = await import('ol/sphere');
+    const { printExtent, serverScale } = await import('@/map/print');
+    const warsaw = transform([21, 52.2], 'EPSG:4326', 'EPSG:3857');
+    const sheet = { paper: 'A4', orientation: 'landscape', scale: 10000 } as const;
+    // The A4 frame is 277 mm wide: 2770 m on the ground at 1:10 000, wherever the map is.
+    const [minX, minY, maxX, maxY] = printExtent(warsaw, sheet);
+    const across = getDistance(
+      transform([minX, (minY + maxY) / 2], 'EPSG:3857', 'EPSG:4326'),
+      transform([maxX, (minY + maxY) / 2], 'EPSG:3857', 'EPSG:4326'),
+    );
+    expect(across).toBeCloseTo(2770, -1);
+    // Map servers count Mercator metres: they see a larger denominator than at the equator.
+    expect(serverScale(sheet, warsaw)).toBeGreaterThan(serverScale(sheet) * 1.5);
+  });
+
   it('reads typed coordinates as latitude and longitude, and writes the system by its name', async () => {
     const { parseCoordinates } = await import('@/search/coordinates');
     const hit = parseCoordinates('52.2318, 21.0067')!;

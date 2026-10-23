@@ -5,7 +5,7 @@ import { compress } from 'hono/compress';
 import { etag } from 'hono/etag';
 import type { Context } from 'hono';
 import { createApp } from './app.ts';
-import { CACHE_FILE, readCache, refreshCache } from './cache.ts';
+import { CACHE_FILE, readCache, startingCache } from './cache.ts';
 import { mailerFromEnv } from './report.ts';
 import { CATALOG_FILE, buildCatalog, readCatalog, writeCatalog, type Catalog } from './modules/gugik/catalog.ts';
 import { config, errorMessage, production } from './config.ts';
@@ -20,7 +20,9 @@ import type { CapabilitiesCache } from '../src/services/meta.ts';
 const site = createSite(loadConfig(config.configDir));
 const withCatalog = site.defaults.modules.gugik?.catalog === true;
 
-let capabilities: CapabilitiesCache = (await readCache()) ?? (await refreshCache(site.defaults));
+let capabilities: CapabilitiesCache = await startingCache(site.defaults, config.sharedData, (built) => {
+  capabilities = built;
+});
 
 /**
  * The geoportal layer catalog (gugik module): read from disk. A single instance builds it in the

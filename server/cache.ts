@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import type { ClientConfig } from '../shared/config.ts';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
 import { buildCache } from './capabilities.ts';
-import { config, dataPath } from './config.ts';
+import { config, dataPath, errorMessage } from './config.ts';
 import { writeAtomic } from './files.ts';
 
 /** Metadata of the configured services, refreshed by `npm run update`. */
@@ -29,4 +29,25 @@ export async function refreshCache(config: ClientConfig): Promise<CapabilitiesCa
   const cache = await buildCache(config, await readCache());
   await writeAtomic(CACHE_FILE, `${JSON.stringify(cache, null, 1)}\n`);
   return cache;
+}
+
+/**
+ * The metadata the server starts with: from disk (or the seed), else none for now. Nothing waits
+ * for the upstream servers before the server listens: a single instance builds the cache in the
+ * background and hands it over through `onBuilt`; instances sharing the data directory leave that
+ * to the updater and pick up its file (index.ts follows it).
+ */
+export async function startingCache(
+  config: ClientConfig,
+  shared: boolean,
+  onBuilt: (cache: CapabilitiesCache) => void,
+): Promise<CapabilitiesCache> {
+  const cache = await readCache();
+  if (cache) return cache;
+  if (!shared) {
+    refreshCache(config)
+      .then(onBuilt)
+      .catch((e: unknown) => console.warn(`capabilities: ${errorMessage(e)}`));
+  }
+  return { generatedAt: '', services: {} };
 }

@@ -25,7 +25,7 @@ Data the server keeps between starts (service metadata, the geoportal catalog, d
 npm run update
 ```
 
-A fresh data directory starts with `seed/capabilities.json` of the configuration directory, when there is one, and a single server builds the geoportal catalog in the background on its first start.
+A fresh data directory starts with `seed/capabilities.json` of the configuration directory, when there is one. Without it a single server starts at once without the services' metadata (scale limits, legends) and fetches it in the background, as it does the geoportal catalog; browsers get it with the next page load. The server never waits for the services before it starts.
 
 ## Containers
 

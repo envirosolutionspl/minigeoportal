@@ -25,7 +25,7 @@ Dane, które serwer przechowuje między uruchomieniami (metadane usług, katalog
 npm run update
 ```
 
-Nowy katalog danych zaczyna od `seed/capabilities.json` z katalogu konfiguracji, jeśli jest, a pojedynczy serwer przy pierwszym starcie buduje w tle katalog geoportalu.
+Nowy katalog danych zaczyna od `seed/capabilities.json` z katalogu konfiguracji, jeśli jest. Bez niego pojedynczy serwer zaczyna od razu bez metadanych usług (zakresów skal, legend) i pobiera je w tle, tak jak katalog geoportalu; przeglądarki dostają je przy następnym wczytaniu strony. Serwer nigdy nie czeka na usługi przed startem.
 
 ## Kontenery
 

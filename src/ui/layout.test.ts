@@ -26,6 +26,10 @@ describe('phone screens', () => {
     expect(source('src/ui/Brand.tsx')).toContain('bottom-[calc(1.75rem+var(--safe-bottom))]');
   });
 
+  it('runs the bottom bar the full width, not 1.3em short of the edge as OpenLayers does', () => {
+    expect(css).toMatch(/\.ol-attribution:not\(\.ol-collapsed\)\s*\{[^}]*left:\s*0;[^}]*right:\s*0;[^}]*max-width:\s*none/);
+  });
+
   it('keeps the app clear of the notch on phones held sideways', () => {
     expect(source('index.html')).toContain('viewport-fit=cover');
     const app = source('src/App.tsx');

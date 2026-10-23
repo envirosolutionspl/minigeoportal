@@ -226,6 +226,8 @@ input[type='search']::-webkit-search-cancel-button {
   left: 0;
   right: 0;
   bottom: 0;
+  /* OpenLayers keeps the credits 1.3em short of the edge; the bar runs the full width. */
+  max-width: none;
   justify-content: flex-end;
   background: color-mix(in srgb, var(--surface) 85%, transparent);
   font-size: 0.7rem;

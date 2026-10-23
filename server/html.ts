@@ -127,7 +127,10 @@ export function routePage(site: Site, c: Context): { locale: string } | { redire
     const path = pagePath(locales, segment);
     return url.pathname === path ? { locale: segment } : to(segment, true);
   }
-  const locale = site.locale(c);
+  // A request that names no language at all (a link preview of a messenger, a crawler) gets
+  // what lives at the address, not the default language a person with other languages gets.
+  const silent = !getCookie(c, 'lang') && c.req.header('accept-language') === undefined;
+  const locale = silent && locales.root ? locales.root : site.locale(c);
   return locale === locales.root && url.pathname === '/' ? { locale } : to(locale, false);
 }
 

@@ -77,7 +77,7 @@ Każdy język ma własny adres: `https://twoja-domena/pl/`, `https://twoja-domen
 2. bez takiego wyboru pierwszy język z preferencji przeglądarki, który aplikacja ma (`de-AT` pasuje do `de`),
 3. gdy aplikacja nie ma żadnego z nich, `locales.default`.
 
-Bez `root` sam adres domeny tylko przekierowuje na adres wybranego języka. Z `root: pl` polski nie ma kodu w adresie: mieszka pod samym adresem domeny, który pokazuje go odwiedzającym wybierającym polski, a pozostałych przekierowuje (`/en/`); `/pl/` prowadzi wtedy pod `/`. Tak działa domyślne wdrożenie: `https://minigeoportal.pl/` po polsku, `https://minigeoportal.pl/en/` po angielsku.
+Bez `root` sam adres domeny tylko przekierowuje na adres wybranego języka. Z `root: pl` polski nie ma kodu w adresie: mieszka pod samym adresem domeny, który pokazuje go odwiedzającym wybierającym polski, a pozostałych przekierowuje (`/en/`); `/pl/` prowadzi wtedy pod `/`. Zapytanie bez żadnego języka (podgląd linku w komunikatorze, robot wyszukiwarki) dostaje pod samym adresem język `root`, więc podgląd linku do domeny jest w tym języku. Tak działa domyślne wdrożenie: `https://minigeoportal.pl/` po polsku, `https://minigeoportal.pl/en/` po angielsku.
 
 Stare linki z `?lang=en` prowadzą pod `/en/`, a nieznany kod (`/xx/`) jak sam adres domeny. Strona podaje wyszukiwarkom wszystkie wersje językowe (`hreflang`). Wdrożenie z jednym językiem działa pod samym adresem domeny, bez `/pl/`, i nie ma przełącznika.
 

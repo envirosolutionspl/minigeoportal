@@ -75,7 +75,7 @@ Each language has its own address: `https://your-domain/pl/`, `https://your-doma
 2. without such a choice the first language of the browser's preferences the app has (`de-AT` matches `de`),
 3. when the app has none of them, `locales.default`.
 
-Without `root` the bare domain only redirects to the address of that language. With `root: pl` Polish has no code in the address: it lives at the bare domain, which shows it to visitors who pick Polish and redirects the others (`/en/`); `/pl/` then leads to `/`. The default deployment works this way: `https://minigeoportal.pl/` in Polish, `https://minigeoportal.pl/en/` in English.
+Without `root` the bare domain only redirects to the address of that language. With `root: pl` Polish has no code in the address: it lives at the bare domain, which shows it to visitors who pick Polish and redirects the others (`/en/`); `/pl/` then leads to `/`. A request that names no language at all (a messenger's link preview, a crawler) gets the `root` language at the bare domain, so a preview of a link to the domain is in that language. The default deployment works this way: `https://minigeoportal.pl/` in Polish, `https://minigeoportal.pl/en/` in English.
 
 Old links with `?lang=en` lead to `/en/`, and an unknown code (`/xx/`) goes where the bare domain goes. The page tells search engines about every language version (`hreflang`). A deployment with one language lives at the bare domain, without `/en/`, and has no switch.
 

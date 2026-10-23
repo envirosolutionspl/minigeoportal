@@ -35,7 +35,12 @@ describe('routePage', () => {
   it('shows Polish (locales.root) at the bare address to Polish browsers, English elsewhere', async () => {
     expect(await route('/', { 'accept-language': 'pl-PL,pl;q=0.9,en;q=0.8' })).toEqual({ locale: 'pl' });
     expect(await route('/', { 'accept-language': 'de-DE,de;q=0.9' })).toEqual({ redirect: '/en/', permanent: false });
-    expect(await route('/')).toEqual({ redirect: '/en/', permanent: false });
+  });
+
+  it('gives a request without any language (a link preview, a crawler) what lives at the bare address', async () => {
+    expect(await route('/')).toEqual({ locale: 'pl' });
+    expect(await route('/?x=1')).toEqual({ locale: 'pl' });
+    expect(await route('/', { cookie: 'lang=en' })).toEqual({ redirect: '/en/', permanent: false });
   });
 
   it('prefers the language chosen with the switch (its cookie) to the browser', async () => {
@@ -58,6 +63,7 @@ describe('routePage', () => {
     const own = new Hono().get('*', (c) => c.json(routePage(general, c)));
     const go = async (path: string, lang: string) => (await own.request(path, { headers: { 'accept-language': lang } })).json();
     expect(await go('/', 'pl')).toEqual({ redirect: '/pl/', permanent: false });
+    expect(await (await own.request('/')).json()).toEqual({ redirect: '/en/', permanent: false });
     expect(await go('/pl/', 'en')).toEqual({ locale: 'pl' });
     expect(general.client('pl').localePaths).toEqual({ pl: '/pl/', en: '/en/' });
   });

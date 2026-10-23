@@ -5,7 +5,7 @@ import { RequestError, rateLimit } from '../../http.ts';
 import { config as env, errorMessage } from '../../config.ts';
 import { follow } from '../../files.ts';
 import type { AppFile, LayersFile, MapFile } from '../../config/schema.ts';
-import { CATALOG_FILE, buildCatalog, catalogIndex, readCatalog, serviceKey, writeCatalog, type Catalog } from './catalog.ts';
+import { buildCatalog, catalogFile, catalogIndex, readCatalog, serviceKey, writeCatalog, type Catalog } from './catalog.ts';
 import { MAX_QUERY, communes, counties, findUnits, precincts, unitNames, voivodeships, type DictEntry } from './dictionaries.ts';
 import { fetchDrawOrder } from './drawOrder.ts';
 import { orthoAt } from './ortho.ts';
@@ -85,7 +85,7 @@ export async function start(client: ClientConfig): Promise<Data> {
       .catch((e: unknown) => console.warn(`catalog: ${errorMessage(e)}`));
   }
   if (env.sharedData) {
-    await follow(CATALOG_FILE, async () => {
+    await follow(catalogFile(), async () => {
       catalog = (await readCatalog()) ?? catalog;
     });
   }

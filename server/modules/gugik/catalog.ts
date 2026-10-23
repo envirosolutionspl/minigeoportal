@@ -39,7 +39,8 @@ export interface Catalog {
 /** A WMTS serves several tile layers under one address, each with its own grid. */
 export const serviceKey = (e: Pick<CatalogEntry, 'url' | 'layer'>) => (e.layer ? `${e.url} ${e.layer}` : e.url);
 
-export const CATALOG_FILE = process.env.CATALOG_FILE ?? dataPath('gugik', 'catalog.json');
+/** Where the catalog is kept; read when used, so a test can move it before the module loads. */
+export const catalogFile = () => process.env.CATALOG_FILE ?? dataPath('gugik', 'catalog.json');
 /** Services checked at once: the geoportal servers are shared with everyone. */
 const CONCURRENCY = 6;
 /** The main module first, so layers take their groups from where most people know them. */
@@ -261,12 +262,12 @@ export function catalogIndex(catalog: Catalog): CatalogIndex {
 
 export async function readCatalog(): Promise<Catalog | undefined> {
   try {
-    return JSON.parse(await readFile(CATALOG_FILE, 'utf8')) as Catalog;
+    return JSON.parse(await readFile(catalogFile(), 'utf8')) as Catalog;
   } catch {
     return undefined;
   }
 }
 
 export async function writeCatalog(catalog: Catalog): Promise<void> {
-  await writeAtomic(CATALOG_FILE, JSON.stringify(catalog));
+  await writeAtomic(catalogFile(), JSON.stringify(catalog));
 }

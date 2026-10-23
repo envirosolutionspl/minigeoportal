@@ -27,8 +27,8 @@ const EMPTY_TTL_MS = 6 * 3600 * 1000;
 const TIMEOUT_MS = 20000;
 const MAX_BYTES = 2_000_000;
 const MAX_PAGES = 5;
-/** Overridable so tests never touch the real cache. */
-const CACHE_DIR = process.env.DICT_CACHE_DIR ?? dataPath('gugik', 'dict');
+/** Overridable so tests never touch the real cache; read when used, as the module may load before a test sets it. */
+const cacheDir = () => process.env.DICT_CACHE_DIR ?? dataPath('gugik', 'dict');
 
 interface Cached {
   fetchedAt: number;
@@ -38,7 +38,7 @@ interface Cached {
 const memory = new Map<string, Cached>();
 const pending = new Map<string, Promise<DictEntry[]>>();
 
-const fileFor = (key: string) => resolve(CACHE_DIR, `${key}.json`);
+const fileFor = (key: string) => resolve(cacheDir(), `${key}.json`);
 
 async function readDisk(key: string): Promise<Cached | undefined> {
   try {

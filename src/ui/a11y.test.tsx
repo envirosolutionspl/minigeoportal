@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { act, render } from '@testing-library/react';
 import axe from 'axe-core';
 import { TopBar } from './TopBar';
@@ -23,15 +23,6 @@ async function violations(container: Element) {
   return result.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`);
 }
 
-beforeAll(() => {
-  HTMLDialogElement.prototype.showModal ??= function (this: HTMLDialogElement) {
-    this.open = true;
-  };
-  HTMLDialogElement.prototype.close ??= function (this: HTMLDialogElement) {
-    this.open = false;
-  };
-});
-
 beforeEach(async () => {
   stubFetch([['/api/report', { enabled: true }]]);
   await withCapabilities();
@@ -41,6 +32,13 @@ beforeEach(async () => {
 describe('accessibility (axe, WCAG 2.1 AA)', () => {
   it('search bar and tool buttons', async () => {
     const { container } = render(<TopBar />);
+    expect(await violations(container)).toEqual([]);
+  });
+
+  it('the "More" sheet of phones, with the display aids unfolded', async () => {
+    const { container, getByRole } = render(<TopBar />);
+    act(() => getByRole('button', { name: 'Więcej' }).click());
+    act(() => getByRole('button', { name: 'Ułatwienia' }).click());
     expect(await violations(container)).toEqual([]);
   });
 

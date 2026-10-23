@@ -29,6 +29,7 @@ tools:
   linkCopied: Link to this map view copied.
   print: Print the map
   about: About
+  more: More
 
 search:
   home: '{app}: show the whole map area'

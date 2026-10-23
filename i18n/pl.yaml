@@ -30,6 +30,7 @@ tools:
   linkCopied: Skopiowano link do tego widoku mapy.
   print: Drukuj mapę
   about: O serwisie
+  more: Więcej
 
 search:
   home: '{app}: pokaż cały obszar mapy'

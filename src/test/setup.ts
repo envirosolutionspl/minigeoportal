@@ -7,4 +7,12 @@ import { loadConfig } from '../../server/config/load.ts';
 // The app's modules read the configuration as they load: the default deployment, in Polish.
 initConfig(clientConfig(loadConfig('config'), 'pl'));
 
+// jsdom has <dialog> without the modal methods.
+HTMLDialogElement.prototype.showModal ??= function (this: HTMLDialogElement) {
+  this.open = true;
+};
+HTMLDialogElement.prototype.close ??= function (this: HTMLDialogElement) {
+  this.open = false;
+};
+
 afterEach(() => cleanup());

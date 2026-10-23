@@ -2,6 +2,13 @@
 @import 'ol/ol.css';
 @import '@fontsource-variable/figtree';
 
+/* Phones, upright or sideways: the map keeps only its main tools (TopBar.tsx, MoreSheet.tsx). */
+@custom-variant phone {
+  @media (max-width: 639px), (max-height: 500px) {
+    @slot;
+  }
+}
+
 :root {
   color: var(--text);
   color-scheme: light dark;
@@ -450,6 +457,17 @@ html[data-printing] #print-sheet {
   .ol-zoom-extent,
   .ol-touch .ol-zoom-extent {
     bottom: calc(13.5rem + var(--safe-bottom));
+  }
+}
+
+/* On phones the whole-country button is in the "More" sheet, the author credit at its foot, and
+   the scale in numbers in the bottom bar is enough without the scale bar. */
+@media (max-width: 639px), (max-height: 500px) {
+  .ol-zoom-extent,
+  .ol-touch .ol-zoom-extent,
+  .ol-scale-line,
+  .author-credit {
+    display: none;
   }
 }
 

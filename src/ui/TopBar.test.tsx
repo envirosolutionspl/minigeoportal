@@ -117,12 +117,27 @@ describe('map tools', () => {
     expect(labels).toEqual([
       'Warstwy',
       'Moja lokalizacja',
+      'Więcej',
       'Pomiar odległości i powierzchni',
       'Kopiuj link do tego widoku mapy',
       'Drukuj mapę',
       'Ułatwienia: wielkość tekstu i kontrast',
       'O serwisie',
     ]);
+  });
+});
+
+describe('tools on phones', () => {
+  it('keeps layers, location and "More" on the map, the rest in the sheet', () => {
+    const { container } = render(<TopBar />);
+    const onPhone = [...container.querySelectorAll<HTMLElement>('.map-tools > button, .map-tools > div')]
+      .filter((el) => !el.className.includes('phone:hidden'))
+      .map((el) => (el.matches('button') ? el : el.querySelector('button'))?.getAttribute('aria-label'));
+    expect(onPhone).toEqual(['Warstwy', 'Moja lokalizacja', 'Więcej']);
+    const more = screen.getByRole('button', { name: 'Więcej' });
+    expect(more.parentElement?.className).toContain('phone:block');
+    fireEvent.click(more);
+    expect(more.getAttribute('aria-expanded')).toBe('true');
   });
 });
 

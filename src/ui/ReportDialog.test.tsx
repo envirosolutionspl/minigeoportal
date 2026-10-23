@@ -1,17 +1,7 @@
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ReportDialog, useReport } from './ReportDialog';
 import { stubFetch } from '@/test/helpers';
-
-beforeAll(() => {
-  // jsdom has <dialog> without the modal methods.
-  HTMLDialogElement.prototype.showModal ??= function (this: HTMLDialogElement) {
-    this.open = true;
-  };
-  HTMLDialogElement.prototype.close ??= function (this: HTMLDialogElement) {
-    this.open = false;
-  };
-});
 
 beforeEach(() => useReport.setState({ open: false, draft: '' }));
 

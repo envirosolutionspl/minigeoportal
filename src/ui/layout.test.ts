@@ -39,6 +39,12 @@ describe('phone screens', () => {
     expect(Number(short?.[1])).toBeGreaterThanOrEqual(660);
   });
 
+  it('leaves the whole-country button, scale bar and author credit off the map on phones', () => {
+    const phone = /@media \(max-width: 639px\), \(max-height: 500px\)\s*\{([^{}]*)\{\s*display:\s*none/.exec(css)?.[1] ?? '';
+    for (const selector of ['.ol-zoom-extent', '.ol-scale-line', '.author-credit']) expect(phone).toContain(selector);
+    expect(css).toMatch(/@custom-variant phone\s*\{\s*@media \(max-width: 639px\), \(max-height: 500px\)/);
+  });
+
   it('draws the open search above the tool buttons', () => {
     expect(source('src/ui/TopBar.tsx')).toMatch(/search-box[^"]*\bz-10\b/);
   });

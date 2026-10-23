@@ -78,9 +78,8 @@ function switchLanguage(code: string) {
 }
 
 /** Button with text size and contrast switches, among the map tools. */
-export function DisplayMenu() {
+export function DisplayMenu({ className = '' }: { className?: string }) {
   const [open, setOpen] = useState(false);
-  const { textSize, contrast, set } = useDisplay();
   const root = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -99,13 +98,8 @@ export function DisplayMenu() {
     };
   }, [open]);
 
-  const option = (pressed: boolean) =>
-    `flex min-h-10 min-w-10 items-center justify-center rounded-xl px-2 font-semibold ring-1 ring-[var(--hover)] ${
-      pressed ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'hover:bg-[var(--hover)]'
-    }`;
-
   return (
-    <div ref={root} className="relative">
+    <div ref={root} className={`relative ${className}`}>
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -124,72 +118,87 @@ export function DisplayMenu() {
           id="display-menu"
           role="group"
           aria-label={t('display.menu')}
-          className="display-menu absolute top-0 right-full z-40 mr-2 w-64 space-y-3 rounded-2xl bg-[var(--surface)] p-3 text-sm shadow-lg ring-1 ring-black/5"
+          className="display-menu absolute top-0 right-full z-40 mr-2 w-64 rounded-2xl bg-[var(--surface)] p-3 text-sm shadow-lg ring-1 ring-black/5"
         >
-          <div>
-            <p className="mb-1.5 font-medium">{t('display.textSize')}</p>
-            <div className="flex gap-2">
-              {SIZES.map(({ size, label, name }) => (
-                <button
-                  key={size}
-                  type="button"
-                  aria-pressed={textSize === size}
-                  aria-label={name}
-                  title={name}
-                  onClick={() => set({ textSize: size })}
-                  className={option(textSize === size)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <button
-            type="button"
-            aria-pressed={contrast}
-            onClick={() => set({ contrast: !contrast })}
-            className={`${option(contrast)} w-full gap-2`}
-          >
-            <span
-              aria-hidden="true"
-              className="flex h-5 w-5 items-center justify-center rounded-full bg-black text-xs text-[#ffff00] ring-1 ring-[#ffff00]"
-            >
-              A
-            </span>
-            {t('display.contrast')}
-          </button>
-          {config.locales.length > 1 && (
-            <div>
-              <p className="mb-1.5 font-medium">{t('display.language')}</p>
-              <div className="flex flex-wrap gap-2">
-                {config.locales.map((code) => (
-                  <button
-                    key={code}
-                    type="button"
-                    lang={code}
-                    aria-pressed={config.locale === code}
-                    onClick={() => config.locale !== code && switchLanguage(code)}
-                    className={option(config.locale === code)}
-                  >
-                    {languageName(code)}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          {config.content.accessibility && (
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                useAccessibility.getState().setOpen(true);
-              }}
-              className="min-h-6 text-[var(--accent)] underline underline-offset-2"
-            >
-              {t('accessibility.title')}
-            </button>
-          )}
+          <DisplayOptions onLeave={() => setOpen(false)} />
         </div>
+      )}
+    </div>
+  );
+}
+
+/** Text size, contrast, language and the accessibility statement; `onLeave` runs before the statement opens. */
+export function DisplayOptions({ onLeave }: { onLeave: () => void }) {
+  const { textSize, contrast, set } = useDisplay();
+  const option = (pressed: boolean) =>
+    `flex min-h-10 min-w-10 items-center justify-center rounded-xl px-2 font-semibold ring-1 ring-[var(--hover)] ${
+      pressed ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'hover:bg-[var(--hover)]'
+    }`;
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <p className="mb-1.5 font-medium">{t('display.textSize')}</p>
+        <div className="flex gap-2">
+          {SIZES.map(({ size, label, name }) => (
+            <button
+              key={size}
+              type="button"
+              aria-pressed={textSize === size}
+              aria-label={name}
+              title={name}
+              onClick={() => set({ textSize: size })}
+              className={option(textSize === size)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <button
+        type="button"
+        aria-pressed={contrast}
+        onClick={() => set({ contrast: !contrast })}
+        className={`${option(contrast)} w-full gap-2`}
+      >
+        <span
+          aria-hidden="true"
+          className="flex h-5 w-5 items-center justify-center rounded-full bg-black text-xs text-[#ffff00] ring-1 ring-[#ffff00]"
+        >
+          A
+        </span>
+        {t('display.contrast')}
+      </button>
+      {config.locales.length > 1 && (
+        <div>
+          <p className="mb-1.5 font-medium">{t('display.language')}</p>
+          <div className="flex flex-wrap gap-2">
+            {config.locales.map((code) => (
+              <button
+                key={code}
+                type="button"
+                lang={code}
+                aria-pressed={config.locale === code}
+                onClick={() => config.locale !== code && switchLanguage(code)}
+                className={option(config.locale === code)}
+              >
+                {languageName(code)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {config.content.accessibility && (
+        <button
+          type="button"
+          onClick={() => {
+            onLeave();
+            useAccessibility.getState().setOpen(true);
+          }}
+          className="min-h-6 text-[var(--accent)] underline underline-offset-2"
+        >
+          {t('accessibility.title')}
+        </button>
       )}
     </div>
   );

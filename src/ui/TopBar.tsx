@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Building2,
   Crosshair,
+  Ellipsis,
+  Fullscreen,
   Home,
   Info,
   Landmark,
@@ -30,6 +32,7 @@ import { useWelcome } from './WelcomeDialog';
 import { PARCEL_SCALE, ParcelSearch } from './ParcelSearch';
 import { PROJECTION, zoomForScale } from '@/map/projection';
 import { DisplayMenu } from './DisplayMenu';
+import { MoreSheet } from './MoreSheet';
 
 /** Scale per hit kind; points zoom to it, outlines at most to it. */
 const SCALE: Record<HitKind, number> = {
@@ -77,6 +80,8 @@ export function TopBar() {
   /** Message after copying the link; read out by screen readers. */
   const [copied, setCopied] = useState('');
   const openWelcome = useWelcome((w) => w.setOpen);
+  /** The sheet with the tools phones keep off the map. */
+  const [more, setMore] = useState(false);
 
   const run = async (q: string, controller: AbortController) => {
     setBusy(true);
@@ -155,6 +160,14 @@ export function TopBar() {
       setCopied(link);
     }
     window.setTimeout(() => setCopied(''), 4000);
+  };
+
+  const toggleMeasure = () => setTool(measuring ? 'none' : 'measure-line');
+  const togglePrint = () => {
+    // The print panel takes the place panel's spot on the left.
+    useInfoStore.getState().close();
+    if (tool === 'print') setTool('none');
+    else openPrint();
   };
 
   const locate = () => {
@@ -301,29 +314,37 @@ export function TopBar() {
         <IconButton label={t('tools.locate')} onClick={locate}>
           <LocateFixed className="h-5 w-5" />
         </IconButton>
-        <IconButton label={t('tools.measure')} active={measuring} onClick={() => setTool(measuring ? 'none' : 'measure-line')}>
+        {/* Phones show only the two tools above and this one; the rest is in its sheet. */}
+        <div className="hidden phone:block">
+          <IconButton label={t('tools.more')} expanded={more} onClick={() => setMore(true)}>
+            <Ellipsis className="h-5 w-5" />
+          </IconButton>
+        </div>
+        <IconButton className="phone:hidden" label={t('tools.measure')} active={measuring} onClick={toggleMeasure}>
           <Ruler className="h-5 w-5" />
         </IconButton>
-        <IconButton label={t('tools.link')} onClick={() => void copyLink()}>
+        <IconButton className="phone:hidden" label={t('tools.link')} onClick={() => void copyLink()}>
           <Link2 className="h-5 w-5" />
         </IconButton>
-        <IconButton
-          label={t('tools.print')}
-          active={tool === 'print'}
-          onClick={() => {
-            // The print panel takes the place panel's spot on the left.
-            useInfoStore.getState().close();
-            if (tool === 'print') setTool('none');
-            else openPrint();
-          }}
-        >
+        <IconButton className="phone:hidden" label={t('tools.print')} active={tool === 'print'} onClick={togglePrint}>
           <Printer className="h-5 w-5" />
         </IconButton>
-        <DisplayMenu />
-        <IconButton label={t('tools.about')} onClick={() => openWelcome(true)}>
+        <DisplayMenu className="phone:hidden" />
+        <IconButton className="phone:hidden" label={t('tools.about')} onClick={() => openWelcome(true)}>
           <Info className="h-5 w-5" />
         </IconButton>
       </div>
+      <MoreSheet
+        open={more}
+        onClose={() => setMore(false)}
+        items={[
+          { label: t('tools.measure'), icon: Ruler, active: measuring, onClick: toggleMeasure },
+          { label: t('tools.link'), icon: Link2, onClick: () => void copyLink() },
+          { label: t('tools.print'), icon: Printer, active: tool === 'print', onClick: togglePrint },
+          { label: config.map.view.homeLabel, icon: Fullscreen, onClick: goHome },
+          { label: t('tools.about'), icon: Info, onClick: () => openWelcome(true) },
+        ]}
+      />
       <p
         role="status"
         className={`pointer-events-auto fixed bottom-20 left-1/2 z-50 max-w-[min(28rem,calc(100%-2rem))] -translate-x-1/2 rounded-xl bg-[var(--text)] px-4 py-2 text-sm break-all text-[var(--surface)] shadow-lg ${
@@ -339,11 +360,16 @@ export function TopBar() {
 function IconButton({
   label,
   active,
+  expanded,
+  className = '',
   onClick,
   children,
 }: {
   label: string;
   active?: boolean;
+  /** For a button that opens a sheet or menu. */
+  expanded?: boolean;
+  className?: string;
   onClick: () => void;
   children: React.ReactNode;
 }) {
@@ -354,7 +380,8 @@ function IconButton({
       aria-label={label}
       title={label}
       aria-pressed={active}
-      className={`flex h-11 w-11 items-center justify-center rounded-2xl shadow-lg ring-1 ring-black/5 transition ${
+      aria-expanded={expanded}
+      className={`${className} flex h-11 w-11 items-center justify-center rounded-2xl shadow-lg ring-1 ring-black/5 transition ${
         active ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'bg-[var(--surface)] hover:bg-[var(--hover)]'
       }`}
     >

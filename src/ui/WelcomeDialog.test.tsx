@@ -1,16 +1,6 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import { WelcomeDialog, useWelcome } from './WelcomeDialog';
-
-beforeAll(() => {
-  // jsdom has <dialog> without the modal methods.
-  HTMLDialogElement.prototype.showModal ??= function (this: HTMLDialogElement) {
-    this.open = true;
-  };
-  HTMLDialogElement.prototype.close ??= function (this: HTMLDialogElement) {
-    this.open = false;
-  };
-});
 
 describe('WelcomeDialog', () => {
   it('says what the service is for and where the data come from, briefly', () => {

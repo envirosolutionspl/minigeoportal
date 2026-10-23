@@ -54,13 +54,66 @@ parcel:
 
 Numbers and dates are written the way the language writes them (1 234,5 in Polish, 1,234.5 in English).
 
-## Adding a language
+## Languages and addresses
 
-1. Add its code to `locales.available` in `app.yaml`.
-2. Put all interface texts in `i18n/<code>.yaml` of the configuration directory (copy `i18n/en.yaml` of the app and translate it). Missing keys show the default language.
-3. Give the texts of `app.yaml`, `map.yaml` and `layers.yaml` a version in the language where it matters: `title: { pl: Mapa, de: Karte }`.
-4. Add the Markdown files: `content/welcome.<code>.md` and the like.
+The languages of a deployment are set in `app.yaml`:
 
-Each language has its own address: `https://your-domain/pl/`, `https://your-domain/en/`, `https://your-domain/de/`. The map view is in the query (`/en/?x=…&y=…`), so a link keeps both the view and the language. The bare domain redirects to the language chosen earlier with the switch (remembered in a cookie), without such a choice to the browser's language, and to the default language when the app does not have it. Old links with `?lang=en` lead to `/en/`. The page tells search engines about every language version (`hreflang`). A deployment with one language lives at the bare domain.
+```yaml
+locales:
+  default: en # for visitors whose browser asks for none of the available ones
+  available: [pl, en] # order in the language switch
+report:
+  locale: pl # language of the report mails to the administrator (default: locales.default)
+```
 
-The switch appears in the display menu once there are two languages or more.
+A language code is two or three lowercase letters, optionally with a region: `pl`, `de`, `en-GB`.
+
+Each language has its own address: `https://your-domain/pl/`, `https://your-domain/en/`. The map view is in the query (`/en/?x=…&y=…`), so a link keeps both the view and the language. The bare domain redirects:
+
+1. to the language chosen earlier with the switch in the display menu (remembered in the `lang` cookie),
+2. without such a choice to the first language of the browser's preferences the app has (`de-AT` matches `de`),
+3. when the app has none of them, to `locales.default`.
+
+Old links with `?lang=en` lead to `/en/`, and an unknown code (`/xx/`) goes where the bare domain goes. The page tells search engines about every language version (`hreflang`). A deployment with one language lives at the bare domain, without `/en/`, and has no switch.
+
+The default language also fills in translations: a text, interface message or Markdown file missing in the visitor's language shows in the default language. A new language can therefore be added step by step.
+
+Every deployment of the app works this way, not only the default one: only the configuration directory changes.
+
+## Adding a language step by step
+
+Example: German (`de`) in the configuration directory `config/`.
+
+1. **Add the language** in `app.yaml`:
+
+   ```yaml
+   locales:
+     default: en
+     available: [pl, en, de]
+   ```
+
+2. **Interface texts.** Copy the app's `i18n/en.yaml` to `config/i18n/de.yaml` and translate the values, keeping the keys. Keep `{name}` placeholders, and give messages that depend on a number the forms the language needs (German: `one` and `other`). If the deployment's `config/i18n/en.yaml` has texts of its own (e.g. `info.fields`, `print.note`), translate them in the same `de.yaml`.
+
+3. **Markdown content.** Add `content/welcome.de.md` and `content/accessibility.de.md` (translate the English ones). Without them the German page shows the content in the default language.
+
+4. **Texts in the YAML files.** Wherever a text has language versions, add the German one: the name and description in `app.yaml`, the report categories, base maps and coordinate systems in `map.yaml`, topics and layers in `layers.yaml`:
+
+   ```yaml
+   title: { pl: 'Mapa gminy', en: 'Municipal map', de: 'Gemeindekarte' }
+   ```
+
+   Layer search keywords can have a list per language: `keywords: { en: [parcel], de: [Flurstück] }`.
+
+5. **Check** the configuration without starting the server:
+
+   ```bash
+   npm run config:check config
+   ```
+
+   The result lists the languages (`OK (pl, en, de; …)`) or every problem with its file, line and column.
+
+6. **Restart the server**, as the configuration is read when it starts: with Docker `docker compose up -d --force-recreate app`, with `npm start` a restart of the process (in development the server restarts by itself).
+
+7. **See the result** at `https://your-domain/de/`. The bare domain opens German for browsers set to German, and the language switch in the display menu shows "Deutsch" (the language's name in itself).
+
+Removing a language means removing its code from `locales.available`; the files may stay. Links to the removed language (`/de/…`) then go where the bare domain goes.

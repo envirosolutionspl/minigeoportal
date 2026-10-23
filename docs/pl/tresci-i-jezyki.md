@@ -56,13 +56,66 @@ parcel:
 
 Liczby i daty są zapisywane tak, jak zapisuje je dany język (1 234,5 po polsku, 1,234.5 po angielsku).
 
-## Dodawanie języka
+## Języki i adresy
 
-1. Dopisz jego kod do `locales.available` w `app.yaml`.
-2. Umieść wszystkie napisy interfejsu w `i18n/<kod>.yaml` katalogu konfiguracji (skopiuj `i18n/en.yaml` aplikacji i przetłumacz). Brakujące klucze pokazują język domyślny.
-3. Nadaj tekstom w `app.yaml`, `map.yaml` i `layers.yaml` wersję w tym języku tam, gdzie to ważne: `title: { pl: Mapa, de: Karte }`.
-4. Dodaj pliki Markdown: `content/welcome.<kod>.md` i pozostałe.
+Języki wdrożenia ustawia `app.yaml`:
 
-Każdy język ma własny adres: `https://twoja-domena/pl/`, `https://twoja-domena/en/`, `https://twoja-domena/de/`. Widok mapy jest w parametrach (`/pl/?x=…&y=…`), więc link zachowuje i widok, i język. Sam adres domeny przekierowuje na język wybrany wcześniej przełącznikiem (zapamiętany w ciasteczku), a bez takiego wyboru na język przeglądarki; gdy aplikacja go nie ma, na język domyślny. Stare linki z `?lang=en` prowadzą pod `/en/`. Strona podaje wyszukiwarkom wszystkie wersje językowe (`hreflang`). Wdrożenie z jednym językiem działa pod samym adresem domeny.
+```yaml
+locales:
+  default: en # dla odwiedzających, których przeglądarka nie prosi o żaden z dostępnych
+  available: [pl, en] # kolejność w przełączniku języka
+report:
+  locale: pl # język maili ze zgłoszeniami do administratora (domyślnie locales.default)
+```
 
-Przełącznik pojawia się w menu ułatwień, gdy są co najmniej dwa języki.
+Kod języka to dwie lub trzy małe litery, opcjonalnie z regionem: `pl`, `de`, `en-GB`.
+
+Każdy język ma własny adres: `https://twoja-domena/pl/`, `https://twoja-domena/en/`. Widok mapy jest w parametrach (`/pl/?x=…&y=…`), więc link zachowuje i widok, i język. Sam adres domeny przekierowuje:
+
+1. na język wybrany wcześniej przełącznikiem w menu ułatwień (zapamiętany w ciasteczku `lang`),
+2. bez takiego wyboru na pierwszy język z preferencji przeglądarki, który aplikacja ma (`de-AT` pasuje do `de`),
+3. gdy aplikacja nie ma żadnego z nich, na `locales.default`.
+
+Stare linki z `?lang=en` prowadzą pod `/en/`, a nieznany kod (`/xx/`) jak sam adres domeny. Strona podaje wyszukiwarkom wszystkie wersje językowe (`hreflang`). Wdrożenie z jednym językiem działa pod samym adresem domeny, bez `/pl/`, i nie ma przełącznika.
+
+Język domyślny uzupełnia też tłumaczenia: tekst, napis interfejsu czy plik Markdown, którego nie ma w języku odwiedzającego, pokazuje się w języku domyślnym. Dzięki temu nowy język można dodawać stopniowo.
+
+Tak działa każde wdrożenie aplikacji, nie tylko domyślne: zmienia się wyłącznie katalog konfiguracji.
+
+## Dodawanie języka krok po kroku
+
+Przykład: niemiecki (`de`) w katalogu konfiguracji `config/`.
+
+1. **Dopisz język** w `app.yaml`:
+
+   ```yaml
+   locales:
+     default: en
+     available: [pl, en, de]
+   ```
+
+2. **Napisy interfejsu.** Skopiuj z aplikacji `i18n/en.yaml` do `config/i18n/de.yaml` i przetłumacz wartości, nie zmieniając kluczy. Zachowaj `{nazwa}` w napisach, a napisom zależnym od liczby daj formy, których potrzebuje język (niemiecki: `one` i `other`). Jeśli `config/i18n/en.yaml` wdrożenia zawiera własne napisy (np. `info.fields`, `print.note`), przetłumacz je w tym samym pliku `de.yaml`.
+
+3. **Treści w Markdown.** Dodaj `content/welcome.de.md` i `content/accessibility.de.md` (przetłumacz wersję angielską). Bez nich niemiecka strona pokaże treści w języku domyślnym.
+
+4. **Teksty w plikach YAML.** Wszędzie, gdzie tekst ma wersje językowe, dopisz niemiecką; dotyczy to nazwy i opisu w `app.yaml`, kategorii zgłoszeń, podkładów i układów współrzędnych w `map.yaml` oraz tematów i warstw w `layers.yaml`:
+
+   ```yaml
+   title: { pl: 'Mapa gminy', en: 'Municipal map', de: 'Gemeindekarte' }
+   ```
+
+   Słowa kluczowe wyszukiwania warstw mogą mieć osobną listę na język: `keywords: { pl: [działka], de: [Flurstück] }`.
+
+5. **Sprawdź** konfigurację bez uruchamiania serwera:
+
+   ```bash
+   npm run config:check config
+   ```
+
+   Wynik wymienia języki (`OK (pl, en, de; …)`) albo każdy problem z plikiem, wierszem i kolumną.
+
+6. **Uruchom serwer ponownie**, bo konfiguracja jest czytana przy starcie: w Dockerze `docker compose up -d --force-recreate app`, przy `npm start` ponowne uruchomienie procesu (w trybie deweloperskim serwer restartuje się sam).
+
+7. **Zobacz wynik** pod `https://twoja-domena/de/`. Sam adres domeny otworzy niemiecki przeglądarkom ustawionym na niemiecki, a przełącznik języka w menu ułatwień pokaże „Deutsch” (nazwę języka w nim samym).
+
+Usunięcie języka to usunięcie jego kodu z `locales.available`; pliki mogą zostać. Linki do usuniętego języka (`/de/…`) prowadzą wtedy jak sam adres domeny.

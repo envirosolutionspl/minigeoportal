@@ -1,6 +1,6 @@
 # Configuration
 
-A deployment is a directory with three YAML files: `app.yaml`, `map.yaml` and `layers.yaml`. The server reads it from `CONFIG_DIR` (`config` by default) and checks every field; unknown fields are errors, so a typo never passes silently. The default deployment in `config/` and the example in `examples/osm/` show every field in use.
+A deployment is a directory with three YAML files: `app.yaml`, `map.yaml` and `layers.yaml`. The server reads it from `CONFIG_DIR` (`config` by default) and checks every field; unknown fields are errors, so a typo never passes silently. The default deployment in `config/` and the example in `examples/osm/` show most fields in use; the others (`time`, `legend`, `search.nominatim.url` and `viewbox`, `skin`) are described here with examples.
 
 **Texts.** Every field marked _text_ is either one string or one string per language:
 
@@ -72,6 +72,47 @@ Each layer of `overlays`:
 | `attribution`          | Source credit of this layer (_text_, Markdown links allowed); the map's credit otherwise.                                                                                                                                                                                                                                                       |
 | `sublayers`            | The layers of the service people can choose, in the order the list shows them: `name` (as the service names it), `title` (_text_), `default` (`true` for the ones switched on with the layer) and `legend` (a legend image, optional; the service's own legend otherwise). Scale limits and point queries come from the service's capabilities. |
 | `time`                 | For a layer that changes over time, see [Layers that change over time](time-layers.md).                                                                                                                                                                                                                                                         |
+
+### Layers of each kind
+
+Scale limits, legends, place information formats and time dimensions are read by the server from the service's capabilities on `npm run update` (and on the first start); `layers.yaml` needs only the address and the layer names.
+
+```yaml
+overlays:
+  # WMS: name is the layer's name in GetCapabilities; place information through GetFeatureInfo
+  # when the layer is queryable.
+  - id: plans
+    kind: wms
+    url: https://example.org/wms/plans
+    title: Local plans
+    topic: planning
+    sublayers:
+      - { name: zones, title: Zones, default: true }
+      - { name: bounds, title: Plan boundaries }
+
+  # WMTS: the service needs a tile matrix set in the map's system (projection.code); the WMTS
+  # layer is the first sublayer. Place information when the service lists GetFeatureInfo formats.
+  - id: ortho2020
+    kind: wmts
+    url: https://example.org/wmts/ortho
+    title: Orthophoto 2020
+    topic: terrain
+    sublayers:
+      - { name: ORTHO_2020, title: Photos 2020, default: true }
+
+  # ArcGIS REST (MapServer): name is the service's layer number (0, 1, 2…); place information
+  # through identify when the service has the Query capability.
+  - id: soils
+    kind: rest
+    url: https://example.org/arcgis/rest/services/Soils/MapServer
+    title: Soil map
+    topic: environment
+    sublayers:
+      - { name: '2', title: Complexes, default: true }
+      - { name: '0', title: Boundaries }
+```
+
+After adding a layer: `npm run config:check`, then `npm run update` (or a restart), so the server fetches the new service's capabilities.
 
 ## Checking a configuration
 

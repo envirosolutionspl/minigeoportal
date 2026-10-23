@@ -94,8 +94,11 @@ describe('buildCache', () => {
       generatedAt: 'earlier',
       services: { kieg: { kind: 'wms', fetchedAt: 'earlier', title: 'Old KIEG', infoFormats: [], layers: {} } },
     };
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const cache = await buildCache(defaults, previous);
     expect(cache.services.kieg).toEqual(previous.services.kieg);
+    // Kept quietly for the app, said out loud for whoever runs the update.
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^kieg: HTTP 503 .*previous metadata kept/));
     expect(cache.services.kimpzp.kind).toBe('wms');
 
     const fresh = await buildCache(defaults);

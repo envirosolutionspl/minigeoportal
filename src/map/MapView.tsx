@@ -97,12 +97,7 @@ export function MapView() {
 
     const applyState = () => {
       const s = useMapStore.getState();
-      for (const { def, layer } of bases) {
-        const on = def.id === s.base;
-        // Tiles of a base map that just went out of sight are let go.
-        if (!on && layer.getVisible()) layer.getSource()?.clear();
-        layer.setVisible(on);
-      }
+      for (const { def, layer } of bases) layer.setVisible(def.id === s.base);
       for (const id of s.overlays) ensureOverlay(id);
       for (const [id, { def, layer }] of overlays) {
         if (!s.overlays.includes(id)) {

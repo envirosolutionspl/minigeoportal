@@ -90,6 +90,11 @@ export function formatReport(report: Report, meta: { userAgent?: string }, form:
 export function mailerFromEnv(form: ReportForm, env: NodeJS.ProcessEnv = process.env): Mailer | undefined {
   const { SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS, REPORT_TO, REPORT_FROM } = env;
   if (!SMTP_HOST || !REPORT_TO) return undefined;
+  const from = REPORT_FROM ?? SMTP_USER;
+  if (!from) {
+    console.warn('Bug reports off: set REPORT_FROM (or SMTP_USER) as the sender address.');
+    return undefined;
+  }
   const port = Number(SMTP_PORT ?? 587);
   const secure = SMTP_SECURE ? SMTP_SECURE === 'true' : port === 465;
   const transport = nodemailer.createTransport({
@@ -107,7 +112,7 @@ export function mailerFromEnv(form: ReportForm, env: NodeJS.ProcessEnv = process
   return {
     async send(report, meta) {
       const { subject, text } = formatReport(report, meta, form);
-      await transport.sendMail({ from: REPORT_FROM ?? SMTP_USER, to: REPORT_TO, replyTo: report.email, subject, text });
+      await transport.sendMail({ from, to: REPORT_TO, replyTo: report.email, subject, text });
     },
   };
 }

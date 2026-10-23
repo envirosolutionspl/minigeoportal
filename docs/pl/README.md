@@ -28,7 +28,7 @@ CONFIG_DIR=examples/osm npm run dev
 
 ## Jak wdrożenie trafia do przeglądarki
 
-Serwer czyta katalog konfiguracji przy starcie i zatrzymuje się z listą wszystkich znalezionych problemów, każdy z plikiem, wierszem i kolumną. Potem umieszcza konfigurację, z tekstami już w języku odwiedzającego, w samej stronie, więc aplikacja startuje bez czekania na kolejne zapytanie. Zmiana konfiguracji działa po ponownym uruchomieniu serwera (w trybie deweloperskim serwer restartuje się sam).
+Serwer czyta katalog konfiguracji przy starcie i zatrzymuje się z listą wszystkich znalezionych problemów, każdy z plikiem, wierszem i kolumną. Potem umieszcza konfigurację, z tekstami już w języku odwiedzającego, w samej stronie, więc aplikacja startuje bez czekania na kolejne zapytanie. Zmiana konfiguracji działa po ponownym uruchomieniu serwera (w trybie deweloperskim serwer restartuje się sam po zmianach w `config/`; przy innym `CONFIG_DIR` trzeba go uruchomić ponownie).
 
 Do przeglądarki trafiają tylko pola potrzebne aplikacji, a w plikach nie wolno zapisać niczego tajnego: klucz wyglądający na hasło, token albo klucz API jest odrzucany. Sekrety (hasło do serwera poczty) należą do zmiennych środowiskowych.
 

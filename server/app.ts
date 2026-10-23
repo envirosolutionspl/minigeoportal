@@ -70,7 +70,7 @@ export function createApp({ site, cache, mailer, origin, moduleData = {}, limits
   /** What the page carries inside (html.ts), for a page served without it. */
   app.get('/api/config', etag(), (c) => {
     c.header('Cache-Control', 'no-cache');
-    if (site.multilingual) c.header('Vary', 'Accept-Language');
+    if (site.multilingual) c.header('Vary', 'Accept-Language, Cookie');
     return c.json(site.client(site.locale(c)));
   });
 
@@ -94,7 +94,9 @@ export function createApp({ site, cache, mailer, origin, moduleData = {}, limits
     const etag = `"${version}"`;
     c.header('Cache-Control', 'no-cache');
     c.header('ETag', etag);
-    if (c.req.header('if-none-match') === etag) return c.body(null, 304);
+    // The compression middleware marks the tag weak (W/"…"), and that is what browsers send back.
+    const given = (c.req.header('if-none-match') ?? '').split(',').map((t) => t.trim().replace(/^W\//, ''));
+    if (given.includes(etag)) return c.body(null, 304);
     return c.json(body());
   };
 
@@ -155,6 +157,8 @@ export function createApp({ site, cache, mailer, origin, moduleData = {}, limits
         const hits = await places(q, site.locale(c));
         if (!hits) return c.text('Busy, try again shortly', 503);
         c.header('Cache-Control', 'public, max-age=86400');
+        // Place names come in the visitor's language.
+        if (site.multilingual) c.header('Vary', 'Accept-Language, Cookie');
         return c.json(hits);
       } catch (e) {
         return upstreamFailure(c, 'search', e);

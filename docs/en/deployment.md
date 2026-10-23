@@ -4,7 +4,7 @@
 
 ```bash
 npm install
-npm run dev # the app and the API, both restarting on changes
+npm run dev # the app and the API, both restarting on code changes
 CONFIG_DIR=examples/osm npm run dev # another deployment
 ```
 
@@ -25,7 +25,7 @@ Data the server keeps between starts (service metadata, the geoportal catalog, d
 npm run update
 ```
 
-A fresh data directory starts with `seed/capabilities.json` of the configuration directory, when there is one, and a single server builds the geoportal catalog in the background on its first start.
+A fresh data directory starts with `seed/capabilities.json` of the configuration directory, when there is one. Without it a single server starts at once without the services' metadata (scale limits, legends) and fetches it in the background, as it does the geoportal catalog; browsers get it with the next page load. The server never waits for the services before it starts.
 
 ## Brand
 
@@ -59,24 +59,32 @@ On a server whose own nginx or Apache serves several sites, `compose.proxy.yaml`
 
 Your own configuration goes in by replacing the `./config` mount of `compose.yaml` with your directory. Mail settings and other secrets go into `.env` next to `compose.yaml`; it is optional.
 
-The image is published by GitHub Actions as `ghcr.io/envirosolutionspl/minigeoportal` (tags `latest`, `sha-<commit>` and version numbers) for x86 (64-bit) servers. It is built only when something that goes into it changes; documentation alone builds nothing. The image runs without root, needs no build tools at runtime and stops cleanly on SIGTERM. Run alone:
+The image is published by GitHub Actions as `ghcr.io/envirosolutionspl/minigeoportal` (tags `latest`, `sha-<commit>` and version numbers) for x86 (64-bit) servers. It is built only when something that goes into it changes (the `config/content/*.md` texts too); documentation alone builds nothing but is still checked by the tests. The image runs without root, needs no build tools at runtime and stops cleanly on SIGTERM. Run alone:
 
 ```bash
 docker run -p 8787:8787 -v minigeoportal-data:/data ghcr.io/envirosolutionspl/minigeoportal
 ```
 
+## Running the server
+
+- **Rate limits** per client address (IPv6 counted by /64): place information 40 at once and 60 a minute, parcel dictionaries 30 and 60, the orthophoto index 10 and 30, Nominatim 10 and 30, bug reports 3 at once and then one in 10 minutes. The server opens at most 24 connections to the upstream services at a time and answers 503 beyond that. Each instance counts on its own; Caddy sends a visitor always to the same replica. Behind a proxy set `TRUSTED_PROXY=1`, otherwise everyone shares the proxy's limit.
+- **Content Security Policy**: scripts, styles and fonts only from the site, images from any https address (tiles and service images), connections only to the site (and to the GUGiK search services with the module on). `frame-ancestors 'none'`: the page cannot be embedded in a frame on another site.
+- **The configuration in the container** is `/app/config`, read-only; it may contain `skins/`, `i18n/`, `content/` and `seed/`. Data is in `/data` and is only a cache: the volume can be wiped, the server rebuilds it.
+- **Endpoints to check**: `GET /api/health` (`{ ok, capabilitiesGeneratedAt }`), `GET /api/report` (`{ enabled }`: whether the report form works), `GET /api/capabilities`, `GET /api/catalog` (gugik module).
+- **Logs**: on standard output; upstream errors and why the report form is off (no mail server, sender, `APP_ORIGIN`). On SIGTERM the server finishes requests in progress, for 10 seconds at most.
+
 ## Environment variables
 
-| Variable                                                                                      | Meaning                                                                                                                              |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `PORT`, `HOST`                                                                                | Where the server listens: 8787; `0.0.0.0` in production, `127.0.0.1` otherwise. Behind a proxy on the same machine keep `127.0.0.1`. |
-| `NODE_ENV`                                                                                    | `production` serves the built app from `dist/`.                                                                                      |
-| `CONFIG_DIR`                                                                                  | The configuration directory (`config`).                                                                                              |
-| `DATA_DIR`                                                                                    | The data directory (`server/data`).                                                                                                  |
-| `SHARED_DATA`                                                                                 | `1` when several instances share `DATA_DIR`: only `npm run update` writes the caches.                                                |
-| `TRUSTED_PROXY`                                                                               | `1` behind a reverse proxy that appends the client address to `X-Forwarded-For`; rate limits then count per client.                  |
-| `APP_ORIGIN`                                                                                  | Public address of the app, e.g. `https://example.org`; bug reports may link only to it.                                              |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `REPORT_FROM`, `REPORT_TO` | The mail server and recipient of bug reports. Without `SMTP_HOST` and `REPORT_TO` the form is off.                                   |
-| `API_PORT`                                                                                    | Development only: where the Vite server finds the API.                                                                               |
+| Variable                                                                                      | Meaning                                                                                                                                                   |
+| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`, `HOST`                                                                                | Where the server listens: 8787; `0.0.0.0` in production, `127.0.0.1` otherwise. Behind a proxy on the same machine keep `127.0.0.1`.                      |
+| `NODE_ENV`                                                                                    | `production` serves the built app from `dist/`.                                                                                                           |
+| `CONFIG_DIR`                                                                                  | The configuration directory (`config`).                                                                                                                   |
+| `DATA_DIR`                                                                                    | The data directory (`server/data`).                                                                                                                       |
+| `SHARED_DATA`                                                                                 | `1` when several instances share `DATA_DIR`: only `npm run update` writes the caches.                                                                     |
+| `TRUSTED_PROXY`                                                                               | `1` behind a reverse proxy that appends the client address to `X-Forwarded-For`; rate limits then count per client.                                       |
+| `APP_ORIGIN`                                                                                  | Public address of the app, e.g. `https://example.org`; bug reports may link only to it.                                                                   |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `REPORT_FROM`, `REPORT_TO` | The mail server, sender (`REPORT_FROM`, default `SMTP_USER`) and recipient of bug reports. Without `SMTP_HOST`, `REPORT_TO` and a sender the form is off. |
+| `API_PORT`                                                                                    | Development only: where the Vite server finds the API.                                                                                                    |
 
 `.env.example` lists them with examples.

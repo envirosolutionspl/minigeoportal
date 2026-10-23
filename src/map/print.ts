@@ -1,7 +1,8 @@
 import type Map from 'ol/Map';
 import { unByKey } from 'ol/Observable';
 import { containsExtent, type Extent } from 'ol/extent';
-import { resolutionToScale } from './projection';
+import { getPointResolution } from 'ol/proj';
+import { PROJECTION, resolutionToScale } from './projection';
 import { duration } from './motion';
 import { useMapStore } from '@/state/store';
 
@@ -45,13 +46,26 @@ interface PrintLayout {
   mapMm: [width: number, height: number];
   /** Map frame in map pixels. */
   mapPx: [width: number, height: number];
-  /** View resolution (metres per map pixel) that gives the scale on paper. */
+  /** View resolution (map units per map pixel) that gives the scale on paper. */
   resolution: number;
   /** CSS zoom that puts the map pixels at their size on paper. */
   zoom: number;
 }
 
-export function printLayout({ paper, orientation, scale }: Pick<PrintOptions, 'paper' | 'orientation' | 'scale'>): PrintLayout {
+/**
+ * Metres on the ground per map unit at a place: about 1 in a metric national grid, the cosine of
+ * the latitude in Web Mercator, about 111 000 in degrees. Without a place, the projection's
+ * nominal metres per unit.
+ */
+function groundMetres(center?: number[]): number {
+  return center ? getPointResolution(PROJECTION, 1, center, 'm') : (PROJECTION.getMetersPerUnit() ?? 1);
+}
+
+/** The sheet for paper, orientation and scale; around `center`, the scale holds on the ground there. */
+export function printLayout(
+  { paper, orientation, scale }: Pick<PrintOptions, 'paper' | 'orientation' | 'scale'>,
+  center?: number[],
+): PrintLayout {
   const [short, long] = PAPER_MM[paper];
   const page: [number, number] = orientation === 'landscape' ? [long, short] : [short, long];
   const mapMm: [number, number] = [page[0] - 2 * MARGIN_MM, page[1] - 2 * MARGIN_MM - HEADER_MM - FOOTER_MM];
@@ -59,7 +73,7 @@ export function printLayout({ paper, orientation, scale }: Pick<PrintOptions, 'p
     page,
     mapMm,
     mapPx: [Math.round(mapMm[0] * PX_PER_MM), Math.round(mapMm[1] * PX_PER_MM)],
-    resolution: scale / 1000 / PX_PER_MM,
+    resolution: scale / 1000 / PX_PER_MM / groundMetres(center),
     zoom: CSS_PX_PER_MM / PX_PER_MM,
   };
 }
@@ -67,8 +81,9 @@ export function printLayout({ paper, orientation, scale }: Pick<PrintOptions, 'p
 /** Ground area of the map frame around a centre: what ends up on paper. */
 export function printExtent([x, y]: number[], options: Pick<PrintOptions, 'paper' | 'orientation' | 'scale'>): Extent {
   const { mapMm } = printLayout(options);
-  const halfW = (mapMm[0] / 1000) * options.scale * 0.5;
-  const halfH = (mapMm[1] / 1000) * options.scale * 0.5;
+  const units = groundMetres([x, y]);
+  const halfW = ((mapMm[0] / 1000) * options.scale * 0.5) / units;
+  const halfH = ((mapMm[1] / 1000) * options.scale * 0.5) / units;
   return [x - halfW, y - halfH, x + halfW, y + halfH];
 }
 
@@ -77,8 +92,8 @@ export function printExtent([x, y]: number[], options: Pick<PrintOptions, 'paper
  * print has smaller ones, so 1:10 000 on paper reads as about 1:6000; layers switch on and off
  * by this number, which decides what the legend lists.
  */
-export const serverScale = (options: Pick<PrintOptions, 'paper' | 'orientation' | 'scale'>) =>
-  resolutionToScale(printLayout(options).resolution);
+export const serverScale = (options: Pick<PrintOptions, 'paper' | 'orientation' | 'scale'>, center?: number[]) =>
+  resolutionToScale(printLayout(options, center).resolution);
 
 /** The print scale closest to the screen scale; 1:10 000 before the map has reported one. */
 export function nearestPrintScale(scale: number): number {
@@ -94,6 +109,8 @@ export function openPrint(): void {
 }
 
 const RENDER_TIMEOUT_MS = 20000;
+/** Browsers that never say the print dialog has closed get the map back after this long. */
+const AFTERPRINT_FALLBACK_MS = 60000;
 
 /** Margins (top, right, bottom, left) the print panel takes: the left on wide screens, the bottom on phones. */
 function panelMargins(): [number, number, number, number] {
@@ -133,7 +150,7 @@ function attachPreview(map: Map): () => void {
     const size = map.getSize();
     frame.hidden = !(tool === 'print' && !printRequest && resolution && size);
     if (frame.hidden || !resolution || !size) return;
-    const [minX, minY, maxX, maxY] = printExtent([0, 0], printSettings);
+    const [minX, minY, maxX, maxY] = printExtent(view.getCenter() ?? [0, 0], printSettings);
     const [width, height] = [(maxX - minX) / resolution, (maxY - minY) / resolution];
     const [top, right, bottom, left] = panelMargins();
     const [x, y] = [(left + size[0] - right) / 2, (top + size[1] - bottom) / 2];
@@ -155,10 +172,13 @@ function attachPreview(map: Map): () => void {
     if ((s.tool === 'print' && prev.tool !== 'print') || (s.tool === 'print' && s.printSettings !== prev.printSettings)) fitIfHidden();
   });
   view.on('change:resolution', update);
+  // Away from the equator of a Mercator map the frame grows and shrinks as the map pans north and south.
+  view.on('change:center', update);
   map.on('change:size', update);
   return () => {
     unsubscribe();
     view.un('change:resolution', update);
+    view.un('change:center', update);
     map.un('change:size', update);
     frame.remove();
   };
@@ -173,9 +193,9 @@ export function attachPrint(map: Map): () => void {
     const view = map.getView();
     const center = view.getCenter();
     const resolution = view.getResolution();
-    const layout = printLayout(options);
     // The sheet is centred where the frame was shown, beside the print panel.
     const sheetCenter = freeArea(map)?.center ?? center;
+    const layout = printLayout(options, sheetCenter);
     useMapStore.setState({ printCenter: sheetCenter ? [sheetCenter[0], sheetCenter[1]] : null });
 
     const page = document.createElement('style');
@@ -186,10 +206,12 @@ export function attachPrint(map: Map): () => void {
     frame.style.height = `${layout.mapPx[1]}px`;
 
     let done = false;
+    let fallback: number | undefined;
     const restore = () => {
       if (done) return;
       done = true;
       window.clearTimeout(timer);
+      window.clearTimeout(fallback);
       unByKey(rendered);
       window.removeEventListener('afterprint', restore);
       map.setTarget(home);
@@ -199,13 +221,16 @@ export function attachPrint(map: Map): () => void {
       delete document.documentElement.dataset.printing;
       useMapStore.getState().printDone();
     };
+    let printing = false;
     const print = () => {
-      if (done) return;
+      if (done || printing) return;
+      printing = true;
       window.clearTimeout(timer);
-      // Desktop browsers block here until the print dialog closes; others fire afterprint later.
+      // The sheet stays until the print dialog closes: desktop browsers say so (afterprint) before
+      // print() returns, phones only when their print preview closes, after the page was captured.
       window.addEventListener('afterprint', restore, { once: true });
+      fallback = window.setTimeout(restore, AFTERPRINT_FALLBACK_MS);
       window.print();
-      restore();
     };
 
     map.setTarget(frame);

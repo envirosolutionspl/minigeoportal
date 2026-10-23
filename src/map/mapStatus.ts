@@ -1,6 +1,7 @@
 import Control from 'ol/control/Control';
 import type MapEvent from 'ol/MapEvent';
-import { resolutionToScale } from './projection';
+import { getPointResolution } from 'ol/proj';
+import { PROJECTION, resolutionToScale } from './projection';
 import { t } from '@/i18n';
 import { scaleText } from './format';
 
@@ -42,7 +43,10 @@ export class MapStatus extends Control {
   }
 
   override render(event: MapEvent): void {
-    const resolution = event.frameState?.viewState.resolution;
+    const state = event.frameState?.viewState;
+    // The scale on the ground at the centre of the view, as the scale bar beside it shows it;
+    // in a Mercator map the nominal scale would be off by the latitude's stretch.
+    const resolution = state && getPointResolution(PROJECTION, state.resolution, state.center);
     const text = resolution ? scaleText(roundScale(resolutionToScale(resolution))) : '';
     if (this.scale.textContent !== text) this.scale.textContent = text;
   }

@@ -5,7 +5,7 @@ import { compress } from 'hono/compress';
 import { etag } from 'hono/etag';
 import type { Context } from 'hono';
 import { createApp } from './app.ts';
-import { CACHE_FILE, readCache, refreshCache } from './cache.ts';
+import { CACHE_FILE, readCache, startingCache } from './cache.ts';
 import { mailerFromEnv } from './report.ts';
 import * as modules from './modules/index.ts';
 import { config, production } from './config.ts';
@@ -19,7 +19,9 @@ import type { CapabilitiesCache } from '../src/services/meta.ts';
 /** A configuration with problems stops the server here, with every problem listed. */
 const site = createSite(loadConfig(config.configDir));
 
-let capabilities: CapabilitiesCache = (await readCache()) ?? (await refreshCache(site.defaults));
+let capabilities: CapabilitiesCache = await startingCache(site.defaults, config.sharedData, (built) => {
+  capabilities = built;
+});
 
 // The modules' data (the geoportal layer catalog): read from disk, or built in the background.
 const moduleData = await modules.start(site.defaults);
@@ -32,6 +34,7 @@ if (config.sharedData) {
 }
 
 const mailer = mailerFromEnv(site.mail);
+if (production && !config.origin) console.warn('APP_ORIGIN not set: bug reports cannot link to the map view.');
 if (!mailer) console.log('Bug reports off: set SMTP_HOST and REPORT_TO to turn them on.');
 const app = createApp({
   site,
@@ -64,7 +67,8 @@ if (production) {
   // Hashed assets never change, so they are cached for a year; .br/.gz files come from the build.
   app.use('/assets/*', async (c, next) => {
     await next();
-    c.header('Cache-Control', 'public, max-age=31536000, immutable');
+    // A file that is not there (an old release's asset) must not be remembered for a year.
+    if (c.res.ok) c.header('Cache-Control', 'public, max-age=31536000, immutable');
   });
   app.use('/*', serveStatic({ root: './dist', precompressed: true }));
   // A file that is not there (an old asset, a guessed icon) is a 404, not the page.

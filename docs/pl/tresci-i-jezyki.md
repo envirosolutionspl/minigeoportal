@@ -119,7 +119,7 @@ Przykład: niemiecki (`de`) w katalogu konfiguracji `config/`.
 
    Wynik wymienia języki (`OK (pl, en, de; …)`) albo każdy problem z plikiem, wierszem i kolumną.
 
-6. **Uruchom serwer ponownie**, bo konfiguracja jest czytana przy starcie: w Dockerze `docker compose up -d --force-recreate app`, przy `npm start` ponowne uruchomienie procesu (w trybie deweloperskim serwer restartuje się sam).
+6. **Uruchom serwer ponownie**, bo konfiguracja jest czytana przy starcie: w Dockerze `docker compose up -d --force-recreate app`, przy `npm start` ponowne uruchomienie procesu (w trybie deweloperskim serwer restartuje się sam po zmianach w `config/`).
 
 7. **Zobacz wynik** pod `https://twoja-domena/de/`. Sam adres domeny otworzy niemiecki przeglądarkom ustawionym na niemiecki, a przełącznik języka w menu ułatwień pokaże „Deutsch” (nazwę języka w nim samym).
 

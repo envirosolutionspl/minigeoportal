@@ -17,7 +17,8 @@ import { useMapStore } from './state/store';
 export default function App() {
   const panel = useMapStore((m) => m.panel);
 
-  // Escape closes the place panel, then the layer list; open dialogs close themselves.
+  // Escape ends the print tool, else (while not measuring: measure.ts has its own Escape) closes
+  // the place panel, then the layer list; open dialogs close themselves.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.defaultPrevented || document.querySelector('dialog[open]')) return;

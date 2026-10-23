@@ -117,7 +117,7 @@ Example: German (`de`) in the configuration directory `config/`.
 
    The result lists the languages (`OK (pl, en, de; …)`) or every problem with its file, line and column.
 
-6. **Restart the server**, as the configuration is read when it starts: with Docker `docker compose up -d --force-recreate app`, with `npm start` a restart of the process (in development the server restarts by itself).
+6. **Restart the server**, as the configuration is read when it starts: with Docker `docker compose up -d --force-recreate app`, with `npm start` a restart of the process (in development the server restarts by itself on changes in `config/`).
 
 7. **See the result** at `https://your-domain/de/`. The bare domain opens German for browsers set to German, and the language switch in the display menu shows "Deutsch" (the language's name in itself).
 

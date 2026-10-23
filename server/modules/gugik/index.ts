@@ -159,7 +159,8 @@ export function routes(app: Hono, { client, data, upstream, upstreamFailure, rev
   const dictionary = (load: (parent: string) => Promise<DictEntry[]>) => async (c: Context) => {
     try {
       const entries = await load(c.req.param('parent') ?? '');
-      c.header('Cache-Control', 'public, max-age=86400');
+      // An empty answer may mean the office was down: kept as long as the server keeps it (dictionaries.ts).
+      c.header('Cache-Control', entries.length > 0 ? 'public, max-age=86400' : 'public, max-age=21600');
       return c.json(entries);
     } catch (e) {
       if (e instanceof RequestError) return c.text(e.message, 400);

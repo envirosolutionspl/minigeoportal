@@ -54,7 +54,7 @@ export interface WmtsMeta {
   };
 }
 
-/** An ArcGIS REST map service (MapServer), read in the map's coordinate system. */
+/** An ArcGIS REST map service (MapServer) in the map's projection. */
 export interface RestMeta {
   kind: 'rest';
   fetchedAt: string;
@@ -137,7 +137,7 @@ export function layerMeta(id: string, name: string): WmsLayerMeta | undefined {
   return (wmsMeta(id) ?? restMeta(id))?.layers[name];
 }
 
-/** Error text when the service did not answer the server's metadata request. */
+/** Error text when the service did not answer the metadata request. */
 export function serviceError(id: string): string | undefined {
   const m = cache?.services[id];
   return m?.kind === 'error' ? m.error : undefined;

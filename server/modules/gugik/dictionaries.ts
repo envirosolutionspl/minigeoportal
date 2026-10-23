@@ -270,12 +270,13 @@ const allCommunes = () =>
 /** City counties (TERYT 61-99) are also one municipality; only the county is listed. */
 const inCityCounty = (communeCode: string) => Number(communeCode.slice(2, 4)) >= 61;
 
+/** Longest unit name anyone types; the route cuts the query here before searching. */
+export const MAX_QUERY = 60;
+
 /**
  * Voivodeships, counties and municipalities whose name starts with the query, from the
  * cached PRG lists of the whole country (a few upstream requests, then served from cache).
  */
-/** Longest unit name anyone types; the route cuts the query here before searching. */
-export const MAX_QUERY = 60;
 
 export async function findUnits(query: string): Promise<UnitHit[]> {
   let q = normalize(query);

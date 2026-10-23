@@ -275,7 +275,7 @@ interface IdentifyResponse {
 
 /** ArcGIS identify: one record per feature, titled with its layer. */
 function parseIdentify(response: IdentifyResponse): InfoRecord[] {
-  if (response.error) throw new Error('Serwer odrzucił zapytanie');
+  if (response.error) throw new Error('The service rejected the query');
   const records: InfoRecord[] = [];
   for (const r of response.results ?? []) {
     push(
@@ -290,7 +290,7 @@ function parseIdentify(response: IdentifyResponse): InfoRecord[] {
 function parseAny(body: string, contentType: string): InfoRecord[] {
   if (!body.trim() || NOT_PUBLISHED.test(body)) return [];
   if (/json/i.test(contentType) || body.trimStart().startsWith('{')) return parseIdentify(JSON.parse(body) as IdentifyResponse);
-  if (SERVICE_ERROR.test(body)) throw new Error('Serwer odrzucił zapytanie');
+  if (SERVICE_ERROR.test(body)) throw new Error('The service rejected the query');
   const xml = /xml|gml/i.test(contentType) || body.trimStart().startsWith('<?xml');
   if (xml) {
     const doc = new DOMParser().parseFromString(body, 'application/xml');

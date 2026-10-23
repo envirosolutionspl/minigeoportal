@@ -28,7 +28,7 @@ CONFIG_DIR=examples/osm npm run dev
 
 ## How a deployment reaches the browser
 
-The server reads the configuration directory when it starts and stops with a list of every problem it finds, each with its file, line and column. It then puts the configuration, with every text already in the visitor's language, into the page itself, so the app starts without waiting for one more request. A change of the configuration takes effect after a restart of the server (in development the server restarts by itself).
+The server reads the configuration directory when it starts and stops with a list of every problem it finds, each with its file, line and column. It then puts the configuration, with every text already in the visitor's language, into the page itself, so the app starts without waiting for one more request. A change of the configuration takes effect after a restart of the server (in development the server restarts by itself on changes in `config/`; with another `CONFIG_DIR` restart it by hand).
 
 Only the fields the app needs go to the browser; nothing secret may be written into the files at all: a key that looks like a password, token or API key is refused. Secrets (the mail server password) belong in environment variables.
 

@@ -66,10 +66,10 @@ export function createTileLayer(def: TileService, range: { minResolution?: numbe
 }
 
 /**
- * Place of an overlay in the drawing order, lowest first. Configured overlays follow the order
- * the server read with the capabilities (a module's, e.g. that of geoportal.gov.pl), else
- * `layers.drawOrder`; a layer of an external catalog goes just above the highest of ours that
- * the catalog draws below it, so the two lists interleave. Unknown layers go on top.
+ * Place of an overlay in the drawing order. Configured overlays follow the order geoportal.gov.pl
+ * draws them in, else `layers.drawOrder`; a layer of the geoportal catalog goes just above the
+ * highest of ours that the geoportal draws below it, so the two lists interleave as on
+ * geoportal.gov.pl. Unknown layers go on top.
  */
 const drawIndex = (id: string) => {
   const order = cachedDrawOrder() ?? config.layers.drawOrder;

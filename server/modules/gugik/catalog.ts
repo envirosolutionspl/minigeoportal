@@ -5,6 +5,7 @@ import { catalogSublayers } from '../../../src/services/catalogSublayers.ts';
 import { normalize } from '../../../src/services/text.ts';
 import { serviceCapabilities, type MapCrs } from '../../capabilities.ts';
 import { fetchGeoportalConfig, type ConfigService, type GeoportalConfig } from './geoportalConfig.ts';
+import type { CATALOG_TOPICS } from './topics.ts';
 import { dataPath, errorMessage } from '../../config.ts';
 import { writeAtomic } from '../../files.ts';
 
@@ -38,28 +39,12 @@ export interface Catalog {
 /** A WMTS serves several tile layers under one address, each with its own grid. */
 export const serviceKey = (e: Pick<CatalogEntry, 'url' | 'layer'>) => (e.layer ? `${e.url} ${e.layer}` : e.url);
 
-export const CATALOG_FILE = process.env.CATALOG_FILE ?? dataPath('catalog', 'catalog.json');
+export const CATALOG_FILE = process.env.CATALOG_FILE ?? dataPath('gugik', 'catalog.json');
 /** Services checked at once: the geoportal servers are shared with everyone. */
 const CONCURRENCY = 6;
 /** The main module first, so layers take their groups from where most people know them. */
 const MAIN_MODULE = 'modulGK';
 
-/** Topics the geoportal layers are sorted into; layers.yaml must define them. */
-export const CATALOG_TOPICS = [
-  'dzialki',
-  'planowanie',
-  'ceny',
-  'uzbrojenie',
-  'granice',
-  'teren',
-  'srodowisko',
-  'zagrozenia',
-  'zabytki',
-  'archiwalne',
-  'pobieranie',
-  'geodezja',
-  'inne',
-] as const;
 type Topic = (typeof CATALOG_TOPICS)[number];
 
 /**

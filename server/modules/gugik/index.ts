@@ -4,12 +4,13 @@ import type { QueryTarget } from '../../featureinfo.ts';
 import { RequestError, rateLimit } from '../../http.ts';
 import { config as env, errorMessage } from '../../config.ts';
 import { follow } from '../../files.ts';
-import type { AppFile, MapFile } from '../../config/schema.ts';
+import type { AppFile, LayersFile, MapFile } from '../../config/schema.ts';
 import { CATALOG_FILE, buildCatalog, catalogIndex, readCatalog, serviceKey, writeCatalog, type Catalog } from './catalog.ts';
 import { MAX_QUERY, communes, counties, findUnits, precincts, unitNames, voivodeships, type DictEntry } from './dictionaries.ts';
 import { fetchDrawOrder } from './drawOrder.ts';
 import { orthoAt } from './ortho.ts';
 import { GUGIK_SEARCH_HOSTS } from './searchHosts.ts';
+import { CATALOG_TOPICS } from './topics.ts';
 
 /**
  * The server side of the gugik module (geoportal.gov.pl and the GUGiK services), as the registry
@@ -25,12 +26,23 @@ export interface Problem {
 }
 
 /** Rules of the module across the configuration files (server/config/load.ts adds file, line and column). */
-export function validate(app: AppFile, map?: MapFile): Problem[] {
+export function validate(app: AppFile, map?: MapFile, layers?: LayersFile): Problem[] {
   const problems: Problem[] = [];
   const on = app.modules.gugik?.enabled === true;
   const add = (path: (string | number)[], message: string) => problems.push({ file: 'app.yaml', path, message });
   if (app.search.provider === 'gugik' && !on) add(['search', 'provider'], 'search.provider gugik needs modules.gugik.enabled');
   if (app.search.parcel && !on) add(['search', 'parcel'], 'search.parcel needs modules.gugik.enabled');
+  if (on && layers && app.modules.gugik?.catalog) {
+    // The catalog sorts the geoportal layers into its own topics, which the layer list shows.
+    const missing = CATALOG_TOPICS.filter((topic) => !layers.topics.some((t) => t.id === topic));
+    if (missing.length) {
+      problems.push({
+        file: 'layers.yaml',
+        path: ['topics'],
+        message: `topics: the geoportal catalog needs the topics ${missing.join(', ')}`,
+      });
+    }
+  }
   if (!on || !map) return problems;
   // GUGiK services, the parcel search and the photo index all work in PL-1992.
   if (map.projection.code !== 'EPSG:2180') add(['modules', 'gugik'], 'modules.gugik needs map.yaml projection EPSG:2180');

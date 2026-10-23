@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import axe from 'axe-core';
+import { config } from '@/config/runtime';
 import { DisplayMenu, useDisplay } from './DisplayMenu';
 
 beforeEach(() => {
@@ -21,7 +22,7 @@ describe('DisplayMenu', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Wysoki kontrast/ }));
     expect(document.documentElement.dataset.contrast).toBe('high');
-    expect(JSON.parse(localStorage.getItem('minigeoportal.display.v1')!)).toEqual({ textSize: 2, contrast: true });
+    expect(JSON.parse(localStorage.getItem(`${config.app.storagePrefix}display.v1`)!)).toEqual({ textSize: 2, contrast: true });
 
     fireEvent.click(screen.getByRole('button', { name: /Wysoki kontrast/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Tekst standardowy' }));

@@ -84,18 +84,19 @@ describe('renderPage', () => {
   });
 
   it('names the canonical address and what a shared link shows', () => {
+    const home = `https://${defaults.app.domain}`;
     const page = renderPage(TEMPLATE, { ...defaults, app: { ...defaults.app, title: 'A & "B"' } });
     // Each language has its own address; the bare one is for search engines the visitor's choice.
-    expect(page).toContain('<link rel="canonical" href="https://minigeoportal.pl/en/" />');
-    expect(page).toContain('<link rel="alternate" hreflang="pl" href="https://minigeoportal.pl/" />');
-    expect(page).toContain('<link rel="alternate" hreflang="en" href="https://minigeoportal.pl/en/" />');
-    expect(page).toContain('<link rel="alternate" hreflang="x-default" href="https://minigeoportal.pl/" />');
-    expect(page).toContain('<meta property="og:url" content="https://minigeoportal.pl/en/" />');
+    expect(page).toContain(`<link rel="canonical" href="${home}/en/" />`);
+    expect(page).toContain(`<link rel="alternate" hreflang="pl" href="${home}/" />`);
+    expect(page).toContain(`<link rel="alternate" hreflang="en" href="${home}/en/" />`);
+    expect(page).toContain(`<link rel="alternate" hreflang="x-default" href="${home}/" />`);
+    expect(page).toContain(`<meta property="og:url" content="${home}/en/" />`);
     const single = renderPage(TEMPLATE, { ...defaults, locales: ['en'], localePaths: { en: '/' } });
-    expect(single).toContain('<link rel="canonical" href="https://minigeoportal.pl/" />');
+    expect(single).toContain(`<link rel="canonical" href="${home}/" />`);
     expect(single).not.toContain('hreflang');
     expect(page).toContain('<meta property="og:title" content="A &amp; &quot;B&quot;" />');
-    expect(page).toContain(`<meta property="og:image" content="https://${defaults.app.domain}/apple-touch-icon.png" />`);
+    expect(page).toContain(`<meta property="og:image" content="${home}/apple-touch-icon.png" />`);
   });
 
   it('keeps the icons of the app, or puts in the icon of the configuration', () => {

@@ -2,7 +2,7 @@ import { toLonLat } from 'ol/proj';
 import { config } from '@/config/runtime';
 import { PROJECTION } from './projection';
 
-/** Polish number formats for coordinates and measurements. */
+/** Number formats of the visitor's language for coordinates and measurements. */
 
 const int = new Intl.NumberFormat(config.locale, { maximumFractionDigits: 0 });
 const one = new Intl.NumberFormat(config.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });

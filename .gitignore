@@ -7,6 +7,4 @@ dist/
 .DS_Store
 Thumbs.db
 *.tsbuildinfo
-server/data/dict/
-server/data/catalog/
-server/data/capabilities.json
+server/data/

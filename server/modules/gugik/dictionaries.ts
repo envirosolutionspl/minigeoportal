@@ -28,7 +28,7 @@ const TIMEOUT_MS = 20000;
 const MAX_BYTES = 2_000_000;
 const MAX_PAGES = 5;
 /** Overridable so tests never touch the real cache. */
-const CACHE_DIR = process.env.DICT_CACHE_DIR ?? dataPath('dict');
+const CACHE_DIR = process.env.DICT_CACHE_DIR ?? dataPath('gugik', 'dict');
 
 interface Cached {
   fetchedAt: number;

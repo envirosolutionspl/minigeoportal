@@ -105,6 +105,16 @@ describe('loadConfig', () => {
     expect(clientConfig(loadConfig(off), 'pl').modules.gugik?.ortho).toBe(false);
   });
 
+  it('needs the topics of the geoportal catalog in layers.yaml while the catalog is on', () => {
+    const noTopic = (s: string) => s.replace(/ {2}- id: zabytki\n.*\n/, '').replace(/topic: zabytki/g, 'topic: inne');
+    expect(problems(broken('layers.yaml', noTopic)).join('\n')).toMatch(
+      /layers\.yaml:\d+:\d+ topics: the geoportal catalog needs the topics zabytki/,
+    );
+    const dir = broken('layers.yaml', noTopic);
+    writeFileSync(join(dir, 'app.yaml'), readFileSync(join(dir, 'app.yaml'), 'utf8').replace('    catalog: true', '    catalog: false'));
+    expect(problems(dir)).toEqual([]);
+  });
+
   it('accepts XYZ tiles only with {z}, {x} and {y} in the address', () => {
     const xyz = (url: string) =>
       broken('map.yaml', (s) => s.replace('tileServices:\n', `tileServices:\n  - id: osm\n    kind: xyz\n    url: ${url}\n`));

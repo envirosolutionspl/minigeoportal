@@ -164,7 +164,7 @@ function crossCheck(
       problems.push(`${at(app, 'app.yaml', ['report', 'locale'])} report.locale must be one of locales.available`);
     }
     const parsed = { 'app.yaml': app, 'map.yaml': map, 'layers.yaml': layers };
-    for (const p of modules.validate(a, map.value)) problems.push(`${at(parsed[p.file], p.file, p.path)} ${p.message}`);
+    for (const p of modules.validate(a, map.value, layers.value)) problems.push(`${at(parsed[p.file], p.file, p.path)} ${p.message}`);
   }
 }
 

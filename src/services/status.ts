@@ -5,11 +5,11 @@ import { serviceError } from './meta';
 /**
  * Availability of a service, as the user sees it in the catalog.
  * unknown: nothing loaded yet; ok: the last load succeeded; degraded: recent loads keep
- * failing in the current area (integration services redirect to county and city servers,
- * which may be down or refuse); blocked: GUGiK answered 401/403 to the metadata request;
- * down: GUGiK did not answer the metadata request.
+ * failing in the current area (a service may redirect to other servers, which may be down or
+ * refuse); blocked: the service answered 401/403 to the metadata request; down: the service
+ * did not answer the metadata request.
  *
- * No extra network probes: the server's capabilities cache says whether GUGiK answered,
+ * No extra network probes: the server's capabilities cache says whether the service answered,
  * and the map's own tile and image loads say whether data arrives.
  */
 export type ServiceStatus = 'unknown' | 'ok' | 'degraded' | 'blocked' | 'down';

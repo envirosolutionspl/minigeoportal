@@ -255,8 +255,8 @@ Ustawia się je w środowisku albo w pliku `.env` w katalogu aplikacji (wzór: `
 | `<CONFIG_DIR>/`                       | Konfiguracja wdrożenia (zob. wyżej).                                                       |
 | `<CONFIG_DIR>/seed/capabilities.json` | Metadane usług na start, gdy `DATA_DIR` jest pusty (opcjonalnie).                          |
 | `<DATA_DIR>/capabilities.json`        | Metadane usług z ich GetCapabilities: zakresy skal, legendy, formaty informacji o miejscu. |
-| `<DATA_DIR>/catalog/catalog.json`     | Katalog warstw geoportal.gov.pl (moduł `gugik`).                                           |
-| `<DATA_DIR>/dict/`                    | Słowniki wyszukiwarki działek: województwa, powiaty, gminy, obręby (moduł `gugik`).        |
+| `<DATA_DIR>/gugik/catalog.json`       | Katalog warstw geoportal.gov.pl (moduł `gugik`).                                           |
+| `<DATA_DIR>/gugik/dict/`              | Słowniki wyszukiwarki działek: województwa, powiaty, gminy, obręby (moduł `gugik`).        |
 | `dist/`                               | Zbudowana aplikacja (`npm run build`), ze skompresowanymi kopiami `.br` i `.gz`.           |
 | `skins/`, `i18n/`                     | Skórki i napisy interfejsu dołączone do aplikacji.                                         |
 

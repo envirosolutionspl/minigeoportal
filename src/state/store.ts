@@ -12,7 +12,7 @@ export type Tool = 'none' | 'measure-line' | 'measure-area' | 'print';
 
 /** Something the map should show: zoom to it and outline it. */
 export interface FocusTarget {
-  /** EPSG:2180 WKT; the view fits its extent. */
+  /** WKT in the map's coordinate system; the view fits its extent. */
   wkt?: string;
   /** Used when there is no geometry. */
   center?: [number, number];

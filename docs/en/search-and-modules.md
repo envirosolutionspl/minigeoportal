@@ -34,7 +34,7 @@ modules:
 
 It works in PL-1992 only: the configuration is refused when the module is enabled with another `projection.code`.
 
-- **catalog**: the server reads the configuration of geoportal.gov.pl (its layer list and groups), checks every service and keeps the result on disk; the layer list shows those layers by topic, and layers that cannot be shown here are listed greyed out with the reason. `npm run update` refreshes it (a minute or two).
+- **catalog**: the server reads the configuration of geoportal.gov.pl (its layer list and groups), checks every service and keeps the result on disk; the layer list shows those layers by topic, and layers that cannot be shown here are listed greyed out with the reason. `npm run update` refreshes it (a minute or two). The catalog sorts the layers into its own topics, which `layers.yaml` must define: `dzialki`, `planowanie`, `ceny`, `uzbrojenie`, `granice`, `teren`, `srodowisko`, `zagrozenia`, `zabytki`, `archiwalne`, `pobieranie`, `geodezja` and `inne`. The module keeps its data in `DATA_DIR/gugik/`.
 - **drawOrder**: configured layers with a `catalogId` follow the order geoportal.gov.pl draws them in; when it cannot be read, `layers.drawOrder` applies.
 - **ortho**: the date of the photo under the orthophoto map, with a link to download its sheet. `service` is the tile service of `map.yaml` that shows the photos: the date appears while a base map drawn by it is on screen (`orto` by default; `false` turns the part off).
 - **parcelReport**: a link in the place panel to the parcel report of geoportal.gov.pl.

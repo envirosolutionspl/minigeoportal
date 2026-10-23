@@ -5,7 +5,7 @@ import { formatReport, mailerFromEnv, parseReport, type Mailer } from './report.
 import type { CapabilitiesCache } from '../src/services/meta.ts';
 import { defaults, site } from './testSite.ts';
 
-const ORIGIN = 'https://minigeoportal.pl';
+const ORIGIN = `https://${defaults.app.domain}`;
 const valid = { category: 'mapa', message: 'Warstwa działek się nie wczytuje.', email: 'jan@example.com', view: `${ORIGIN}/?x=1&y=2&z=3` };
 
 describe('parseReport', () => {
@@ -35,7 +35,7 @@ describe('parseReport', () => {
 describe('formatReport', () => {
   it('writes a plain-text mail with a fixed subject, in the language of report mails (report.locale: pl)', () => {
     const { subject, text } = formatReport(parseReport(valid, ORIGIN, site.mail)!, { userAgent: 'Chrome' }, site.mail);
-    expect(subject).toBe('[MiniGeoportal] Zgłoszenie: Mapa lub warstwy');
+    expect(subject).toBe(`[${site.mail.app.name}] Zgłoszenie: Mapa lub warstwy`);
     expect(text).toContain('Kontakt: jan@example.com');
     expect(text).toContain(`Widok mapy: ${valid.view}`);
     expect(text).toContain('Przeglądarka: Chrome');
@@ -46,7 +46,7 @@ describe('formatReport', () => {
 describe('formatReport in another language', () => {
   it('takes the texts of the mail from that language', () => {
     const { subject, text } = formatReport(parseReport(valid, ORIGIN, defaults)!, {}, defaults);
-    expect(subject).toBe('[MiniGeoportal] Report: Map or layers');
+    expect(subject).toBe(`[${defaults.app.name}] Report: Map or layers`);
     expect(text).toContain('Browser: unknown');
   });
 });

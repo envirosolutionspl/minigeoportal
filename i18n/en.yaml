@@ -25,7 +25,8 @@ map:
 tools:
   layers: Layers
   locate: My location
-  locateDenied: Location access is off. It can be turned on in the browser's settings for this site.
+  locateDenied: The browser gave no permission to use your location. Reload the page and try again; if it does not ask, allow location in the site's settings (the icon beside its address).
+  reload: Reload the page
   locateFailed: Your position could not be found. Try again in a moment.
   measure: Measure distance and area
   link: Copy a link to this map view

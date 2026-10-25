@@ -79,7 +79,9 @@ export function TopBar() {
   const setTool = useMapStore((m) => m.setTool);
   const measuring = tool === 'measure-line' || tool === 'measure-area';
   /** Message after copying the link; read out by screen readers. */
-  const [notice, setNotice] = useState('');
+  /** Message at the bottom of the screen; `reload` adds a button that reloads the page. */
+  const [notice, setNotice] = useState<{ text: string; reload?: boolean } | null>(null);
+  const noticeTimer = useRef<number | undefined>(undefined);
   const openWelcome = useWelcome((w) => w.setOpen);
   /** The sheet with the tools phones keep off the map. */
   const [more, setMore] = useState(false);
@@ -150,13 +152,14 @@ export function TopBar() {
     clearFocus();
   };
 
-  /** Link to this view with the base map and the layers that are on, ready to paste. */
-  /** A short message at the bottom of the screen, read out by screen readers. */
-  const say = (text: string) => {
-    setNotice(text);
-    window.setTimeout(() => setNotice(''), text.length > 80 ? 6000 : 4000);
+  /** A short message at the bottom of the screen, read out by screen readers; longer ones stay longer. */
+  const say = (text: string, reload = false) => {
+    window.clearTimeout(noticeTimer.current);
+    setNotice({ text, reload });
+    noticeTimer.current = window.setTimeout(() => setNotice(null), reload ? 15000 : text.length > 80 ? 6000 : 4000);
   };
 
+  /** Link to this view with the base map and the layers that are on, ready to paste. */
   const copyLink = async () => {
     const link = linkFor(useMapStore.getState());
     try {
@@ -184,7 +187,10 @@ export function TopBar() {
         const c = fromLonLat([pos.coords.longitude, pos.coords.latitude], PROJECTION);
         focusOn({ center: [c[0], c[1]], zoom: zoomForScale(SCALE.point) });
       },
-      (error) => say(t(error.code === error.PERMISSION_DENIED ? 'tools.locateDenied' : 'tools.locateFailed')),
+      // A refused or dismissed permission prompt: browsers do not ask again on their own (Safari
+      // not until the page is loaded anew, and cannot tell a dismissal from a refusal), so the
+      // message says how, with a button that reloads the page and keeps the view in its address.
+      (error) => (error.code === error.PERMISSION_DENIED ? say(t('tools.locateDenied'), true) : say(t('tools.locateFailed'))),
       { enableHighAccuracy: true, timeout: 8000 },
     );
   };
@@ -359,14 +365,23 @@ export function TopBar() {
           { label: t('tools.about'), icon: Info, onClick: () => openWelcome(true) },
         ]}
       />
-      <p
+      <div
         role="status"
         className={`pointer-events-auto fixed bottom-20 left-1/2 z-50 max-w-[min(28rem,calc(100%-2rem))] -translate-x-1/2 rounded-xl bg-[var(--text)] px-4 py-2 text-sm break-words text-[var(--surface)] shadow-lg ${
           notice ? '' : 'sr-only'
         }`}
       >
-        {notice}
-      </p>
+        {notice?.text}
+        {notice?.reload && (
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-2 block rounded-lg bg-[var(--surface)] px-3 py-1.5 font-semibold text-[var(--text)]"
+          >
+            {t('tools.reload')}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

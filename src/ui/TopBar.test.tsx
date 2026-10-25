@@ -156,11 +156,22 @@ describe('my location', () => {
     withGeolocation({ getCurrentPosition: (_, fail) => fail!(refused(code)) });
     render(<TopBar />);
     press();
-    expect(notice()).toContain('Brak zgody na lokalizację');
+    expect(notice()).toContain('Przeglądarka nie dała zgody na lokalizację');
     expect(useMapStore.getState().focus).toBeNull();
     code = 3;
     press();
     expect(notice()).toContain('Nie udało się ustalić położenia');
+    expect(screen.queryByRole('button', { name: 'Odśwież stronę' })).toBeNull();
+  });
+
+  it('offers to reload the page after a refused or dismissed prompt, since browsers do not ask again on their own', () => {
+    withGeolocation({ getCurrentPosition: (_, fail) => fail!(refused(1)) });
+    const reload = vi.fn();
+    vi.stubGlobal('location', { ...window.location, reload });
+    render(<TopBar />);
+    press();
+    fireEvent.click(screen.getByRole('button', { name: 'Odśwież stronę' }));
+    expect(reload).toHaveBeenCalledOnce();
   });
 
   it('says so in a browser without geolocation', () => {

@@ -1,17 +1,66 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Ban, ChevronUp } from 'lucide-react';
 import { config, type BaseMap } from '@/config/runtime';
 import { t } from '@/i18n';
 import { useMapStore } from '@/state/store';
+import { BaseWheel } from './BaseWheel';
 
 const { view, baseMaps } = config.map;
 /** The base map one click switches to (map.yaml: view.toggleBase, the photos), and back from. */
 const TOGGLE = view.toggleBase ?? baseMaps.find((b) => b.id !== view.base)?.id ?? view.base;
 
+/** Press and hold for this long on the thumbnail: the wheel of all base maps. */
+const HOLD_MS = 450;
+/** A finger that moves this far is panning, not holding. */
+const HOLD_SLOP_PX = 10;
+
+/**
+ * Pressing and holding: `onHold` after HOLD_MS unless the pointer moved or let go first; the
+ * click that ends a hold is swallowed (`held()` says so once).
+ */
+function useHold(onHold: () => void) {
+  const timer = useRef<number | undefined>(undefined);
+  const start = useRef<[number, number] | null>(null);
+  const fired = useRef(false);
+  const cancel = () => {
+    window.clearTimeout(timer.current);
+    start.current = null;
+  };
+  useEffect(() => cancel, []);
+  return {
+    handlers: {
+      onPointerDown: (e: React.PointerEvent) => {
+        if (e.button !== 0) return;
+        fired.current = false;
+        start.current = [e.clientX, e.clientY];
+        timer.current = window.setTimeout(() => {
+          fired.current = true;
+          start.current = null;
+          onHold();
+        }, HOLD_MS);
+      },
+      onPointerMove: (e: React.PointerEvent) => {
+        if (start.current && Math.hypot(e.clientX - start.current[0], e.clientY - start.current[1]) > HOLD_SLOP_PX) cancel();
+      },
+      onPointerUp: cancel,
+      onPointerCancel: cancel,
+      onPointerLeave: cancel,
+      // No system menu (save image, copy) under a held finger.
+      onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
+    },
+    held: () => {
+      const was = fired.current;
+      fired.current = false;
+      return was;
+    },
+  };
+}
+
 /**
  * Base map switcher as in Google Maps: the thumbnail shows the base map one click switches to
  * (photos, or back to the last map used). Every base map is listed on hover or keyboard focus;
- * touch screens, which have no hover, get a small button that opens the list.
+ * touch screens, which have no hover, get a small button that opens the list, and pressing and
+ * holding the thumbnail turns up a wheel of all base maps, as the time in a phone's clock.
  */
 export function BasemapSwitcher() {
   const base = useMapStore((m) => m.base);
@@ -31,6 +80,12 @@ export function BasemapSwitcher() {
   const root = useRef<HTMLDivElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
   const shown = (open || focused) && !dismissed;
+  const [wheel, setWheel] = useState(false);
+  const hold = useHold(() => {
+    setOpen(false);
+    setWheel(true);
+  });
+  const closeWheel = useCallback(() => setWheel(false), []);
 
   useEffect(() => {
     if (!shown) return;
@@ -71,8 +126,10 @@ export function BasemapSwitcher() {
         def={target}
         size="lg"
         label={t('basemaps.switchTo', { title: target.title })}
-        onClick={() => setBase(target.id)}
+        press={hold.handlers}
+        onClick={() => !hold.held() && setBase(target.id)}
       />
+      {wheel && <BaseWheel maps={baseMaps} current={base} onPick={setBase} onClose={closeWheel} />}
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -115,6 +172,7 @@ function Thumb({
   size,
   active,
   label: name,
+  press,
   onClick,
 }: {
   ref?: React.Ref<HTMLButtonElement>;
@@ -122,6 +180,8 @@ function Thumb({
   size: 'sm' | 'lg';
   active?: boolean;
   label?: string;
+  /** Pointer handlers of a press and hold (the thumbnail's wheel). */
+  press?: React.HTMLAttributes<HTMLButtonElement>;
   onClick: () => void;
 }) {
   const src = def.thumb;
@@ -135,16 +195,17 @@ function Thumb({
     <button
       ref={ref}
       type="button"
+      {...press}
       onClick={onClick}
       aria-pressed={size === 'sm' ? active : undefined}
       aria-label={name ?? t('basemaps.one', { title: def.title })}
       title={def.description}
-      className={`relative shrink-0 overflow-hidden bg-[var(--map-bg)] transition ${box} ${
+      className={`relative shrink-0 overflow-hidden bg-[var(--map-bg)] transition select-none [-webkit-touch-callout:none] ${box} ${
         active ? 'ring-[var(--accent)]' : size === 'sm' ? 'ring-transparent hover:ring-[var(--hover)]' : ''
       }`}
     >
       {src ? (
-        <img src={src} alt="" loading="lazy" className="h-full w-full object-cover" />
+        <img src={src} alt="" loading="lazy" draggable={false} className="h-full w-full object-cover" />
       ) : (
         <Ban className="absolute top-2 left-1/2 h-6 w-6 -translate-x-1/2 text-[#9db49e]" aria-hidden="true" />
       )}

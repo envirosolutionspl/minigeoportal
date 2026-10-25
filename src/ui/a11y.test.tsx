@@ -42,6 +42,21 @@ describe('accessibility (axe, WCAG 2.1 AA)', () => {
     expect(await violations(container)).toEqual([]);
   });
 
+  it('the wheel of base maps', async () => {
+    const { container, getByRole } = render(
+      <main>
+        <BasemapSwitcher />
+      </main>,
+    );
+    const thumb = getByRole('button', { name: /^Przełącz podkład na/ });
+    act(() => {
+      thumb.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0 }));
+    });
+    await act(() => new Promise((r) => setTimeout(r, 500)));
+    expect(getByRole('listbox', { name: 'Podkłady' })).toBeTruthy();
+    expect(await violations(container)).toEqual([]);
+  });
+
   it('layer catalog and base map switcher', async () => {
     const { container } = render(
       <main>

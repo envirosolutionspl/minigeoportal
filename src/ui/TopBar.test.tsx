@@ -127,6 +127,50 @@ describe('map tools', () => {
   });
 });
 
+describe('my location', () => {
+  type Geo = Pick<Geolocation, 'getCurrentPosition'>;
+  const withGeolocation = (geolocation: Geo | undefined) => vi.stubGlobal('navigator', { ...navigator, geolocation });
+  const press = () => fireEvent.click(screen.getByRole('button', { name: 'Moja lokalizacja' }));
+  const notice = () =>
+    screen
+      .getAllByRole('status')
+      .map((s) => s.textContent)
+      .join(' ');
+  const refused = (code: number) =>
+    ({ code, PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3, message: '' }) as GeolocationPositionError;
+
+  it('zooms to the position when the visitor allows it', () => {
+    withGeolocation({
+      getCurrentPosition: (ok) => ok({ coords: { latitude: 52.2297, longitude: 21.0122 } } as GeolocationPosition),
+    });
+    render(<TopBar />);
+    press();
+    const focus = useMapStore.getState().focus!;
+    expect(focus.center![0]).toBeCloseTo(637382, 0);
+    expect(focus.center![1]).toBeCloseTo(486757, 0);
+    expect(notice()).not.toContain('lokalizac');
+  });
+
+  it('says why nothing happens when the visitor refuses, or the position cannot be found', () => {
+    let code = 1;
+    withGeolocation({ getCurrentPosition: (_, fail) => fail!(refused(code)) });
+    render(<TopBar />);
+    press();
+    expect(notice()).toContain('Brak zgody na lokalizację');
+    expect(useMapStore.getState().focus).toBeNull();
+    code = 3;
+    press();
+    expect(notice()).toContain('Nie udało się ustalić położenia');
+  });
+
+  it('says so in a browser without geolocation', () => {
+    withGeolocation(undefined);
+    render(<TopBar />);
+    press();
+    expect(notice()).toContain('Nie udało się ustalić położenia');
+  });
+});
+
 describe('tools on phones', () => {
   it('keeps layers, location and "More" on the map, the rest in the sheet', () => {
     const { container } = render(<TopBar />);

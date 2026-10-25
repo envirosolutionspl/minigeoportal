@@ -125,7 +125,8 @@ export function ParcelSearch({ onClose }: { onClose(): void }) {
   return (
     <section
       aria-label={t('parcel.panel')}
-      className="absolute inset-x-0 mt-2 rounded-2xl bg-[var(--surface)] p-4 shadow-lg ring-1 ring-black/5"
+      // Never taller than the screen below the search bar: a phone held sideways scrolls the form.
+      className="absolute inset-x-0 mt-2 max-h-[calc(100dvh-5rem)] overflow-y-auto rounded-2xl bg-[var(--surface)] p-4 shadow-lg ring-1 ring-black/5"
     >
       <header className="mb-3 flex items-center gap-2">
         <SquareDashed className="h-5 w-5 text-[var(--accent)]" />

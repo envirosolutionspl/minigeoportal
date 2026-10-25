@@ -25,6 +25,8 @@ map:
 tools:
   layers: Layers
   locate: My location
+  locateDenied: Location access is off. It can be turned on in the browser's settings for this site.
+  locateFailed: Your position could not be found. Try again in a moment.
   measure: Measure distance and area
   link: Copy a link to this map view
   linkCopied: Link to this map view copied.

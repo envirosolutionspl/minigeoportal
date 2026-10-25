@@ -53,6 +53,17 @@ describe('phone screens', () => {
     expect(css).toMatch(/button:not\(:disabled\),\s*\[role='button'\]:not\(:disabled\)\s*\{\s*cursor:\s*pointer/);
   });
 
+  it('keeps the parcel search and the search results within the screen, scrolling them on a phone held sideways', () => {
+    expect(source('src/modules/gugik/ParcelSearch.tsx')).toMatch(/max-h-\[calc\(100dvh-5rem\)\] overflow-y-auto/);
+    expect(source('src/ui/TopBar.tsx')).toMatch(/id="search-results"[\s\S]*?max-h-\[calc\(100dvh-5rem\)\] overflow-y-auto/);
+  });
+
+  it('draws the top bar, with the parcel form, above the base map switcher', () => {
+    // z-[35] over z-30: on a phone held sideways the parcel form reaches down to the switcher.
+    expect(source('src/ui/TopBar.tsx')).toContain('className="pointer-events-none absolute inset-x-0 top-0 z-[35]');
+    expect(source('src/ui/BasemapSwitcher.tsx')).toMatch(/className="group pointer-events-auto absolute [^"]* z-30 /);
+  });
+
   it('draws the open search above the tool buttons', () => {
     expect(source('src/ui/TopBar.tsx')).toMatch(/search-box[^"]*\bz-10\b/);
   });

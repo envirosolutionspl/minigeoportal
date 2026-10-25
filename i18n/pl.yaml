@@ -26,6 +26,8 @@ map:
 tools:
   layers: Warstwy
   locate: Moja lokalizacja
+  locateDenied: Brak zgody na lokalizację. Można ją włączyć w ustawieniach przeglądarki dla tej strony.
+  locateFailed: Nie udało się ustalić położenia. Spróbuj ponownie za chwilę.
   measure: Pomiar odległości i powierzchni
   link: Kopiuj link do tego widoku mapy
   linkCopied: Skopiowano link do tego widoku mapy.

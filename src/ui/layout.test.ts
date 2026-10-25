@@ -64,6 +64,12 @@ describe('phone screens', () => {
     expect(source('src/ui/BasemapSwitcher.tsx')).toMatch(/className="group pointer-events-auto absolute [^"]* z-30 /);
   });
 
+  it('opens the layer list over the whole screen of a phone, below the status bar', () => {
+    const aside = /<aside[\s\S]*?className=\{`([^`]*)`\}/.exec(source('src/App.tsx'))![1];
+    expect(aside).toMatch(/inset-0 pt-\[env\(safe-area-inset-top\)\] pb-\[var\(--safe-bottom\)\]/);
+    expect(aside).not.toMatch(/h-\[\d+dvh\]/);
+  });
+
   it('draws the open search above the tool buttons', () => {
     expect(source('src/ui/TopBar.tsx')).toMatch(/search-box[^"]*\bz-10\b/);
   });

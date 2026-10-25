@@ -86,6 +86,20 @@ describe('the wheel of base maps', () => {
     expect(useMapStore.getState().base).toBe('orto');
   });
 
+  it('takes the map in the band and closes on a tap on it; a tap on another row turns to that one', () => {
+    render(<BasemapSwitcher />);
+    hold();
+    turn(2);
+    const scrollTo = vi.fn();
+    wheel()!.scrollTo = scrollTo;
+    fireEvent.click(screen.getByRole('option', { name: 'Prosta' }));
+    expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ top: 3 * ROW }));
+    expect(wheel()).toBeTruthy();
+    fireEvent.click(screen.getByRole('option', { name: 'Teren' }));
+    expect(wheel()).toBeNull();
+    expect(useMapStore.getState().base).toBe('teren');
+  });
+
   it('closes with Escape or a tap outside, keeping the map it stopped on', () => {
     render(<BasemapSwitcher />);
     hold();

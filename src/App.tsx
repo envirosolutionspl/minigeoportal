@@ -51,7 +51,7 @@ export default function App() {
         aria-hidden={panel !== 'catalog'}
         inert={panel !== 'catalog'}
         className={`absolute z-40 bg-[var(--surface)] shadow-2xl transition-transform duration-300 ease-out
-          inset-x-0 bottom-0 h-[70dvh] rounded-t-3xl pb-[var(--safe-bottom)]
+          inset-0 pt-[env(safe-area-inset-top)] pb-[var(--safe-bottom)]
           sm:inset-y-0 sm:right-0 sm:left-auto sm:h-auto sm:w-96 sm:rounded-none
           ${panel === 'catalog' ? 'translate-y-0 sm:translate-x-0' : 'translate-y-full sm:translate-x-full sm:translate-y-0'}`}
       >

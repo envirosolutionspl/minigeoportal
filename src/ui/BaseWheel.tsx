@@ -14,8 +14,9 @@ const SETTLE_MS = 140;
 /**
  * Base maps on a wheel, like the time in a phone's clock: rows snap into the middle band, tilt
  * and fade away from it, and the map in the band is shown as soon as the wheel stops, so the map
- * behind changes while it turns. Arrow keys turn it a row at a time; Enter, Escape or a tap
- * outside closes it. The rows are painted on scroll straight in the DOM, not by React.
+ * behind changes while it turns. A tap on another row turns to it; a tap on the row in the band,
+ * Enter, Escape or a tap outside closes it. Arrow keys turn it a row at a time. The rows are
+ * painted on scroll straight in the DOM, not by React.
  */
 export function BaseWheel({
   maps,
@@ -144,7 +145,12 @@ export function BaseWheel({
               role="option"
               tabIndex={-1}
               aria-selected={m.id === current}
-              onClick={() => turnTo(i)}
+              // A tap on the map in the band takes it and closes the wheel; on another row turns to it.
+              onClick={() => {
+                if (i !== middle()) return turnTo(i);
+                pick();
+                onClose();
+              }}
               className="flex snap-center items-center gap-3 px-4 text-[var(--text)] select-none [-webkit-touch-callout:none]"
               style={{ height: ROW }}
             >

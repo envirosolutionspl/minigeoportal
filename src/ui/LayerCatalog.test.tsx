@@ -212,9 +212,10 @@ describe('LayerCatalog', () => {
     const item = screen.getByLabelText('Uzbrojenie terenu').closest('.rounded-xl') as HTMLElement;
     // A problem shows as a shape with a name, not as a coloured dot alone.
     expect(within(item).getByRole('img', { name: 'Niedostępna u nas' })).toBeTruthy();
-    // A service that works or has not been loaded yet shows no mark at all.
+    // A service that works or has not been loaded yet has a plain dot, which says no problem.
     const normal = screen.getByLabelText('Ewidencja gruntów i budynków').closest('.rounded-xl') as HTMLElement;
     expect(within(normal).queryByRole('img')).toBeNull();
+    expect(normal.querySelector('.rounded-full.h-2')).toBeTruthy();
     fireEvent.click(within(item).getByRole('button', { name: 'Niedostępna u nas. Dlaczego?' }));
     expect(within(item).getByText(/Odpowiedź serwera: HTTP 403/)).toBeTruthy();
   });

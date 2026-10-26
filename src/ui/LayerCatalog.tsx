@@ -28,7 +28,7 @@ const STATUS_LABEL = (status: ServiceStatus) => t(`layers.status.${status}`);
 
 /**
  * Problems of a service by shape and name, not colour alone (WCAG 1.4.1): a crossed circle or a
- * warning. A service that works, or has not been loaded yet, shows nothing: that is the normal state.
+ * warning. A service that works, or has not been loaded yet, has a dot in the accent colour.
  */
 const STATUS_ICON: Partial<Record<ServiceStatus, [LucideIcon, string]>> = {
   blocked: [CircleOff, 'text-[var(--muted)]'],
@@ -416,7 +416,9 @@ function Why({ status, detail, checked }: { status: WhyStatus; detail?: string; 
 
 function StatusDot({ status }: { status: ServiceStatus }) {
   const icon = STATUS_ICON[status];
-  if (!icon) return null;
+  // One dot for both normal states: telling "works" from "not loaded yet" by colour alone would
+  // not do (WCAG 1.4.1), and the accent keeps 3:1 against the panel (1.4.11).
+  if (!icon) return <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-[var(--accent)]" aria-hidden="true" />;
   const [Icon, colour] = icon;
   return (
     <Icon className={`h-3.5 w-3.5 shrink-0 ${colour}`} role="img" aria-label={STATUS_LABEL(status)}>

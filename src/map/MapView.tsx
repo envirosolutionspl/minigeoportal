@@ -5,7 +5,7 @@ import { defaults as defaultControls, MousePosition, ScaleLine, ZoomToExtent } f
 import { defaults as defaultInteractions } from 'ol/interaction/defaults';
 import { duration } from './motion';
 import { HOME_EXTENT, PROJECTION, RESOLUTIONS, resolutionToScale, scaleToResolution } from './projection';
-import { config, selectedSublayers, tileServiceById, type Overlay } from '@/config/runtime';
+import { config, overlayById, selectedSublayers, tileServiceById, type Overlay } from '@/config/runtime';
 import { loadCatalogLayer, overlayDef, useCatalog } from '@/services/catalog';
 import { createOverlayLayer, createTileLayer, resolutionRange, showSublayers, type OverlayLayer } from '@/services/layers';
 import { hasInitialView, overlayOpacity, useMapStore } from '@/state/store';
@@ -45,6 +45,11 @@ export function MapView() {
      * megabytes each, for the whole visit.
      */
     const overlays = new globalThis.Map<string, { def: Overlay; layer: OverlayLayer }>();
+    /**
+     * The service of the time view (map.yaml: timeTravel). Switched on from the layer list as
+     * well, it would draw its newest image over the view's chosen date, so it stays off meanwhile.
+     */
+    const timeUrl = config.map.timeTravel && overlayById.get(config.map.timeTravel.layer)?.url;
 
     const view = new View({
       projection: PROJECTION,
@@ -109,7 +114,7 @@ export function MapView() {
           continue;
         }
         const names = selectedSublayers(def, s.sublayers);
-        const visible = names.length > 0;
+        const visible = names.length > 0 && !(s.tool === 'time' && def.url === timeUrl);
         layer.setVisible(visible);
         if (!visible) continue;
         showSublayers(layer, names);
@@ -122,7 +127,13 @@ export function MapView() {
     applyState();
 
     const unsubscribeState = useMapStore.subscribe((s, prev) => {
-      if (s.base !== prev.base || s.overlays !== prev.overlays || s.sublayers !== prev.sublayers || s.opacity !== prev.opacity) {
+      if (
+        s.base !== prev.base ||
+        s.overlays !== prev.overlays ||
+        s.sublayers !== prev.sublayers ||
+        s.opacity !== prev.opacity ||
+        s.tool !== prev.tool
+      ) {
         applyState();
       }
     });

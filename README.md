@@ -20,6 +20,7 @@ _A simple, fast web map for public map services. Documentation in English: [docs
 - **Menu kontekstowe** (prawy przycisk myszy albo przytrzymanie palca): kopiuje współrzędne w PL-1992 i WGS 84 i prowadzi do miejsca w Google Maps.
 - **Pomiar** odległości i powierzchni, **wydruk** w skali na A4 lub A3 (także do PDF) i **link** do bieżącego widoku mapy.
 - **Podkłady**: mapa i ortofotomapa z datą zdjęcia, przełączane jednym kliknięciem.
+- **Podróż w czasie**: archiwalne ortofotomapy GUGiK od 1995 r. Suwak pokazuje tylko daty, z których są zdjęcia w oglądanym miejscu (ze skorowidza ortofotomap), a przycisk „Porównaj” dzieli mapę kurtyną: po lewej wybrana data, po prawej dziś. Link do widoku niesie datę, więc „jak to wyglądało w 2007” da się wysłać. W panelu miejsca liczba zdjęć z archiwum prowadzi prosto do podróży.
 - **Telefon**: panele na cały ekran, przytrzymanie palca zamiast prawego przycisku, przycisk „Moja lokalizacja”.
 - **Dostępność** na poziomie WCAG 2.1 AA, z wyjątkami opisanymi w deklaracji dostępności: obsługa klawiaturą (także pomiaru i menu miejsca), czytniki ekranu, tryb ciemny, powiększenie tekstu i wysoki kontrast. Interfejs po polsku i angielsku.
 

@@ -40,6 +40,6 @@ Only the fields the app needs go to the browser; nothing secret may be written i
 - [Texts and languages](texts-and-languages.md): Markdown pages, interface texts, adding a language.
 - [Skins](skins.md): colours of the interface.
 - [Search and modules](search-and-modules.md): GUGiK, Nominatim or coordinates only; the `gugik` module.
-- [Layers that change over time](time-layers.md): the `time` block of a layer.
+- [Layers that change over time](time-layers.md): the `time` block of a layer and the time view (`timeTravel` in `map.yaml`).
 - [Deployment](deployment.md): Docker, Caddy, nginx, a server without Docker, environment variables, paths, commands.
 - [Architecture](architecture.md): how it is built, security, quality.

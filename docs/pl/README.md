@@ -40,6 +40,6 @@ Do przeglądarki trafiają tylko pola potrzebne aplikacji, a w `app.yaml`, `map.
 - [Treści i języki](tresci-i-jezyki.md): strony w Markdown, napisy interfejsu, dodawanie języka.
 - [Skórki](skorki.md): kolory interfejsu.
 - [Wyszukiwarka i moduły](wyszukiwarka-i-moduly.md): GUGiK, Nominatim albo same współrzędne; moduł `gugik`.
-- [Warstwy zmienne w czasie](warstwy-czasowe.md): blok `time` warstwy.
+- [Warstwy zmienne w czasie](warstwy-czasowe.md): blok `time` warstwy i podróż w czasie (`timeTravel` w `map.yaml`).
 - [Wdrożenie](wdrozenie.md): Docker, Caddy, nginx, serwer bez Dockera, zmienne środowiskowe, ścieżki, polecenia.
 - [Architektura](architektura.md): budowa, bezpieczeństwo, jakość.

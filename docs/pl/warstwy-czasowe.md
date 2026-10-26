@@ -48,9 +48,11 @@ Każda edycja ma `value` i, jeśli różni się od warstwy, własny `layer` (jed
 timeTravel:
   base: orto # podkład wymuszany, póki podróż trwa (opcjonalnie)
   layers:
-    - { id: orto-archiwalna, label: Zdjęcia } # wymiar jednej usługi
-    - { id: mapy-dawne, label: Mapy dawne } # seria edycji
+    - { id: orto-archiwalna, label: Zdjęcia } # wymiar jednej usługi, nad zdjęciami
+    - { id: mapy-dawne, label: Mapy dawne, base: mapa } # seria edycji, nad dzisiejszą mapą
 ```
+
+Kurtyna porównuje wybraną datę z podkładem, więc warto, by podkład był tego samego rodzaju co warstwa: dawne zdjęcia z dzisiejszymi zdjęciami, dawne mapy z dzisiejszą mapą.
 
 Narzędzie „Podróż w czasie” (na komputerze przycisk obok pomiaru, na telefonie pozycja w „Więcej”) pokazuje pasek z przełącznikiem warstw (gdy jest ich więcej niż jedna), suwakiem dat, przyciskami do wcześniejszej i późniejszej daty, opisem tego, co widać, i podpowiedzią, gdy mapa jest za daleko, by warstwa rysowała. Usługa z wymiarem TIME pokazuje stan na datę (np. zdjęcie zrobione tego dnia albo wcześniej), więc suwak chodzi po datach, nie po każdym miesiącu zakresu. Bez modułu, który zna daty w danym miejscu, suwak ma pierwszą wartość każdego roku z listy warstwy. Moduł `gugik` z `ortho.history` wskazującym tę warstwę zawęża daty do zdjęć, które skorowidz ortofotomapy zna w środku mapy (zob. [Wyszukiwarka i moduły](wyszukiwarka-i-moduly.md)).
 

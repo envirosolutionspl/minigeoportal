@@ -122,6 +122,12 @@ function crossCheck(
     }
     if (m.timeTravel?.base && !bases.has(m.timeTravel.base))
       problems.push(`${at(map, 'map.yaml', ['timeTravel', 'base'])} timeTravel.base: unknown base map "${m.timeTravel.base}"`);
+    m.timeTravel?.layers.forEach((l, i) => {
+      if (l.base && !bases.has(l.base))
+        problems.push(
+          `${at(map, 'map.yaml', ['timeTravel', 'layers', i, 'base'])} timeTravel.layers.${i}.base: unknown base map "${l.base}"`,
+        );
+    });
     if (m.view.zoom > m.zoom.scales.length - 1)
       problems.push(`${at(map, 'map.yaml', ['view', 'zoom'])} view.zoom: there are only ${m.zoom.scales.length} zoom levels`);
     // The browser loads tiles and map images itself: the page's CSP and HTTPS allow only https.

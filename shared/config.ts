@@ -164,10 +164,11 @@ export interface ClientConfig {
     baseMaps: BaseMap[];
     /**
      * The time view: `layers` are overlays with a `time` block, each with the name the bar's
-     * switch shows, drawn one at a time over `base` (a base map forced while the view is open)
-     * at the date chosen on the time bar.
+     * switch shows, drawn one at a time at the date chosen on the time bar over a base map forced
+     * while the view is open: the layer's own `base` (the present of the same kind: today's
+     * photos under old photos, today's map under old maps), else the view's `base`.
      */
-    timeTravel?: { layers: { id: string; label: string }[]; base?: string };
+    timeTravel?: { layers: { id: string; label: string; base?: string }[]; base?: string };
   };
   layers: {
     topics: Topic[];

@@ -114,12 +114,22 @@ const initial = readUrl();
 const TIME_TRAVEL = config.map.timeTravel;
 const timeAtStart = initial.time !== undefined && TIME_TRAVEL !== undefined;
 const LINKED_BASE = config.map.baseMaps.find((s) => s.id === initial.base)?.id ?? DEFAULT_BASE;
+const LINKED_TIME_LAYER = timeAtStart && TIME_TRAVEL?.layers.some((l) => l.id === initial.timeLayer) ? (initial.timeLayer ?? null) : null;
+
+/**
+ * The base map the time view forces under a layer: the present of the same kind (today's photos
+ * under old photos, today's map under old maps), else the view's own; none leaves the base map as it is.
+ */
+function forcedBase(timeLayer: string | null): string | undefined {
+  const layers = TIME_TRAVEL?.layers ?? [];
+  return (layers.find((l) => l.id === timeLayer) ?? layers[0])?.base ?? TIME_TRAVEL?.base;
+}
 
 export const useMapStore = create<MapStore>((set, get) => ({
   center: initial.center ?? view.center,
   zoom: initial.zoom ?? view.zoom,
   scale: Infinity,
-  base: (timeAtStart && TIME_TRAVEL?.base) || LINKED_BASE,
+  base: (timeAtStart && forcedBase(LINKED_TIME_LAYER)) || LINKED_BASE,
   // Catalog layers in a link are loaded by the map (with the catalog on); unknown ids simply draw nothing.
   overlays: (initial.overlays ?? view.overlays).filter(
     (id) => overlayById.has(id) || (config.modules.gugik?.catalog === true && CATALOG_ID.test(id)),
@@ -135,12 +145,12 @@ export const useMapStore = create<MapStore>((set, get) => ({
   printSettings: { paper: 'A4', orientation: 'landscape', scale: 10000, title: '' },
   printCenter: null,
   time: timeAtStart ? (initial.time ?? null) : null,
-  timeLayer: timeAtStart && TIME_TRAVEL?.layers.some((l) => l.id === initial.timeLayer) ? (initial.timeLayer ?? null) : null,
+  timeLayer: LINKED_TIME_LAYER,
   timeSublayers: null,
   compare: timeAtStart && initial.compare === true,
   curtain: 0.5,
   // The view of a link closes onto the base map the link named.
-  ...(timeAtStart && TIME_TRAVEL?.base ? { baseBeforeTime: LINKED_BASE } : {}),
+  ...(timeAtStart && forcedBase(LINKED_TIME_LAYER) ? { baseBeforeTime: LINKED_BASE } : {}),
   timeStatus: 'idle',
   timeRetries: 0,
 
@@ -171,16 +181,16 @@ export const useMapStore = create<MapStore>((set, get) => ({
   clearFocus: () => set({ focus: null }),
   goHome: () => get().focusOn({ extent: HOME_EXTENT, zoom: 0 }),
   zoomToScale: (scale) => get().focusOn({ scale, zoom: 0 }),
-  // The time view forces its base map (the photos under the archival photos) and gives the
-  // one used before back when it closes.
+  // The time view forces the base map of its layer (the photos under the archival photos, the
+  // map under the old maps) and gives the one used before back when it closes.
   setTool: (tool) =>
     set((s) => {
       if (tool === s.tool) return {};
-      const forced = TIME_TRAVEL?.base;
+      const forced = forcedBase(s.timeLayer);
       if (tool === 'time' && forced) return { tool, base: forced, baseBeforeTime: s.base };
-      if (s.tool === 'time' && forced)
-        return { tool, base: s.baseBeforeTime ?? DEFAULT_BASE, baseBeforeTime: undefined, timeStatus: 'idle' };
-      return { tool };
+      if (s.tool === 'time' && s.baseBeforeTime !== undefined)
+        return { tool, base: s.baseBeforeTime, baseBeforeTime: undefined, timeStatus: 'idle' };
+      return { tool, ...(s.tool === 'time' ? { timeStatus: 'idle' as const } : {}) };
     }),
   clearMeasurements: () => set((s) => ({ measureClears: s.measureClears + 1, measureResult: '' })),
   setMeasureResult: (measureResult) => set({ measureResult }),
@@ -192,7 +202,13 @@ export const useMapStore = create<MapStore>((set, get) => ({
   retryTime: () => set((s) => ({ timeRetries: s.timeRetries + 1 })),
   setCompare: (compare) => set({ compare }),
   setCurtain: (fraction) => set({ curtain: Math.min(Math.max(fraction, 0), 1) }),
-  setTimeLayer: (timeLayer) => set({ timeLayer, timeSublayers: null }),
+  // Another layer of the open view brings its own base map; the one before the view stays remembered.
+  setTimeLayer: (timeLayer) =>
+    set((s) => {
+      const forced = s.tool === 'time' ? forcedBase(timeLayer) : undefined;
+      if (!forced) return { timeLayer, timeSublayers: null };
+      return { timeLayer, timeSublayers: null, base: forced, baseBeforeTime: s.baseBeforeTime ?? s.base };
+    }),
   setTimeSublayers: (timeSublayers) => set((s) => (s.timeSublayers === timeSublayers ? {} : { timeSublayers })),
 }));
 

@@ -135,16 +135,20 @@ describe('loadConfig', () => {
   it('needs the time view to name a layer with a time block and a base map that exists', () => {
     const dir = broken('map.yaml', (s) =>
       s
-        .replace('    - { id: mapy-dawne, label: { pl: Mapy dawne, en: Old maps } }', '    - { id: kieg, label: Kieg }')
+        .replace(
+          '    - { id: mapy-dawne, label: { pl: Mapy dawne, en: Old maps }, base: mapa }',
+          '    - { id: kieg, label: Kieg, base: mapka }',
+        )
         .replace('  base: orto\n  layers:', '  base: zdjecia\n  layers:'),
     );
     expect(problems(dir).join('\n')).toMatch(/map\.yaml:\d+:\d+ timeTravel\.layers\.1\.id: "kieg" is not an overlay with a time block/);
     expect(problems(dir).join('\n')).toMatch(/map\.yaml:\d+:\d+ timeTravel\.base: unknown base map "zdjecia"/);
+    expect(problems(dir).join('\n')).toMatch(/map\.yaml:\d+:\d+ timeTravel\.layers\.1\.base: unknown base map "mapka"/);
     const config = clientConfig(loadConfig('config'), 'pl');
     expect(config.map.timeTravel).toEqual({
       layers: [
         { id: 'orto-archiwalna', label: 'Zdjęcia' },
-        { id: 'mapy-dawne', label: 'Mapy dawne' },
+        { id: 'mapy-dawne', label: 'Mapy dawne', base: 'mapa' },
       ],
       base: 'orto',
     });

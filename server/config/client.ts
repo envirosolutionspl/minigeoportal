@@ -74,7 +74,12 @@ export function clientConfig({ app, map, layers, content, brand, messages }: App
       attribution: creditHtml(t(map.attribution)),
       tileServices: map.tileServices,
       ...(map.timeTravel
-        ? { timeTravel: { layers: map.timeTravel.layers.map((l) => ({ id: l.id, label: t(l.label) })), base: map.timeTravel.base } }
+        ? {
+            timeTravel: {
+              layers: map.timeTravel.layers.map((l) => ({ id: l.id, label: t(l.label), ...(l.base ? { base: l.base } : {}) })),
+              base: map.timeTravel.base,
+            },
+          }
         : {}),
       baseMaps: map.baseMaps.map((b) => ({
         id: b.id,

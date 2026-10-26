@@ -48,9 +48,11 @@ Each edition has a `value` and, where it differs from the layer, its own `layer`
 timeTravel:
   base: orto # a base map forced while the view is open (optional)
   layers:
-    - { id: orto-archiwalna, label: Photos } # a dimension of one service
-    - { id: mapy-dawne, label: Old maps } # a series of editions
+    - { id: orto-archiwalna, label: Photos } # a dimension of one service, over the photos
+    - { id: mapy-dawne, label: Old maps, base: mapa } # a series of editions, over today's map
 ```
+
+The curtain compares the chosen date with the base map, so the base map is best of the same kind as the layer: old photos with today's photos, old maps with today's map.
 
 The "Time travel" tool (a button beside the measurement on a computer, an entry of "More" on a phone) shows a bar with a switch between the layers (when there are several), a slider over the dates, buttons to the earlier and the later date, a line saying what is shown, and a hint when the map is too far out for the layer to draw. A service with a TIME dimension shows the state as of a date (a photo taken on that day or before), so the slider goes by dates, not by every month of the range. Without a module that knows the dates at a place, the slider holds the first value of each year of the layer's list. The `gugik` module with `ortho.history` naming the layer narrows the dates to the photos the orthophoto index knows at the middle of the map (see [Search and modules](search-and-modules.md)).
 

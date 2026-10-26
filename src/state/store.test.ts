@@ -41,16 +41,21 @@ describe('defaults', () => {
   });
 
   it('opens the time view of a link, on the base map it forces', async () => {
-    window.history.replaceState(null, '', '?b=mapa&t=2007-01-01&c=1&tl=mapy-dawne');
+    window.history.replaceState(null, '', '?b=teren&t=2007-01-01&c=1&tl=mapy-dawne');
     const s = await fresh(false);
     expect(s.tool).toBe('time');
     expect(s.time).toBe('2007-01-01');
     expect(s.compare).toBe(true);
     expect(s.timeLayer).toBe('mapy-dawne');
-    window.history.replaceState(null, '', '?t=2007-01-01&tl=nothing');
-    expect((await fresh(false)).timeLayer).toBeNull();
-    expect(s.base).toBe('orto');
-    expect(s.baseBeforeTime).toBe('mapa');
+    // The old maps lie over today's map; closing the view gives the linked base map back.
+    expect(s.base).toBe('mapa');
+    expect(s.baseBeforeTime).toBe('teren');
+    // An unknown layer is the first one, over the photos.
+    window.history.replaceState(null, '', '?b=mapa&t=2007-01-01&tl=nothing');
+    const first = await fresh(false);
+    expect(first.timeLayer).toBeNull();
+    expect(first.base).toBe('orto');
+    expect(first.baseBeforeTime).toBe('mapa');
     window.history.replaceState(null, '', '/');
   });
 
@@ -139,6 +144,24 @@ describe('time view', () => {
     expect(state().timeSublayers).toBe('Raster_10_1965');
     state().setTimeLayer('orto-archiwalna');
     expect(state().timeSublayers).toBeNull();
+  });
+
+  it('puts each layer over the present of its kind: photos under photos, the map under old maps', () => {
+    useMapStore.setState({ base: 'teren', tool: 'none', timeLayer: null, baseBeforeTime: undefined });
+    state().setTool('time');
+    expect(state().base).toBe('orto');
+    state().setTimeLayer('mapy-dawne');
+    expect(state().base).toBe('mapa');
+    state().setTimeLayer('orto-archiwalna');
+    expect(state().base).toBe('orto');
+    state().setTimeLayer('mapy-dawne');
+    state().setTool('none');
+    expect(state().base).toBe('teren');
+    // Chosen while the view is closed, the layer's base map comes with the view.
+    state().setTool('time');
+    expect(state().base).toBe('mapa');
+    state().setTool('none');
+    useMapStore.setState({ timeLayer: null });
   });
 
   it('forces its base map while open and gives the one before back', () => {

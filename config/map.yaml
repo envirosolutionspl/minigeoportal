@@ -50,13 +50,14 @@ view:
   toggleBase: orto # the large thumbnail switches to the photos and back
   overlays: [kieg]
 
-# The time view: the archival orthophoto map and the old topographic maps (layers.yaml) over the
-# photos, one at a time, at the date chosen on the time bar.
+# The time view: the archival orthophoto map and the old topographic maps (layers.yaml), one at a
+# time, at the date chosen on the time bar, each over the present of its kind (the curtain compares
+# the two): old photos over today's photos, old maps over today's topographic map.
 timeTravel:
   base: orto
   layers:
     - { id: orto-archiwalna, label: { pl: Zdjęcia, en: Photos } }
-    - { id: mapy-dawne, label: { pl: Mapy dawne, en: Old maps } }
+    - { id: mapy-dawne, label: { pl: Mapy dawne, en: Old maps }, base: mapa }
 
 attribution: 'Dane: [GUGiK, geoportal.gov.pl](https://www.geoportal.gov.pl)'
 

@@ -292,6 +292,7 @@ exports[`default configuration > stays what the app was built with (any change s
           "label": "Zdjęcia",
         },
         {
+          "base": "mapa",
           "id": "mapy-dawne",
           "label": "Mapy dawne",
         },

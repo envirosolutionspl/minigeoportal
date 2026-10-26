@@ -46,10 +46,10 @@ export function MapView() {
      */
     const overlays = new globalThis.Map<string, { def: Overlay; layer: OverlayLayer }>();
     /**
-     * The service of the time view (map.yaml: timeTravel). Switched on from the layer list as
-     * well, it would draw its newest image over the view's chosen date, so it stays off meanwhile.
+     * The services of the time view (map.yaml: timeTravel). Switched on from the layer list as
+     * well, one would draw its newest image over the view's chosen date, so they stay off meanwhile.
      */
-    const timeUrl = config.map.timeTravel && overlayById.get(config.map.timeTravel.layer)?.url;
+    const timeUrls = new Set((config.map.timeTravel?.layers ?? []).flatMap((l) => overlayById.get(l.id)?.url ?? []));
 
     const view = new View({
       projection: PROJECTION,
@@ -114,7 +114,7 @@ export function MapView() {
           continue;
         }
         const names = selectedSublayers(def, s.sublayers);
-        const visible = names.length > 0 && !(s.tool === 'time' && def.url === timeUrl);
+        const visible = names.length > 0 && !(s.tool === 'time' && timeUrls.has(def.url));
         layer.setVisible(visible);
         if (!visible) continue;
         showSublayers(layer, names);

@@ -35,7 +35,7 @@ beforeEach(() => {
   vi.spyOn(viewport(), 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 800, 600));
   layer = new ImageLayer({ source: new ImageWMS({ url: 'https://example.org/wms', params: { LAYERS: 'a' } }) });
   map.addLayer(layer);
-  detach = attachCurtain(map, layer);
+  detach = attachCurtain(map, [layer]);
 });
 
 afterEach(() => {

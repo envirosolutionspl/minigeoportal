@@ -35,12 +35,15 @@ export interface TimeOption {
   detail?: string;
 }
 
+/** Asks for the dates a layer has at a point. */
+export type TimeOptionsAt = (coordinate: [number, number], signal: AbortSignal) => Promise<TimeOption[]>;
+
 /**
- * The dates the time view's layer has at a point, from a module that knows them (the photo
- * index of the gugik module); without one the view offers the layer's own values.
+ * The dates a layer of the time view has at a point, from a module that knows them (the photo
+ * index of the gugik module for the archival photos); for a layer no module knows, the view
+ * offers the layer's own values.
  */
-export const timeOptionsAt: ((coordinate: [number, number], signal: AbortSignal) => Promise<TimeOption[]>) | undefined =
-  gugik.timeOptionsAt;
+export const timeOptions: (layer: string) => TimeOptionsAt | undefined = gugik.timeOptions;
 
 /** Under the coordinates in the header of the place panel. */
 export const infoHeader: InfoPart[] = [...gugik.infoHeader];

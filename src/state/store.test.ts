@@ -41,11 +41,14 @@ describe('defaults', () => {
   });
 
   it('opens the time view of a link, on the base map it forces', async () => {
-    window.history.replaceState(null, '', '?b=mapa&t=2007-01-01&c=1');
+    window.history.replaceState(null, '', '?b=mapa&t=2007-01-01&c=1&tl=mapy-dawne');
     const s = await fresh(false);
     expect(s.tool).toBe('time');
     expect(s.time).toBe('2007-01-01');
     expect(s.compare).toBe(true);
+    expect(s.timeLayer).toBe('mapy-dawne');
+    window.history.replaceState(null, '', '?t=2007-01-01&tl=nothing');
+    expect((await fresh(false)).timeLayer).toBeNull();
     expect(s.base).toBe('orto');
     expect(s.baseBeforeTime).toBe('mapa');
     window.history.replaceState(null, '', '/');
@@ -142,11 +145,13 @@ describe('time view', () => {
     expect(state().timeStatus).toBe('idle');
   });
 
-  it('puts the date and the comparison into links only while the view is open', () => {
-    useMapStore.setState({ tool: 'none', time: '2007-01-01', compare: true });
+  it('puts the date, the layer and the comparison into links only while the view is open', () => {
+    useMapStore.setState({ tool: 'none', time: '2007-01-01', compare: true, timeLayer: 'mapy-dawne' });
     expect(urlState(state()).time).toBeUndefined();
     state().setTool('time');
-    expect(urlState(state())).toMatchObject({ time: '2007-01-01', compare: true });
+    expect(urlState(state())).toMatchObject({ time: '2007-01-01', compare: true, timeLayer: 'mapy-dawne' });
+    state().setTimeLayer(null);
+    expect(urlState(state()).timeLayer).toBeUndefined();
     state().setCompare(false);
     expect(urlState(state()).compare).toBeUndefined();
   });

@@ -144,6 +144,7 @@ time:
   tool: Podróż w czasie
   title: Podróż w czasie
   date: Data
+  layers: Warstwa podróży w czasie
   earlier: Wcześniejsza data
   later: Późniejsza data
   end: Zakończ podróż w czasie

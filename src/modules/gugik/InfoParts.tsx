@@ -9,8 +9,9 @@ import { locale, t } from '@/i18n';
 import { parcelReportUrl } from './parcelReport';
 import { orthoAt, pixelText, type OrthoEdition, type OrthoInfo } from './ortho';
 
-/** The time view shows the archive of these photos (app.yaml: ortho.history names its layer). */
-const TIME_VIEW = config.modules.gugik?.ortho && config.modules.gugik.ortho.history === config.map.timeTravel?.layer;
+/** The layer of the time view that shows the archive of these photos (app.yaml: ortho.history), if it is one. */
+const HISTORY = config.modules.gugik?.ortho ? config.modules.gugik.ortho.history : undefined;
+const TIME_VIEW = HISTORY !== undefined && (config.map.timeTravel?.layers ?? []).some((l) => l.id === HISTORY);
 /** Scale the time view opens at from the place panel, when the map is further out. */
 const OPENING_SCALE = 20000;
 
@@ -57,10 +58,14 @@ type OrthoState = { status: 'loading' } | { status: 'done'; info: OrthoInfo } | 
  */
 function PhotoDate({ coordinate }: { coordinate: [number, number] }) {
   const [state, setState] = useState<OrthoState>({ status: 'loading' });
-  const asOf = useMapStore((m) => (TIME_VIEW && m.tool === 'time' ? m.time : null));
+  // The photo as of the chosen date, while the view shows the photos (the first layer, or this one by id).
+  const asOf = useMapStore((m) =>
+    TIME_VIEW && m.tool === 'time' && (m.timeLayer ?? config.map.timeTravel?.layers[0]?.id) === HISTORY ? m.time : null,
+  );
   const seeChanges = () => {
     const m = useMapStore.getState();
     useInfoStore.getState().close();
+    m.setTimeLayer(HISTORY ?? null);
     m.setTool('time');
     m.focusOn({ center: coordinate, zoom: Math.max(m.zoom, zoomForScale(OPENING_SCALE)) });
   };

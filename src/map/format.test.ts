@@ -7,6 +7,14 @@ import { parseCoordinates } from '@/search/coordinates';
 // Intl in pl-PL groups with a narrow no-break space; compare with plain spaces.
 const plain = (s: string) => s.replace(/\s/g, ' ');
 
+describe('dateText', () => {
+  it('writes a day, a month or a year as the language does', () => {
+    expect(dateText('2025-04-27')).toBe('27.04.2025');
+    expect(dateText('2025-04')).toBe('04.2025');
+    expect(dateText('1965')).toBe('1965');
+  });
+});
+
 describe('formatCoordinate', () => {
   it('writes PL-1992 as X = northing, Y = easting, followed by WGS 84', () => {
     const c = fromLonLat([21, 52], 'EPSG:2180');
@@ -16,10 +24,26 @@ describe('formatCoordinate', () => {
   });
 });
 
+describe('dateText', () => {
+  it('writes a day, a month or a year as the language does', () => {
+    expect(dateText('2025-04-27')).toBe('27.04.2025');
+    expect(dateText('2025-04')).toBe('04.2025');
+    expect(dateText('1965')).toBe('1965');
+  });
+});
+
 describe('formatLength', () => {
   it('uses metres below a kilometre and kilometres above', () => {
     expect(formatLength(12.34)).toBe('12,3 m');
     expect(formatLength(1234)).toBe('1,23 km');
+  });
+});
+
+describe('dateText', () => {
+  it('writes a day, a month or a year as the language does', () => {
+    expect(dateText('2025-04-27')).toBe('27.04.2025');
+    expect(dateText('2025-04')).toBe('04.2025');
+    expect(dateText('1965')).toBe('1965');
   });
 });
 
@@ -32,8 +56,24 @@ describe('formatArea', () => {
 });
 
 describe('dateText', () => {
+  it('writes a day, a month or a year as the language does', () => {
+    expect(dateText('2025-04-27')).toBe('27.04.2025');
+    expect(dateText('2025-04')).toBe('04.2025');
+    expect(dateText('1965')).toBe('1965');
+  });
+});
+
+describe('dateText', () => {
   it('writes an ISO date the Polish way', () => {
     expect(dateText('2025-04-27')).toBe('27.04.2025');
+  });
+});
+
+describe('dateText', () => {
+  it('writes a day, a month or a year as the language does', () => {
+    expect(dateText('2025-04-27')).toBe('27.04.2025');
+    expect(dateText('2025-04')).toBe('04.2025');
+    expect(dateText('1965')).toBe('1965');
   });
 });
 
@@ -44,6 +84,14 @@ describe('coordinateBar', () => {
     el.innerHTML = html;
     expect([...el.querySelectorAll('.mp-system')].map((s) => s.querySelector('b')?.textContent)).toEqual(['PL-1992', 'WGS 84']);
     expect(el.textContent).toMatch(/^PL-1992X \d{3} \d{3}Y \d{3} \d{3}WGS 8452,00000° N21,00000° E$/);
+  });
+});
+
+describe('dateText', () => {
+  it('writes a day, a month or a year as the language does', () => {
+    expect(dateText('2025-04-27')).toBe('27.04.2025');
+    expect(dateText('2025-04')).toBe('04.2025');
+    expect(dateText('1965')).toBe('1965');
   });
 });
 

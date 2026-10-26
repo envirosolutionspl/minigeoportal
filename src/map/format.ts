@@ -13,8 +13,16 @@ const four = new Intl.NumberFormat(config.locale, { maximumFractionDigits: 4 });
 export const scaleText = (scale: number) => `1:${int.format(scale)}`;
 
 const day = new Intl.DateTimeFormat(config.locale, { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
-/** "2025-04-27" as the language writes dates: 27.04.2025 in Polish, 04/27/2025 in English. */
-export const dateText = (iso: string) => day.format(new Date(`${iso}T00:00:00Z`));
+const month = new Intl.DateTimeFormat(config.locale, { month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+/**
+ * "2025-04-27" as the language writes dates: 27.04.2025 in Polish, 04/27/2025 in English;
+ * "2025-04" as month and year, "2025" as it is.
+ */
+export function dateText(iso: string): string {
+  if (/^\d{4}$/.test(iso)) return iso;
+  if (/^\d{4}-\d{2}$/.test(iso)) return month.format(new Date(`${iso}-01T00:00:00Z`));
+  return day.format(new Date(`${iso}T00:00:00Z`));
+}
 const deg = new Intl.NumberFormat(config.locale, { minimumFractionDigits: 5, maximumFractionDigits: 5 });
 
 const SYSTEM = config.map.projection.name;

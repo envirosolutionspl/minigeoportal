@@ -18,8 +18,10 @@ describe('readUrl', () => {
   it('reads the date of the time view, when it looks like one', () => {
     setSearch('?x=1&y=2&t=2007-01-01');
     expect(readUrl().time).toBe('2007-01-01');
-    setSearch('?t=2007&c=1');
-    expect(readUrl()).toMatchObject({ time: '2007', compare: true });
+    setSearch('?t=2007&c=1&tl=mapy-dawne');
+    expect(readUrl()).toMatchObject({ time: '2007', compare: true, timeLayer: 'mapy-dawne' });
+    setSearch('?t=2007&tl=../x');
+    expect(readUrl().timeLayer).toBeUndefined();
     setSearch('?t=yesterday&c=1');
     expect(readUrl().time).toBeUndefined();
     expect(readUrl().compare).toBeUndefined();
@@ -60,6 +62,9 @@ describe('writeUrl', () => {
     writeUrl({ center: [1, 2], zoom: 3, base: 'orto', overlays: [], sublayers: {}, time: '2007-01-01', compare: true });
     vi.advanceTimersByTime(300);
     expect(window.location.search).toBe('?x=1&y=2&z=3.0&b=orto&l=&t=2007-01-01&c=1');
+    writeUrl({ center: [1, 2], zoom: 3, base: 'orto', overlays: [], sublayers: {}, time: '1965', timeLayer: 'mapy-dawne' });
+    vi.advanceTimersByTime(300);
+    expect(window.location.search).toBe('?x=1&y=2&z=3.0&b=orto&l=&t=1965&tl=mapy-dawne');
     vi.useRealTimers();
   });
 

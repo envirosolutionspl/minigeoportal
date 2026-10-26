@@ -145,6 +145,7 @@ time:
   tool: Time travel
   title: Time travel
   date: Date
+  layers: Layer of the time view
   earlier: Earlier date
   later: Later date
   end: End the time travel

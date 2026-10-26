@@ -63,6 +63,8 @@ interface MapStore {
   /** Date shown in the time view; null before one is chosen (the layer's own current value). */
   time: string | null;
   timeStatus: TimeStatus;
+  /** The time view's layer (map.yaml: timeTravel.layers), by id; null means the first. */
+  timeLayer: string | null;
   /** The time view compares its date with the present: the layer draws left of a curtain, the base map shows right of it. */
   compare: boolean;
   /** Where the curtain is, as a fraction of the map's width from its left edge. */
@@ -96,6 +98,7 @@ interface MapStore {
   retryTime(): void;
   setCompare(compare: boolean): void;
   setCurtain(fraction: number): void;
+  setTimeLayer(id: string | null): void;
 }
 
 /** Phones may start on a lighter base map (map.yaml: view.baseMobile), whose tiles load faster on mobile connections. */
@@ -129,6 +132,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
   printSettings: { paper: 'A4', orientation: 'landscape', scale: 10000, title: '' },
   printCenter: null,
   time: timeAtStart ? (initial.time ?? null) : null,
+  timeLayer: timeAtStart && TIME_TRAVEL?.layers.some((l) => l.id === initial.timeLayer) ? (initial.timeLayer ?? null) : null,
   compare: timeAtStart && initial.compare === true,
   curtain: 0.5,
   // The view of a link closes onto the base map the link named.
@@ -184,6 +188,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
   retryTime: () => set((s) => ({ timeRetries: s.timeRetries + 1 })),
   setCompare: (compare) => set({ compare }),
   setCurtain: (fraction) => set({ curtain: Math.min(Math.max(fraction, 0), 1) }),
+  setTimeLayer: (timeLayer) => set({ timeLayer }),
 }));
 
 /** What a link to the map carries: the view, the layers and, while the time view is open, its date. */
@@ -193,7 +198,9 @@ export const urlState = (s: MapStore) => ({
   base: s.base,
   overlays: s.overlays,
   sublayers: s.sublayers,
-  ...(s.tool === 'time' && s.time ? { time: s.time, ...(s.compare ? { compare: true } : {}) } : {}),
+  ...(s.tool === 'time' && s.time
+    ? { time: s.time, ...(s.compare ? { compare: true } : {}), ...(s.timeLayer ? { timeLayer: s.timeLayer } : {}) }
+    : {}),
 });
 
 useMapStore.subscribe((s, prev) => {
@@ -205,7 +212,8 @@ useMapStore.subscribe((s, prev) => {
     s.sublayers !== prev.sublayers ||
     s.tool !== prev.tool ||
     s.time !== prev.time ||
-    s.compare !== prev.compare
+    s.compare !== prev.compare ||
+    s.timeLayer !== prev.timeLayer
   ) {
     writeUrl(urlState(s));
   }

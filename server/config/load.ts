@@ -151,9 +151,12 @@ function crossCheck(
       map.value.view.overlays.forEach((o, i) => {
         if (!overlays.has(o)) problems.push(`${at(map, 'map.yaml', ['view', 'overlays', i])} unknown overlay "${o}"`);
       });
-      const time = map.value.timeTravel?.layer;
-      if (time && !l.overlays.some((o) => o.id === time && o.time))
-        problems.push(`${at(map, 'map.yaml', ['timeTravel', 'layer'])} timeTravel.layer: "${time}" is not an overlay with a time block`);
+      map.value.timeTravel?.layers.forEach((entry, i) => {
+        if (!l.overlays.some((o) => o.id === entry.id && o.time))
+          problems.push(
+            `${at(map, 'map.yaml', ['timeTravel', 'layers', i, 'id'])} timeTravel.layers.${i}.id: "${entry.id}" is not an overlay with a time block`,
+          );
+      });
     }
   }
 

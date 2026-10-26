@@ -1,11 +1,11 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Columns2, LoaderCircle, RotateCw, X, ZoomIn } from 'lucide-react';
-import { config, overlayById } from '@/config/runtime';
+import { config } from '@/config/runtime';
 import { t } from '@/i18n';
 import { dateText } from '@/map/format';
-import { timeLayerDrawsAt } from '@/map/timeTravel';
-import { timeOptionsAt, type TimeOption } from '@/modules';
-import { timeValues, valueAt, yearly } from '@/services/time';
+import { currentTimeLayer, timeLayerDrawsAt, timeLayers } from '@/map/timeTravel';
+import { timeOptions, type TimeOption } from '@/modules';
+import { valueAt, yearly, type TimeValues } from '@/services/time';
 import { useMapStore } from '@/state/store';
 
 /** After the map stops, before the dates at its new centre are asked for. */
@@ -13,19 +13,19 @@ const SETTLE_MS = 700;
 /** Scale the "zoom in" button goes to. */
 const ZOOM_SCALE = 20000;
 
-const TIME = config.map.timeTravel;
-
 /**
- * The time view's bar (map.yaml: timeTravel): a slider over the dates the layer has at the
- * centre of the map, buttons to the date before and after (also for keyboards and for
- * anyone who cannot drag), what is shown or loading, and a hint when the map is too far out
- * for the layer to draw. At the foot of the map on a phone, in the middle on wider screens.
+ * The time view's bar (map.yaml: timeTravel): a switch between its layers when there are
+ * several, a slider over the dates the layer has at the centre of the map, buttons to the date
+ * before and after (also for keyboards and for anyone who cannot drag), what is shown or
+ * loading, and a hint when the map is too far out for the layer to draw. At the foot of the map
+ * on a phone, in the middle on wider screens.
  */
 export function TimeBar() {
   const tool = useMapStore((m) => m.tool);
-  const def = TIME && overlayById.get(TIME.layer);
-  if (tool !== 'time' || !def) return null;
-  return <Bar id={def.id} title={def.title} />;
+  const chosen = useMapStore((m) => m.timeLayer);
+  const current = currentTimeLayer(chosen);
+  if (tool !== 'time' || !current) return null;
+  return <Bar key={current.def.id} id={current.def.id} title={current.def.title} spec={current.spec} />;
 }
 
 /** The date as its year, for the ends of the slider and beside it. */
@@ -35,13 +35,14 @@ const action = 'inline-flex items-center gap-1 rounded-lg px-1.5 py-0.5 font-med
 const step =
   'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl hover:bg-[var(--hover)] disabled:opacity-40 disabled:hover:bg-transparent';
 
-function Bar({ id, title }: { id: string; title: string }) {
-  const spec = timeValues(overlayById.get(id)!);
+function Bar({ id, title, spec }: { id: string; title: string; spec: TimeValues }) {
   const time = useMapStore((m) => m.time);
   const setTime = useMapStore((m) => m.setTime);
   const status = useMapStore((m) => m.timeStatus);
   const retry = useMapStore((m) => m.retryTime);
   const setTool = useMapStore((m) => m.setTool);
+  const chosen = useMapStore((m) => m.timeLayer);
+  const setTimeLayer = useMapStore((m) => m.setTimeLayer);
   const compare = useMapStore((m) => m.compare);
   const setCompare = useMapStore((m) => m.setCompare);
   const zoomToScale = useMapStore((m) => m.zoomToScale);
@@ -49,7 +50,9 @@ function Bar({ id, title }: { id: string; title: string }) {
   const center = useMapStore((m) => m.center);
   /** The dates a module knows at the centre; null until it answers (or without a module). */
   const [options, setOptions] = useState<TimeOption[] | null>(null);
-  const [checking, setChecking] = useState(timeOptionsAt !== undefined);
+  /** A module that knows the dates of this layer at a place; without one the slider holds the layer's own values. */
+  const ask = timeOptions(id);
+  const [checking, setChecking] = useState(ask !== undefined);
   const sliderId = useId();
   const listId = useId();
   /** Where the slider is while it is being dragged; the date is asked for once it is let go. */
@@ -73,8 +76,7 @@ function Bar({ id, title }: { id: string; title: string }) {
   // Asked once the map has settled; a move of less than 100 m stays on the same photos.
   const place = `${Math.round(center[0] / 100)},${Math.round(center[1] / 100)}`;
   useEffect(() => {
-    if (!timeOptionsAt) return;
-    const ask = timeOptionsAt;
+    if (!ask) return;
     const controller = new AbortController();
     setChecking(true);
     const timer = window.setTimeout(() => {
@@ -89,11 +91,11 @@ function Bar({ id, title }: { id: string; title: string }) {
     };
     // The centre is read when the place changes, not on every move within it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [place]);
+  }, [id, place]);
 
-  const values = options?.map((o) => o.value) ?? yearly(spec?.values ?? []);
-  const draws = timeLayerDrawsAt(scale);
-  const current = values.length > 0 ? valueAt(values, time ?? spec?.current ?? values[values.length - 1]) : undefined;
+  const values = options?.map((o) => o.value) ?? yearly(spec.values);
+  const draws = timeLayerDrawsAt(chosen, time, scale);
+  const current = values.length > 0 ? valueAt(values, time ?? spec.current ?? values[values.length - 1]) : undefined;
   const index = current ? values.indexOf(current) : -1;
   // The date in the link is one the slider holds, so what is shown and what is shared agree;
   // not before the module has answered, when the slider still holds the layer's own values.
@@ -129,15 +131,17 @@ function Bar({ id, title }: { id: string; title: string }) {
   };
   const shown = dragging ?? index;
   const dragged = dragging !== null && values[dragging] !== undefined ? values[dragging] : undefined;
+
+  /** What a value is called: an edition's name, else the date, with a module's detail after it. */
   const label = (value: string) => {
-    const shown = t('time.shown', { date: dateText(value) });
+    const named = spec.editions?.[value]?.label ?? t('time.shown', { date: dateText(value) });
     const detail = options?.find((o) => o.value === value)?.detail;
-    return detail ? `${shown}, ${detail}` : shown;
+    return detail ? `${named}, ${detail}` : named;
   };
 
   let line: React.ReactNode;
   if (dragged) {
-    line = t('time.pick', { date: dateText(dragged) });
+    line = spec.editions?.[dragged]?.label ?? t('time.pick', { date: dateText(dragged) });
   } else if (!draws) {
     line = (
       <>
@@ -180,6 +184,23 @@ function Bar({ id, title }: { id: string; title: string }) {
       aria-label={t('time.title')}
       className="time-bar pointer-events-auto absolute z-30 bg-[var(--surface)] p-2 shadow-lg ring-1 ring-black/5"
     >
+      {timeLayers().length > 1 && (
+        <div role="group" aria-label={t('time.layers')} className="mb-1 flex gap-1 px-1">
+          {(config.map.timeTravel?.layers ?? []).map((entry) => (
+            <button
+              key={entry.id}
+              type="button"
+              aria-pressed={entry.id === id}
+              onClick={() => setTimeLayer(entry.id)}
+              className={`min-h-9 flex-1 rounded-xl px-2 text-sm font-medium transition ${
+                entry.id === id ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'bg-[var(--field)] hover:bg-[var(--hover)]'
+              }`}
+            >
+              {entry.label}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="flex items-center gap-1">
         <button type="button" onClick={() => choose(index - 1)} disabled={index <= 0} aria-label={t('time.earlier')} className={step}>
           <ChevronLeft className="h-5 w-5" aria-hidden="true" />

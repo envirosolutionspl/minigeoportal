@@ -80,7 +80,7 @@ describe('overlayOrder', () => {
 ${MAIN}`,
         defaults.layers.overlays,
       ),
-    ).toEqual(['orto-archiwalna', 'suikzp', 'kimpzp', 'pog', 'kibdot', 'kiut', 'kieg', 'rcn', 'kina', 'prg']);
+    ).toEqual(['mapy-dawne', 'orto-archiwalna', 'suikzp', 'kimpzp', 'pog', 'kibdot', 'kiut', 'kieg', 'rcn', 'kina', 'prg']);
   });
 
   it('follows a changed order', () => {
@@ -94,7 +94,7 @@ ${MAIN}`,
 ${MAIN}`,
         defaults.layers.overlays,
       ),
-    ).toEqual(['orto-archiwalna', 'suikzp', 'kimpzp', 'pog', 'kibdot', 'kieg', 'kiut', 'rcn', 'kina', 'prg']);
+    ).toEqual(['mapy-dawne', 'orto-archiwalna', 'suikzp', 'kimpzp', 'pog', 'kibdot', 'kieg', 'kiut', 'rcn', 'kina', 'prg']);
   });
 
   it('gives up when an overlay is missing, so the built-in order is used', () => {

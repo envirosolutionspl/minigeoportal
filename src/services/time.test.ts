@@ -37,7 +37,18 @@ describe('timeValues', () => {
     const fixed: Overlay = { ...listed, time: { type: 'dimension', param: 'TIME', values: ['2019', '2021'], default: '2019' } };
     expect(timeValues(fixed)?.current).toBe('2019');
     const series: Overlay = { ...kieg, time: { type: 'series', editions: [{ value: '2010' }, { value: '2020' }] } };
-    expect(timeValues(series)).toEqual({ values: ['2010', '2020'], current: '2020' });
+    expect(timeValues(series)).toEqual({ values: ['2010', '2020'], current: '2020', editions: { '2010': {}, '2020': {} } });
+    const named: Overlay = {
+      ...kieg,
+      time: {
+        type: 'series',
+        editions: [
+          { value: '1965', layer: 'a,b', label: 'Układ 1965' },
+          { value: '1992', layer: 'c' },
+        ],
+      },
+    };
+    expect(timeValues(named)?.editions).toEqual({ '1965': { layer: 'a,b', label: 'Układ 1965' }, '1992': { layer: 'c' } });
     expect(timeValues(kieg)).toBeUndefined();
   });
 

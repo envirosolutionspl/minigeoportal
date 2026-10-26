@@ -17,7 +17,7 @@ const KEY_STEP = 0.05;
  * move it from the keyboard (WCAG 2.5.7: nothing needs dragging). The handle sits over the map
  * like the print frame, so the map pans under it at no cost.
  */
-export function attachCurtain(map: Map, layer: Layer): () => void {
+export function attachCurtain(map: Map, layers: Layer[]): () => void {
   const viewport = map.getViewport();
   if (!viewport) return () => {};
   const clip = (e: RenderEvent) => {
@@ -43,8 +43,10 @@ export function attachCurtain(map: Map, layer: Layer): () => void {
     const s = useMapStore.getState();
     if (s.compare && s.tool === 'time') (e.context as CanvasRenderingContext2D).restore();
   };
-  layer.on('prerender', clip);
-  layer.on('postrender', unclip);
+  for (const layer of layers) {
+    layer.on('prerender', clip);
+    layer.on('postrender', unclip);
+  }
 
   // The line, its handle, the labels of both sides and the track a click moves the line on.
   const root = document.createElement('div');
@@ -131,8 +133,10 @@ export function attachCurtain(map: Map, layer: Layer): () => void {
 
   return () => {
     unsubscribe();
-    layer.un('prerender', clip);
-    layer.un('postrender', unclip);
+    for (const layer of layers) {
+      layer.un('prerender', clip);
+      layer.un('postrender', unclip);
+    }
     root.remove();
   };
 }

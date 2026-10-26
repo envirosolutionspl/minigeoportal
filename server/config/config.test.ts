@@ -40,7 +40,19 @@ describe('default configuration', () => {
     expect(config.map.attribution).toBe(
       'Dane: <a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">GUGiK, geoportal.gov.pl</a>',
     );
-    expect(config.layers.drawOrder).toEqual(['orto-archiwalna', 'suikzp', 'kimpzp', 'pog', 'kibdot', 'kiut', 'kieg', 'rcn', 'kina', 'prg']);
+    expect(config.layers.drawOrder).toEqual([
+      'mapy-dawne',
+      'orto-archiwalna',
+      'suikzp',
+      'kimpzp',
+      'pog',
+      'kibdot',
+      'kiut',
+      'kieg',
+      'rcn',
+      'kina',
+      'prg',
+    ]);
     expect(config.map.view).toMatchObject({ center: [500000, 465000], zoom: 3, base: 'mapa', baseMobile: 'prosta', overlays: ['kieg'] });
     expect(config.map.view.home).toEqual([170000, 130000, 870000, 800000]);
     expect(config.search).toEqual({ provider: 'gugik', parcel: true });
@@ -114,12 +126,29 @@ describe('loadConfig', () => {
 
   it('needs the time view to name a layer with a time block and a base map that exists', () => {
     const dir = broken('map.yaml', (s) =>
-      s.replace('timeTravel: { layer: orto-archiwalna, base: orto }', 'timeTravel: { layer: kieg, base: zdjecia }'),
+      s
+        .replace('    - { id: mapy-dawne, label: { pl: Mapy dawne, en: Old maps } }', '    - { id: kieg, label: Kieg }')
+        .replace('  base: orto\n  layers:', '  base: zdjecia\n  layers:'),
     );
-    expect(problems(dir).join('\n')).toMatch(/map\.yaml:\d+:\d+ timeTravel\.layer: "kieg" is not an overlay with a time block/);
+    expect(problems(dir).join('\n')).toMatch(/map\.yaml:\d+:\d+ timeTravel\.layers\.1\.id: "kieg" is not an overlay with a time block/);
     expect(problems(dir).join('\n')).toMatch(/map\.yaml:\d+:\d+ timeTravel\.base: unknown base map "zdjecia"/);
     const config = clientConfig(loadConfig('config'), 'pl');
-    expect(config.map.timeTravel).toEqual({ layer: 'orto-archiwalna', base: 'orto' });
+    expect(config.map.timeTravel).toEqual({
+      layers: [
+        { id: 'orto-archiwalna', label: 'Zdjęcia' },
+        { id: 'mapy-dawne', label: 'Mapy dawne' },
+      ],
+      base: 'orto',
+    });
+    expect(clientConfig(loadConfig('config'), 'en').map.timeTravel?.layers[1].label).toBe('Old maps');
+    const oldMaps = config.layers.overlays.find((o) => o.id === 'mapy-dawne')!;
+    expect(oldMaps.time).toMatchObject({ type: 'series' });
+    expect((oldMaps.time as { editions: unknown[] }).editions).toHaveLength(3);
+    expect((oldMaps.time as { editions: unknown[] }).editions[0]).toEqual({
+      value: '1942',
+      layer: 'Raster_50_1942,Raster_10_1942',
+      label: 'Mapy w układzie 1942, lata 50.–70.',
+    });
     expect(config.layers.overlays.find((o) => o.id === 'orto-archiwalna')).toMatchObject({ format: 'image/jpeg', time: { param: 'TIME' } });
   });
 

@@ -69,7 +69,8 @@ export type TimeSpec =
     }
   | {
       type: 'series';
-      editions: { value: string; url?: string; layer?: string }[];
+      /** `label`: what the time bar says for the edition instead of its value (a system of maps and its years). */
+      editions: { value: string; url?: string; layer?: string; label?: string }[];
     };
 
 /** Overlay: a map service drawn over the base map, with sublayers to choose from. */
@@ -162,10 +163,11 @@ export interface ClientConfig {
     tileServices: TileService[];
     baseMaps: BaseMap[];
     /**
-     * The time view: `layer` is an overlay with a `time` block, drawn over `base` (a base map
-     * forced while the view is open) at the date chosen on the time bar.
+     * The time view: `layers` are overlays with a `time` block, each with the name the bar's
+     * switch shows, drawn one at a time over `base` (a base map forced while the view is open)
+     * at the date chosen on the time bar.
      */
-    timeTravel?: { layer: string; base?: string };
+    timeTravel?: { layers: { id: string; label: string }[]; base?: string };
   };
   layers: {
     topics: Topic[];

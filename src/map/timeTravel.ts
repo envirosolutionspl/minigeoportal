@@ -1,8 +1,8 @@
 import type Map from 'ol/Map';
 import ImageWMS from 'ol/source/ImageWMS';
-import { config, defaultSublayers, overlayById } from '@/config/runtime';
-import { createOverlayLayer, resolutionRange, showSublayers } from '@/services/layers';
-import { timeValues } from '@/services/time';
+import { config, defaultSublayers, overlayById, type Overlay } from '@/config/runtime';
+import { createOverlayLayer, resolutionRange, showSublayers, type OverlayLayer } from '@/services/layers';
+import { timeValues, valueAt, type TimeValues } from '@/services/time';
 import { useMapStore } from '@/state/store';
 import { attachCurtain } from './curtain';
 import { resolutionToScale, scaleToResolution } from './projection';
@@ -15,76 +15,129 @@ const Z_INDEX = 5;
 /** The last date's image stays while the next loads, faded so the wait shows on the map too. */
 const LOADING_OPACITY = 0.5;
 
+/** The layers of the time view (map.yaml: timeTravel.layers) that have a time block, in order. */
+export function timeLayers(): { def: Overlay; spec: TimeValues }[] {
+  return (config.map.timeTravel?.layers ?? []).flatMap((entry) => {
+    const def = overlayById.get(entry.id);
+    const spec = def && timeValues(def);
+    return def && spec ? [{ def, spec }] : [];
+  });
+}
+
+/** The layer the view shows: the chosen one, else the first. */
+export function currentTimeLayer(id: string | null): { def: Overlay; spec: TimeValues } | undefined {
+  const layers = timeLayers();
+  return layers.find((l) => l.def.id === id) ?? layers[0];
+}
+
+/** The sublayers a layer draws for a value: an edition's own, else the layer's defaults. */
+export function sublayersFor(def: Overlay, spec: TimeValues, value: string | undefined): string[] {
+  const edition = value !== undefined ? spec.editions?.[value] : undefined;
+  return edition?.layer ? edition.layer.split(',').map((n) => n.trim()) : defaultSublayers(def);
+}
+
+/** The value a layer draws for the date chosen on the bar: the latest of its own not after it. */
+const valueFor = (spec: TimeValues, time: string | null) => (time === null ? spec.current : (valueAt(spec.values, time) ?? spec.current));
+
 /**
- * The time view (map.yaml: timeTravel): its layer, drawn over the base map while the view is
- * open, at the date chosen on the time bar (ui/TimeBar.tsx). The layer is a WMS with a time
- * dimension: one image per view, asked again for each date; OpenLayers keeps the last image on
- * screen until the new one arrives, and the bar says what is loading. Compared with the
- * present, the layer is drawn left of a curtain (curtain.ts) and the base map shows right of it.
+ * The time view (map.yaml: timeTravel): its layers, one drawn over the base map while the view is
+ * open, at the date chosen on the time bar (ui/TimeBar.tsx). A layer with a time dimension is a
+ * WMS asked for one image per view and date; a series draws the sublayers of its edition.
+ * OpenLayers keeps the last image on screen until the new one arrives, and the bar says what is
+ * loading. Compared with the present, the layer is drawn left of a curtain (curtain.ts) and the
+ * base map shows right of it.
  */
 export function attachTimeTravel(map: Map): () => void {
-  const def = config.map.timeTravel && overlayById.get(config.map.timeTravel.layer);
-  const spec = def && timeValues(def);
-  if (!def || !spec) return () => {};
-
-  // The image is the size of the view, not larger: the service is slow, and a pan asks anyway.
-  const layer = createOverlayLayer(def, { ratio: 1 });
-  layer.setZIndex(Z_INDEX);
-  const names = defaultSublayers(def);
-  showSublayers(layer, names);
-  const range = resolutionRange(def, names);
-  layer.setMinResolution(range.min);
-  layer.setMaxResolution(range.max);
-  map.addLayer(layer);
-  const detachCurtain = attachCurtain(map, layer);
-
-  const source = layer.getSource();
+  const layers = timeLayers();
+  if (layers.length === 0) return () => {};
   const { setTimeStatus } = useMapStore.getState();
-  if (source instanceof ImageWMS) {
-    source.on('imageloadstart', () => setTimeStatus('loading'));
-    source.on('imageloadend', () => setTimeStatus('idle'));
-    source.on('imageloaderror', () => setTimeStatus('error'));
-  }
-  const fade = () => layer.setOpacity(useMapStore.getState().timeStatus === 'loading' ? LOADING_OPACITY : 1);
+
+  const shown = layers.map(({ def, spec }) => {
+    // The image is the size of the view, not larger: the services are slow, and a pan asks anyway.
+    const layer = createOverlayLayer(def, { ratio: 1 });
+    layer.setZIndex(Z_INDEX);
+    map.addLayer(layer);
+    const source = layer.getSource();
+    if (source instanceof ImageWMS) {
+      source.on('imageloadstart', () => setTimeStatus('loading'));
+      source.on('imageloadend', () => setTimeStatus('idle'));
+      source.on('imageloaderror', () => setTimeStatus('error'));
+    }
+    return { def, spec, layer, source };
+  });
+  const detachCurtain = attachCurtain(
+    map,
+    shown.map((s) => s.layer),
+  );
+
+  /** The shown layer's scale range for the chosen value; none while the view is closed. */
+  const rangeOf = (entry: (typeof shown)[number], value: string | undefined) =>
+    resolutionRange(entry.def, sublayersFor(entry.def, entry.spec, value));
 
   const apply = () => {
     const s = useMapStore.getState();
     const open = s.tool === 'time';
-    layer.setVisible(open);
-    if (!open || !spec.param || !(source instanceof ImageWMS)) return;
-    const value = s.time ?? spec.current;
-    if (value !== undefined && source.getParams()[spec.param] !== value) source.updateParams({ [spec.param]: value });
+    const current = currentTimeLayer(s.timeLayer)?.def.id;
+    for (const entry of shown) {
+      const visible = open && entry.def.id === current;
+      entry.layer.setVisible(visible);
+      if (!visible) continue;
+      const value = valueFor(entry.spec, s.time);
+      const names = sublayersFor(entry.def, entry.spec, value);
+      showSublayers(entry.layer, names);
+      const range = rangeOf(entry, value);
+      entry.layer.setMinResolution(range.min);
+      entry.layer.setMaxResolution(range.max);
+      if (
+        entry.spec.param &&
+        entry.source instanceof ImageWMS &&
+        value !== undefined &&
+        entry.source.getParams()[entry.spec.param] !== value
+      ) {
+        entry.source.updateParams({ [entry.spec.param]: value });
+      }
+    }
   };
   apply();
 
+  const fade = () => {
+    const opacity = useMapStore.getState().timeStatus === 'loading' ? LOADING_OPACITY : 1;
+    for (const entry of shown) entry.layer.setOpacity(opacity);
+  };
+
   /** Opened too far out for the layer to draw: closer, at the scale where it does. */
   const zoomIn = () => {
+    const s = useMapStore.getState();
+    const entry = shown.find((e) => e.def.id === currentTimeLayer(s.timeLayer)?.def.id);
     const resolution = map.getView().getResolution();
-    if (resolution !== undefined && resolution > range.max)
-      useMapStore.getState().zoomToScale(Math.min(OPENING_SCALE, resolutionToScale(range.max)));
+    if (!entry || resolution === undefined) return;
+    const range = rangeOf(entry, valueFor(entry.spec, s.time));
+    if (resolution > range.max) s.zoomToScale(Math.min(OPENING_SCALE, resolutionToScale(range.max)));
   };
   if (useMapStore.getState().tool === 'time') zoomIn();
 
   const unsubscribe = useMapStore.subscribe((s, prev) => {
-    if (s.tool !== prev.tool || s.time !== prev.time) apply();
-    if (s.tool === 'time' && prev.tool !== 'time') zoomIn();
-    if (s.timeRetries !== prev.timeRetries) source?.refresh();
+    if (s.tool !== prev.tool || s.time !== prev.time || s.timeLayer !== prev.timeLayer) apply();
+    if (s.tool === 'time' && (prev.tool !== 'time' || s.timeLayer !== prev.timeLayer)) zoomIn();
+    if (s.timeRetries !== prev.timeRetries) shown.forEach((e) => e.source?.refresh());
     if (s.timeStatus !== prev.timeStatus) fade();
   });
 
   return () => {
     unsubscribe();
     detachCurtain();
-    map.removeLayer(layer);
-    layer.dispose();
+    for (const entry of shown) {
+      map.removeLayer(entry.layer);
+      (entry.layer as OverlayLayer).dispose();
+    }
   };
 }
 
-/** Whether the time layer draws at this scale (its service's limits). */
-export function timeLayerDrawsAt(scale: number): boolean {
-  const def = config.map.timeTravel && overlayById.get(config.map.timeTravel.layer);
-  if (!def) return false;
-  const range = resolutionRange(def, defaultSublayers(def));
+/** Whether the view's layer draws at this scale for this date (its service's limits). */
+export function timeLayerDrawsAt(id: string | null, time: string | null, scale: number): boolean {
+  const entry = currentTimeLayer(id);
+  if (!entry) return false;
+  const range = resolutionRange(entry.def, sublayersFor(entry.def, entry.spec, valueFor(entry.spec, time)));
   const resolution = scaleToResolution(scale);
   return resolution >= range.min && resolution <= range.max;
 }

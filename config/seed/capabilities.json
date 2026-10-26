@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-10-26T12:36:04.432Z",
+  "generatedAt": "2026-10-26T20:58:39.496Z",
   "services": {
     "kieg": {
       "kind": "wms",
-      "fetchedAt": "2026-10-26T12:35:55.128Z",
+      "fetchedAt": "2026-10-26T20:58:38.517Z",
       "title": "Krajowa Integracja Ewidencji Gruntów",
       "infoFormats": ["text/xml", "text/html"],
       "layers": {
@@ -103,7 +103,7 @@
     },
     "kimpzp": {
       "kind": "wms",
-      "fetchedAt": "2026-10-26T12:35:55.114Z",
+      "fetchedAt": "2026-10-26T20:58:38.543Z",
       "title": "Krajowa Integracja Miejscowych Planów Zagospodarowania Przestrzennego",
       "infoFormats": ["text/html", "application/vnd.ogc.gml", "text/plain"],
       "layers": {
@@ -167,7 +167,7 @@
     },
     "pog": {
       "kind": "wms",
-      "fetchedAt": "2026-10-26T12:35:55.194Z",
+      "fetchedAt": "2026-10-26T20:58:38.680Z",
       "title": "Plany ogólne gmin - uchwalone",
       "infoFormats": ["text/html", "text/xml", "application/vnd.ogc.gml", "text/plain"],
       "layers": {
@@ -199,7 +199,7 @@
     },
     "rcn": {
       "kind": "wms",
-      "fetchedAt": "2026-10-26T12:35:55.222Z",
+      "fetchedAt": "2026-10-26T20:58:38.561Z",
       "title": "Rejestr Cen Nieruchomości",
       "infoFormats": ["text/xml", "text/html", "application/vnd.ogc.gml", "text/plain"],
       "layers": {
@@ -231,7 +231,7 @@
     },
     "kiut": {
       "kind": "wms",
-      "fetchedAt": "2026-10-26T12:35:55.130Z",
+      "fetchedAt": "2026-10-26T20:58:38.535Z",
       "title": "Krajowa Integracja Uzbrojenia Terenu",
       "infoFormats": ["text/xml", "text/html"],
       "layers": {
@@ -312,7 +312,7 @@
     },
     "kibdot": {
       "kind": "wms",
-      "fetchedAt": "2026-10-26T12:35:55.216Z",
+      "fetchedAt": "2026-10-26T20:58:38.505Z",
       "title": "Krajowa Integracja Baz Danych Obiektów Topograficznych",
       "infoFormats": ["text/html", "application/vnd.ogc.gml", "text/plain"],
       "layers": {
@@ -333,7 +333,7 @@
     },
     "suikzp": {
       "kind": "wms",
-      "fetchedAt": "2026-10-26T12:35:55.112Z",
+      "fetchedAt": "2026-10-26T20:58:38.537Z",
       "title": "Krajowa Integracja Studium Uwarunkowań i Kierunków Zagospodarowania Przestrzennego",
       "infoFormats": ["text/html", "application/vnd.ogc.gml", "text/plain"],
       "layers": {
@@ -355,7 +355,7 @@
     },
     "kina": {
       "kind": "wms",
-      "fetchedAt": "2026-10-26T12:35:55.107Z",
+      "fetchedAt": "2026-10-26T20:58:38.524Z",
       "title": "Krajowa Integracja Numeracji Adresowej",
       "infoFormats": ["text/xml", "application/vnd.ogc.gml", "text/plain"],
       "layers": {
@@ -387,7 +387,7 @@
     },
     "prg": {
       "kind": "wms",
-      "fetchedAt": "2026-10-26T12:35:55.275Z",
+      "fetchedAt": "2026-10-26T20:58:38.679Z",
       "title": "Usługa przeglądania Państwowego Rejestru Granic",
       "infoFormats": ["text/xml", "application/vnd.ogc.gml", "text/plain"],
       "layers": {
@@ -681,7 +681,7 @@
     },
     "orto-archiwalna": {
       "kind": "wms",
-      "fetchedAt": "2026-10-26T12:35:55.931Z",
+      "fetchedAt": "2026-10-26T20:58:38.550Z",
       "title": "Usługa przeglądania (WMS) ortofotomap archiwalnych dla obszaru Polski",
       "infoFormats": ["application/vnd.ogc.wms_xml", "application/geojson", "text/xml", "text/html", "text/plain"],
       "layers": {
@@ -698,9 +698,71 @@
         }
       }
     },
+    "mapy-dawne": {
+      "kind": "wms",
+      "fetchedAt": "2026-10-26T20:58:38.540Z",
+      "title": "Usługa przeglądania (WMS) rastrowych map topograficznych dla obszaru Polski (serie)",
+      "infoFormats": [],
+      "layers": {
+        "Raster_10_1992": {
+          "title": "Raster_10_1992",
+          "queryable": false,
+          "maxScale": 23622.566964,
+          "legend": "https://mapy.geoportal.gov.pl/wss/service/img/guest/TOPO_SERIA/MapServer/WMSServer?request=GetLegendGraphic%26version=1.3.0%26format=image/png%26layer=Raster_10_1992%26WIDTH=200"
+        },
+        "Raster_10_1965": {
+          "title": "Raster_10_1965",
+          "queryable": false,
+          "maxScale": 23622.566964,
+          "legend": "https://mapy.geoportal.gov.pl/wss/service/img/guest/TOPO_SERIA/MapServer/WMSServer?request=GetLegendGraphic%26version=1.3.0%26format=image/png%26layer=Raster_10_1965%26WIDTH=200"
+        },
+        "Raster_10_1942": {
+          "title": "Raster_10_1942",
+          "queryable": false,
+          "maxScale": 23622.566964,
+          "legend": "https://mapy.geoportal.gov.pl/wss/service/img/guest/TOPO_SERIA/MapServer/WMSServer?request=GetLegendGraphic%26version=1.3.0%26format=image/png%26layer=Raster_10_1942%26WIDTH=200"
+        },
+        "Raster_25_1965": {
+          "title": "Raster_25_1965",
+          "queryable": false,
+          "maxScale": 47246.078869,
+          "legend": "https://mapy.geoportal.gov.pl/wss/service/img/guest/TOPO_SERIA/MapServer/WMSServer?request=GetLegendGraphic%26version=1.3.0%26format=image/png%26layer=Raster_25_1965%26WIDTH=200"
+        },
+        "Raster_50_UTM": {
+          "title": "Raster_50_UTM",
+          "queryable": false,
+          "maxScale": 94493.102679,
+          "legend": "https://mapy.geoportal.gov.pl/wss/service/img/guest/TOPO_SERIA/MapServer/WMSServer?request=GetLegendGraphic%26version=1.3.0%26format=image/png%26layer=Raster_50_UTM%26WIDTH=200"
+        },
+        "Raster_50tys_VMap": {
+          "title": "Raster_50tys_VMap",
+          "queryable": false,
+          "maxScale": 94493.102679,
+          "legend": "https://mapy.geoportal.gov.pl/wss/service/img/guest/TOPO_SERIA/MapServer/WMSServer?request=GetLegendGraphic%26version=1.3.0%26format=image/png%26layer=VMAP_50tys_Raster"
+        },
+        "Raster_50_1992": {
+          "title": "Raster_50_1992",
+          "queryable": false,
+          "maxScale": 94493.102679,
+          "legend": "https://mapy.geoportal.gov.pl/wss/service/img/guest/TOPO_SERIA/MapServer/WMSServer?request=GetLegendGraphic%26version=1.3.0%26format=image/png%26layer=Raster_50_1992%26WIDTH=200"
+        },
+        "Raster_50_1965": {
+          "title": "Raster_50_1965",
+          "queryable": false,
+          "maxScale": 94493.102679,
+          "legend": "https://mapy.geoportal.gov.pl/wss/service/img/guest/TOPO_SERIA/MapServer/WMSServer?request=GetLegendGraphic%26version=1.3.0%26format=image/png%26layer=Raster_50_1965%26WIDTH=200"
+        },
+        "Raster_50_1942": {
+          "title": "Raster_50_1942",
+          "queryable": false,
+          "maxScale": 94493.102679,
+          "legend": "https://mapy.geoportal.gov.pl/wss/service/img/guest/TOPO_SERIA/MapServer/WMSServer?request=GetLegendGraphic%26version=1.3.0%26format=image/png%26layer=Raster_50_1942%26WIDTH=200"
+        }
+      }
+    },
     "orto": {
       "kind": "wmts",
-      "fetchedAt": "2026-10-26T12:36:04.432Z",
+      "fetchedAt": "2026-10-26T20:58:38.532Z",
       "title": "Usługa przeglądania ortofotomap dla obszaru Polski. Profil kafelkowany (WMTS)",
       "layer": "ORTOFOTOMAPA",
       "format": "image/jpeg",
@@ -818,7 +880,7 @@
     },
     "bdoo": {
       "kind": "wmts",
-      "fetchedAt": "2026-10-26T12:35:55.137Z",
+      "fetchedAt": "2026-10-26T20:58:38.558Z",
       "title": "Usługa przeglądania treści Bazy Danych Obiektów Ogólnogeograficznych. Profil kafelkowany (WMTS)",
       "layer": "BDOO",
       "format": "image/png",
@@ -912,7 +974,7 @@
     },
     "bdot10k": {
       "kind": "wmts",
-      "fetchedAt": "2026-10-26T12:35:55.143Z",
+      "fetchedAt": "2026-10-26T20:58:38.569Z",
       "title": "Usługa przeglądania danych Bazy Danych Obiektów Topograficznych BDOT10k. Profil kafelkowany (WMTS)",
       "layer": "BDOT10k",
       "format": "image/png",
@@ -1006,7 +1068,7 @@
     },
     "relief": {
       "kind": "wmts",
-      "fetchedAt": "2026-10-26T12:35:55.125Z",
+      "fetchedAt": "2026-10-26T20:58:38.522Z",
       "title": "Usługa przeglądania cieniowanej hipsometrii dla NMT o rozdzielczoćci 1m. Profil kafelkowany (WMTS)",
       "layer": "HipsoCien",
       "format": "image/jpeg",
@@ -1100,7 +1162,7 @@
     },
     "g2mobile": {
       "kind": "wmts",
-      "fetchedAt": "2026-10-26T12:35:59.683Z",
+      "fetchedAt": "2026-10-26T20:58:38.520Z",
       "title": "Usługa przeglądania WMTS dla urządzeń mobilnych (G2_MOBILE500)",
       "layer": "G2_MOBILE_500",
       "format": "image/png",
@@ -1212,7 +1274,7 @@
     },
     "topo": {
       "kind": "wmts",
-      "fetchedAt": "2026-10-26T12:35:55.156Z",
+      "fetchedAt": "2026-10-26T20:58:38.549Z",
       "title": "Usługa przeglądania rastrowych map topograficznych dla Polski. Profil kafelkowany (WMTS)",
       "layer": "MAPA TOPOGRAFICZNA",
       "format": "image/jpeg",
@@ -1305,5 +1367,5 @@
       }
     }
   },
-  "drawOrder": ["orto-archiwalna", "suikzp", "kimpzp", "pog", "kibdot", "kiut", "kieg", "rcn", "kina", "prg"]
+  "drawOrder": ["mapy-dawne", "orto-archiwalna", "suikzp", "kimpzp", "pog", "kibdot", "kiut", "kieg", "rcn", "kina", "prg"]
 }

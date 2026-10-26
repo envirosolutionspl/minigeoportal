@@ -38,20 +38,24 @@ time:
       layer: orto_2020
 ```
 
-Każda edycja ma `value` i, jeśli różni się od warstwy, własny `url` lub `layer`. Własne `url` i podwarstwy warstwy pokazują najnowszą edycję i to one są dziś rysowane; `url` i `layer` edycji czekają na podróż w czasie po seriach.
+Każda edycja ma `value` i, jeśli różni się od warstwy, własny `layer` (jedna podwarstwa albo kilka po przecinku, w kolejności rysowania; usługa rysuje każdą w jej zakresie skal) oraz opcjonalnie `label` (_tekst_), którym pasek czasu nazywa edycję zamiast wartości. Włączona z listy warstw seria rysuje podwarstwy warstwy (najnowszą edycję); w podróży w czasie rysuje podwarstwy wybranej edycji. `url` edycji czeka na obsługę.
 
 ## Podróż w czasie
 
-`map.yaml` wskazuje warstwę z wymiarem, którą pasek czasu rysuje nad podkładem na wybraną datę:
+`map.yaml` wskazuje warstwy z blokiem `time`, które pasek czasu rysuje nad podkładem na wybraną datę, po jednej naraz:
 
 ```yaml
 timeTravel:
-  layer: orto-archiwalna # warstwa z layers.yaml z blokiem time (dziś: WMS z wymiarem)
   base: orto # podkład wymuszany, póki podróż trwa (opcjonalnie)
+  layers:
+    - { id: orto-archiwalna, label: Zdjęcia } # wymiar jednej usługi
+    - { id: mapy-dawne, label: Mapy dawne } # seria edycji
 ```
 
-Narzędzie „Podróż w czasie” (na komputerze przycisk obok pomiaru, na telefonie pozycja w „Więcej”) pokazuje pasek z suwakiem dat, przyciskami do wcześniejszej i późniejszej daty, opisem tego, co widać, i podpowiedzią, gdy mapa jest za daleko, by warstwa rysowała. Usługa z wymiarem TIME pokazuje stan na datę (np. zdjęcie zrobione tego dnia albo wcześniej), więc suwak chodzi po datach, nie po każdym miesiącu zakresu. Bez modułu, który zna daty w danym miejscu, suwak ma pierwszą wartość każdego roku z listy warstwy. Moduł `gugik` z `ortho.history` wskazującym tę warstwę zawęża daty do zdjęć, które skorowidz ortofotomapy zna w środku mapy (zob. [Wyszukiwarka i moduły](wyszukiwarka-i-moduly.md)).
+Narzędzie „Podróż w czasie” (na komputerze przycisk obok pomiaru, na telefonie pozycja w „Więcej”) pokazuje pasek z przełącznikiem warstw (gdy jest ich więcej niż jedna), suwakiem dat, przyciskami do wcześniejszej i późniejszej daty, opisem tego, co widać, i podpowiedzią, gdy mapa jest za daleko, by warstwa rysowała. Usługa z wymiarem TIME pokazuje stan na datę (np. zdjęcie zrobione tego dnia albo wcześniej), więc suwak chodzi po datach, nie po każdym miesiącu zakresu. Bez modułu, który zna daty w danym miejscu, suwak ma pierwszą wartość każdego roku z listy warstwy. Moduł `gugik` z `ortho.history` wskazującym tę warstwę zawęża daty do zdjęć, które skorowidz ortofotomapy zna w środku mapy (zob. [Wyszukiwarka i moduły](wyszukiwarka-i-moduly.md)).
 
 Przycisk „Porównaj z aktualnymi danymi” w pasku dzieli mapę kurtyną: po lewej warstwa na wybraną datę, po prawej podkład (dziś). Uchwyt na linii przeciąga się myszą lub palcem, klik na wysokości uchwytu stawia linię w tym miejscu, strzałki w lewo i w prawo przesuwają ją z klawiatury.
 
-Link do widoku niesie datę (`t=2007-01-01`, z porównaniem `c=1`) i otwiera mapę od razu w podróży; Escape ją kończy i przywraca podkład sprzed niej.
+Przy zmianie warstwy data zostaje, a suwak staje na najpóźniejszej wartości nowej warstwy nie późniejszej od niej (zdjęcie z 2007 na mapach dawnych pokazuje układ 1992).
+
+Link do widoku niesie datę (`t=2007-01-01`, z porównaniem `c=1`, z inną warstwą niż pierwsza `tl=mapy-dawne`) i otwiera mapę od razu w podróży; Escape ją kończy i przywraca podkład sprzed niej.

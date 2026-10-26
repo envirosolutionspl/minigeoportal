@@ -11,9 +11,11 @@ import { layerMeta } from './meta';
 const MAX_VALUES = 1000;
 
 export interface TimeValues {
-  /** Request parameter (TIME, DIM_…); none for a series, whose editions are separate services. */
+  /** Request parameter (TIME, DIM_…); none for a series, whose editions are separate services or layers. */
   param?: string;
   values: string[];
+  /** Of a series: the sublayers each edition draws (comma-separated, as a WMS lists them) and what to call it. */
+  editions?: Record<string, { layer?: string; label?: string }>;
   /** The value drawn: the configured one, the service's default, or the newest; none while the service's values are not known yet. */
   current?: string;
 }
@@ -60,7 +62,10 @@ export function timeValues(def: Overlay): TimeValues | undefined {
   if (!time) return undefined;
   if (time.type === 'series') {
     const values = time.editions.map((e) => e.value);
-    return { values, current: values[values.length - 1] };
+    const editions = Object.fromEntries(
+      time.editions.map((e) => [e.value, { ...(e.layer ? { layer: e.layer } : {}), ...(e.label ? { label: e.label } : {}) }]),
+    );
+    return { values, current: values[values.length - 1], editions };
   }
   let values: string[];
   let fallback: string | undefined;

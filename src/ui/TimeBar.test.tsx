@@ -22,7 +22,27 @@ beforeEach(() => {
       },
     },
   });
-  useMapStore.setState({ tool: 'time', time: null, timeStatus: 'idle', compare: false, scale: 10000, center: [636500, 486500] });
+  registerMeta('mapy-dawne', {
+    kind: 'wms',
+    fetchedAt: '',
+    title: '',
+    infoFormats: [],
+    layers: {
+      Raster_50_1965: { title: '', queryable: false, maxScale: 94493 },
+      Raster_10_1965: { title: '', queryable: false, maxScale: 23623 },
+      Raster_50_1992: { title: '', queryable: false, maxScale: 94493 },
+      Raster_10_1992: { title: '', queryable: false, maxScale: 23623 },
+    },
+  });
+  useMapStore.setState({
+    tool: 'time',
+    time: null,
+    timeLayer: null,
+    timeStatus: 'idle',
+    compare: false,
+    scale: 10000,
+    center: [636500, 486500],
+  });
 });
 
 afterEach(() => vi.useRealTimers());
@@ -173,6 +193,30 @@ describe('TimeBar', () => {
     expect(screen.getByRole('status').textContent).toContain('Przeciągnij kurtynę');
     fireEvent.click(compare);
     expect(useMapStore.getState().compare).toBe(false);
+  });
+
+  it('switches to the old maps: three systems on the slider, named, without asking the photo index', async () => {
+    const { calls } = index();
+    render(<TimeBar />);
+    await settle();
+    const asked = calls.length;
+    fireEvent.click(screen.getByRole('button', { name: 'Mapy dawne' }));
+    expect(useMapStore.getState().timeLayer).toBe('mapy-dawne');
+    expect(screen.getByRole('button', { name: 'Mapy dawne' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Zdjęcia' }).getAttribute('aria-pressed')).toBe('false');
+    await settle();
+    expect(calls.length).toBe(asked);
+    expect(slider().max).toBe('2');
+    // The photo's date snaps to the latest system before it.
+    expect(useMapStore.getState().time).toBe('1992');
+    expect(slider().getAttribute('aria-valuetext')).toBe('1992');
+    expect(screen.getByRole('status').textContent).toBe('Mapy w układzie 1992, lata 90. i 2000.');
+    fireEvent.click(screen.getByRole('button', { name: 'Wcześniejsza data' }));
+    expect(useMapStore.getState().time).toBe('1965');
+    expect(screen.getByRole('status').textContent).toBe('Mapy w układzie 1965, lata 70.–90.');
+    fireEvent.click(screen.getByRole('button', { name: 'Zdjęcia' }));
+    await settle();
+    expect(useMapStore.getState().time).toBe('2001-05-13');
   });
 
   it('closes with its button', async () => {

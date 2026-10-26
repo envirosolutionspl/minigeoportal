@@ -40,7 +40,9 @@ const timeSpec = z.discriminatedUnion('type', [
   }),
   z.strictObject({
     type: z.literal('series'),
-    editions: z.array(z.strictObject({ value: z.string(), url: url.optional(), layer: z.string().optional() })).min(1),
+    editions: z
+      .array(z.strictObject({ value: z.string(), url: url.optional(), layer: z.string().optional(), label: text.optional() }))
+      .min(1),
   }),
 ]);
 
@@ -146,8 +148,8 @@ export const mapSchema = z.strictObject({
     toggleBase: id.optional(),
     overlays: z.array(id).default([]),
   }),
-  /** The time view: an overlay with a `time` block, drawn over a base map forced while the view is open. */
-  timeTravel: z.strictObject({ layer: id, base: id.optional() }).optional(),
+  /** The time view: overlays with a `time` block, named for the bar's switch, drawn over a base map forced while the view is open. */
+  timeTravel: z.strictObject({ layers: z.array(z.strictObject({ id, label: text })).min(1), base: id.optional() }).optional(),
   attribution: text,
   tileServices: z
     .array(

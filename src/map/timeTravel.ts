@@ -12,6 +12,8 @@ const OPENING_SCALE = 20000;
 
 /** Between the base map and the overlays. */
 const Z_INDEX = 5;
+/** The last date's image stays while the next loads, faded so the wait shows on the map too. */
+const LOADING_OPACITY = 0.5;
 
 /**
  * The time view (map.yaml: timeTravel): its layer, drawn over the base map while the view is
@@ -25,7 +27,8 @@ export function attachTimeTravel(map: Map): () => void {
   const spec = def && timeValues(def);
   if (!def || !spec) return () => {};
 
-  const layer = createOverlayLayer(def);
+  // The image is the size of the view, not larger: the service is slow, and a pan asks anyway.
+  const layer = createOverlayLayer(def, { ratio: 1 });
   layer.setZIndex(Z_INDEX);
   const names = defaultSublayers(def);
   showSublayers(layer, names);
@@ -42,6 +45,7 @@ export function attachTimeTravel(map: Map): () => void {
     source.on('imageloadend', () => setTimeStatus('idle'));
     source.on('imageloaderror', () => setTimeStatus('error'));
   }
+  const fade = () => layer.setOpacity(useMapStore.getState().timeStatus === 'loading' ? LOADING_OPACITY : 1);
 
   const apply = () => {
     const s = useMapStore.getState();
@@ -65,6 +69,7 @@ export function attachTimeTravel(map: Map): () => void {
     if (s.tool !== prev.tool || s.time !== prev.time) apply();
     if (s.tool === 'time' && prev.tool !== 'time') zoomIn();
     if (s.timeRetries !== prev.timeRetries) source?.refresh();
+    if (s.timeStatus !== prev.timeStatus) fade();
   });
 
   return () => {

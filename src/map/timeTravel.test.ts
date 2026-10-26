@@ -83,11 +83,14 @@ describe('attachTimeTravel', () => {
     expect(useMapStore.getState().focus?.scale).toBe(20000);
   });
 
-  it('reports the loading of the image and asks for it again on a retry', () => {
-    const source = timeLayer().getSource()!;
+  it('reports the loading of the image, fading the last one meanwhile, and asks for it again on a retry', () => {
+    const layer = timeLayer();
+    const source = layer.getSource()!;
+    expect((source as unknown as { ratio_: number }).ratio_).toBe(1);
     useMapStore.getState().setTool('time');
     source.dispatchEvent('imageloadstart');
     expect(useMapStore.getState().timeStatus).toBe('loading');
+    expect(layer.getOpacity()).toBe(0.5);
     source.dispatchEvent('imageloaderror');
     expect(useMapStore.getState().timeStatus).toBe('error');
     const refresh = vi.spyOn(source, 'refresh');
@@ -95,6 +98,7 @@ describe('attachTimeTravel', () => {
     expect(refresh).toHaveBeenCalled();
     source.dispatchEvent('imageloadend');
     expect(useMapStore.getState().timeStatus).toBe('idle');
+    expect(layer.getOpacity()).toBe(1);
   });
 
   it('goes with the map', () => {

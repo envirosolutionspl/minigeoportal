@@ -155,6 +155,7 @@ time:
   error: The server did not answer.
   retry: Try again
   zoomHint: Zoom in to see the layer {title}.
+  pick: Let go to show the state as of {date}.
   compare: Compare with the present
   now: Today
   curtain: 'Curtain: the chosen date on the left, today on the right'

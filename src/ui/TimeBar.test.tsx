@@ -84,6 +84,23 @@ describe('TimeBar', () => {
     expect(screen.getByRole('status').textContent).toBe('Stan na 21.04.2011, piksel 25 cm');
   });
 
+  it('asks for a date only once the slider is let go, showing where it is meanwhile', async () => {
+    index();
+    render(<TimeBar />);
+    await settle();
+    // Dragging: the browser sends input events for every date the thumb passes.
+    fireEvent.input(slider(), { target: { value: '0' } });
+    expect(useMapStore.getState().time).toBe('2025-04-27');
+    expect(slider().value).toBe('0');
+    expect(slider().getAttribute('aria-valuetext')).toBe('13.05.2001');
+    expect(screen.getByRole('status').textContent).toBe('Puść, aby pokazać stan na 13.05.2001.');
+    expect(screen.getByText('2001', { selector: 'span[aria-hidden]' })).toBeTruthy();
+    // Let go: one change event.
+    slider().dispatchEvent(new Event('change', { bubbles: true }));
+    expect(useMapStore.getState().time).toBe('2001-05-13');
+    expect(screen.getByRole('status').textContent).toBe('Stan na 13.05.2001, piksel 75 cm');
+  });
+
   it('snaps a date from a link to the photo the service shows for it', async () => {
     useMapStore.setState({ time: '2015-06-01' });
     index();

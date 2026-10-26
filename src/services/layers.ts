@@ -99,7 +99,7 @@ export type OverlayLayer = ImageLayer<ImageWMS | ImageArcGISRest> | TileLayer<WM
  * `Origin: null`, which some of them reject (e.g. Warsaw answers 403), while others send no
  * CORS headers at all. The app never reads overlay pixels, so CORS is not needed here.
  */
-export function createOverlayLayer(def: Overlay): OverlayLayer {
+export function createOverlayLayer(def: Overlay, image: { ratio?: number } = {}): OverlayLayer {
   const options = { visible: false, opacity: def.opacity ?? 1, zIndex: 10 + drawIndex(def.id) };
   const tiles = tileSource(def);
   if (tiles) {
@@ -107,15 +107,20 @@ export function createOverlayLayer(def: Overlay): OverlayLayer {
     tiles.on('tileloaderror', () => report(def.id, false));
     return new TileLayer({ source: tiles, ...options });
   }
-  const image = { url: def.url, projection: PROJECTION, ratio: 1.25, attributions: def.attribution ?? config.map.attribution };
+  const common = {
+    url: def.url,
+    projection: PROJECTION,
+    ratio: image.ratio ?? 1.25,
+    attributions: def.attribution ?? config.map.attribution,
+  };
   // A layer that changes over time is drawn at its current value (TIME=2020 and the like).
   const time = timeValues(def);
   const when = time?.param && time.current !== undefined ? { [time.param]: time.current } : {};
   const source =
     def.kind === 'rest'
-      ? new ImageArcGISRest({ ...image, params: { LAYERS: 'show:', FORMAT: 'png32', TRANSPARENT: true } })
+      ? new ImageArcGISRest({ ...common, params: { LAYERS: 'show:', FORMAT: 'png32', TRANSPARENT: true } })
       : new ImageWMS({
-          ...image,
+          ...common,
           params: { LAYERS: '', FORMAT: def.format ?? 'image/png', TRANSPARENT: def.format !== 'image/jpeg', VERSION: '1.3.0', ...when },
         });
   source.on('imageloadend', () => report(def.id, true));

@@ -154,6 +154,7 @@ time:
   error: Serwer nie odpowiedział.
   retry: Spróbuj ponownie
   zoomHint: Przybliż mapę, aby zobaczyć warstwę {title}.
+  pick: Puść, aby pokazać stan na {date}.
   compare: Porównaj z aktualnymi danymi
   now: Dziś
   curtain: 'Kurtyna: po lewej wybrana data, po prawej dziś'

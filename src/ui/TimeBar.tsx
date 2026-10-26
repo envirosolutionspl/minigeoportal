@@ -52,6 +52,8 @@ function Bar({ id, title }: { id: string; title: string }) {
   const [checking, setChecking] = useState(timeOptionsAt !== undefined);
   const sliderId = useId();
   const listId = useId();
+  /** Where the slider is while it is being dragged; the date is asked for once it is let go. */
+  const [dragging, setDragging] = useState<number | null>(null);
 
   // Asked once the map has settled; a move of less than 100 m stays on the same photos.
   const place = `${Math.round(center[0] / 100)},${Math.round(center[1] / 100)}`;
@@ -86,6 +88,19 @@ function Bar({ id, title }: { id: string; title: string }) {
   }, [ready, current, time, setTime]);
 
   const choose = (i: number) => setTime(values[Math.min(Math.max(i, 0), values.length - 1)]);
+  /**
+   * The browser sends input events for every date the thumb passes and a change event when the
+   * slider is let go (and after each key): only then is the service asked.
+   */
+  const onSlide = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const i = Number(e.target.value);
+    if (e.nativeEvent.type === 'change') {
+      setDragging(null);
+      choose(i);
+    } else setDragging(i);
+  };
+  const shown = dragging ?? index;
+  const dragged = dragging !== null && values[dragging] !== undefined ? values[dragging] : undefined;
   const label = (value: string) => {
     const shown = t('time.shown', { date: dateText(value) });
     const detail = options?.find((o) => o.value === value)?.detail;
@@ -93,7 +108,9 @@ function Bar({ id, title }: { id: string; title: string }) {
   };
 
   let line: React.ReactNode;
-  if (!draws) {
+  if (dragged) {
+    line = t('time.pick', { date: dateText(dragged) });
+  } else if (!draws) {
     line = (
       <>
         {t('time.zoomHint', { title })}{' '}
@@ -145,12 +162,12 @@ function Bar({ id, title }: { id: string; title: string }) {
             min={0}
             max={Math.max(values.length - 1, 0)}
             step={1}
-            value={Math.max(index, 0)}
+            value={Math.max(shown, 0)}
             disabled={values.length === 0}
             list={listId}
             aria-label={t('time.date')}
-            aria-valuetext={current ? dateText(current) : ''}
-            onChange={(e) => choose(Number(e.target.value))}
+            aria-valuetext={dragged ? dateText(dragged) : current ? dateText(current) : ''}
+            onChange={onSlide}
             className="time-slider w-full accent-[var(--accent)]"
           />
           <datalist id={listId}>
@@ -164,7 +181,7 @@ function Bar({ id, title }: { id: string; title: string }) {
           </div>
         </div>
         <span aria-hidden="true" className="w-12 shrink-0 text-center text-lg font-semibold tabular-nums">
-          {current ? year(current) : '–'}
+          {dragged ? year(dragged) : current ? year(current) : '–'}
         </span>
         <button
           type="button"

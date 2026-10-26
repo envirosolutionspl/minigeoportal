@@ -37,7 +37,7 @@ layers:
   popular: Na start
 ```
 
-Tak wdrożenie podaje też czytelne nazwy technicznych pól z odpowiedzi usług (`info.fields`, kluczem jest nazwa pola), dopisuje źródło danych do stopki wydruku (`print.note`) i formułuje napisy pod własne dane (podpowiedź wyszukiwania warstw, powody, dla których warstwy nie da się pokazać, panel miejsca bez warstw, wstęp formularza zgłoszeń); domyślna konfiguracja robi to dla usług GUGiK w `config/i18n/`:
+Tak wdrożenie podaje też czytelne nazwy technicznych pól z odpowiedzi usług (`info.fields`, kluczem jest nazwa pola), zastępuje stopkę wydruku własną, ze źródłem danych (`print.note`, cały tekst stopki) i formułuje napisy pod własne dane (podpowiedź wyszukiwania warstw, powody, dla których warstwy nie da się pokazać, panel miejsca bez warstw, wstęp formularza zgłoszeń); domyślna konfiguracja robi to dla usług GUGiK w `config/i18n/`:
 
 ```yaml
 info:
@@ -103,7 +103,7 @@ Przykład: niemiecki (`de`) w katalogu konfiguracji `config/`.
 
 3. **Treści w Markdown.** Dodaj `content/welcome.de.md` i `content/accessibility.de.md` (przetłumacz wersję angielską). Bez nich niemiecka strona pokaże treści w języku domyślnym.
 
-4. **Teksty w plikach YAML.** Wszędzie, gdzie tekst ma wersje językowe, dopisz niemiecką; dotyczy to nazwy i opisu w `app.yaml`, kategorii zgłoszeń, podkładów i układów współrzędnych w `map.yaml` oraz tematów i warstw w `layers.yaml`:
+4. **Teksty w plikach YAML.** Wszędzie, gdzie tekst ma wersje językowe, dopisz niemiecką; dotyczy to nazwy, opisu, hasła (`tagline`), kategorii zgłoszeń i `links.fallbackName` w `app.yaml`, podkładów, `homeLabel` i `attribution` w `map.yaml` oraz tematów, warstw i podwarstw w `layers.yaml`. Nazwa układu współrzędnych (`projection.name`) jest jedna dla wszystkich języków:
 
    ```yaml
    title: { pl: 'Mapa gminy', en: 'Municipal map', de: 'Gemeindekarte' }

@@ -8,7 +8,7 @@ skin: przystan
 
 Serwer szuka `skins/przystan/skin.css` najpierw w katalogu konfiguracji, potem wśród skórek dołączonych do aplikacji (`skins/` w repozytorium; `default` to wygląd minigeoportal.pl), i umieszcza arkusz w stronie.
 
-Zacznij od kopii `skins/default/skin.css` i zmień wartości:
+Zacznij od kopii `skins/default/skin.css` i zmień wartości. Przykład niżej to skórka w odcieniach niebieskiego; wartości wyglądu minigeoportal.pl są w samym pliku `default`:
 
 ```css
 :root {
@@ -19,8 +19,8 @@ Zacznij od kopii `skins/default/skin.css` i zmień wartości:
   --muted: #52606d; /* tekst pomocniczy */
   --danger: #8a2c0d; /* tekst błędu */
   --danger-soft: #fde8e0; /* tło błędu */
-  --highlight: #ff8142; /* znalezione obiekty i kliknięte miejsce na mapie, ramka wydruku */
-  --highlight-ui: #c2410c; /* ten sam kolor na panelach (ikony miejsca i działki); bez tego --highlight */
+  --highlight: #ff8142; /* znalezione obiekty i kliknięte miejsce na mapie */
+  --highlight-ui: #c2410c; /* ten sam kolor na panelach (ikony miejsca i działki, ramka wydruku); bez tego --highlight */
   --map-measure: #466946; /* mierzone linie i powierzchnie */
   --accent: #0b5d8f; /* przyciski, linki, włączone elementy */
   --on-accent: #ffffff; /* tekst na akcencie */
@@ -37,7 +37,7 @@ Zacznij od kopii `skins/default/skin.css` i zmień wartości:
 }
 ```
 
-Tekst musi być czytelny: `--text`, `--muted` i `--accent` potrzebują kontrastu co najmniej 4,5:1 względem `--surface` i `--field`, `--on-accent` względem `--accent`, a `--danger` względem `--surface` i `--danger-soft`, w obu trybach (WCAG 2.1 AA). Testy aplikacji sprawdzają to dla każdej skórki w `skins/`.
+Tekst musi być czytelny: `--text`, `--muted`, `--accent` i `--highlight-ui` potrzebują kontrastu co najmniej 4,5:1 względem `--surface` i `--field`, `--on-accent` względem `--accent`, a `--danger` względem `--surface` i `--danger-soft`, w obu trybach (WCAG 2.1 AA). Testy aplikacji sprawdzają to dla każdej skórki w `skins/`, więc skórka trzymana tam musi mieć też `--highlight-ui`.
 
 Wysoki kontrast (żółty na czarnym, w menu ułatwień) jest wspólny dla wszystkich skórek, więc zawsze działa.
 

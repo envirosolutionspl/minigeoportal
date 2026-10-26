@@ -13,6 +13,7 @@ config/
   i18n/             zmiany napisów interfejsu albo nowy język
   skins/            własna skórka (kolory)
   seed/             metadane usług na start, przed pierwszą aktualizacją (opcjonalnie)
+  brand/            znak aplikacji i logo autora, wskazywane przez icon i author.logo (opcjonalnie)
 ```
 
 Repozytorium zawiera dwa wdrożenia:
@@ -30,13 +31,15 @@ CONFIG_DIR=examples/osm npm run dev
 
 Serwer czyta katalog konfiguracji przy starcie i zatrzymuje się z listą wszystkich znalezionych problemów, każdy z plikiem, wierszem i kolumną. Potem umieszcza konfigurację, z tekstami już w języku odwiedzającego, w samej stronie, więc aplikacja startuje bez czekania na kolejne zapytanie. Zmiana konfiguracji działa po ponownym uruchomieniu serwera (w trybie deweloperskim serwer restartuje się sam po zmianach w `config/`; przy innym `CONFIG_DIR` trzeba go uruchomić ponownie).
 
-Do przeglądarki trafiają tylko pola potrzebne aplikacji, a w plikach nie wolno zapisać niczego tajnego: klucz wyglądający na hasło, token albo klucz API jest odrzucany. Sekrety (hasło do serwera poczty) należą do zmiennych środowiskowych.
+Do przeglądarki trafiają tylko pola potrzebne aplikacji, a w `app.yaml`, `map.yaml` i `layers.yaml` nie wolno zapisać niczego tajnego: klucz wyglądający na hasło, token albo klucz API jest odrzucany. Sekrety (hasło do serwera poczty) należą do zmiennych środowiskowych.
 
 ## Dalej
 
+- [Pierwsze wdrożenie](pierwsze-wdrozenie.md): od kopii przykładu do działającej mapy, krok po kroku.
 - [Konfiguracja](konfiguracja.md): wszystkie pola `app.yaml`, `map.yaml` i `layers.yaml`.
 - [Treści i języki](tresci-i-jezyki.md): strony w Markdown, napisy interfejsu, dodawanie języka.
 - [Skórki](skorki.md): kolory interfejsu.
 - [Wyszukiwarka i moduły](wyszukiwarka-i-moduly.md): GUGiK, Nominatim albo same współrzędne; moduł `gugik`.
 - [Warstwy zmienne w czasie](warstwy-czasowe.md): blok `time` warstwy.
-- [Wdrożenie](wdrozenie.md): Docker, Caddy, wiele instancji, zmienne środowiskowe, aktualizacja danych.
+- [Wdrożenie](wdrozenie.md): Docker, Caddy, nginx, serwer bez Dockera, zmienne środowiskowe, ścieżki, polecenia.
+- [Architektura](architektura.md): budowa, bezpieczeństwo, jakość.

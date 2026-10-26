@@ -37,7 +37,7 @@ layers:
   popular: Start here
 ```
 
-The same way a deployment gives readable names to technical fields in the answers of its services (`info.fields`, keyed by the field name), names its data source in the footer of a printout (`print.note`) and words texts for its own data (the hint of the layer search, the reasons a layer cannot be shown, the place panel without layers, the introduction of the report form); the default configuration does this for the GUGiK services in `config/i18n/`:
+The same way a deployment gives readable names to technical fields in the answers of its services (`info.fields`, keyed by the field name), replaces the footer of a printout with its own, naming its data source (`print.note`, the whole footer text) and words texts for its own data (the hint of the layer search, the reasons a layer cannot be shown, the place panel without layers, the introduction of the report form); the default configuration does this for the GUGiK services in `config/i18n/`:
 
 ```yaml
 info:
@@ -101,7 +101,7 @@ Example: German (`de`) in the configuration directory `config/`.
 
 3. **Markdown content.** Add `content/welcome.de.md` and `content/accessibility.de.md` (translate the English ones). Without them the German page shows the content in the default language.
 
-4. **Texts in the YAML files.** Wherever a text has language versions, add the German one: the name and description in `app.yaml`, the report categories, base maps and coordinate systems in `map.yaml`, topics and layers in `layers.yaml`:
+4. **Texts in the YAML files.** Wherever a text has language versions, add the German one: the name, description, `tagline`, report categories and `links.fallbackName` in `app.yaml`, base maps, `homeLabel` and `attribution` in `map.yaml`, topics, layers and sublayers in `layers.yaml`. The name of the coordinate system (`projection.name`) is one for all languages:
 
    ```yaml
    title: { pl: 'Mapa gminy', en: 'Municipal map', de: 'Gemeindekarte' }

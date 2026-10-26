@@ -13,6 +13,7 @@ config/
   i18n/             changes to the interface texts, or a new language
   skins/            a skin of your own (colours)
   seed/             service metadata to start with before the first update (optional)
+  brand/            the app's sign and the author's logo, named by icon and author.logo (optional)
 ```
 
 The repository ships two deployments:
@@ -30,13 +31,15 @@ CONFIG_DIR=examples/osm npm run dev
 
 The server reads the configuration directory when it starts and stops with a list of every problem it finds, each with its file, line and column. It then puts the configuration, with every text already in the visitor's language, into the page itself, so the app starts without waiting for one more request. A change of the configuration takes effect after a restart of the server (in development the server restarts by itself on changes in `config/`; with another `CONFIG_DIR` restart it by hand).
 
-Only the fields the app needs go to the browser; nothing secret may be written into the files at all: a key that looks like a password, token or API key is refused. Secrets (the mail server password) belong in environment variables.
+Only the fields the app needs go to the browser; nothing secret may be written into `app.yaml`, `map.yaml` and `layers.yaml` at all: a key that looks like a password, token or API key is refused. Secrets (the mail server password) belong in environment variables.
 
 ## Further reading
 
+- [First deployment](first-deployment.md): from a copy of the example to a working map, step by step.
 - [Configuration](configuration.md): every field of `app.yaml`, `map.yaml` and `layers.yaml`.
 - [Texts and languages](texts-and-languages.md): Markdown pages, interface texts, adding a language.
 - [Skins](skins.md): colours of the interface.
 - [Search and modules](search-and-modules.md): GUGiK, Nominatim or coordinates only; the `gugik` module.
 - [Layers that change over time](time-layers.md): the `time` block of a layer.
-- [Deployment](deployment.md): Docker, Caddy, several instances, environment variables, data updates.
+- [Deployment](deployment.md): Docker, Caddy, nginx, a server without Docker, environment variables, paths, commands.
+- [Architecture](architecture.md): how it is built, security, quality.

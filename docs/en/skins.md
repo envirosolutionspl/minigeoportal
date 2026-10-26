@@ -8,7 +8,7 @@ skin: harbour
 
 The server looks for `skins/harbour/skin.css` in the configuration directory first, then among the skins that come with the app (`skins/` of the repository; `default` is the look of minigeoportal.pl), and puts the stylesheet into the page.
 
-Start from a copy of `skins/default/skin.css` and change the values:
+Start from a copy of `skins/default/skin.css` and change the values. The example below is a skin in shades of blue; the values of minigeoportal.pl are in the `default` file itself:
 
 ```css
 :root {
@@ -19,8 +19,8 @@ Start from a copy of `skins/default/skin.css` and change the values:
   --muted: #52606d; /* secondary text */
   --danger: #8a2c0d; /* error text */
   --danger-soft: #fde8e0; /* error background */
-  --highlight: #ff8142; /* found objects and the clicked place on the map, the print frame */
-  --highlight-ui: #c2410c; /* the same colour on panels (icons of the place and the parcel); without it --highlight */
+  --highlight: #ff8142; /* found objects and the clicked place on the map */
+  --highlight-ui: #c2410c; /* the same colour on panels (icons of the place and the parcel, the print frame); without it --highlight */
   --map-measure: #466946; /* measured lines and areas */
   --accent: #0b5d8f; /* buttons, links, switched-on items */
   --on-accent: #ffffff; /* text on the accent */
@@ -37,7 +37,7 @@ Start from a copy of `skins/default/skin.css` and change the values:
 }
 ```
 
-Keep the text readable: `--text`, `--muted` and `--accent` need a contrast of at least 4.5:1 against `--surface` and `--field`, `--on-accent` against `--accent` and `--danger` against `--surface` and `--danger-soft`, in both modes (WCAG 2.1 AA). The tests of the app check this for every skin in `skins/`.
+Keep the text readable: `--text`, `--muted`, `--accent` and `--highlight-ui` need a contrast of at least 4.5:1 against `--surface` and `--field`, `--on-accent` against `--accent` and `--danger` against `--surface` and `--danger-soft`, in both modes (WCAG 2.1 AA). The tests of the app check this for every skin in `skins/`, so a skin kept there needs `--highlight-ui` too.
 
 High contrast (yellow on black, in the display menu) is the same for every skin, so it always works.
 

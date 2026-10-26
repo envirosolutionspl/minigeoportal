@@ -84,7 +84,7 @@ export function WelcomeDialog() {
             <button
               type="button"
               onClick={close}
-              // In a modal, autofocus names the element to start on: the main action, not the checkbox.
+              // In a modal, autofocus names the element to start on: the main action, not the first link.
               // eslint-disable-next-line jsx-a11y/no-autofocus
               autoFocus
               className="rounded-2xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-[var(--on-accent)] transition hover:brightness-110"

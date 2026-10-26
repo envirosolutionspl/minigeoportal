@@ -14,7 +14,7 @@ import { useInfoStore } from '@/state/info';
 import { useMapStore } from '@/state/store';
 import { stubFetch, withCapabilities } from '@/test/helpers';
 
-/** WCAG 2.1 A and AA rules; contrast needs real rendering and is checked by hand (see README). */
+/** WCAG 2.1 A and AA rules; contrast needs real rendering, so the colours of each skin are checked in contrast.test.ts. */
 async function violations(container: Element) {
   const result = await axe.run(container, {
     runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] },

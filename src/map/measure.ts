@@ -23,7 +23,7 @@ const STYLE = new Style({
   image: new Circle({ radius: 5, fill: new Fill({ color: '#ffffff' }), stroke: new Stroke({ color: ACCENT, width: 2 }) }),
 });
 
-/** Geodesic measurement on the ellipsoid, so results do not depend on the scale distortion of the map's projection. */
+/** Measurement on the sphere (OpenLayers' sphere), so results do not depend on the scale distortion of the map's projection. */
 export function measure(geometry: Geometry): string | undefined {
   if (geometry instanceof Polygon) {
     const area = getArea(geometry, { projection: PROJECTION });

@@ -4,12 +4,14 @@ import type { Overlay } from '../../../shared/config.ts';
 
 /**
  * Drawing order of the overlays as on geoportal.gov.pl, read from the configuration of its
- * "Geoportal Krajowy" map. The file is JavaScript source (an object literal with comments), so
- * it is never executed: the ids of layers and groups are read in source order with a pattern,
- * groups are expanded, and the list of the map is taken bottom to top.
+ * "Geoportal Krajowy" map and the main file, which defines the groups the maps share (the
+ * archival data). The files are JavaScript source (object literals with comments), so they are
+ * never executed: the ids of layers and groups are read in source order with a pattern, groups
+ * are expanded, and the list of the map is taken bottom to top.
  */
 
 const GEOPORTAL_CONFIG = `${CONFIG_BASE}config_parts/part_GeoportalKrajowy.js`;
+const GEOPORTAL_MAIN = `${CONFIG_BASE}application.properties.js`;
 const MAP_ID = 'modulGK';
 const TIMEOUT_MS = 30000;
 const MAX_BYTES = 2_000_000;
@@ -48,7 +50,16 @@ export function overlayOrder(source: string, overlays: Overlay[]): string[] | un
   return ranked.sort((a, b) => a.rank - b.rank).map((r) => r.id);
 }
 
+async function fetchSource(url: string): Promise<string> {
+  const res = await fetchFixed(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+  return new TextDecoder().decode(await readLimited(res, MAX_BYTES));
+}
+
 export async function fetchDrawOrder(overlays: Overlay[]): Promise<string[] | undefined> {
-  const res = await fetchFixed(GEOPORTAL_CONFIG, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-  return overlayOrder(new TextDecoder().decode(await readLimited(res, MAX_BYTES)), overlays);
+  const [map, main] = await Promise.all([fetchSource(GEOPORTAL_CONFIG), fetchSource(GEOPORTAL_MAIN)]);
+  return overlayOrder(
+    `${map}
+${main}`,
+    overlays,
+  );
 }

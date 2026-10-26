@@ -29,6 +29,19 @@ export const searchProviders: Record<string, () => Promise<SearchProvider>> = {
 
 export const searchTool: SearchTool | undefined = gugik.parcelTool;
 
+/** A date the time view can show at a place, with a detail to say after it (the photo's sharpness). */
+export interface TimeOption {
+  value: string;
+  detail?: string;
+}
+
+/**
+ * The dates the time view's layer has at a point, from a module that knows them (the photo
+ * index of the gugik module); without one the view offers the layer's own values.
+ */
+export const timeOptionsAt: ((coordinate: [number, number], signal: AbortSignal) => Promise<TimeOption[]>) | undefined =
+  gugik.timeOptionsAt;
+
 /** Under the coordinates in the header of the place panel. */
 export const infoHeader: InfoPart[] = [...gugik.infoHeader];
 

@@ -113,7 +113,8 @@ describe('context menu of the map', () => {
     viewport().dispatchEvent(new MouseEvent('contextmenu', { clientX: 500, clientY: 300, bubbles: true, cancelable: true }));
     expect(useMapMenu.getState().at).toBeNull();
 
-    useMapStore.setState({ tool: 'none' });
+    // The time view does not use the clicks: the menu opens as usual.
+    useMapStore.setState({ tool: 'time' });
     viewport().dispatchEvent(new MouseEvent('contextmenu', { clientX: 500, clientY: 300, bubbles: true, cancelable: true }));
     expect(useMapMenu.getState().at).not.toBeNull();
     map.dispatchEvent('movestart');

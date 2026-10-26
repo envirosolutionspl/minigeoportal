@@ -141,6 +141,25 @@ measure:
   result: 'Result: {result}'
   perimeter: perimeter {length}
 
+time:
+  tool: Time travel
+  title: Time travel
+  date: Date
+  earlier: Earlier date
+  later: Later date
+  end: End the time travel
+  shown: As of {date}
+  loading: Loading the state as of {date}…
+  checking: Checking which years have data here…
+  none: No data at this place.
+  error: The server did not answer.
+  retry: Try again
+  zoomHint: Zoom in to see the layer {title}.
+  compare: Compare with the present
+  now: Today
+  curtain: 'Curtain: the chosen date on the left, today on the right'
+  curtainHint: Drag the curtain, or click at its height where it should stand. The left and right arrow keys move it too.
+
 print:
   title: Print the map
   frameHint: The orange frame on the map shows the printed area. Move the map to set it.

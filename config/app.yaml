@@ -72,5 +72,7 @@ modules:
     enabled: true
     catalog: true
     drawOrder: true
-    ortho: { service: orto } # the tile service of map.yaml that shows the aerial photos
+    # The tile service of map.yaml that shows the aerial photos, and the layer of layers.yaml that
+    # shows their archive (the time view offers the dates the photo index knows at a point).
+    ortho: { service: orto, history: orto-archiwalna }
     parcelReport: true

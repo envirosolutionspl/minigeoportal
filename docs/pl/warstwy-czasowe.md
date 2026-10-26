@@ -1,6 +1,6 @@
 # Warstwy zmienne w czasie
 
-Warstwę, której dane mają daty (kolejne edycje ortofotomapy, plany obowiązujące w danym roku), oznacza się w `layers.yaml` blokiem `time`. Mapa rysuje jedną jej wartość; widok wyboru innej jest zaplanowany, a konfiguracja już opisuje wszystko, czego będzie potrzebował.
+Warstwę, której dane mają daty (kolejne edycje ortofotomapy, plany obowiązujące w danym roku), oznacza się w `layers.yaml` blokiem `time`. Włączona z listy warstw rysuje jedną wartość: skonfigurowaną, domyślną usługi albo najnowszą. Datę wybiera się w podróży w czasie (niżej).
 
 ## Wymiar jednej usługi
 
@@ -38,4 +38,20 @@ time:
       layer: orto_2020
 ```
 
-Każda edycja ma `value` i, jeśli różni się od warstwy, własny `url` lub `layer`. Własne `url` i podwarstwy warstwy pokazują najnowszą edycję i to one są dziś rysowane; `url` i `layer` edycji czekają na widok wyboru.
+Każda edycja ma `value` i, jeśli różni się od warstwy, własny `url` lub `layer`. Własne `url` i podwarstwy warstwy pokazują najnowszą edycję i to one są dziś rysowane; `url` i `layer` edycji czekają na podróż w czasie po seriach.
+
+## Podróż w czasie
+
+`map.yaml` wskazuje warstwę z wymiarem, którą pasek czasu rysuje nad podkładem na wybraną datę:
+
+```yaml
+timeTravel:
+  layer: orto-archiwalna # warstwa z layers.yaml z blokiem time (dziś: wymiar jednej usługi)
+  base: orto # podkład wymuszany, póki podróż trwa (opcjonalnie)
+```
+
+Narzędzie „Podróż w czasie” (na komputerze przycisk obok pomiaru, na telefonie pozycja w „Więcej”) pokazuje pasek z suwakiem dat, przyciskami do wcześniejszej i późniejszej daty, opisem tego, co widać, i podpowiedzią, gdy mapa jest za daleko, by warstwa rysowała. Usługa z wymiarem TIME pokazuje stan na datę (np. zdjęcie zrobione tego dnia albo wcześniej), więc suwak chodzi po datach, nie po każdym miesiącu zakresu. Bez modułu, który zna daty w danym miejscu, suwak ma pierwszą wartość każdego roku z listy warstwy. Moduł `gugik` z `ortho.history` wskazującym tę warstwę zawęża daty do zdjęć, które skorowidz ortofotomapy zna w środku mapy (zob. [Wyszukiwarka i moduły](wyszukiwarka-i-moduly.md)).
+
+Przycisk „Porównaj z aktualnymi danymi” w pasku dzieli mapę kurtyną: po lewej warstwa na wybraną datę, po prawej podkład (dziś). Uchwyt na linii przeciąga się myszą lub palcem, klik na wysokości uchwytu stawia linię w tym miejscu, strzałki w lewo i w prawo przesuwają ją z klawiatury.
+
+Link do widoku niesie datę (`t=2007-01-01`, z porównaniem `c=1`) i otwiera mapę od razu w podróży; Escape ją kończy i przywraca podkład sprzed niej.

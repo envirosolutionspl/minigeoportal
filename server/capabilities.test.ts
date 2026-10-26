@@ -107,12 +107,16 @@ describe('buildCache', () => {
 
   it('stores the geoportal drawing order and keeps the last good one when it cannot be read', async () => {
     const config = `gpmaps: [{ id: 'modulGK', layers: [
-      { layerId: 'msSUiKZP' }, { layerId: 'msMPZP' }, { layerId: 'msPlanyOgolneGmin' }, { layerId: 'msKIBDOT' }, { layerId: 'msKIEG' },
+      { layerId: 'msORTO_TIME_WMS' }, { layerId: 'msSUiKZP' }, { layerId: 'msMPZP' }, { layerId: 'msPlanyOgolneGmin' }, { layerId: 'msKIBDOT' }, { layerId: 'msKIEG' },
       { layerId: 'msKIUT' }, { layerId: 'msRejestrCenNieruchomosci' }, { layerId: 'msAdresyUlice' }, { layerId: 'msPRG' },
     ] }]`;
-    stub((url) => new Response(url.includes('part_GeoportalKrajowy') ? config : url.includes('WMTS') ? WMTS : WMS));
+    stub((url) =>
+      url.includes('application.properties')
+        ? new Response('')
+        : new Response(url.includes('part_GeoportalKrajowy') ? config : url.includes('WMTS') ? WMTS : WMS),
+    );
     const cache = await buildCache(defaults);
-    expect(cache.drawOrder).toEqual(['suikzp', 'kimpzp', 'pog', 'kibdot', 'kieg', 'kiut', 'rcn', 'kina', 'prg']);
+    expect(cache.drawOrder).toEqual(['orto-archiwalna', 'suikzp', 'kimpzp', 'pog', 'kibdot', 'kieg', 'kiut', 'rcn', 'kina', 'prg']);
 
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     stub((url) =>

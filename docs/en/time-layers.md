@@ -1,6 +1,6 @@
 # Layers that change over time
 
-A layer whose data has dates (orthophoto editions, plans in force in a given year) is marked in `layers.yaml` with a `time` block. The map draws one value of it; a view to choose another one is planned, and the configuration already describes everything it will need.
+A layer whose data has dates (orthophoto editions, plans in force in a given year) is marked in `layers.yaml` with a `time` block. Switched on from the layer list it draws one value: the configured one, the service's default or the newest. The time view (below) chooses the date.
 
 ## A dimension of one service
 
@@ -38,4 +38,20 @@ time:
       layer: ortho_2020
 ```
 
-Each edition has a `value` and, where it differs from the layer, its own `url` or `layer`. The layer's own `url` and sublayers show the newest edition and are what the map draws today; the editions' `url` and `layer` wait for the view to choose one.
+Each edition has a `value` and, where it differs from the layer, its own `url` or `layer`. The layer's own `url` and sublayers show the newest edition and are what the map draws today; the editions' `url` and `layer` wait for the time view to take up series.
+
+## The time view
+
+`map.yaml` names the layer with a dimension that the time bar draws over the base map as of the chosen date:
+
+```yaml
+timeTravel:
+  layer: orto-archiwalna # a layer of layers.yaml with a time block (today: a dimension of one service)
+  base: orto # a base map forced while the view is open (optional)
+```
+
+The "Time travel" tool (a button beside the measurement on a computer, an entry of "More" on a phone) shows a bar with a slider over the dates, buttons to the earlier and the later date, a line saying what is shown, and a hint when the map is too far out for the layer to draw. A service with a TIME dimension shows the state as of a date (a photo taken on that day or before), so the slider goes by dates, not by every month of the range. Without a module that knows the dates at a place, the slider holds the first value of each year of the layer's list. The `gugik` module with `ortho.history` naming the layer narrows the dates to the photos the orthophoto index knows at the middle of the map (see [Search and modules](search-and-modules.md)).
+
+The bar's "Compare with the present" button splits the map with a curtain: the layer as of the chosen date on the left, the base map (today) on the right. The handle on the line drags with a mouse or a finger, a click at the handle's height puts the line there, and the left and right arrow keys move it from the keyboard.
+
+A link to the view carries the date (`t=2007-01-01`, with the comparison `c=1`) and opens the map in the time view; Escape ends it and brings the base map used before it back.

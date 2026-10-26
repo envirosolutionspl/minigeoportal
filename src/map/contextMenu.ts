@@ -1,6 +1,6 @@
 import type Map from 'ol/Map';
 import { mapPressed, useMapMenu } from '@/state/mapMenu';
-import { useMapStore } from '@/state/store';
+import { TAKES_CLICKS, useMapStore } from '@/state/store';
 
 /** Holding a finger this long on the map opens the menu, as in map apps. */
 export const LONG_PRESS_MS = 500;
@@ -22,7 +22,7 @@ export function attachContextMenu(map: Map): () => void {
   let lastOpen = -Infinity;
 
   const open = (pixel: number[], byPress: boolean, byKeyboard = false) => {
-    if (useMapStore.getState().tool !== 'none') return;
+    if (TAKES_CLICKS.has(useMapStore.getState().tool)) return;
     const coordinate = byKeyboard ? map.getView().getCenter() : map.getCoordinateFromPixel(pixel);
     if (!coordinate) return;
     lastOpen = performance.now();

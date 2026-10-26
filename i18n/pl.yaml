@@ -140,6 +140,25 @@ measure:
   result: 'Wynik: {result}'
   perimeter: obwód {length}
 
+time:
+  tool: Podróż w czasie
+  title: Podróż w czasie
+  date: Data
+  earlier: Wcześniejsza data
+  later: Późniejsza data
+  end: Zakończ podróż w czasie
+  shown: Stan na {date}
+  loading: Wczytuję stan na {date}…
+  checking: Sprawdzam, z których lat są tu dane…
+  none: Brak danych w tym miejscu.
+  error: Serwer nie odpowiedział.
+  retry: Spróbuj ponownie
+  zoomHint: Przybliż mapę, aby zobaczyć warstwę {title}.
+  compare: Porównaj z aktualnymi danymi
+  now: Dziś
+  curtain: 'Kurtyna: po lewej wybrana data, po prawej dziś'
+  curtainHint: Przeciągnij kurtynę albo kliknij na jej wysokości, gdzie ma stanąć. Strzałki w lewo i w prawo przesuwają ją z klawiatury.
+
 print:
   title: Drukuj mapę
   frameHint: Pomarańczowa ramka na mapie pokazuje obszar wydruku. Przesuń mapę, aby go ustawić.

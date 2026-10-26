@@ -55,6 +55,7 @@ exports[`default configuration > stays what the app was built with (any change s
   },
   "layers": {
     "drawOrder": [
+      "orto-archiwalna",
       "suikzp",
       "kimpzp",
       "pog",
@@ -493,6 +494,38 @@ exports[`default configuration > stays what the app was built with (any change s
         "topic": "granice",
         "url": "https://mapy.geoportal.gov.pl/wss/service/PZGIK/PRG/WMS/AdministrativeBoundaries",
       },
+      {
+        "catalogId": "msORTO_TIME_WMS",
+        "description": "Zdjęcia lotnicze z lat 1995–2025: stan na wybraną datę. Podróż w czasie pokazuje tylko daty, z których są tu zdjęcia.",
+        "format": "image/jpeg",
+        "id": "orto-archiwalna",
+        "keywords": [
+          "archiwalna",
+          "dawne",
+          "historyczne",
+          "zdjęcia",
+          "lata",
+          "czas",
+          "kiedyś",
+          "zmiany",
+        ],
+        "kind": "wms",
+        "sublayers": [
+          {
+            "default": true,
+            "name": "Raster",
+            "title": "Ortofotomapa archiwalna",
+          },
+        ],
+        "time": {
+          "param": "TIME",
+          "type": "dimension",
+          "values": "capabilities",
+        },
+        "title": "Ortofotomapa archiwalna",
+        "topic": "archiwalne",
+        "url": "https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/StandardResolutionTime",
+      },
     ],
     "topics": [
       {
@@ -730,6 +763,10 @@ exports[`default configuration > stays what the app was built with (any change s
         "url": "https://mapy.geoportal.gov.pl/wss/service/WMTS/guest/wmts/TOPO",
       },
     ],
+    "timeTravel": {
+      "base": "orto",
+      "layer": "orto-archiwalna",
+    },
     "view": {
       "base": "mapa",
       "baseMobile": "prosta",
@@ -757,6 +794,7 @@ exports[`default configuration > stays what the app was built with (any change s
       "catalog": true,
       "drawOrder": true,
       "ortho": {
+        "history": "orto-archiwalna",
         "service": "orto",
       },
       "parcelReport": true,

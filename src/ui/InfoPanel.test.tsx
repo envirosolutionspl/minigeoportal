@@ -28,6 +28,11 @@ describe('InfoPanel', () => {
             sizeMb: 1026,
           },
           archived: 23,
+          history: [
+            { date: '2001-05-13', pixel: 0.75 },
+            { date: '2011-04-21', pixel: 0.25 },
+            { date: '2025-04-27', pixel: 0.05 },
+          ],
         },
       ],
     ]);
@@ -45,6 +50,38 @@ describe('InfoPanel', () => {
     expect(screen.queryByText('27.04.2025')).toBeNull();
     act(() => useInfoStore.getState().start([656849, 482000], []));
     expect(calls.length).toBe(asked);
+  });
+
+  it('counts the archived photos and leads into the time view at the place; in the view it names the photo as of the date', async () => {
+    useMapStore.setState({ base: 'orto', tool: 'none', zoom: 8 });
+    stubFetch([
+      [
+        '/api/orto',
+        {
+          latest: { date: '2025-04-27', pixel: 0.05, color: 'RGB', sheet: 'N' },
+          archived: 5,
+          history: [
+            { date: '2001-05-13', pixel: 0.75 },
+            { date: '2025-04-27', pixel: 0.05 },
+          ],
+        },
+      ],
+    ]);
+    useInfoStore.getState().start(point, []);
+    render(<InfoPanel />);
+    expect(await screen.findByText(/2 zdjęcia od 2001/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Zobacz zmiany' }));
+    const s = useMapStore.getState();
+    expect(s.tool).toBe('time');
+    expect(s.focus).toMatchObject({ center: point, zoom: 10 });
+    expect(useInfoStore.getState().query).toBeNull();
+
+    act(() => useMapStore.setState({ time: '2015-01-01' }));
+    act(() => useInfoStore.getState().start(point, []));
+    expect(await screen.findByText('13.05.2001')).toBeTruthy();
+    expect(screen.getByText(/Stan na 01.01.2015/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Zobacz zmiany' })).toBeNull();
+    useMapStore.setState({ tool: 'none' });
   });
 
   it('renders nothing without a query', () => {

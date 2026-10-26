@@ -1,5 +1,5 @@
 import { RequestError, fetchFixed, readLimited } from '../../http.ts';
-import type { OrthoInfo, OrthoSheet } from '../../../src/modules/gugik/ortho.ts';
+import type { OrthoEdition, OrthoInfo, OrthoSheet } from '../../../src/modules/gugik/ortho.ts';
 export type { OrthoInfo };
 
 /**
@@ -83,6 +83,16 @@ export function latestPhoto(sheets: OrthoSheet[]): OrthoSheet | undefined {
   return sheets.filter((s) => s.color === 'RGB').sort((a, b) => b.date.localeCompare(a.date) || a.pixel - b.pixel)[0];
 }
 
+/** The natural-colour photos of a point by date, oldest first, the sharpest of each day: the dates the time view offers. */
+export function photoHistory(sheets: OrthoSheet[]): OrthoEdition[] {
+  const byDate = new Map<string, number>();
+  for (const s of sheets) {
+    if (s.color !== 'RGB') continue;
+    byDate.set(s.date, Math.min(byDate.get(s.date) ?? Infinity, s.pixel));
+  }
+  return [...byDate].sort(([a], [b]) => a.localeCompare(b)).map(([date, pixel]) => ({ date, pixel }));
+}
+
 /** Aerial photo at a point of Poland (PL-1992); a point outside it is a RequestError. */
 export async function orthoAt(xParam: string | undefined, yParam: string | undefined, abort?: AbortSignal): Promise<OrthoInfo> {
   const x = Number(xParam);
@@ -111,5 +121,5 @@ export async function orthoAt(xParam: string | undefined, yParam: string | undef
   const deadline = AbortSignal.timeout(TIMEOUT_MS);
   const res = await fetchFixed(`${INDEX}?${params}`, { signal: abort ? AbortSignal.any([deadline, abort]) : deadline });
   const sheets = parseIndex(new TextDecoder().decode(await readLimited(res, MAX_BYTES)));
-  return { latest: latestPhoto(sheets), archived: sheets.length };
+  return { latest: latestPhoto(sheets), archived: sheets.length, history: photoHistory(sheets) };
 }

@@ -10,7 +10,7 @@ import { selectedSublayers, type Overlay } from '@/config/runtime';
 import type { OverlayLayer } from '@/services/layers';
 import { fetchFeatureInfo, queryLayers } from '@/services/featureinfo';
 import { useInfoStore } from '@/state/info';
-import { useMapStore } from '@/state/store';
+import { TAKES_CLICKS, useMapStore } from '@/state/store';
 import { consumeMapClick } from '@/state/mapMenu';
 
 const MARKER = new Style({
@@ -53,7 +53,7 @@ export function attachFeatureInfo(map: Map, overlays: () => Shown[]): () => void
   };
 
   const onClick = (evt: { coordinate: number[] }) => {
-    if (useMapStore.getState().tool !== 'none') return;
+    if (TAKES_CLICKS.has(useMapStore.getState().tool)) return;
     const view = map.getView();
     const resolution = view.getResolution();
     if (resolution === undefined) return;
@@ -90,7 +90,7 @@ export function attachFeatureInfo(map: Map, overlays: () => Shown[]): () => void
   const onMoveEnd = () => {
     const query = useInfoStore.getState().query;
     const resolution = map.getView().getResolution();
-    if (!query || query.services.length > 0 || resolution === undefined || useMapStore.getState().tool !== 'none') return;
+    if (!query || query.services.length > 0 || resolution === undefined || TAKES_CLICKS.has(useMapStore.getState().tool)) return;
     if (infoTargets(overlays(), resolutionToScale(resolution)).length > 0) onClick({ coordinate: query.coordinate });
   };
   map.on('moveend', onMoveEnd);

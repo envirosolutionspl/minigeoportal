@@ -40,11 +40,16 @@ describe('default configuration', () => {
     expect(config.map.attribution).toBe(
       'Dane: <a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">GUGiK, geoportal.gov.pl</a>',
     );
-    expect(config.layers.drawOrder).toEqual(['suikzp', 'kimpzp', 'pog', 'kibdot', 'kiut', 'kieg', 'rcn', 'kina', 'prg']);
+    expect(config.layers.drawOrder).toEqual(['orto-archiwalna', 'suikzp', 'kimpzp', 'pog', 'kibdot', 'kiut', 'kieg', 'rcn', 'kina', 'prg']);
     expect(config.map.view).toMatchObject({ center: [500000, 465000], zoom: 3, base: 'mapa', baseMobile: 'prosta', overlays: ['kieg'] });
     expect(config.map.view.home).toEqual([170000, 130000, 870000, 800000]);
     expect(config.search).toEqual({ provider: 'gugik', parcel: true });
-    expect(config.modules.gugik).toEqual({ catalog: true, drawOrder: true, ortho: { service: 'orto' }, parcelReport: true });
+    expect(config.modules.gugik).toEqual({
+      catalog: true,
+      drawOrder: true,
+      ortho: { service: 'orto', history: 'orto-archiwalna' },
+      parcelReport: true,
+    });
   });
 });
 
@@ -99,10 +104,23 @@ describe('loadConfig', () => {
   });
 
   it('finds the photos of the gugik module among the tile services, or leaves them out', () => {
-    const unknown = broken('app.yaml', (s) => s.replace('ortho: { service: orto }', 'ortho: { service: zdjecia }'));
+    const unknown = broken('app.yaml', (s) => s.replace('ortho: { service: orto,', 'ortho: { service: zdjecia,'));
     expect(problems(unknown).join('\n')).toMatch(/app\.yaml:\d+:\d+ modules\.gugik\.ortho\.service: unknown tile service "zdjecia"/);
-    const off = broken('app.yaml', (s) => s.replace('ortho: { service: orto }', 'ortho: false'));
+    const noTime = broken('app.yaml', (s) => s.replace('history: orto-archiwalna }', 'history: kieg }'));
+    expect(problems(noTime).join('\n')).toMatch(/modules\.gugik\.ortho\.history: "kieg" is not an overlay with a time block/);
+    const off = broken('app.yaml', (s) => s.replace(/ortho: \{ service: orto, history: orto-archiwalna \}/, 'ortho: false'));
     expect(clientConfig(loadConfig(off), 'pl').modules.gugik?.ortho).toBe(false);
+  });
+
+  it('needs the time view to name a layer with a time block and a base map that exists', () => {
+    const dir = broken('map.yaml', (s) =>
+      s.replace('timeTravel: { layer: orto-archiwalna, base: orto }', 'timeTravel: { layer: kieg, base: zdjecia }'),
+    );
+    expect(problems(dir).join('\n')).toMatch(/map\.yaml:\d+:\d+ timeTravel\.layer: "kieg" is not an overlay with a time block/);
+    expect(problems(dir).join('\n')).toMatch(/map\.yaml:\d+:\d+ timeTravel\.base: unknown base map "zdjecia"/);
+    const config = clientConfig(loadConfig('config'), 'pl');
+    expect(config.map.timeTravel).toEqual({ layer: 'orto-archiwalna', base: 'orto' });
+    expect(config.layers.overlays.find((o) => o.id === 'orto-archiwalna')).toMatchObject({ format: 'image/jpeg', time: { param: 'TIME' } });
   });
 
   it('needs the topics of the geoportal catalog in layers.yaml while the catalog is on', () => {

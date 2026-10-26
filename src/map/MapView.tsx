@@ -14,6 +14,7 @@ import { attachFocus } from './focus';
 import { attachMeasure } from './measure';
 import { attachPrint } from './print';
 import { attachContextMenu } from './contextMenu';
+import { attachTimeTravel } from './timeTravel';
 import { MapStatus } from './mapStatus';
 import { coordinateBar } from './format';
 import { t } from '@/i18n';
@@ -138,9 +139,11 @@ export function MapView() {
     const detachMeasure = attachMeasure(map);
     const detachPrint = attachPrint(map);
     const detachContextMenu = attachContextMenu(map);
+    const detachTimeTravel = attachTimeTravel(map);
 
     return () => {
       alive = false;
+      detachTimeTravel();
       detachContextMenu();
       detachPrint();
       detachMeasure();

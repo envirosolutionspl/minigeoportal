@@ -91,6 +91,8 @@ export interface Overlay {
   opacity?: number;
   /** Source credit as HTML (links only); without it the map's attribution applies. */
   attribution?: string;
+  /** Image format a WMS is asked for; image/png (the default) is transparent, image/jpeg smaller. */
+  format?: 'image/png' | 'image/jpeg';
   time?: TimeSpec;
 }
 
@@ -159,6 +161,11 @@ export interface ClientConfig {
     attribution: string;
     tileServices: TileService[];
     baseMaps: BaseMap[];
+    /**
+     * The time view: `layer` is an overlay with a `time` block, drawn over `base` (a base map
+     * forced while the view is open) at the date chosen on the time bar.
+     */
+    timeTravel?: { layer: string; base?: string };
   };
   layers: {
     topics: Topic[];
@@ -171,7 +178,11 @@ export interface ClientConfig {
   links: { fallbackMap?: { url: string; name: string } };
   report: { categories: { id: string; label: string }[] };
   modules: {
-    /** `ortho.service`: the tile service that shows the aerial photos (map.tileServices). */
-    gugik?: { catalog: boolean; drawOrder: boolean; ortho: { service: string } | false; parcelReport: boolean };
+    /**
+     * `ortho.service`: the tile service that shows the aerial photos (map.tileServices);
+     * `ortho.history`: the overlay (with a `time` block) that shows their archive, whose dates at
+     * a point the photo index narrows down to the ones that exist there.
+     */
+    gugik?: { catalog: boolean; drawOrder: boolean; ortho: { service: string; history?: string } | false; parcelReport: boolean };
   };
 }

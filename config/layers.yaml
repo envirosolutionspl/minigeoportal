@@ -32,6 +32,7 @@ topics:
     title: { pl: 'Inne', en: 'Other' }
 # Drawing order, lowest first: plans at the bottom, networks over them, parcels over both.
 drawOrder:
+  - orto-archiwalna
   - suikzp
   - kimpzp
   - pog
@@ -311,3 +312,24 @@ overlays:
       - name: A00_Granice_panstwa
         title: { pl: 'Granica państwa', en: 'State border' }
         default: true
+  - id: orto-archiwalna
+    kind: wms
+    url: https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/StandardResolutionTime
+    title: { pl: 'Ortofotomapa archiwalna', en: 'Archival orthophoto map' }
+    description:
+      {
+        pl: 'Zdjęcia lotnicze z lat 1995–2025: stan na wybraną datę. Podróż w czasie pokazuje tylko daty, z których są tu zdjęcia.',
+        en: 'Aerial photos of 1995–2025 as of a chosen date. The time view offers only the dates with photos of the place.',
+      }
+    topic: archiwalne
+    catalogId: msORTO_TIME_WMS
+    format: image/jpeg # opaque photos: a third of the bytes of PNG
+    keywords:
+      pl: [archiwalna, dawne, historyczne, zdjęcia, lata, czas, kiedyś, zmiany]
+      en: [archival, old, historical, photos, years, time, changes]
+    sublayers:
+      - name: Raster
+        title: { pl: 'Ortofotomapa archiwalna', en: 'Archival orthophoto map' }
+        default: true
+    # The service draws the newest photo taken on or before TIME; the dates it lists are months.
+    time: { type: dimension, param: TIME, values: capabilities }

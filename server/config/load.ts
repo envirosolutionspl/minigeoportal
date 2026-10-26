@@ -120,6 +120,8 @@ function crossCheck(
       const value = m.view[key];
       if (value && !bases.has(value)) problems.push(`${at(map, 'map.yaml', ['view', key])} view.${key}: unknown base map "${value}"`);
     }
+    if (m.timeTravel?.base && !bases.has(m.timeTravel.base))
+      problems.push(`${at(map, 'map.yaml', ['timeTravel', 'base'])} timeTravel.base: unknown base map "${m.timeTravel.base}"`);
     if (m.view.zoom > m.zoom.scales.length - 1)
       problems.push(`${at(map, 'map.yaml', ['view', 'zoom'])} view.zoom: there are only ${m.zoom.scales.length} zoom levels`);
     // The browser loads tiles and map images itself: the page's CSP and HTTPS allow only https.
@@ -149,6 +151,9 @@ function crossCheck(
       map.value.view.overlays.forEach((o, i) => {
         if (!overlays.has(o)) problems.push(`${at(map, 'map.yaml', ['view', 'overlays', i])} unknown overlay "${o}"`);
       });
+      const time = map.value.timeTravel?.layer;
+      if (time && !l.overlays.some((o) => o.id === time && o.time))
+        problems.push(`${at(map, 'map.yaml', ['timeTravel', 'layer'])} timeTravel.layer: "${time}" is not an overlay with a time block`);
     }
   }
 

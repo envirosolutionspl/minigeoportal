@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { HOME_EXTENT } from '@/map/projection';
 import { config } from '@/config/runtime';
-import { overlayOpacity, useMapStore } from './store';
+import { overlayOpacity, urlState, useMapStore } from './store';
 
 const state = () => useMapStore.getState();
 
@@ -38,6 +38,17 @@ describe('defaults', () => {
   it('starts on the general map on a computer and on the simple map on a phone', async () => {
     expect((await fresh(false)).base).toBe('mapa');
     expect((await fresh(true)).base).toBe('prosta');
+  });
+
+  it('opens the time view of a link, on the base map it forces', async () => {
+    window.history.replaceState(null, '', '?b=mapa&t=2007-01-01&c=1');
+    const s = await fresh(false);
+    expect(s.tool).toBe('time');
+    expect(s.time).toBe('2007-01-01');
+    expect(s.compare).toBe(true);
+    expect(s.base).toBe('orto');
+    expect(s.baseBeforeTime).toBe('mapa');
+    window.history.replaceState(null, '', '/');
   });
 
   it('starts with the land register on, no custom sublayers and no tool', async () => {
@@ -115,6 +126,38 @@ describe('measurement tool', () => {
     expect(state().measureResult).toBe('');
     state().setTool('none');
     expect(state().tool).toBe('none');
+  });
+});
+
+describe('time view', () => {
+  it('forces its base map while open and gives the one before back', () => {
+    useMapStore.setState({ base: 'mapa', tool: 'none', timeStatus: 'error' });
+    state().setTool('time');
+    expect(state().base).toBe('orto');
+    state().setTool('time');
+    expect(state().baseBeforeTime).toBe('mapa');
+    state().setTool('none');
+    expect(state().base).toBe('mapa');
+    expect(state().baseBeforeTime).toBeUndefined();
+    expect(state().timeStatus).toBe('idle');
+  });
+
+  it('puts the date and the comparison into links only while the view is open', () => {
+    useMapStore.setState({ tool: 'none', time: '2007-01-01', compare: true });
+    expect(urlState(state()).time).toBeUndefined();
+    state().setTool('time');
+    expect(urlState(state())).toMatchObject({ time: '2007-01-01', compare: true });
+    state().setCompare(false);
+    expect(urlState(state()).compare).toBeUndefined();
+  });
+
+  it('keeps the curtain on the map', () => {
+    state().setCurtain(1.4);
+    expect(state().curtain).toBe(1);
+    state().setCurtain(-2);
+    expect(state().curtain).toBe(0);
+    state().setCurtain(0.3);
+    expect(state().curtain).toBe(0.3);
   });
 });
 

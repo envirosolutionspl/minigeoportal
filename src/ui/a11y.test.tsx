@@ -5,6 +5,7 @@ import { TopBar } from './TopBar';
 import { LayerCatalog } from './LayerCatalog';
 import { InfoPanel } from './InfoPanel';
 import { MeasureBar } from './MeasureBar';
+import { TimeBar } from './TimeBar';
 import { WelcomeDialog, useWelcome } from './WelcomeDialog';
 import { ReportDialog, useReport } from './ReportDialog';
 import { PrintPanel } from './Print';
@@ -87,6 +88,18 @@ describe('accessibility (axe, WCAG 2.1 AA)', () => {
       </main>,
     );
     expect(await violations(container)).toEqual([]);
+  });
+
+  it('time bar', async () => {
+    stubFetch([['/api/orto', { archived: 1, history: [{ date: '2025-04-27', pixel: 0.05 }] }]]);
+    useMapStore.setState({ tool: 'time', time: null, scale: 10000 });
+    const { container } = render(
+      <main>
+        <TimeBar />
+      </main>,
+    );
+    expect(await violations(container)).toEqual([]);
+    useMapStore.setState({ tool: 'none' });
   });
 
   it('dialogs', async () => {

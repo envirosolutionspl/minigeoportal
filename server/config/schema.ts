@@ -103,8 +103,12 @@ export const appSchema = z.strictObject({
           enabled: z.boolean(),
           catalog: z.boolean().default(true),
           drawOrder: z.boolean().default(true),
-          /** The date of the aerial photo under the photo map: `service` is the tile service of map.yaml that shows the photos. */
-          ortho: z.union([z.literal(false), z.strictObject({ service: id })]).default({ service: 'orto' }),
+          /**
+           * The date of the aerial photo under the photo map: `service` is the tile service of map.yaml
+           * that shows the photos; `history` the overlay of layers.yaml (with a `time` block) that shows
+           * their archive, whose dates the photo index narrows to the ones that exist at a point.
+           */
+          ortho: z.union([z.literal(false), z.strictObject({ service: id, history: id.optional() })]).default({ service: 'orto' }),
           parcelReport: z.boolean().default(true),
         })
         .optional(),
@@ -140,6 +144,8 @@ export const mapSchema = z.strictObject({
     toggleBase: id.optional(),
     overlays: z.array(id).default([]),
   }),
+  /** The time view: an overlay with a `time` block, drawn over a base map forced while the view is open. */
+  timeTravel: z.strictObject({ layer: id, base: id.optional() }).optional(),
   attribution: text,
   tileServices: z
     .array(
@@ -192,6 +198,8 @@ export const layersSchema = z.strictObject({
         catalogId: z.string().optional(),
         opacity: z.number().min(0).max(1).optional(),
         attribution: text.optional(),
+        /** Image format a WMS is asked for: image/png (the default, transparent) or image/jpeg (smaller, opaque). */
+        format: z.enum(['image/png', 'image/jpeg']).optional(),
         sublayers: z
           .array(z.strictObject({ name: z.string().min(1), title: text, default: z.boolean().optional(), legend: url.optional() }))
           .min(1),

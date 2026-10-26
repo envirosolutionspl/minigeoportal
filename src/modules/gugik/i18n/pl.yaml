@@ -52,3 +52,10 @@ info:
   pixel: piksel
   downloadSheet: pobierz arkusz {sheet}
   photoLoading: Sprawdzam datę zdjęcia lotniczego…
+  photoAsOf: 'Stan na {date}: zdjęcie z'
+  photos:
+    one: '{count} zdjęcie od {year}'
+    few: '{count} zdjęcia od {year}'
+    many: '{count} zdjęć od {year}'
+    other: '{count} zdjęcia od {year}'
+  seeChanges: Zobacz zmiany

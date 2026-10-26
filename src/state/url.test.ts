@@ -15,6 +15,16 @@ describe('readUrl', () => {
     });
   });
 
+  it('reads the date of the time view, when it looks like one', () => {
+    setSearch('?x=1&y=2&t=2007-01-01');
+    expect(readUrl().time).toBe('2007-01-01');
+    setSearch('?t=2007&c=1');
+    expect(readUrl()).toMatchObject({ time: '2007', compare: true });
+    setSearch('?t=yesterday&c=1');
+    expect(readUrl().time).toBeUndefined();
+    expect(readUrl().compare).toBeUndefined();
+  });
+
   it('ignores missing or malformed values', () => {
     setSearch('?x=abc&y=1&z=&b=');
     expect(readUrl()).toEqual({});
@@ -44,6 +54,12 @@ describe('writeUrl', () => {
     expect(window.location.search).toBe('');
     vi.advanceTimersByTime(300);
     expect(window.location.search).toBe('?x=637001&y=486000&z=12.3&b=orto&l=kieg,kiut.przewod_gazowy');
+    writeUrl({ center: [1, 2], zoom: 3, base: 'orto', overlays: [], sublayers: {}, time: '2007-01-01' });
+    vi.advanceTimersByTime(300);
+    expect(window.location.search).toBe('?x=1&y=2&z=3.0&b=orto&l=&t=2007-01-01');
+    writeUrl({ center: [1, 2], zoom: 3, base: 'orto', overlays: [], sublayers: {}, time: '2007-01-01', compare: true });
+    vi.advanceTimersByTime(300);
+    expect(window.location.search).toBe('?x=1&y=2&z=3.0&b=orto&l=&t=2007-01-01&c=1');
     vi.useRealTimers();
   });
 

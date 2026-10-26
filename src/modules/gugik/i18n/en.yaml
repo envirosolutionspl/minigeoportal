@@ -50,3 +50,8 @@ info:
   pixel: pixel
   downloadSheet: download sheet {sheet}
   photoLoading: Checking the date of the aerial photo…
+  photoAsOf: 'As of {date}: photo of'
+  photos:
+    one: '{count} photo since {year}'
+    other: '{count} photos since {year}'
+  seeChanges: See the changes

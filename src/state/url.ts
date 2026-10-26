@@ -2,8 +2,9 @@ import { PROJECTION } from '@/map/projection';
 
 /**
  * Map state lives in the URL query so every view is a shareable link:
- * ?x=637000&y=486000&z=12&b=orto&l=kieg,kiut.przewod_wodociagowy.przewod_gazowy
- * An overlay without sublayers uses its defaults.
+ * ?x=637000&y=486000&z=12&b=orto&l=kieg,kiut.przewod_wodociagowy.przewod_gazowy&t=2007-01-01&c=1
+ * An overlay without sublayers uses its defaults. `t` is the date of the time view, which the
+ * link then opens; `c=1` compares it with the present behind a curtain.
  */
 
 interface UrlState {
@@ -13,7 +14,14 @@ interface UrlState {
   overlays: string[];
   /** Custom sublayer selection per overlay; absent means defaults. */
   sublayers: Record<string, string[]>;
+  /** Date shown in the time view; absent when the view is closed. */
+  time?: string;
+  /** The time view compares its date with the present. */
+  compare?: boolean;
 }
+
+/** A date of the time view as links carry it: 2007, 2007-01 or 2007-01-01. */
+const DATE = /^\d{4}(-\d{2}){0,2}$/;
 
 export function readUrl(): Partial<UrlState> {
   const q = new URLSearchParams(window.location.search);
@@ -38,6 +46,11 @@ export function readUrl(): Partial<UrlState> {
       if (subs.length > 0) state.sublayers[id] = subs;
     }
   }
+  const time = q.get('t');
+  if (time && DATE.test(time)) {
+    state.time = time;
+    if (q.get('c') === '1') state.compare = true;
+  }
   return state;
 }
 
@@ -53,6 +66,8 @@ function queryFor(state: UrlState): string {
   q.set('b', state.base);
   const named = (s: string) => s.replace(/\./g, '%2E');
   q.set('l', state.overlays.map((id) => [id, ...(state.sublayers[id] ?? [])].map(named).join('.')).join(','));
+  if (state.time) q.set('t', state.time);
+  if (state.time && state.compare) q.set('c', '1');
   return `?${q.toString().replace(/%2C/g, ',')}`;
 }
 

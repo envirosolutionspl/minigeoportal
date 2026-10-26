@@ -120,7 +120,7 @@ export function BasemapSwitcher() {
         setFocused(false);
         setDismissed(false);
       }}
-      className="group pointer-events-auto absolute bottom-[calc(2.25rem+var(--safe-bottom))] left-3 z-30 flex items-end gap-2 sm:bottom-[calc(2.5rem+var(--safe-bottom))] sm:left-4"
+      className="group pointer-events-auto absolute basemap-switcher bottom-[calc(2.25rem+var(--safe-bottom))] left-3 z-30 flex items-end gap-2 sm:bottom-[calc(2.5rem+var(--safe-bottom))] sm:left-4"
     >
       <Thumb
         ref={toggle}

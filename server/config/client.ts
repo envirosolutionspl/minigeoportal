@@ -73,6 +73,7 @@ export function clientConfig({ app, map, layers, content, brand, messages }: App
       },
       attribution: creditHtml(t(map.attribution)),
       tileServices: map.tileServices,
+      ...(map.timeTravel ? { timeTravel: map.timeTravel } : {}),
       baseMaps: map.baseMaps.map((b) => ({
         id: b.id,
         title: t(b.title),
@@ -101,6 +102,7 @@ export function clientConfig({ app, map, layers, content, brand, messages }: App
         })),
         ...(o.opacity !== undefined ? { opacity: o.opacity } : {}),
         ...(o.attribution ? { attribution: creditHtml(t(o.attribution)) } : {}),
+        ...(o.format ? { format: o.format } : {}),
         ...(o.time ? { time: o.time } : {}),
       })),
       drawOrder: layers.drawOrder ?? layers.overlays.map((o) => o.id),

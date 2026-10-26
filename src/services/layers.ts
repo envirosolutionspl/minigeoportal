@@ -114,7 +114,10 @@ export function createOverlayLayer(def: Overlay): OverlayLayer {
   const source =
     def.kind === 'rest'
       ? new ImageArcGISRest({ ...image, params: { LAYERS: 'show:', FORMAT: 'png32', TRANSPARENT: true } })
-      : new ImageWMS({ ...image, params: { LAYERS: '', FORMAT: 'image/png', TRANSPARENT: true, VERSION: '1.3.0', ...when } });
+      : new ImageWMS({
+          ...image,
+          params: { LAYERS: '', FORMAT: def.format ?? 'image/png', TRANSPARENT: def.format !== 'image/jpeg', VERSION: '1.3.0', ...when },
+        });
   source.on('imageloadend', () => report(def.id, true));
   source.on('imageloaderror', () => report(def.id, false));
   return new ImageLayer({ source, ...options });

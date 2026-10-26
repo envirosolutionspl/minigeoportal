@@ -31,3 +31,12 @@ export const infoHeader = info && gugik?.parcelReport ? [lazy(() => info.then((m
 
 /** The date of the aerial photo above the footer of the place panel (ortho). */
 export const infoFooter = info && gugik?.ortho ? [lazy(() => info.then((m) => ({ default: m.OrthoPhoto })))] : [];
+
+/**
+ * The dates of the archival photos at a point (ortho.history names the time view's layer): the
+ * photo index knows which photos exist there, so the time bar offers those dates only.
+ */
+export const timeOptionsAt =
+  gugik && gugik.ortho && gugik.ortho.history && gugik.ortho.history === config.map.timeTravel?.layer
+    ? (coordinate: [number, number], signal: AbortSignal) => import('./ortho').then((m) => m.timeOptionsAt(coordinate, signal))
+    : undefined;

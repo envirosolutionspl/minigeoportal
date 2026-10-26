@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { RequestError } from '../../http.ts';
-import { latestPhoto, orthoAt, parseIndex } from './ortho.ts';
+import { latestPhoto, orthoAt, parseIndex, photoHistory } from './ortho.ts';
 
 const record = (fields: Record<string, string>) =>
   `skorDo5cm.push({${Object.entries(fields)
@@ -64,9 +64,26 @@ describe('orthoAt', () => {
         return new Response(PAGE);
       }),
     );
-    expect(await orthoAt('636500', '486500')).toEqual({ latest: expect.objectContaining({ pixel: 0.05 }), archived: 4 });
+    expect(await orthoAt('636500', '486500')).toEqual({
+      latest: expect.objectContaining({ pixel: 0.05 }),
+      archived: 4,
+      history: [
+        { date: '2001-05-13', pixel: 0.75 },
+        { date: '2025-04-27', pixel: 0.05 },
+      ],
+    });
     const query = new URL(calls.at(-1)!).searchParams;
     expect(query.get('LAYERS')).toBe('SkorowidzeOrtofotomapy2027,SkorowidzeOrtofotomapyStarsze');
     expect(query.get('BBOX')).toBe('486499.00,636499.00,486501.00,636501.00');
+  });
+});
+
+describe('photoHistory', () => {
+  it('lists the natural-colour photos by date, oldest first, the sharpest of each day', () => {
+    expect(photoHistory(parseIndex(PAGE))).toEqual([
+      { date: '2001-05-13', pixel: 0.75 },
+      { date: '2025-04-27', pixel: 0.05 },
+    ]);
+    expect(photoHistory([])).toEqual([]);
   });
 });

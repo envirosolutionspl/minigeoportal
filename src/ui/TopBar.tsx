@@ -4,6 +4,7 @@ import {
   Crosshair,
   Ellipsis,
   Fullscreen,
+  History,
   Home,
   Info,
   Landmark,
@@ -23,7 +24,7 @@ import { fromLonLat } from 'ol/proj';
 import { searchProvider, type HitKind, type SearchHit } from '@/search';
 import { config } from '@/config/runtime';
 import { t } from '@/i18n';
-import { useMapStore } from '@/state/store';
+import { urlState, useMapStore } from '@/state/store';
 import { useInfoStore } from '@/state/info';
 import { openPrint } from '@/map/print';
 import { linkFor } from '@/state/url';
@@ -84,6 +85,9 @@ export function TopBar() {
   const tool = useMapStore((m) => m.tool);
   const setTool = useMapStore((m) => m.setTool);
   const measuring = tool === 'measure-line' || tool === 'measure-area';
+  const toggleTime = () => setTool(tool === 'time' ? 'none' : 'time');
+  /** The time view, where map.yaml sets one up. */
+  const timeTravel = config.map.timeTravel !== undefined;
   /** Message after copying the link; read out by screen readers. */
   const { say, notice } = useNotice();
   const openWelcome = useWelcome((w) => w.setOpen);
@@ -162,7 +166,7 @@ export function TopBar() {
 
   /** Link to this view with the base map and the layers that are on, ready to paste. */
   const copyLink = async () => {
-    const link = linkFor(useMapStore.getState());
+    const link = linkFor(urlState(useMapStore.getState()));
     try {
       await navigator.clipboard.writeText(link);
       say(t('tools.linkCopied'));
@@ -355,6 +359,11 @@ export function TopBar() {
         <IconButton className="phone:hidden" label={t('tools.measure')} active={measuring} onClick={toggleMeasure}>
           <Ruler className="h-5 w-5" />
         </IconButton>
+        {timeTravel && (
+          <IconButton className="phone:hidden" label={t('time.tool')} active={tool === 'time'} onClick={toggleTime}>
+            <History className="h-5 w-5" />
+          </IconButton>
+        )}
         <IconButton className="phone:hidden" label={t('tools.link')} onClick={() => void copyLink()}>
           <Link2 className="h-5 w-5" />
         </IconButton>
@@ -370,6 +379,7 @@ export function TopBar() {
         open={more}
         onClose={() => setMore(false)}
         items={[
+          ...(timeTravel ? [{ label: t('time.tool'), icon: History, active: tool === 'time', onClick: toggleTime }] : []),
           { label: t('tools.measure'), icon: Ruler, active: measuring, onClick: toggleMeasure },
           { label: t('tools.link'), icon: Link2, onClick: () => void copyLink() },
           // No printing on a phone: the printed frame and the paper cannot be set well on its screen.

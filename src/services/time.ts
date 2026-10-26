@@ -4,7 +4,7 @@ import { layerMeta } from './meta';
 /**
  * Layers that change over time (layers.yaml: `time`). A WMS or WMTS dimension is one service
  * asked for one value at a time (TIME=2020); a series is one service or layer per edition. The
- * map draws the current value; choosing another one is left to a future time view.
+ * map draws the current value; the time view (map.yaml: timeTravel) lets people choose another.
  */
 
 /** Most values a layer offers: a long range with a short step is cut here. */
@@ -41,10 +41,13 @@ export function expandRange(start: string, end: string, step: string): string[] 
   return out;
 }
 
+/** A date at midnight as some servers write it (2015-01-01T00:00:00.000Z) is the date. */
+const day = (value: string) => value.replace(/T00:00:00(?:\.0+)?Z$/, '');
+
 /** A list as WMS capabilities give it: values and start/end/period ranges, separated by commas. */
 export function parseValues(list: string): string[] {
   return list.split(',').flatMap((v) => {
-    const [start, end, step] = v.trim().split('/');
+    const [start, end, step] = v.trim().split('/').map(day);
     return end && step ? expandRange(start, end, step) : [start];
   });
 }
@@ -70,4 +73,28 @@ export function timeValues(def: Overlay): TimeValues | undefined {
   }
   const current = time.default ?? fallback ?? values[values.length - 1];
   return current === undefined ? undefined : { param: time.param, values, current };
+}
+
+/**
+ * The value a time layer shows for a wanted date: the latest value not after it, as a WMS with a
+ * time dimension answers (a photo taken on or before the date), else the first one.
+ */
+export function valueAt(values: string[], wanted: string): string | undefined {
+  let found: string | undefined;
+  for (const v of values) {
+    if (v > wanted) break;
+    found = v;
+  }
+  return found ?? values[0];
+}
+
+/** Values a slider can hold: of a monthly or daily list, the first value of each year. */
+export function yearly(values: string[]): string[] {
+  const seen = new Set<string>();
+  return values.filter((v) => {
+    const year = v.slice(0, 4);
+    if (seen.has(year)) return false;
+    seen.add(year);
+    return true;
+  });
 }

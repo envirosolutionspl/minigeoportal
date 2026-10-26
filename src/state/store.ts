@@ -7,8 +7,17 @@ import type { PrintOptions } from '@/map/print';
 
 type Panel = 'none' | 'catalog';
 
-/** A map tool that takes over clicks: while one is active, clicks do not ask for information. */
-export type Tool = 'none' | 'measure-line' | 'measure-area' | 'print';
+/**
+ * A map tool. Measuring and printing take over clicks: while one is active, clicks do not ask
+ * for information. The time view (map.yaml: timeTravel) leaves clicks to the place panel.
+ */
+export type Tool = 'none' | 'measure-line' | 'measure-area' | 'print' | 'time';
+
+/** The tools that take the map's clicks; the others leave them to the place panel and the map menu. */
+export const TAKES_CLICKS: ReadonlySet<Tool> = new Set<Tool>(['measure-line', 'measure-area', 'print']);
+
+/** Whether the time view's image of the chosen date has arrived. */
+export type TimeStatus = 'idle' | 'loading' | 'error';
 
 /** Something the map should show: zoom to it and outline it. */
 export interface FocusTarget {
@@ -51,6 +60,17 @@ interface MapStore {
   printSettings: PrintOptions;
   /** Centre of the sheet being printed, for its caption. */
   printCenter: [number, number] | null;
+  /** Date shown in the time view; null before one is chosen (the layer's own current value). */
+  time: string | null;
+  timeStatus: TimeStatus;
+  /** The time view compares its date with the present: the layer draws left of a curtain, the base map shows right of it. */
+  compare: boolean;
+  /** Where the curtain is, as a fraction of the map's width from its left edge. */
+  curtain: number;
+  /** Changes when the image of the chosen date is asked for again after an error. */
+  timeRetries: number;
+  /** The base map to go back to when the time view, which forces its own, closes. */
+  baseBeforeTime?: string;
   /** Called by the map on moveend; keeps store and URL in sync. */
   setView(center: [number, number], zoom: number, scale: number): void;
   setBase(id: string): void;
@@ -71,6 +91,11 @@ interface MapStore {
   setPrintSettings(settings: Partial<PrintOptions>): void;
   requestPrint(options: PrintOptions): void;
   printDone(): void;
+  setTime(time: string | null): void;
+  setTimeStatus(status: TimeStatus): void;
+  retryTime(): void;
+  setCompare(compare: boolean): void;
+  setCurtain(fraction: number): void;
 }
 
 /** Phones may start on a lighter base map (map.yaml: view.baseMobile), whose tiles load faster on mobile connections. */
@@ -79,12 +104,16 @@ const DEFAULT_BASE =
   view.baseMobile && typeof window !== 'undefined' && window.matchMedia?.('(max-width: 639px)').matches ? view.baseMobile : view.base;
 
 const initial = readUrl();
+/** The time view in a link opens with it, on the base map it forces. */
+const TIME_TRAVEL = config.map.timeTravel;
+const timeAtStart = initial.time !== undefined && TIME_TRAVEL !== undefined;
+const LINKED_BASE = config.map.baseMaps.find((s) => s.id === initial.base)?.id ?? DEFAULT_BASE;
 
 export const useMapStore = create<MapStore>((set, get) => ({
   center: initial.center ?? view.center,
   zoom: initial.zoom ?? view.zoom,
   scale: Infinity,
-  base: config.map.baseMaps.find((s) => s.id === initial.base)?.id ?? DEFAULT_BASE,
+  base: (timeAtStart && TIME_TRAVEL?.base) || LINKED_BASE,
   // Catalog layers in a link are loaded by the map (with the catalog on); unknown ids simply draw nothing.
   overlays: (initial.overlays ?? view.overlays).filter(
     (id) => overlayById.has(id) || (config.modules.gugik?.catalog === true && CATALOG_ID.test(id)),
@@ -93,12 +122,19 @@ export const useMapStore = create<MapStore>((set, get) => ({
   opacity: {},
   panel: 'none',
   focus: null,
-  tool: 'none',
+  tool: timeAtStart ? 'time' : 'none',
   measureClears: 0,
   measureResult: '',
   printRequest: null,
   printSettings: { paper: 'A4', orientation: 'landscape', scale: 10000, title: '' },
   printCenter: null,
+  time: timeAtStart ? (initial.time ?? null) : null,
+  compare: timeAtStart && initial.compare === true,
+  curtain: 0.5,
+  // The view of a link closes onto the base map the link named.
+  ...(timeAtStart && TIME_TRAVEL?.base ? { baseBeforeTime: LINKED_BASE } : {}),
+  timeStatus: 'idle',
+  timeRetries: 0,
 
   setView: (center, zoom, scale) => set({ center, zoom, scale }),
   setBase: (base) => set({ base }),
@@ -127,13 +163,38 @@ export const useMapStore = create<MapStore>((set, get) => ({
   clearFocus: () => set({ focus: null }),
   goHome: () => get().focusOn({ extent: HOME_EXTENT, zoom: 0 }),
   zoomToScale: (scale) => get().focusOn({ scale, zoom: 0 }),
-  setTool: (tool) => set({ tool }),
+  // The time view forces its base map (the photos under the archival photos) and gives the
+  // one used before back when it closes.
+  setTool: (tool) =>
+    set((s) => {
+      if (tool === s.tool) return {};
+      const forced = TIME_TRAVEL?.base;
+      if (tool === 'time' && forced) return { tool, base: forced, baseBeforeTime: s.base };
+      if (s.tool === 'time' && forced)
+        return { tool, base: s.baseBeforeTime ?? DEFAULT_BASE, baseBeforeTime: undefined, timeStatus: 'idle' };
+      return { tool };
+    }),
   clearMeasurements: () => set((s) => ({ measureClears: s.measureClears + 1, measureResult: '' })),
   setMeasureResult: (measureResult) => set({ measureResult }),
   setPrintSettings: (settings) => set((s) => ({ printSettings: { ...s.printSettings, ...settings } })),
   requestPrint: (options) => set({ printRequest: { ...options } }),
   printDone: () => set({ printRequest: null }),
+  setTime: (time) => set({ time }),
+  setTimeStatus: (timeStatus) => set({ timeStatus }),
+  retryTime: () => set((s) => ({ timeRetries: s.timeRetries + 1 })),
+  setCompare: (compare) => set({ compare }),
+  setCurtain: (fraction) => set({ curtain: Math.min(Math.max(fraction, 0), 1) }),
 }));
+
+/** What a link to the map carries: the view, the layers and, while the time view is open, its date. */
+export const urlState = (s: MapStore) => ({
+  center: s.center,
+  zoom: s.zoom,
+  base: s.base,
+  overlays: s.overlays,
+  sublayers: s.sublayers,
+  ...(s.tool === 'time' && s.time ? { time: s.time, ...(s.compare ? { compare: true } : {}) } : {}),
+});
 
 useMapStore.subscribe((s, prev) => {
   if (
@@ -141,9 +202,12 @@ useMapStore.subscribe((s, prev) => {
     s.zoom !== prev.zoom ||
     s.base !== prev.base ||
     s.overlays !== prev.overlays ||
-    s.sublayers !== prev.sublayers
+    s.sublayers !== prev.sublayers ||
+    s.tool !== prev.tool ||
+    s.time !== prev.time ||
+    s.compare !== prev.compare
   ) {
-    writeUrl({ center: s.center, zoom: s.zoom, base: s.base, overlays: s.overlays, sublayers: s.sublayers });
+    writeUrl(urlState(s));
   }
 });
 

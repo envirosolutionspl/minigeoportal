@@ -6,6 +6,7 @@ import { BasemapSwitcher } from './ui/BasemapSwitcher';
 import { InfoPanel } from './ui/InfoPanel';
 import { MapMenu } from './ui/MapMenu';
 import { MeasureBar } from './ui/MeasureBar';
+import { TimeBar } from './ui/TimeBar';
 import { WelcomeDialog } from './ui/WelcomeDialog';
 import { ReportDialog } from './ui/ReportDialog';
 import { PrintPanel, PrintSheet } from './ui/Print';
@@ -17,18 +18,20 @@ import { useMapStore } from './state/store';
 
 export default function App() {
   const panel = useMapStore((m) => m.panel);
+  const tool = useMapStore((m) => m.tool);
 
   // Escape ends the print tool, else (while not measuring: measure.ts has its own Escape) closes
-  // the place panel, then the layer list; open dialogs close themselves.
+  // the place panel, then the layer list, then the time view; open dialogs close themselves.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.defaultPrevented || document.querySelector('dialog[open]')) return;
       const { tool, setTool } = useMapStore.getState();
       if (tool === 'print') return setTool('none');
-      if (tool !== 'none') return;
+      if (tool !== 'none' && tool !== 'time') return;
       const info = useInfoStore.getState();
       if (info.query) info.close();
       else if (useMapStore.getState().panel !== 'none') useMapStore.getState().setPanel('none');
+      else if (tool === 'time') setTool('none');
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -36,7 +39,11 @@ export default function App() {
 
   // Phones held sideways: the app keeps clear of the notch (viewport-fit=cover lets the page under it).
   return (
-    <div data-panel={panel} className="relative mr-[env(safe-area-inset-right)] ml-[env(safe-area-inset-left)] h-dvh overflow-hidden">
+    <div
+      data-panel={panel}
+      data-tool={tool}
+      className="relative mr-[env(safe-area-inset-right)] ml-[env(safe-area-inset-left)] h-dvh overflow-hidden"
+    >
       <nav aria-label={t('app.skipLinks')} className="skip-links">
         <a href="#map">{t('app.skipToMap')}</a>
         <a href="#search">{t('app.skipToSearch')}</a>
@@ -50,6 +57,7 @@ export default function App() {
       <InfoPanel />
       <MapMenu />
       <MeasureBar />
+      <TimeBar />
       <PrintPanel />
       <AuthorCredit />
       <aside

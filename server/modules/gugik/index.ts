@@ -50,6 +50,9 @@ export function validate(app: AppFile, map?: MapFile, layers?: LayersFile): Prob
   if (ortho && !map.tileServices.some((s) => s.id === ortho.service)) {
     add(['modules', 'gugik', 'ortho', 'service'], `modules.gugik.ortho.service: unknown tile service "${ortho.service}"`);
   }
+  if (ortho && ortho.history && !layers?.overlays.some((o) => o.id === ortho.history && o.time)) {
+    add(['modules', 'gugik', 'ortho', 'history'], `modules.gugik.ortho.history: "${ortho.history}" is not an overlay with a time block`);
+  }
   return problems;
 }
 

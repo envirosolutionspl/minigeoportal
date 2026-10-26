@@ -3,7 +3,7 @@ import ImageWMS from 'ol/source/ImageWMS';
 import { overlayById, type Overlay } from '@/config/runtime';
 import { createOverlayLayer } from './layers';
 import { registerMeta } from './meta';
-import { expandRange, parseValues, timeValues } from './time';
+import { expandRange, parseValues, timeValues, valueAt, yearly } from './time';
 
 const kieg = overlayById.get('kieg')!;
 
@@ -22,6 +22,11 @@ describe('expandRange', () => {
 describe('parseValues', () => {
   it('reads lists and ranges as WMS capabilities write them', () => {
     expect(parseValues('2010, 2012/2016/P2Y')).toEqual(['2010', '2012', '2014', '2016']);
+  });
+
+  it('takes a date written with midnight as the date', () => {
+    expect(parseValues('1995-01-01T00:00:00.000Z/1995-03-01T00:00:00.000Z/P1M')).toEqual(['1995-01-01', '1995-02-01', '1995-03-01']);
+    expect(parseValues('2015-06-01T12:00:00Z')).toEqual(['2015-06-01T12:00:00Z']);
   });
 });
 
@@ -54,5 +59,23 @@ describe('timeValues', () => {
     expect(timeValues(def)).toEqual({ param: 'TIME', values: ['2015', '2018', '2020'], current: '2018' });
     const source = createOverlayLayer(def).getSource() as ImageWMS;
     expect(source.getParams().TIME).toBe('2018');
+  });
+});
+
+describe('valueAt', () => {
+  it('gives the latest value not after the wanted date, else the first', () => {
+    const values = ['2001-05-13', '2011-04-21', '2025-04-27'];
+    expect(valueAt(values, '2015-06-01')).toBe('2011-04-21');
+    expect(valueAt(values, '2011-04-21')).toBe('2011-04-21');
+    expect(valueAt(values, '2030')).toBe('2025-04-27');
+    expect(valueAt(values, '1999')).toBe('2001-05-13');
+    expect(valueAt([], '2010')).toBeUndefined();
+  });
+});
+
+describe('yearly', () => {
+  it('keeps the first value of each year', () => {
+    expect(yearly(['2023-11', '2023-12', '2024-01', '2024-02'])).toEqual(['2023-11', '2024-01']);
+    expect(yearly(['2015', '2018'])).toEqual(['2015', '2018']);
   });
 });

@@ -50,6 +50,9 @@ view:
   toggleBase: orto # the large thumbnail switches to the photos and back
   overlays: [kieg]
 
+# The time view: the archival orthophoto map (layers.yaml) over the photos, at the chosen date.
+timeTravel: { layer: orto-archiwalna, base: orto }
+
 attribution: 'Dane: [GUGiK, geoportal.gov.pl](https://www.geoportal.gov.pl)'
 
 # WMTS services; firstLevel and levels say which of the zoom levels above each one publishes.

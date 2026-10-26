@@ -12,6 +12,7 @@ const CONFIG = `export const config = {
         //{
         //  layerId: 'msBudynkiBDOT10k',
         //},
+        { layerId: 'groupDaneArch' },
         { layerId: 'msSUiKZP', visible: false },
         { layerId: 'msMPZP', visible: false },
         { layerId: 'msPlanyOgolneGmin', visible: false },
@@ -41,10 +42,22 @@ const CONFIG = `export const config = {
   ],
 };`;
 
+/** The main file of the configuration, read after the map's: the groups the maps share. */
+const MAIN = `export const main = {
+  services: [
+    { id: 'groupDaneArch', type: 'group', layers: [{ layerId: 'msTOPO_SERIA_10_1992' }, { layerId: 'msORTO_TIME_WMS' }] },
+  ],
+};`;
+
 describe('geoportalLayerOrder', () => {
   it('lists the map layers bottom to top with groups expanded and comments ignored', () => {
-    expect(geoportalLayerOrder(CONFIG)).toEqual([
+    expect(
+      geoportalLayerOrder(`${CONFIG}
+${MAIN}`),
+    ).toEqual([
       'msBDOO_BDOT10k_base',
+      'msTOPO_SERIA_10_1992',
+      'msORTO_TIME_WMS',
       'msSUiKZP',
       'msMPZP',
       'msPlanyOgolneGmin',
@@ -61,17 +74,13 @@ describe('geoportalLayerOrder', () => {
 
 describe('overlayOrder', () => {
   it('orders our overlays as the geoportal draws them', () => {
-    expect(overlayOrder(CONFIG, defaults.layers.overlays)).toEqual([
-      'suikzp',
-      'kimpzp',
-      'pog',
-      'kibdot',
-      'kiut',
-      'kieg',
-      'rcn',
-      'kina',
-      'prg',
-    ]);
+    expect(
+      overlayOrder(
+        `${CONFIG}
+${MAIN}`,
+        defaults.layers.overlays,
+      ),
+    ).toEqual(['orto-archiwalna', 'suikzp', 'kimpzp', 'pog', 'kibdot', 'kiut', 'kieg', 'rcn', 'kina', 'prg']);
   });
 
   it('follows a changed order', () => {
@@ -79,17 +88,13 @@ describe('overlayOrder', () => {
       "{ layerId: 'msKIUT', visible: true },\n        { layerId: 'msKIEG', visible: true },",
       "{ layerId: 'msKIEG', visible: true },\n        { layerId: 'msKIUT', visible: true },",
     );
-    expect(overlayOrder(swapped, defaults.layers.overlays)).toEqual([
-      'suikzp',
-      'kimpzp',
-      'pog',
-      'kibdot',
-      'kieg',
-      'kiut',
-      'rcn',
-      'kina',
-      'prg',
-    ]);
+    expect(
+      overlayOrder(
+        `${swapped}
+${MAIN}`,
+        defaults.layers.overlays,
+      ),
+    ).toEqual(['orto-archiwalna', 'suikzp', 'kimpzp', 'pog', 'kibdot', 'kieg', 'kiut', 'rcn', 'kina', 'prg']);
   });
 
   it('gives up when an overlay is missing, so the built-in order is used', () => {

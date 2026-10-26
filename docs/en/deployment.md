@@ -81,7 +81,7 @@ map.example.org {
 }
 ```
 
-Data the server keeps between starts (service metadata, the geoportal catalog, dictionaries) lives in `DATA_DIR`. Refresh it once a day, e.g. with cron:
+Data the server keeps between starts (service metadata, the geoportal catalog, dictionaries) lives in `DATA_DIR`. A single server refreshes the metadata and the catalog itself once a day, so cron is optional; to refresh them at a set hour, or at once after a change of the configuration, run `npm run update`. The server reads what it wrote within a minute, without a restart:
 
 ```
 0 4 * * * cd /srv/minigeoportal && CONFIG_DIR=/etc/minigeoportal DATA_DIR=/var/lib/minigeoportal npm run update
@@ -108,7 +108,13 @@ Two things live in `public/` and go into the build: the thumbnails of the base m
 - **Content Security Policy**: scripts, styles and fonts only from the site, images from any https address (tiles and service images), connections only to the site (and to the GUGiK search services with the module on). `frame-ancestors 'none'`: the page cannot be embedded in a frame on another site.
 - **The configuration in the container** is `/app/config`, read-only; it may contain `skins/`, `i18n/`, `content/`, `seed/` and `brand/`. Data is in `/data` and is only a cache: the volume can be wiped, the server rebuilds it.
 - **Endpoints to check**: `GET /api/health` (`{ ok, capabilitiesGeneratedAt }`), `GET /api/config` (the configuration given to the app), `GET /api/report` (`{ enabled }`: whether the report form works), `GET /api/capabilities`, `GET /api/catalog` (gugik module).
-- **Logs**: on standard output; upstream errors and why the report form is off (no mail server or sender); a missing `APP_ORIGIN` only gives a warning that reports will carry no link to the map view. On SIGTERM the server finishes requests in progress, for 10 seconds at most.
+- **Logs**: on standard output; upstream errors, critical errors (see below) and why the report form is off (no mail server or sender); a missing `APP_ORIGIN` only gives a warning that reports will carry no link to the map view. On SIGTERM the server finishes requests in progress, for 10 seconds at most.
+
+## Critical errors
+
+What the server cannot fix by itself is a critical error: a configured service (a basemap or an overlay of the configuration) that did not answer at the daily refresh, a refresh that failed as a whole, and an error nothing in the server caught (the process then stops, and Docker or the service manager starts it again). It goes to the log as a line starting with `CRITICAL` and, with the mail server set up, by e-mail to `admin` from `app.yaml`, the same address as the bug reports, in the language of `report.locale`. The same error is mailed at most once a day and no more than ten a day in all. Layers of the geoportal catalog that do not answer are not critical: there are hundreds of them and some are always down.
+
+In Docker Compose the `updater` service reads `.env` too, so its refresh mails with the same mail server.
 
 Security and how the server is built: [Architecture](architecture.md).
 
@@ -116,20 +122,20 @@ Security and how the server is built: [Architecture](architecture.md).
 
 Set them in the environment or in a `.env` file in the app directory (template with descriptions: `.env.example`; `.env` never goes into the repository).
 
-| Variable                                | Default                                        | Meaning                                                                                                                          |
-| --------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `CONFIG_DIR`                            | `config`                                       | The deployment's configuration directory.                                                                                        |
-| `DATA_DIR`                              | `server/data`                                  | The server's data directory (see below). Must be writable.                                                                       |
-| `PORT`                                  | `8787`                                         | The server's port.                                                                                                               |
-| `HOST`                                  | `0.0.0.0` in production, `127.0.0.1` otherwise | The listening address. Behind a proxy on the same machine: `127.0.0.1`.                                                          |
-| `NODE_ENV`                              |                                                | `production`: the server also serves the built app from `dist/`. The Docker image sets it.                                       |
-| `APP_ORIGIN`                            |                                                | Public address of the app, e.g. `https://map.example.org`. Bug reports may link only to it; without it they carry no link.       |
-| `TRUSTED_PROXY`                         |                                                | `1` behind a reverse proxy that appends the client address to `X-Forwarded-For`; rate limits then count per client.              |
-| `SHARED_DATA`                           |                                                | `1` when several instances share `DATA_DIR`: only `npm run update` writes the data, the instances read it again within a minute. |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | `587`, STARTTLS                                | The mail server for the report form; port 465 means TLS from the start, `SMTP_SECURE` only overrides that.                       |
-| `SMTP_USER`, `SMTP_PASS`                |                                                | Login to the mail server. Only in `.env` or the environment, never in the configuration.                                         |
-| `REPORT_FROM`, `REPORT_TO`              |                                                | Sender (default `SMTP_USER`) and recipient of bug reports. Without `SMTP_HOST`, `REPORT_TO` and a sender the form is off.        |
-| `API_PORT`                              | `8787`                                         | Development only: where the Vite server finds the API.                                                                           |
+| Variable                                | Default                                        | Meaning                                                                                                                                                                                      |
+| --------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CONFIG_DIR`                            | `config`                                       | The deployment's configuration directory.                                                                                                                                                    |
+| `DATA_DIR`                              | `server/data`                                  | The server's data directory (see below). Must be writable.                                                                                                                                   |
+| `PORT`                                  | `8787`                                         | The server's port.                                                                                                                                                                           |
+| `HOST`                                  | `0.0.0.0` in production, `127.0.0.1` otherwise | The listening address. Behind a proxy on the same machine: `127.0.0.1`.                                                                                                                      |
+| `NODE_ENV`                              |                                                | `production`: the server also serves the built app from `dist/`. The Docker image sets it.                                                                                                   |
+| `APP_ORIGIN`                            |                                                | Public address of the app, e.g. `https://map.example.org`. Bug reports may link only to it; without it they carry no link.                                                                   |
+| `TRUSTED_PROXY`                         |                                                | `1` behind a reverse proxy that appends the client address to `X-Forwarded-For`; rate limits then count per client.                                                                          |
+| `SHARED_DATA`                           |                                                | `1` when several instances share `DATA_DIR`: only `npm run update` writes the data, the instances read it again within a minute. Without it the server refreshes the data itself once a day. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | \1                                             | The mail server for the mails to the administrator (`admin` in `app.yaml`): bug reports and critical errors; port 465 means TLS from the start, `SMTP_SECURE` only overrides that.           |
+| `SMTP_USER`, `SMTP_PASS`                |                                                | Login to the mail server. Only in `.env` or the environment, never in the configuration.                                                                                                     |
+| `REPORT_FROM`                           |                                                | Sender of the mails (default `SMTP_USER`). Without `SMTP_HOST`, `admin` in `app.yaml` and a sender the report form and the alert mails are off.                                              |
+| `API_PORT`                              | `8787`                                         | Development only: where the Vite server finds the API.                                                                                                                                       |
 
 ## Paths and files
 

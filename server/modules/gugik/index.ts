@@ -73,8 +73,8 @@ export interface Data {
 /**
  * The layer catalog, read from disk. A single instance builds it in the background on its first
  * start (a minute or two: every service is checked), so it answers at once and the app works on
- * its own layers meanwhile; instances sharing the data directory wait for the updater and read
- * the catalog again when it changes.
+ * its own layers meanwhile; instances sharing the data directory wait for the updater. Every
+ * instance reads the catalog again when it changes.
  */
 export async function start(client: ClientConfig): Promise<Data> {
   if (!client.modules.gugik?.catalog) return {};
@@ -87,11 +87,9 @@ export async function start(client: ClientConfig): Promise<Data> {
       })
       .catch((e: unknown) => console.warn(`catalog: ${errorMessage(e)}`));
   }
-  if (env.sharedData) {
-    await follow(catalogFile(), async () => {
-      catalog = (await readCatalog()) ?? catalog;
-    });
-  }
+  await follow(catalogFile(), async () => {
+    catalog = (await readCatalog()) ?? catalog;
+  });
   return { catalog: () => catalog };
 }
 

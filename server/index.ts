@@ -4,20 +4,27 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { compress } from 'hono/compress';
 import { etag } from 'hono/etag';
 import type { Context } from 'hono';
+import { alertOnCrash, alertsTo, critical } from './alerts.ts';
 import { createApp } from './app.ts';
-import { CACHE_FILE, readCache, startingCache } from './cache.ts';
+import { CACHE_FILE, readCache, refreshCache, startingCache } from './cache.ts';
 import { mailerFromEnv } from './report.ts';
 import * as modules from './modules/index.ts';
 import { config, production } from './config.ts';
 import { loadConfig } from './config/load.ts';
 import { createSite, renderPage, routePage } from './html.ts';
-import { follow } from './files.ts';
+import { follow, repeat } from './files.ts';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
 
 /** Starts the API; in production it also serves the built app from ./dist. Settings: config.ts. */
 
 /** A configuration with problems stops the server here, with every problem listed. */
 const site = createSite(loadConfig(config.configDir));
+
+// Bug reports and critical errors go to the administrator (app.yaml admin) by e-mail.
+const mailer = mailerFromEnv(site.mail, site.config.app.admin);
+if (!mailer) console.log('Bug reports and alert mails off: set SMTP_HOST and admin in app.yaml to turn them on.');
+alertsTo(mailer, site.mail);
+alertOnCrash();
 
 let capabilities: CapabilitiesCache = await startingCache(site.defaults, config.sharedData, (built) => {
   capabilities = built;
@@ -26,16 +33,30 @@ let capabilities: CapabilitiesCache = await startingCache(site.defaults, config.
 // The modules' data (the geoportal layer catalog): read from disk, or built in the background.
 const moduleData = await modules.start(site.defaults);
 
-// With a shared data directory the updater writes the caches; this instance reads them again.
-if (config.sharedData) {
-  await follow(CACHE_FILE, async () => {
-    capabilities = (await readCache()) ?? capabilities;
-  });
+// The caches are read again when they change: written by the daily refresh below, by a cron run
+// of `npm run update` or, with a shared data directory, by the updater.
+await follow(CACHE_FILE, async () => {
+  capabilities = (await readCache()) ?? capabilities;
+});
+
+// A single instance refreshes its caches once a day itself; instances sharing the data directory
+// leave that to the updater.
+if (!config.sharedData) {
+  repeat(
+    async () => {
+      try {
+        await refreshCache(site.defaults);
+        await modules.update(site.defaults);
+      } catch (e) {
+        await critical('Data refresh failed', e);
+      }
+    },
+    24 * 60 * 60 * 1000,
+    'refresh',
+  );
 }
 
-const mailer = mailerFromEnv(site.mail);
 if (production && !config.origin) console.warn('APP_ORIGIN not set: bug reports cannot link to the map view.');
-if (!mailer) console.log('Bug reports off: set SMTP_HOST and REPORT_TO to turn them on.');
 const app = createApp({
   site,
   cache: () => capabilities,

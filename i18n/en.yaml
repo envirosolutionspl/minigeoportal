@@ -204,6 +204,10 @@ report:
     noView: not attached
     browser: Browser
     noBrowser: unknown
+    # A critical error of the server (server/alerts.ts).
+    alert: '[{app}] Critical error: {what}'
+    server: Server
+    time: Time
   failed: The report could not be sent.
   offline: No connection to the server. Try again.
   invalid: The report has invalid data. Check the description and the e-mail address.

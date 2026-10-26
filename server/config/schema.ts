@@ -51,6 +51,8 @@ export const appSchema = z.strictObject({
   description: text,
   domain: z.string().min(1),
   contact: z.email(),
+  /** The administrator: bug reports and critical errors of the server go there by e-mail; both are off without it. */
+  admin: z.email().optional(),
   /** The author, linked in the corner of the map; `logo` is shown instead of the name when given. */
   author: z.strictObject({ name: z.string().min(1), url, logo: image.optional() }),
   /** The sign of the app: in the bar, the welcome window, the browser tab and link previews; the built-in one when left out. */

@@ -2,7 +2,7 @@ import { mkdtemp, readdir, readFile, rm, utimes } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it, vi } from 'vitest';
-import { follow, writeAtomic } from './files.ts';
+import { follow, repeat, writeAtomic } from './files.ts';
 
 const dirs: string[] = [];
 afterAll(() => Promise.all(dirs.map((d) => rm(d, { recursive: true, force: true }))));
@@ -48,5 +48,37 @@ describe('follow', () => {
     await utimes(file, new Date(), new Date(Date.now() + 5000));
     await vi.waitFor(() => expect(read).toHaveBeenCalledOnce());
     stop();
+  });
+});
+
+describe('repeat', () => {
+  it('runs the task every turn but never twice at once, and goes on after a failure', async () => {
+    vi.useFakeTimers();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    let finish = () => {};
+    const task = vi
+      .fn<() => Promise<void>>()
+      .mockImplementationOnce(() => new Promise((r) => (finish = r)))
+      .mockRejectedValueOnce(new Error('down'))
+      .mockResolvedValue();
+    const stop = repeat(task, 1000, 'refresh');
+    await vi.advanceTimersByTimeAsync(999);
+    expect(task).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(task).toHaveBeenCalledOnce();
+    // The first run is still going: the next turn passes it by.
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(task).toHaveBeenCalledOnce();
+    finish();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(task).toHaveBeenCalledTimes(2);
+    expect(warn).toHaveBeenCalledWith('refresh: down');
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(task).toHaveBeenCalledTimes(3);
+    stop();
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(task).toHaveBeenCalledTimes(3);
+    warn.mockRestore();
+    vi.useRealTimers();
   });
 });

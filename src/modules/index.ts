@@ -29,10 +29,14 @@ export const searchProviders: Record<string, () => Promise<SearchProvider>> = {
 
 export const searchTool: SearchTool | undefined = gugik.parcelTool;
 
-/** A date the time view can show at a place, with a detail to say after it (the photo's sharpness). */
+/**
+ * A date the time view can show at a place, with a detail to say after it (the photo's
+ * sharpness, the sheets' scales) and, for a series, the sublayers that draw it (comma-separated).
+ */
 export interface TimeOption {
   value: string;
   detail?: string;
+  layer?: string;
 }
 
 /** Asks for the dates a layer has at a point. */

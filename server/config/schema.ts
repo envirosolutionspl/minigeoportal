@@ -113,6 +113,11 @@ export const appSchema = z.strictObject({
            * their archive, whose dates the photo index narrows to the ones that exist at a point.
            */
           ortho: z.union([z.literal(false), z.strictObject({ service: id, history: id.optional() })]).default({ service: 'orto' }),
+          /**
+           * The old topographic maps: `history` is the overlay of layers.yaml (a series) that shows them, whose
+           * dates at a point the index of topographic maps gives, sheet by sheet.
+           */
+          topo: z.union([z.literal(false), z.strictObject({ history: id })]).default(false),
           parcelReport: z.boolean().default(true),
         })
         .optional(),

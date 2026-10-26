@@ -133,6 +133,14 @@ describe('measurement tool', () => {
 });
 
 describe('time view', () => {
+  it('keeps the sublayers a module names for the date, and drops them with the layer', () => {
+    useMapStore.setState({ tool: 'time', timeLayer: 'mapy-dawne', timeSublayers: null });
+    state().setTimeSublayers('Raster_10_1965');
+    expect(state().timeSublayers).toBe('Raster_10_1965');
+    state().setTimeLayer('orto-archiwalna');
+    expect(state().timeSublayers).toBeNull();
+  });
+
   it('forces its base map while open and gives the one before back', () => {
     useMapStore.setState({ base: 'mapa', tool: 'none', timeStatus: 'error' });
     state().setTool('time');

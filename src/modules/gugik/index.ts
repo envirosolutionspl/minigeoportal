@@ -32,14 +32,21 @@ export const infoHeader = info && gugik?.parcelReport ? [lazy(() => info.then((m
 /** The date of the aerial photo above the footer of the place panel (ortho). */
 export const infoFooter = info && gugik?.ortho ? [lazy(() => info.then((m) => ({ default: m.OrthoPhoto })))] : [];
 
-/** The layer of the time view that shows the archive of the photos (ortho.history), if it is one. */
-const historyLayer = gugik && gugik.ortho ? gugik.ortho.history : undefined;
+/** The layers of the time view the module knows the dates of: the archival photos (ortho.history), the old maps (topo.history). */
+const photos = gugik && gugik.ortho ? gugik.ortho.history : undefined;
+const oldMaps = gugik && gugik.topo ? gugik.topo.history : undefined;
 
 /**
- * The dates of the archival photos at a point, for the layer that shows them: the photo index
- * knows which photos exist there, so the time bar offers those dates only.
+ * The dates a layer has at a point: of the archival photos from the photo index (the time bar
+ * offers those dates only), of the old maps from the index of topographic maps (each date drawing
+ * its own sheets).
  */
-export const timeOptions = (layer: string) =>
-  historyLayer !== undefined && layer === historyLayer
-    ? (coordinate: [number, number], signal: AbortSignal) => import('./ortho').then((m) => m.timeOptionsAt(coordinate, signal))
-    : undefined;
+export const timeOptions = (layer: string) => {
+  if (photos !== undefined && layer === photos) {
+    return (coordinate: [number, number], signal: AbortSignal) => import('./ortho').then((m) => m.timeOptionsAt(coordinate, signal));
+  }
+  if (oldMaps !== undefined && layer === oldMaps) {
+    return (coordinate: [number, number], signal: AbortSignal) => import('./topo').then((m) => m.timeOptionsAt(coordinate, signal));
+  }
+  return undefined;
+};

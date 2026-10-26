@@ -59,3 +59,6 @@ info:
     many: '{count} zdjęć od {year}'
     other: '{count} zdjęcia od {year}'
   seeChanges: Zobacz zmiany
+
+topo:
+  sheet: 'arkusz 1:{scale} w układzie {system}'

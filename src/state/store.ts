@@ -65,6 +65,8 @@ interface MapStore {
   timeStatus: TimeStatus;
   /** The time view's layer (map.yaml: timeTravel.layers), by id; null means the first. */
   timeLayer: string | null;
+  /** The sublayers (comma-separated) a module names for the chosen date of a series; null leaves the choice to the layer's editions. */
+  timeSublayers: string | null;
   /** The time view compares its date with the present: the layer draws left of a curtain, the base map shows right of it. */
   compare: boolean;
   /** Where the curtain is, as a fraction of the map's width from its left edge. */
@@ -99,6 +101,7 @@ interface MapStore {
   setCompare(compare: boolean): void;
   setCurtain(fraction: number): void;
   setTimeLayer(id: string | null): void;
+  setTimeSublayers(names: string | null): void;
 }
 
 /** Phones may start on a lighter base map (map.yaml: view.baseMobile), whose tiles load faster on mobile connections. */
@@ -133,6 +136,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
   printCenter: null,
   time: timeAtStart ? (initial.time ?? null) : null,
   timeLayer: timeAtStart && TIME_TRAVEL?.layers.some((l) => l.id === initial.timeLayer) ? (initial.timeLayer ?? null) : null,
+  timeSublayers: null,
   compare: timeAtStart && initial.compare === true,
   curtain: 0.5,
   // The view of a link closes onto the base map the link named.
@@ -188,7 +192,8 @@ export const useMapStore = create<MapStore>((set, get) => ({
   retryTime: () => set((s) => ({ timeRetries: s.timeRetries + 1 })),
   setCompare: (compare) => set({ compare }),
   setCurtain: (fraction) => set({ curtain: Math.min(Math.max(fraction, 0), 1) }),
-  setTimeLayer: (timeLayer) => set({ timeLayer }),
+  setTimeLayer: (timeLayer) => set({ timeLayer, timeSublayers: null }),
+  setTimeSublayers: (timeSublayers) => set((s) => (s.timeSublayers === timeSublayers ? {} : { timeSublayers })),
 }));
 
 /** What a link to the map carries: the view, the layers and, while the time view is open, its date. */

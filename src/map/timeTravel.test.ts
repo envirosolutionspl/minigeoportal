@@ -92,11 +92,13 @@ describe('attachTimeTravel', () => {
     useMapStore.getState().setTool('time');
     const layer = timeLayer();
     expect(layer.getMaxResolution()).toBeCloseTo(scaleToResolution(47247), 6);
-    expect(timeLayerDrawsAt(null, null, 10000)).toBe(true);
-    expect(timeLayerDrawsAt(null, null, 100000)).toBe(false);
-    // The old maps draw further out: their 1:50 000 sheets, up to 1:94 493.
-    expect(timeLayerDrawsAt('mapy-dawne', '1965', 60000)).toBe(true);
-    expect(timeLayerDrawsAt('mapy-dawne', '1965', 100000)).toBe(false);
+    expect(timeLayerDrawsAt(null, null, null, 10000)).toBe(true);
+    expect(timeLayerDrawsAt(null, null, null, 100000)).toBe(false);
+    // The old maps draw further out: their 1:50 000 sheets, up to 1:94 493; a named 1:10 000 sheet only up to 1:23 623.
+    expect(timeLayerDrawsAt('mapy-dawne', '1965', null, 60000)).toBe(true);
+    expect(timeLayerDrawsAt('mapy-dawne', '1965', null, 100000)).toBe(false);
+    expect(timeLayerDrawsAt('mapy-dawne', '1982', 'Raster_10_1965', 60000)).toBe(false);
+    expect(timeLayerDrawsAt('mapy-dawne', '1982', 'Raster_10_1965', 20000)).toBe(true);
   });
 
   it('shows one layer at a time: the old maps draw the sheets of the chosen system, finest last', () => {
@@ -116,6 +118,13 @@ describe('attachTimeTravel', () => {
     expect(oldMaps().getSource()!.getParams().LAYERS).toBe('Raster_50_1965,Raster_25_1965,Raster_10_1965');
     const def = overlayById.get('mapy-dawne')!;
     expect(sublayersFor(def, timeLayers()[1].spec, undefined)).toEqual(['Raster_50_1992', 'Raster_10_1992']);
+    // A module naming the sheets of a date (the index of topographic maps) wins over the edition.
+    useMapStore.getState().setTime('1982');
+    useMapStore.getState().setTimeSublayers('Raster_25_1965,Raster_10_1965');
+    expect(oldMaps().getSource()!.getParams().LAYERS).toBe('Raster_25_1965,Raster_10_1965');
+    expect(oldMaps().getMaxResolution()).toBeCloseTo(scaleToResolution(47246), 6);
+    useMapStore.getState().setTimeSublayers(null);
+    expect(oldMaps().getSource()!.getParams().LAYERS).toBe('Raster_50_1965,Raster_25_1965,Raster_10_1965');
   });
 
   it('zooms in when the view opens too far out for the layer', () => {

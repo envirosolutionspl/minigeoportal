@@ -4,6 +4,9 @@ import { TimeBar } from './TimeBar';
 import { useMapStore } from '@/state/store';
 import { registerMeta } from '@/services/meta';
 import { stubFetch } from '@/test/helpers';
+// The modules the bar loads on demand, loaded now so the fake timers of the tests see their answers.
+import '@/modules/gugik/ortho';
+import '@/modules/gugik/topo';
 
 /** The archival orthophoto map draws below 1:47 247, with monthly values from 1995 to 2025. */
 beforeEach(() => {
@@ -38,6 +41,7 @@ beforeEach(() => {
     tool: 'time',
     time: null,
     timeLayer: null,
+    timeSublayers: null,
     timeStatus: 'idle',
     compare: false,
     scale: 10000,
@@ -195,28 +199,58 @@ describe('TimeBar', () => {
     expect(useMapStore.getState().compare).toBe(false);
   });
 
-  it('switches to the old maps: three systems on the slider, named, without asking the photo index', async () => {
-    const { calls } = index();
+  it('switches to the old maps: the years of the sheets at the place, each drawing its own sheets', async () => {
+    const { calls } = stubFetch([
+      ['/api/orto', { archived: 1, history: [{ date: '2025-04-27', pixel: 0.05 }] }],
+      [
+        '/api/topo',
+        {
+          sheets: [
+            { date: '1982', scale: 25000, system: '1965', layer: 'Raster_25_1965', sheet: '263.34' },
+            { date: '1982', scale: 10000, system: '1965', layer: 'Raster_10_1965', sheet: '263.344' },
+            { date: '1993', scale: 10000, system: '1942', layer: 'Raster_10_1942', sheet: 'N-34-139-A-c-1' },
+          ],
+        },
+      ],
+    ]);
     render(<TimeBar />);
     await settle();
-    const asked = calls.length;
     fireEvent.click(screen.getByRole('button', { name: 'Mapy dawne' }));
     expect(useMapStore.getState().timeLayer).toBe('mapy-dawne');
     expect(screen.getByRole('button', { name: 'Mapy dawne' }).getAttribute('aria-pressed')).toBe('true');
     expect(screen.getByRole('button', { name: 'Zdjęcia' }).getAttribute('aria-pressed')).toBe('false');
-    await settle();
-    expect(calls.length).toBe(asked);
+    // Until the index answers, the slider holds the systems of the layer's editions.
     expect(slider().max).toBe('2');
-    // The photo's date snaps to the latest system before it.
-    expect(useMapStore.getState().time).toBe('1992');
-    expect(slider().getAttribute('aria-valuetext')).toBe('1992');
-    expect(screen.getByRole('status').textContent).toBe('Mapy w układzie 1992, lata 90. i 2000.');
+    expect(screen.getByRole('status').textContent).toContain('Sprawdzam');
+    await settle();
+    expect(calls.some((u) => u.includes('/api/topo?x=636500&y=486500'))).toBe(true);
+    // Two years: the newest before the photo's date is 1993, whose sheet the map is told to draw.
+    expect(slider().max).toBe('1');
+    expect(useMapStore.getState().time).toBe('1993');
+    expect(useMapStore.getState().timeSublayers).toBe('Raster_10_1942');
+    expect(screen.getByRole('status').textContent).toMatch(/^Stan na 1993, arkusz 1:10\s000 w układzie 1942$/);
     fireEvent.click(screen.getByRole('button', { name: 'Wcześniejsza data' }));
-    expect(useMapStore.getState().time).toBe('1965');
-    expect(screen.getByRole('status').textContent).toBe('Mapy w układzie 1965, lata 70.–90.');
+    expect(useMapStore.getState().time).toBe('1982');
+    expect(useMapStore.getState().timeSublayers).toBe('Raster_25_1965,Raster_10_1965');
+    expect(screen.getByRole('status').textContent).toMatch(
+      /^Stan na 1982, arkusz 1:25\s000 w układzie 1965 · arkusz 1:10\s000 w układzie 1965$/,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Zdjęcia' }));
     await settle();
-    expect(useMapStore.getState().time).toBe('2001-05-13');
+    expect(useMapStore.getState().time).toBe('2025-04-27');
+    expect(useMapStore.getState().timeSublayers).toBeNull();
+  });
+
+  it('names the systems of the old maps while no index answers, which are not years', async () => {
+    stubFetch([['/api/topo', 'down', { status: 503 }]]);
+    useMapStore.setState({ timeLayer: 'mapy-dawne', time: '2007-01-01' });
+    render(<TimeBar />);
+    await settle();
+    expect(slider().max).toBe('2');
+    expect(useMapStore.getState().time).toBe('1992');
+    expect(screen.getByRole('status').textContent).toBe('Mapy w układzie 1992');
+    fireEvent.click(screen.getByRole('button', { name: 'Wcześniejsza data' }));
+    expect(screen.getByRole('status').textContent).toBe('Mapy w układzie 1965');
   });
 
   it('closes with its button', async () => {

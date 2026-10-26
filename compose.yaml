@@ -17,6 +17,9 @@ services:
       TRUSTED_PROXY: '1'
       SHARED_DATA: '1'
       APP_ORIGIN: https://${DOMAIN:-localhost}
+    # Docker's default of 1024 open files caps a replica at about a thousand connections at once.
+    ulimits:
+      nofile: { soft: 65536, hard: 65536 }
     env_file:
       - path: .env
         required: false

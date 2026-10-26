@@ -327,6 +327,9 @@ exports[`default configuration > stays what the app was built with (any change s
         "service": "orto",
       },
       "parcelReport": true,
+      "topo": {
+        "history": "mapy-dawne",
+      },
     },
   },
   "overlay": {

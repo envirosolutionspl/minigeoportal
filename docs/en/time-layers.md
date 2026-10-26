@@ -56,6 +56,6 @@ The "Time travel" tool (a button beside the measurement on a computer, an entry 
 
 The bar's "Compare with the present" button splits the map with a curtain: the layer as of the chosen date on the left, the base map (today) on the right. The handle on the line drags with a mouse or a finger, a click at the handle's height puts the line there, and the left and right arrow keys move it from the keyboard.
 
-Switching the layer keeps the date, and the slider stands on the newest value of the new layer not after it (a photo of 2007 shows the 1992 system on the old maps).
+Switching the layer keeps the date, and the slider stands on the newest value of the new layer not after it (a photo of 2007 shows the last sheet before 2007 on the old maps).
 
 A link to the view carries the date (`t=2007-01-01`, with the comparison `c=1`, with another layer than the first `tl=mapy-dawne`) and opens the map in the time view; Escape ends it and brings the base map used before it back.

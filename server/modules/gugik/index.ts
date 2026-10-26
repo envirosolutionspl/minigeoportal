@@ -10,6 +10,7 @@ import { buildCatalog, catalogFile, catalogIndex, readCatalog, serviceKey, write
 import { MAX_QUERY, communes, counties, findUnits, precincts, unitNames, voivodeships, type DictEntry } from './dictionaries.ts';
 import { fetchDrawOrder } from './drawOrder.ts';
 import { orthoAt } from './ortho.ts';
+import { topoAt } from './topo.ts';
 import { GUGIK_SEARCH_HOSTS } from './searchHosts.ts';
 import { CATALOG_TOPICS } from './topics.ts';
 
@@ -53,6 +54,13 @@ export function validate(app: AppFile, map?: MapFile, layers?: LayersFile): Prob
   }
   if (ortho && ortho.history && !layers?.overlays.some((o) => o.id === ortho.history && o.time)) {
     add(['modules', 'gugik', 'ortho', 'history'], `modules.gugik.ortho.history: "${ortho.history}" is not an overlay with a time block`);
+  }
+  const topo = app.modules.gugik?.topo;
+  if (topo && !layers?.overlays.some((o) => o.id === topo.history && o.time?.type === 'series')) {
+    add(
+      ['modules', 'gugik', 'topo', 'history'],
+      `modules.gugik.topo.history: "${topo.history}" is not an overlay with a series of editions`,
+    );
   }
   return problems;
 }
@@ -150,7 +158,11 @@ export interface RouteDeps {
   upstreamFailure: (c: Context, where: string, e: unknown) => Response;
   /** Answers that change only with the caches: kept by the browser, checked every time (ETag). */
   revalidated: (c: Context, version: string, body: () => unknown) => Response;
-  limits?: { dict?: [burst: number, perMinute: number]; ortho?: [burst: number, perMinute: number] };
+  limits?: {
+    dict?: [burst: number, perMinute: number];
+    ortho?: [burst: number, perMinute: number];
+    topo?: [burst: number, perMinute: number];
+  };
 }
 
 /** The module's routes: TERYT dictionaries of the parcel and unit search, the geoportal catalog, the photo index. */
@@ -230,6 +242,22 @@ export function routes(app: Hono, { client, data, upstream, upstreamFailure, rev
       } catch (e) {
         if (e instanceof RequestError) return c.text(e.message, 400);
         return upstreamFailure(c, 'orto', e);
+      }
+    });
+  }
+
+  if (gugik.topo) {
+    /** The sheets of the old topographic maps at a point, with the year each is current for. */
+    app.use('/api/topo', rateLimit(...(limits?.topo ?? [10, 30])));
+    app.get('/api/topo', async (c) => {
+      try {
+        const info = await upstream(() => topoAt(c.req.query('x'), c.req.query('y'), c.req.raw.signal));
+        if (!info) return c.text('Busy, try again shortly', 503);
+        c.header('Cache-Control', 'public, max-age=86400');
+        return c.json(info);
+      } catch (e) {
+        if (e instanceof RequestError) return c.text(e.message, 400);
+        return upstreamFailure(c, 'topo', e);
       }
     });
   }

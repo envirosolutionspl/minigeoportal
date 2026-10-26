@@ -1,15 +1,18 @@
-# For a server whose own reverse proxy (nginx, Apache) serves several sites: no Caddy, one replica
-# of the app reachable only from the server itself, on 127.0.0.1:8787. Use it with compose.yaml:
+# For a server whose own reverse proxy (nginx, Apache) serves several sites: no Caddy, two replicas
+# of the app reachable only from the server itself, on 127.0.0.1:8787 and 127.0.0.1:8788. Use it
+# with compose.yaml:
 #   docker compose -f compose.yaml -f compose.proxy.yaml up -d
 # or put COMPOSE_FILE=compose.yaml:compose.proxy.yaml into .env, so plain `docker compose` uses both.
+# With COMPOSE_PARALLEL_LIMIT=1 in .env too, an update recreates the replicas one after the other,
+# and the proxy keeps answering from the one that is up.
 # The proxy's site configuration: deploy/nginx/minigeoportal.conf.
 
 services:
   app:
     deploy:
-      replicas: 1
+      replicas: 2
     ports:
-      - '127.0.0.1:8787:8787'
+      - '127.0.0.1:8787-8788:8787'
 
   caddy:
     # Left out unless asked for: docker compose --profile caddy …

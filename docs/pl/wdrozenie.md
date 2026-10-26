@@ -44,7 +44,7 @@ Co uruchamia `compose.yaml`:
 | `app`     | Aplikacja i API (port 8787 w sieci Compose, niedostępny z zewnątrz), domyślnie 2 repliki z `SHARED_DATA=1` i `TRUSTED_PROXY=1`. Repliki nigdy same nie budują danych: czytają to, co zapisze `updater`, w ciągu minuty od zmiany. Każda odpowiada na `GET /api/health`.     |
 | `updater` | Ten sam obraz; odświeża dane (`node server/update.ts`, to samo co `npm run update`) przy starcie, a potem co 24 godziny.                                                                                                                                                    |
 
-Wolumeny: `data` (dane serwera, `/data` w kontenerach), `caddy-data` i `caddy-config` (certyfikaty Caddy). Konfiguracja jest montowana tylko do odczytu; po jej zmianie wystarczy `docker compose up -d --force-recreate app updater`. Ustawienia poczty i inne sekrety trafiają do `.env`.
+Każda replika ma limit 65536 otwartych plików (`ulimits` w `compose.yaml`); domyślne 1024 Dockera to sufit około tysiąca równoczesnych połączeń. Wolumeny: `data` (dane serwera, `/data` w kontenerach), `caddy-data` i `caddy-config` (certyfikaty Caddy). Konfiguracja jest montowana tylko do odczytu; po jej zmianie wystarczy `docker compose up -d --force-recreate app updater`. Ustawienia poczty i inne sekrety trafiają do `.env`.
 
 Sam obraz, bez Compose:
 
@@ -54,14 +54,17 @@ docker run -p 8787:8787 -v minigeoportal-data:/data ghcr.io/envirosolutionspl/mi
 
 ## Docker za istniejącym proxy (nginx)
 
-Gdy na serwerze działa już nginx (albo Apache) obsługujący kilka serwisów, Caddy nie jest potrzebny. Nakładka `compose.proxy.yaml` uruchamia jedną replikę aplikacji dostępną tylko lokalnie, pod `127.0.0.1:8787`:
+Gdy na serwerze działa już nginx (albo Apache) obsługujący kilka serwisów, Caddy nie jest potrzebny. Nakładka `compose.proxy.yaml` uruchamia dwie repliki aplikacji dostępne tylko lokalnie, pod `127.0.0.1:8787` i `127.0.0.1:8788`:
 
 ```bash
-printf 'DOMAIN=mapa.example.org\nCOMPOSE_FILE=compose.yaml:compose.proxy.yaml\n' >> .env
+printf 'DOMAIN=mapa.example.org
+COMPOSE_FILE=compose.yaml:compose.proxy.yaml
+COMPOSE_PARALLEL_LIMIT=1
+' >> .env
 docker compose up -d
 ```
 
-Wzór konfiguracji nginx (z przekierowaniem `www`) jest w `deploy/nginx/minigeoportal.conf`; certyfikat daje `certbot --nginx -d mapa.example.org -d www.mapa.example.org --redirect`.
+`COMPOSE_PARALLEL_LIMIT=1` sprawia, że aktualizacja odtwarza repliki po kolei, a nginx w tym czasie odpowiada z tej, która działa, więc wdrożenie nie daje błędów 502. Wzór konfiguracji nginx (z przekierowaniem `www`, blokiem `upstream` z dwiema replikami i `keepalive`) jest w `deploy/nginx/minigeoportal.conf`; w `/etc/nginx/nginx.conf` podnieś limity procesów (`worker_rlimit_nofile 65536;` i `worker_connections 4096;`), bo domyślne 1024 otwarte pliki na proces wystarczają na ok. 500 połączeń przez proxy. Certyfikat daje `certbot --nginx -d mapa.example.org -d www.mapa.example.org --redirect`.
 
 ## Jeden serwer bez Dockera
 

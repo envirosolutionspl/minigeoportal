@@ -185,6 +185,13 @@ export interface ClientConfig {
      * `ortho.history`: the overlay (with a `time` block) that shows their archive, whose dates at
      * a point the photo index narrows down to the ones that exist there.
      */
-    gugik?: { catalog: boolean; drawOrder: boolean; ortho: { service: string; history?: string } | false; parcelReport: boolean };
+    gugik?: {
+      catalog: boolean;
+      drawOrder: boolean;
+      ortho: { service: string; history?: string } | false;
+      /** `topo.history`: the overlay (a series) of the old topographic maps, whose dates at a point the index of those maps gives. */
+      topo: { history: string } | false;
+      parcelReport: boolean;
+    };
   };
 }

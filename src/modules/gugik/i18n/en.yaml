@@ -55,3 +55,6 @@ info:
     one: '{count} photo since {year}'
     other: '{count} photos since {year}'
   seeChanges: See the changes
+
+topo:
+  sheet: 'sheet 1:{scale} in the {system} system'

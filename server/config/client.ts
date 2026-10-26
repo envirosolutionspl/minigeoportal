@@ -133,6 +133,7 @@ export function clientConfig({ app, map, layers, content, brand, messages }: App
             catalog: app.modules.gugik.catalog,
             drawOrder: app.modules.gugik.drawOrder,
             ortho: app.modules.gugik.ortho,
+            topo: app.modules.gugik.topo,
             parcelReport: app.modules.gugik.parcelReport,
           },
         }

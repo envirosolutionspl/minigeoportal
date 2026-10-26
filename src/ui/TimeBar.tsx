@@ -43,6 +43,8 @@ function Bar({ id, title, spec }: { id: string; title: string; spec: TimeValues 
   const setTool = useMapStore((m) => m.setTool);
   const chosen = useMapStore((m) => m.timeLayer);
   const setTimeLayer = useMapStore((m) => m.setTimeLayer);
+  const named = useMapStore((m) => m.timeSublayers);
+  const setTimeSublayers = useMapStore((m) => m.setTimeSublayers);
   const compare = useMapStore((m) => m.compare);
   const setCompare = useMapStore((m) => m.setCompare);
   const zoomToScale = useMapStore((m) => m.zoomToScale);
@@ -94,7 +96,7 @@ function Bar({ id, title, spec }: { id: string; title: string; spec: TimeValues 
   }, [id, place]);
 
   const values = options?.map((o) => o.value) ?? yearly(spec.values);
-  const draws = timeLayerDrawsAt(chosen, time, scale);
+  const draws = timeLayerDrawsAt(chosen, time, named, scale);
   const current = values.length > 0 ? valueAt(values, time ?? spec.current ?? values[values.length - 1]) : undefined;
   const index = current ? values.indexOf(current) : -1;
   // The date in the link is one the slider holds, so what is shown and what is shared agree;
@@ -103,6 +105,11 @@ function Bar({ id, title, spec }: { id: string; title: string; spec: TimeValues 
   useEffect(() => {
     if (ready && current !== undefined && current !== time) setTime(current);
   }, [ready, current, time, setTime]);
+  // What the module says draws this date (the sheets at the place), for the map.
+  const chosenLayer = current !== undefined ? (options?.find((o) => o.value === current)?.layer ?? null) : null;
+  useEffect(() => {
+    setTimeSublayers(chosenLayer);
+  }, [chosenLayer, setTimeSublayers]);
 
   const choose = (i: number) => setTime(values[Math.min(Math.max(i, 0), values.length - 1)]);
   const latest = useRef(values);

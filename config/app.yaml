@@ -78,4 +78,7 @@ modules:
     # The tile service of map.yaml that shows the aerial photos, and the layer of layers.yaml that
     # shows their archive (the time view offers the dates the photo index knows at a point).
     ortho: { service: orto, history: orto-archiwalna }
+    # The layer of layers.yaml with the old topographic maps: the time view offers the years of the
+    # sheets the index of topographic maps knows at a point, each drawing its own sheet.
+    topo: { history: mapy-dawne }
     parcelReport: true

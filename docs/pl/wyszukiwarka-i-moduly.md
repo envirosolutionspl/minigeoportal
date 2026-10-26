@@ -29,6 +29,7 @@ modules:
     catalog: true # wszystkie warstwy geoportal.gov.pl na liście warstw
     drawOrder: true # kolejność rysowania z geoportal.gov.pl dla skonfigurowanych warstw
     ortho: { service: orto, history: orto-archiwalna } # data zdjęcia w klikniętym miejscu i archiwum zdjęć
+    topo: { history: mapy-dawne } # lata arkuszy map topograficznych w podróży w czasie
     parcelReport: true # link do raportu o działce w geoportal.gov.pl
 ```
 
@@ -37,6 +38,7 @@ Działa tylko w PL-1992: konfiguracja jest odrzucana, gdy moduł jest włączony
 - **catalog**: serwer czyta konfigurację geoportal.gov.pl (listę warstw i grupy), sprawdza każdą usługę (po sześć naraz) i zapisuje wynik na dysku (`<DATA_DIR>/gugik/catalog.json`); lista warstw pokazuje je według tematów, a warstwy, których nie da się tu pokazać, są na liście wyszarzone z wyjaśnieniem. Pojedynczy serwer sam odświeża katalog raz na dobę, `npm run update` od razu (minuta lub dwie); każdy serwer czyta nowy plik w ciągu minuty. Za zmianami w geoportal.gov.pl nadąża tylko katalog; warstwy z `layers.yaml` zostają takie, jak w konfiguracji (zob. [Architektura](architektura.md#dane-i-odświeżanie)). Pojedynczy serwer buduje go w tle przy pierwszym starcie, a do tego czasu `/api/catalog` odpowiada 503 i lista pokazuje tylko warstwy z `layers.yaml`; repliki z `SHARED_DATA=1` czekają na proces aktualizujący. Katalog przydziela warstwy do tematów o identyfikatorach `dzialki`, `planowanie`, `ceny`, `uzbrojenie`, `granice`, `teren`, `srodowisko`, `zagrozenia`, `zabytki`, `archiwalne`, `pobieranie`, `geodezja` i `inne`, więc `layers.yaml` musi je zdefiniować w `topics` (sprawdzenie konfiguracji wymienia brakujące).
 - **drawOrder**: skonfigurowane warstwy z `catalogId` są rysowane w kolejności geoportal.gov.pl; gdy nie da się jej odczytać, obowiązuje `layers.drawOrder`.
 - **ortho**: data zdjęcia pod ortofotomapą i link do pobrania arkusza. `service` to usługa kafli z `map.yaml`, która pokazuje zdjęcia: data pojawia się, gdy na ekranie jest rysowany przez nią podkład (domyślnie `orto`; `false` wyłącza tę część). `history` to warstwa z `layers.yaml` pokazująca archiwum tych zdjęć (blok `time`): gdy `map.yaml` wskazuje ją w `timeTravel`, podróż w czasie oferuje tylko daty, z których skorowidz zna zdjęcia w środku mapy, a panel miejsca liczy zdjęcia z archiwum i prowadzi do podróży.
+- **topo**: `history` to warstwa z `layers.yaml` (seria edycji) ze skanami dawnych map topograficznych. Gdy `map.yaml` wskazuje ją w `timeTravel`, podróż w czasie pyta skorowidz map topograficznych o arkusze w środku mapy i oferuje ich lata (pole „aktualność kartograficzna”: rok, na który aktualna jest treść mapy, a nie data skanu ani nazwa układu), a każdy rok rysuje własne arkusze. Bez tej części suwak ma edycje serii z `layers.yaml` (układy współrzędnych, które nie są datami). `false` wyłącza tę część.
 - **parcelReport**: link w panelu informacji o miejscu do raportu o działce w geoportal.gov.pl.
 
 Wyszukiwarka GUGiK (`search.provider: gugik`) i wyszukiwarka działek (`search.parcel`) też wymagają modułu. Bez niego serwer nie ma jego tras, a strona nie łączy się bezpośrednio z żadnym serwerem GUGiK.

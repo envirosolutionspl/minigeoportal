@@ -67,6 +67,7 @@ describe('default configuration', () => {
       catalog: true,
       drawOrder: true,
       ortho: { service: 'orto', history: 'orto-archiwalna' },
+      topo: { history: 'mapy-dawne' },
       parcelReport: true,
     });
   });
@@ -154,7 +155,7 @@ describe('loadConfig', () => {
     expect((oldMaps.time as { editions: unknown[] }).editions[0]).toEqual({
       value: '1942',
       layer: 'Raster_50_1942,Raster_10_1942',
-      label: 'Mapy w układzie 1942, lata 50.–70.',
+      label: 'Mapy w układzie 1942',
     });
     expect(config.layers.overlays.find((o) => o.id === 'orto-archiwalna')).toMatchObject({ format: 'image/jpeg', time: { param: 'TIME' } });
   });

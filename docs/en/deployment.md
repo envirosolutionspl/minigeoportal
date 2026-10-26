@@ -44,7 +44,7 @@ What `compose.yaml` runs:
 | `app`     | The app and the API (port 8787 on the Compose network, not reachable from outside), 2 replicas by default with `SHARED_DATA=1` and `TRUSTED_PROXY=1`. The replicas never build the data themselves: they read what `updater` writes, within a minute of a change. Each answers `GET /api/health`. |
 | `updater` | The same image; refreshes the data (`node server/update.ts`, the same as `npm run update`) at start and then every 24 hours.                                                                                                                                                                      |
 
-Volumes: `data` (the server's data, `/data` in the containers), `caddy-data` and `caddy-config` (Caddy's certificates). The configuration is mounted read-only; after changing it, `docker compose up -d --force-recreate app updater` is enough. Mail settings and other secrets go into `.env`.
+Every replica may hold 65536 open files (`ulimits` in `compose.yaml`); Docker's default of 1024 caps a replica at about a thousand connections at once. Volumes: `data` (the server's data, `/data` in the containers), `caddy-data` and `caddy-config` (Caddy's certificates). The configuration is mounted read-only; after changing it, `docker compose up -d --force-recreate app updater` is enough. Mail settings and other secrets go into `.env`.
 
 The image alone, without Compose:
 
@@ -54,14 +54,17 @@ docker run -p 8787:8787 -v minigeoportal-data:/data ghcr.io/envirosolutionspl/mi
 
 ## Docker behind an existing proxy (nginx)
 
-When nginx (or Apache) already serves several sites on the server, Caddy is not needed. The `compose.proxy.yaml` overlay runs one app replica reachable only locally, on `127.0.0.1:8787`:
+When nginx (or Apache) already serves several sites on the server, Caddy is not needed. The `compose.proxy.yaml` overlay runs two app replicas reachable only locally, on `127.0.0.1:8787` and `127.0.0.1:8788`:
 
 ```bash
-printf 'DOMAIN=map.example.org\nCOMPOSE_FILE=compose.yaml:compose.proxy.yaml\n' >> .env
+printf 'DOMAIN=map.example.org
+COMPOSE_FILE=compose.yaml:compose.proxy.yaml
+COMPOSE_PARALLEL_LIMIT=1
+' >> .env
 docker compose up -d
 ```
 
-A template nginx site (with a `www` redirect) is in `deploy/nginx/minigeoportal.conf`; `certbot --nginx -d map.example.org -d www.map.example.org --redirect` adds the certificate.
+`COMPOSE_PARALLEL_LIMIT=1` makes an update recreate the replicas one after the other while nginx answers from the one that is up, so a deployment gives no 502 errors. A template nginx site (with a `www` redirect, an `upstream` block with both replicas and `keepalive`) is in `deploy/nginx/minigeoportal.conf`; in `/etc/nginx/nginx.conf` raise the workers' limits (`worker_rlimit_nofile 65536;` and `worker_connections 4096;`), as the default 1024 open files per worker last for about 500 proxied connections. `certbot --nginx -d map.example.org -d www.map.example.org --redirect` adds the certificate.
 
 ## One server without Docker
 

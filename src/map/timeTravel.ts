@@ -30,10 +30,14 @@ export function currentTimeLayer(id: string | null): { def: Overlay; spec: TimeV
   return layers.find((l) => l.def.id === id) ?? layers[0];
 }
 
-/** The sublayers a layer draws for a value: an edition's own, else the layer's defaults. */
-export function sublayersFor(def: Overlay, spec: TimeValues, value: string | undefined): string[] {
+/**
+ * The sublayers a layer draws for a value: the ones a module named for the date (the sheets of
+ * the old maps at the place), else an edition's own, else the layer's defaults.
+ */
+export function sublayersFor(def: Overlay, spec: TimeValues, value: string | undefined, named: string | null = null): string[] {
   const edition = value !== undefined ? spec.editions?.[value] : undefined;
-  return edition?.layer ? edition.layer.split(',').map((n) => n.trim()) : defaultSublayers(def);
+  const list = named ?? edition?.layer;
+  return list ? list.split(',').map((n) => n.trim()) : defaultSublayers(def);
 }
 
 /** The value a layer draws for the date chosen on the bar: the latest of its own not after it. */
@@ -70,9 +74,9 @@ export function attachTimeTravel(map: Map): () => void {
     shown.map((s) => s.layer),
   );
 
-  /** The shown layer's scale range for the chosen value; none while the view is closed. */
-  const rangeOf = (entry: (typeof shown)[number], value: string | undefined) =>
-    resolutionRange(entry.def, sublayersFor(entry.def, entry.spec, value));
+  /** The shown layer's scale range for the chosen value. */
+  const rangeOf = (entry: (typeof shown)[number], value: string | undefined, named: string | null) =>
+    resolutionRange(entry.def, sublayersFor(entry.def, entry.spec, value, named));
 
   const apply = () => {
     const s = useMapStore.getState();
@@ -83,9 +87,9 @@ export function attachTimeTravel(map: Map): () => void {
       entry.layer.setVisible(visible);
       if (!visible) continue;
       const value = valueFor(entry.spec, s.time);
-      const names = sublayersFor(entry.def, entry.spec, value);
+      const names = sublayersFor(entry.def, entry.spec, value, s.timeSublayers);
       showSublayers(entry.layer, names);
-      const range = rangeOf(entry, value);
+      const range = rangeOf(entry, value, s.timeSublayers);
       entry.layer.setMinResolution(range.min);
       entry.layer.setMaxResolution(range.max);
       if (
@@ -111,13 +115,13 @@ export function attachTimeTravel(map: Map): () => void {
     const entry = shown.find((e) => e.def.id === currentTimeLayer(s.timeLayer)?.def.id);
     const resolution = map.getView().getResolution();
     if (!entry || resolution === undefined) return;
-    const range = rangeOf(entry, valueFor(entry.spec, s.time));
+    const range = rangeOf(entry, valueFor(entry.spec, s.time), s.timeSublayers);
     if (resolution > range.max) s.zoomToScale(Math.min(OPENING_SCALE, resolutionToScale(range.max)));
   };
   if (useMapStore.getState().tool === 'time') zoomIn();
 
   const unsubscribe = useMapStore.subscribe((s, prev) => {
-    if (s.tool !== prev.tool || s.time !== prev.time || s.timeLayer !== prev.timeLayer) apply();
+    if (s.tool !== prev.tool || s.time !== prev.time || s.timeLayer !== prev.timeLayer || s.timeSublayers !== prev.timeSublayers) apply();
     if (s.tool === 'time' && (prev.tool !== 'time' || s.timeLayer !== prev.timeLayer)) zoomIn();
     if (s.timeRetries !== prev.timeRetries) shown.forEach((e) => e.source?.refresh());
     if (s.timeStatus !== prev.timeStatus) fade();
@@ -134,10 +138,10 @@ export function attachTimeTravel(map: Map): () => void {
 }
 
 /** Whether the view's layer draws at this scale for this date (its service's limits). */
-export function timeLayerDrawsAt(id: string | null, time: string | null, scale: number): boolean {
+export function timeLayerDrawsAt(id: string | null, time: string | null, named: string | null, scale: number): boolean {
   const entry = currentTimeLayer(id);
   if (!entry) return false;
-  const range = resolutionRange(entry.def, sublayersFor(entry.def, entry.spec, valueFor(entry.spec, time)));
+  const range = resolutionRange(entry.def, sublayersFor(entry.def, entry.spec, valueFor(entry.spec, time), named));
   const resolution = scaleToResolution(scale);
   return resolution >= range.min && resolution <= range.max;
 }

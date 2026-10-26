@@ -340,8 +340,8 @@ overlays:
     title: { pl: 'Mapy topograficzne dawne', en: 'Old topographic maps' }
     description:
       {
-        pl: 'Skany map topograficznych 1:10 000, 1:25 000 i 1:50 000 w układach 1942, 1965 i 1992, od lat 50. do 2000.',
-        en: 'Scans of topographic maps 1:10 000, 1:25 000 and 1:50 000 in the 1942, 1965 and 1992 systems, from the 1950s to the 2000s.',
+        pl: 'Skany map topograficznych 1:10 000, 1:25 000 i 1:50 000 w układach 1942, 1965 i 1992.',
+        en: 'Scans of topographic maps 1:10 000, 1:25 000 and 1:50 000 in the 1942, 1965 and 1992 systems.',
       }
     topic: archiwalne
     catalogId: msTOPO_SERIA_10_1992
@@ -366,17 +366,19 @@ overlays:
       - name: Raster_10_1992
         title: { pl: 'Układ 1992, 1:10 000', en: '1992 system, 1:10 000' }
         default: true
-    # One edition per system of maps: its sheets at every scale, the service drawing each in its
-    # own scale range (the finer ones listed last, so they lie on top).
+    # One edition per system of coordinates the sheets were made in (a name, not a year: a sheet
+    # in the 1942 system may be current for 1993): its sheets at every scale, the service drawing
+    # each in its own scale range (the finer ones listed last, so they lie on top). The time view
+    # draws the sheets the index of topographic maps names for a year (app.yaml: modules.gugik.topo).
     time:
       type: series
       editions:
         - value: '1942'
           layer: Raster_50_1942,Raster_10_1942
-          label: { pl: 'Mapy w układzie 1942, lata 50.–70.', en: 'Maps in the 1942 system, 1950s to 1970s' }
+          label: { pl: 'Mapy w układzie 1942', en: 'Maps in the 1942 system' }
         - value: '1965'
           layer: Raster_50_1965,Raster_25_1965,Raster_10_1965
-          label: { pl: 'Mapy w układzie 1965, lata 70.–90.', en: 'Maps in the 1965 system, 1970s to 1990s' }
+          label: { pl: 'Mapy w układzie 1965', en: 'Maps in the 1965 system' }
         - value: '1992'
           layer: Raster_50_1992,Raster_10_1992
-          label: { pl: 'Mapy w układzie 1992, lata 90. i 2000.', en: 'Maps in the 1992 system, 1990s and 2000s' }
+          label: { pl: 'Mapy w układzie 1992', en: 'Maps in the 1992 system' }

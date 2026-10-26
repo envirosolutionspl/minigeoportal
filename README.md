@@ -34,6 +34,7 @@ _A simple, fast web map for public map services. Documentation in English: [docs
 | Informacje o miejscu, raport o działce | <img src="docs/img/komputer-raport-o-dzialce.webp" width="520">     | <img src="docs/img/telefon-raport-o-dzialce.webp" width="180">     |
 | Menu kontekstowe                       | <img src="docs/img/komputer-menu-kontekstowe.webp" width="520">     | <img src="docs/img/telefon-menu-kontekstowe.webp" width="180">     |
 | Lista warstw                           | <img src="docs/img/komputer-warstwy.webp" width="520">              | <img src="docs/img/telefon-warstwy.webp" width="180">              |
+| Podróż w czasie: 2007 i dziś           | <img src="docs/img/komputer-podroz-w-czasie.webp" width="520">      | <img src="docs/img/telefon-podroz-w-czasie.webp" width="180">      |
 
 Link „Raport o działce” (obwiedziony na zrzutach) otwiera raport geoportal.gov.pl dla klikniętej działki, z wydrukiem i zapisem do PDF:
 

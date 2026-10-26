@@ -599,7 +599,7 @@ html[data-printing] #print-sheet {
 }
 @media (max-width: 639px) and (min-height: 501px) {
   :root {
-    /* Height of the bar with its two rows; the zoom buttons sit above it. */
+    /* Height of the bar (TimeBar.tsx measures it; this is the usual two rows): the zoom buttons sit above it. */
     --time-bar: 5.5rem;
   }
   .time-bar {

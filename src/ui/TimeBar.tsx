@@ -55,6 +55,20 @@ function Bar({ id, title }: { id: string; title: string }) {
   /** Where the slider is while it is being dragged; the date is asked for once it is let go. */
   const [dragging, setDragging] = useState<number | null>(null);
   const slider = useRef<HTMLInputElement>(null);
+  const bar = useRef<HTMLElement>(null);
+
+  // Phones put the zoom buttons above the bar (index.css: --time-bar), whose height follows its text.
+  useEffect(() => {
+    const el = bar.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const root = document.documentElement.style;
+    const observer = new ResizeObserver(() => root.setProperty('--time-bar', `${el.offsetHeight}px`));
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      root.removeProperty('--time-bar');
+    };
+  }, []);
 
   // Asked once the map has settled; a move of less than 100 m stays on the same photos.
   const place = `${Math.round(center[0] / 100)},${Math.round(center[1] / 100)}`;
@@ -162,6 +176,7 @@ function Bar({ id, title }: { id: string; title: string }) {
 
   return (
     <section
+      ref={bar}
       aria-label={t('time.title')}
       className="time-bar pointer-events-auto absolute z-30 bg-[var(--surface)] p-2 shadow-lg ring-1 ring-black/5"
     >

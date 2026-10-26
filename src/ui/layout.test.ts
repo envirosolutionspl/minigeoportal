@@ -13,9 +13,22 @@ const bottoms = (selector: string) =>
     .flatMap((m) => [...m[2].matchAll(/bottom:\s*([^;]+);/g)].map((b) => b[1]));
 
 describe('keyboard focus', () => {
+  it('reaches the search and the tools before the map and its buttons (focus order follows the screen)', () => {
+    const app = source('src/App.tsx');
+    expect(app.indexOf('<TopBar />')).toBeLessThan(app.indexOf('<MapView />'));
+  });
+
   it('shows on the OpenLayers buttons as on every other button, instead of the outline OpenLayers hides', () => {
     expect(css).not.toMatch(/\.ol-control button:focus\s*\{[^}]*outline:\s*none/);
     expect(css).toMatch(/\.ol-control button:focus-visible\s*\{[^}]*outline:\s*3px solid var\(--accent\)/);
+  });
+});
+
+describe('small print', () => {
+  it('keeps the bottom bar, the scale bar and the labels at 11 px or more', () => {
+    expect(css).not.toMatch(/font-size:\s*0\.(6\d*|70*)rem/);
+    expect(source('src/ui/BasemapSwitcher.tsx')).not.toContain('text-[10px]');
+    expect(source('src/ui/Brand.tsx')).not.toContain('text-[10px]');
   });
 });
 

@@ -96,8 +96,28 @@ export function attachMeasure(map: Map): () => void {
     for (const o of labels.splice(0)) map.removeOverlay(o);
   };
 
+  /** Where the last Enter put a point: a second Enter at the same place finishes the shape. */
+  let lastKeyPoint: number[] | undefined;
   const onKey = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && draw) draw.abortDrawing();
+    if (!draw) return;
+    if (e.key === 'Escape') {
+      draw.abortDrawing();
+      lastKeyPoint = undefined;
+    }
+    // With the keyboard (WCAG 2.1.1): Enter on the focused map adds the point at its centre, as
+    // a click does; Enter again without moving the map ends the measurement, as a double click.
+    if (e.key === 'Enter' && e.target === map.getTargetElement()) {
+      const centre = map.getView().getCenter();
+      if (!centre) return;
+      e.preventDefault();
+      if (lastKeyPoint && lastKeyPoint[0] === centre[0] && lastKeyPoint[1] === centre[1]) {
+        draw.finishDrawing();
+        lastKeyPoint = undefined;
+      } else {
+        draw.appendCoordinates([centre]);
+        lastKeyPoint = centre;
+      }
+    }
   };
   window.addEventListener('keydown', onKey);
 

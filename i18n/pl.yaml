@@ -6,6 +6,7 @@
 common:
   close: Zamknij
   loading: Wczytywanie…
+  newTab: (otwiera się w nowej karcie)
 
 app:
   skipLinks: Szybkie przejścia
@@ -17,7 +18,7 @@ brand:
 
 map:
   title: Mapa
-  keys: Strzałki przesuwają mapę, plus i minus zmieniają skalę, Enter pokazuje informacje o miejscu w środku mapy.
+  keys: Strzałki przesuwają mapę, plus i minus zmieniają skalę, Enter pokazuje informacje o miejscu w środku mapy, a podczas pomiaru dodaje tam punkt.
   zoomIn: Przybliż
   zoomOut: Oddal
   scale: Skala
@@ -41,6 +42,7 @@ search:
   list: Wyniki wyszukiwania
   busy: Szukam…
   none: Brak wyników.
+  tooShort: Wpisz co najmniej 3 znaki.
   unavailable: 'Nie odpowiada: {services}. Wyniki mogą być niepełne.'
   results: 'Wyników: {count}. Strzałki w dół i w górę wybierają, Enter pokazuje na mapie.'
   nominatim:
@@ -127,7 +129,7 @@ measure:
   area: Powierzchnia
   clear: Wyczyść
   end: Zakończ pomiar
-  hint: Klikaj kolejne punkty na mapie. Dwuklik kończy pomiar, Esc anuluje rysowany kształt.
+  hint: Klikaj kolejne punkty na mapie, dwuklik kończy pomiar. Z klawiatury Enter dodaje punkt w środku mapy, drugi Enter w tym miejscu kończy. Esc anuluje rysowany kształt.
   result: 'Wynik: {result}'
   perimeter: obwód {length}
 
@@ -199,5 +201,4 @@ accessibility:
   title: Deklaracja dostępności
 
 welcome:
-  dontShow: Nie pokazuj ponownie
   start: Przejdź do mapy

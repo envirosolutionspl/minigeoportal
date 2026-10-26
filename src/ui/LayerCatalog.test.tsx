@@ -210,6 +210,8 @@ describe('LayerCatalog', () => {
     render(<LayerCatalog />);
     expect((screen.getByLabelText('Uzbrojenie terenu') as HTMLInputElement).disabled).toBe(true);
     const item = screen.getByLabelText('Uzbrojenie terenu').closest('.rounded-xl') as HTMLElement;
+    // The state shows as a shape with a name, not as a coloured dot alone.
+    expect(within(item).getByRole('img', { name: 'Niedostępna u nas' })).toBeTruthy();
     fireEvent.click(within(item).getByRole('button', { name: 'Niedostępna u nas. Dlaczego?' }));
     expect(within(item).getByText(/Odpowiedź serwera: HTTP 403/)).toBeTruthy();
   });

@@ -1,5 +1,6 @@
 import { config } from '@/config/runtime';
 import { t } from '@/i18n';
+import { NewTab } from './NewTab';
 
 export const APP_NAME = config.app.name;
 export const APP_DOMAIN = config.app.domain;
@@ -59,7 +60,7 @@ export function AuthorCredit() {
       href={AUTHOR_URL}
       target="_blank"
       rel="noopener"
-      className="author-credit pointer-events-auto absolute right-3 bottom-[calc(1.75rem+var(--safe-bottom))] z-20 flex items-center gap-1 rounded-xl bg-white/95 py-0.5 pr-1 pl-2.5 text-[10px] text-[#444444] shadow-md ring-1 ring-black/5 sm:right-4 sm:bottom-[calc(2rem+var(--safe-bottom))]"
+      className="author-credit pointer-events-auto absolute right-3 bottom-[calc(1.75rem+var(--safe-bottom))] z-20 flex items-center gap-1 rounded-xl bg-white/95 py-0.5 pr-1 pl-2.5 text-[11px] text-[#444444] shadow-md ring-1 ring-black/5 sm:right-4 sm:bottom-[calc(2rem+var(--safe-bottom))]"
       title={config.app.author.name}
     >
       {t('brand.madeBy')}
@@ -67,6 +68,7 @@ export function AuthorCredit() {
       <span className="author-logo rounded-lg bg-white">
         <AuthorLogo className="h-7" />
       </span>
+      <NewTab />
     </a>
   );
 }

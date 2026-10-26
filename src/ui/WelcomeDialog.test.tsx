@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { WelcomeDialog, useWelcome } from './WelcomeDialog';
 
 describe('WelcomeDialog', () => {
@@ -7,7 +7,9 @@ describe('WelcomeDialog', () => {
     render(<WelcomeDialog />);
     act(() => useWelcome.getState().setOpen(true));
     expect(screen.getByText('Dane z geoportal.gov.pl – prościej i szybciej')).toBeTruthy();
+    // The page keeps its one h1 (App.tsx); the window's title is the first of its headings.
     expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual([
+      'MiniGeoportal',
       'Po co jest ten serwis',
       'Skąd są dane',
       'Ważne',
@@ -25,6 +27,16 @@ describe('WelcomeDialog', () => {
     expect(screen.getByRole('link', { name: 'kod źródłowy na GitHubie' }).getAttribute('href')).toBe(
       'https://github.com/envirosolutionspl/minigeoportal',
     );
+  });
+
+  it('is seen once: going to the map remembers that, so the next visit starts on the map', () => {
+    localStorage.clear();
+    render(<WelcomeDialog />);
+    act(() => useWelcome.getState().setOpen(true));
+    expect(screen.queryByRole('checkbox')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Przejdź do mapy' }));
+    expect(useWelcome.getState().open).toBe(false);
+    expect(Object.values({ ...localStorage })).toContain('hidden');
   });
 
   it('puts the author between the report form and the accessibility statement in its footer', () => {

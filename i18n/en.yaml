@@ -5,6 +5,7 @@
 common:
   close: Close
   loading: Loading…
+  newTab: (opens in a new tab)
 
 app:
   skipLinks: Skip links
@@ -16,7 +17,7 @@ brand:
 
 map:
   title: Map
-  keys: Arrow keys move the map, plus and minus change the scale, Enter shows information about the place in the middle of the map.
+  keys: Arrow keys move the map, plus and minus change the scale, Enter shows information about the place in the middle of the map and, while measuring, adds a point there.
   zoomIn: Zoom in
   zoomOut: Zoom out
   scale: Scale
@@ -40,6 +41,7 @@ search:
   list: Search results
   busy: Searching…
   none: No results.
+  tooShort: Type at least 3 characters.
   unavailable: 'Not answering: {services}. The results may be incomplete.'
   results:
     one: '{count} result. Arrow keys down and up choose, Enter shows it on the map.'
@@ -128,7 +130,7 @@ measure:
   area: Area
   clear: Clear
   end: End the measurement
-  hint: Click the next points on the map. A double click ends the measurement, Esc cancels the shape being drawn.
+  hint: Click the next points on the map, a double click ends the measurement. With the keyboard, Enter adds the point in the middle of the map and a second Enter there ends it. Esc cancels the shape being drawn.
   result: 'Result: {result}'
   perimeter: perimeter {length}
 
@@ -200,5 +202,4 @@ accessibility:
   title: Accessibility statement
 
 welcome:
-  dontShow: Do not show again
   start: Go to the map

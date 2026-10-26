@@ -34,6 +34,7 @@ import { PROJECTION, zoomForScale } from '@/map/projection';
 import { DisplayMenu } from './DisplayMenu';
 import { useNotice } from './Notice';
 import { MoreSheet } from './MoreSheet';
+import { NewTab } from './NewTab';
 
 /** Scale per hit kind, unless the hit names its own; points zoom to it, outlines at most to it. */
 const SCALE: Record<HitKind, number> = {
@@ -202,8 +203,8 @@ export function TopBar() {
   return (
     // Above the base map switcher and the credits (z-30), so the open search, its results and the
     // parcel form are never covered on a short screen; the layer list (z-40) still covers it.
-    <div className="pointer-events-none absolute inset-x-0 top-0 z-[35] flex items-start gap-2 p-3 sm:p-4">
-      <div className="search-box pointer-events-auto relative z-10 w-full max-w-lg">
+    <header className="pointer-events-none absolute inset-x-0 top-0 z-[35] flex items-start gap-2 p-3 sm:p-4">
+      <div role="search" className="search-box pointer-events-auto relative z-10 w-full max-w-lg">
         <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface)] py-1.5 pr-3 pl-1.5 shadow-lg ring-1 ring-black/5 has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-[var(--accent)]">
           <button
             type="button"
@@ -240,6 +241,7 @@ export function TopBar() {
               }
               if (e.key === 'Enter' && hits.length > 0) void pick(hits[Math.max(active, 0)]);
               else if (e.key === 'Enter' && query.trim().length >= 3) searchNow();
+              else if (e.key === 'Enter') say(t('search.tooShort'));
               if (e.key === 'Escape' && listOpen) {
                 e.stopPropagation();
                 setOpen(false);
@@ -321,6 +323,7 @@ export function TopBar() {
             <li role="presentation" className="px-4 pt-1 pb-1.5 text-right text-xs text-[var(--muted)]">
               <a href={provider.credit.href} target="_blank" rel="noopener" className="underline-offset-2 hover:underline">
                 {provider.credit.text}
+                <NewTab />
               </a>
             </li>
           )}
@@ -375,7 +378,7 @@ export function TopBar() {
         ]}
       />
       {notice}
-    </div>
+    </header>
   );
 }
 

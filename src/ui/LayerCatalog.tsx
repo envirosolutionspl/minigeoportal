@@ -1,5 +1,19 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
-import { Check, ChevronDown, ExternalLink, HelpCircle, LoaderCircle, Search, X, ZoomIn, ZoomOut } from 'lucide-react';
+import {
+  Check,
+  ChevronDown,
+  CircleOff,
+  ExternalLink,
+  HelpCircle,
+  LoaderCircle,
+  Minus,
+  Search,
+  TriangleAlert,
+  X,
+  ZoomIn,
+  ZoomOut,
+  type LucideIcon,
+} from 'lucide-react';
 import { config, type Overlay, type SubLayer } from '@/config/runtime';
 import { layerMeta, serviceError, visibleAtScale } from '@/services/meta';
 import { normalize } from '@/services/text';
@@ -9,16 +23,17 @@ import type { CatalogIndexEntry, CatalogStatus } from '@/services/catalogTypes';
 import { overlayOpacity, useMapStore } from '@/state/store';
 import { dateText, scaleText } from '@/map/format';
 import { locale, t } from '@/i18n';
+import { NewTab } from './NewTab';
 
 const STATUS_LABEL = (status: ServiceStatus) => t(`layers.status.${status}`);
 
-/** Brand book palette: clover for ok, amber and raspberry from the additional colours for problems. */
-const STATUS_DOT: Record<ServiceStatus, string> = {
-  unknown: 'bg-[#9db49e]',
-  ok: 'bg-[#7da87f]',
-  blocked: 'bg-[#9db49e]',
-  down: 'bg-[#D25F87]',
-  degraded: 'bg-[#FFBC42]',
+/** State of a service by shape, not colour alone (WCAG 1.4.1): a tick, a dash, a warning, a crossed circle. */
+const STATUS_ICON: Record<ServiceStatus, [LucideIcon, string]> = {
+  unknown: [Minus, 'text-[var(--muted)]'],
+  ok: [Check, 'text-[var(--accent)]'],
+  blocked: [CircleOff, 'text-[var(--muted)]'],
+  down: [CircleOff, 'text-[var(--danger)]'],
+  degraded: [TriangleAlert, 'text-[var(--danger)]'],
 };
 
 /** Why a layer cannot be shown, in plain language, by the result of the last check. */
@@ -143,8 +158,9 @@ export function LayerCatalog() {
             </button>
           )}
         </label>
-        {/* On a phone the filters form one row that scrolls sideways, so the list keeps the screen. */}
-        <div className="mt-2 flex flex-wrap gap-1.5 phone:-mx-4 phone:flex-nowrap phone:overflow-x-auto phone:px-4 phone:[scrollbar-width:none] phone:[&>*]:shrink-0 phone:[&>*]:whitespace-nowrap phone:[&::-webkit-scrollbar]:hidden">
+        {/* On a phone the filters form one row that scrolls sideways, so the list keeps the screen;
+            the row fades out at its right edge, which says there is more. */}
+        <div className="mt-2 flex flex-wrap gap-1.5 phone:-mx-4 phone:flex-nowrap phone:overflow-x-auto phone:px-4 phone:[scrollbar-width:none] phone:[mask-image:linear-gradient(to_right,#000_calc(100%-2.5rem),transparent)] phone:[&>*]:shrink-0 phone:[&>*]:whitespace-nowrap phone:[&::-webkit-scrollbar]:hidden">
           <button
             type="button"
             onClick={() => setOnlyActive(!onlyActive)}
@@ -318,7 +334,7 @@ function CatalogItem({ entry }: { entry: CatalogIndexEntry }) {
           disabled={!available}
           onChange={() => toggle(entry.id)}
           aria-label={entry.title}
-          className="mt-1 h-4 w-4 shrink-0 accent-[var(--accent)]"
+          className="mt-1 h-4 w-4 shrink-0 accent-[var(--accent)] phone:h-5 phone:w-5"
         />
         <label htmlFor={`gp-${entry.id}`} className={`min-w-0 flex-1 ${available ? 'cursor-pointer' : ''}`}>
           <span className="block text-sm font-medium">{entry.title}</span>
@@ -352,6 +368,7 @@ function CatalogItem({ entry }: { entry: CatalogIndexEntry }) {
               {t('layers.failedFallback')}{' '}
               <a href={FALLBACK.url} target="_blank" rel="noopener" className="underline">
                 {FALLBACK.name}
+                <NewTab />
               </a>
             </>
           )}
@@ -388,6 +405,7 @@ function Why({ status, detail, checked }: { status: WhyStatus; detail?: string; 
           {FALLBACK && (
             <a href={FALLBACK.url} target="_blank" rel="noopener" className="mt-1 inline-flex items-center gap-1 text-[var(--accent)]">
               {t('layers.seeFallback', { name: FALLBACK.name })} <ExternalLink className="h-3 w-3" aria-hidden="true" />
+              <NewTab />
             </a>
           )}
         </div>
@@ -397,13 +415,11 @@ function Why({ status, detail, checked }: { status: WhyStatus; detail?: string; 
 }
 
 function StatusDot({ status }: { status: ServiceStatus }) {
+  const [Icon, colour] = STATUS_ICON[status];
   return (
-    <span
-      className={`inline-block h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[status]}`}
-      title={STATUS_LABEL(status)}
-      role="img"
-      aria-label={STATUS_LABEL(status)}
-    />
+    <Icon className={`h-3.5 w-3.5 shrink-0 ${colour}`} role="img" aria-label={STATUS_LABEL(status)}>
+      <title>{STATUS_LABEL(status)}</title>
+    </Icon>
   );
 }
 
@@ -427,7 +443,7 @@ function OverlayItem({ s, hits, startOpen = false }: { s: Overlay; hits: string[
           disabled={blocked}
           onChange={() => toggle(s.id)}
           aria-label={s.title}
-          className="mt-1 h-4 w-4 shrink-0 accent-[var(--accent)]"
+          className="mt-1 h-4 w-4 shrink-0 accent-[var(--accent)] phone:h-5 phone:w-5"
         />
         <label htmlFor={`ov-${s.id}`} className="min-w-0 flex-1 cursor-pointer">
           <span className="flex items-center gap-2 text-sm font-medium">
@@ -494,14 +510,14 @@ function SublayerRow({ s, l, highlighted, disabled }: { s: Overlay; l: SubLayer;
     : t('layers.visibleTo', { scale: scaleText(meta?.minScale ?? 0) });
   return (
     <li className={`flex items-center gap-1 rounded-lg text-sm ${highlighted ? 'bg-[var(--field)] font-medium' : ''}`}>
-      <label className="flex min-h-8 flex-1 cursor-pointer items-center gap-2 px-1.5 py-1">
+      <label className="flex min-h-8 flex-1 cursor-pointer items-center gap-2 px-1.5 py-1 phone:min-h-11">
         <input
           type="checkbox"
           checked={checked}
           disabled={disabled}
           onChange={() => toggle(s.id, l.name)}
           aria-label={`${s.title}: ${l.title}`}
-          className="h-3.5 w-3.5 shrink-0 accent-[var(--accent)]"
+          className="h-3.5 w-3.5 shrink-0 accent-[var(--accent)] phone:h-4.5 phone:w-4.5"
         />
         {/* Greyed while the server does not draw it at this scale; the hint says from which scale it does. */}
         <span className={outOfScale ? 'text-[var(--muted)]' : ''} title={outOfScale ? t('layers.hiddenNow', { hint }) : undefined}>

@@ -1,8 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { LineString, Point, Polygon } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
-import '@/map/projection';
-import { measure } from './measure';
+import Map from 'ol/Map';
+import View from 'ol/View';
+import { PROJECTION } from '@/map/projection';
+import { attachMeasure, measure } from './measure';
+import { useMapStore } from '@/state/store';
 
 const plain = (s?: string) => s?.replace(/\s/g, ' ');
 
@@ -45,5 +48,39 @@ describe('measure', () => {
 
   it('ignores other geometries', () => {
     expect(measure(new Point([0, 0]))).toBeUndefined();
+  });
+});
+
+describe('measuring with the keyboard', () => {
+  it('adds the centre of the map on Enter and ends the shape on a second Enter at the same place', () => {
+    // The map watches its target's size; jsdom has no ResizeObserver.
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    const target = document.createElement('div');
+    document.body.append(target);
+    const map = new Map({
+      target,
+      view: new View({ projection: PROJECTION, center: [600000, 500000], zoom: 10 }),
+      controls: [],
+      interactions: [],
+    });
+    const detach = attachMeasure(map);
+    useMapStore.setState({ tool: 'measure-line', measureResult: '' });
+    const enter = () => target.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    enter();
+    map.getView().setCenter([601000, 500000]);
+    enter();
+    expect(useMapStore.getState().measureResult).toBe('');
+    enter();
+    expect(useMapStore.getState().measureResult).toMatch(/^99\d,\d m$/);
+    detach();
+    map.setTarget(undefined);
+    useMapStore.setState({ tool: 'none', measureResult: '' });
   });
 });

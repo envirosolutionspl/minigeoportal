@@ -8,6 +8,7 @@ import { nearestQueryable, type InfoRecord, type ScaleHint } from '@/services/fe
 import { useInfoStore, type InfoResult } from '@/state/info';
 import { useMapStore } from '@/state/store';
 import { useReport } from './ReportDialog';
+import { NewTab } from './NewTab';
 import { t } from '@/i18n';
 
 /** Results of a map click: one section per queried overlay. */
@@ -128,6 +129,7 @@ function ServiceResult({ id, result }: { id: string; result: InfoResult | undefi
           {config.links.fallbackMap && (
             <a href={config.links.fallbackMap.url} target="_blank" rel="noopener" className="text-[var(--accent)] underline">
               {t('info.checkFallback', { name: config.links.fallbackMap.name })}
+              <NewTab />
             </a>
           )}
         </p>
@@ -154,7 +156,8 @@ function RecordView({ record }: { record: InfoRecord }) {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-[var(--accent)] underline"
                 >
-                  {f.value} <ExternalLink className="h-3 w-3 shrink-0" />
+                  {f.value} <ExternalLink className="h-3 w-3 shrink-0" aria-hidden="true" />
+                  <NewTab />
                 </a>
               ) : (
                 f.value

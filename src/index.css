@@ -106,7 +106,7 @@ input[type='search']::-webkit-search-cancel-button {
   white-space: nowrap;
   display: flex;
   align-items: center;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
@@ -220,7 +220,7 @@ input[type='search']::-webkit-search-cancel-button {
 .ol-scale-line-inner {
   color: var(--text);
   border-color: currentColor;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 /* OpenLayers gives the open credits a white background of its own (.ol-attribution:not(.ol-collapsed)),
    which would hide the light text of dark mode: the bar takes the surface colour in every state. */
@@ -233,7 +233,7 @@ input[type='search']::-webkit-search-cancel-button {
   max-width: none;
   justify-content: flex-end;
   background: color-mix(in srgb, var(--surface) 85%, transparent);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   padding: 0.15rem 0.5rem calc(0.15rem + var(--safe-bottom));
   border-radius: 0;
 }

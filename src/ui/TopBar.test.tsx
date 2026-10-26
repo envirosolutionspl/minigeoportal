@@ -31,6 +31,14 @@ const type = async (text: string) => {
 };
 
 describe('search box', () => {
+  it('says that Enter needs at least three characters, instead of doing nothing', () => {
+    render(<TopBar />);
+    const box = screen.getByRole('combobox');
+    fireEvent.change(box, { target: { value: 'Kr' } });
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(screen.getByText('Wpisz co najmniej 3 znaki.')).toBeTruthy();
+  });
+
   it('is a combobox: arrows move through the results, Enter shows the chosen one', async () => {
     render(<TopBar />);
     const box = await type('komaszyce');

@@ -10,7 +10,7 @@ import { ReportDialog } from './ui/ReportDialog';
 import { PrintPanel, PrintSheet } from './ui/Print';
 import { AccessibilityDialog } from './ui/AccessibilityDialog';
 import { useInfoStore } from './state/info';
-import { AuthorCredit } from './ui/Brand';
+import { APP_NAME, AuthorCredit } from './ui/Brand';
 import { t } from '@/i18n';
 import { useMapStore } from './state/store';
 
@@ -40,8 +40,11 @@ export default function App() {
         <a href="#map">{t('app.skipToMap')}</a>
         <a href="#search">{t('app.skipToSearch')}</a>
       </nav>
-      <MapView />
+      <h1 className="sr-only">{APP_NAME}</h1>
+      {/* The top bar before the map, so the Tab key reaches the search and the tools before the
+          map's own buttons; the stacking is by z-index, so the order on screen does not change. */}
       <TopBar />
+      <MapView />
       <BasemapSwitcher />
       <InfoPanel />
       <MeasureBar />

@@ -6,13 +6,13 @@ Serwis jest częściowo zgodny z WCAG 2.1 AA z powodu niezgodności i wyłącze�
 
 - Obraz mapy, ortofotomapy i warstw pochodzi z usług GUGiK, starostw i gmin i nie ma opisu tekstowego. Treść mapy w danym miejscu można odczytać jako tekst: Enter na mapie albo kliknięcie otwiera panel informacji o miejscu, a wyszukiwarki podają adresy i działki tekstem.
 - Legendy warstw są obrazami dostarczanymi przez usługi źródłowe.
-- Rysowanie pomiaru odległości i powierzchni wymaga myszy lub dotyku.
 - Raport o działce otwiera się w serwisie geoportal.gov.pl, za którego dostępność odpowiada GUGiK.
 
 ### Obsługa z klawiatury
 
 - Tab przechodzi między elementami, pierwszy z nich przenosi od razu do mapy lub wyszukiwarki.
-- Na mapie: strzałki przesuwają, plus i minus zmieniają skalę, Enter pokazuje informacje o środku mapy.
+- Na mapie: strzałki przesuwają, plus i minus zmieniają skalę, Enter pokazuje informacje o środku mapy. Gdy warstwa odpowiada dopiero w większej skali, panel mówi od jakiej i przybliża mapę jednym przyciskiem.
+- Pomiar: Enter dodaje punkt w środku mapy, drugi Enter w tym samym miejscu kończy pomiar, Esc anuluje rysowany kształt.
 - W wyszukiwarce: strzałki wybierają wynik, Enter pokazuje go na mapie, Esc zamyka listę.
 - Esc zamyka okna, panel informacji i listę warstw.
 
@@ -22,7 +22,7 @@ Przycisk ułatwień obok wyszukiwarki powiększa tekst (A, A+, A++) i włącza w
 
 ### Przygotowanie deklaracji
 
-Deklarację sporządzono 2026-10-21 na podstawie samooceny przeprowadzonej przez EnviroSolutions, wspartej testami automatycznymi.
+Deklarację sporządzono 2026-10-21 i zaktualizowano 2026-10-26 po przeglądzie dostępności (WCAG 2.1 AA, z kryteriami WCAG 2.2 jako celem) na podstawie samooceny przeprowadzonej przez EnviroSolutions, wspartej testami automatycznymi.
 
 ### Informacje zwrotne i kontakt
 

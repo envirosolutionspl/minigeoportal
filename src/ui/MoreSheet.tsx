@@ -4,6 +4,7 @@ import { t } from '@/i18n';
 import { AUTHOR_URL, AuthorLogo } from './Brand';
 import { DisplayOptions } from './DisplayMenu';
 import { useModalDialog } from './useModalDialog';
+import { NewTab } from './NewTab';
 
 export interface MoreItem {
   label: string;
@@ -89,6 +90,7 @@ export function MoreSheet({ open, onClose, items }: { open: boolean; onClose: ()
           <span className="author-logo rounded-lg bg-white px-1">
             <AuthorLogo className="h-7" />
           </span>
+          <NewTab />
         </a>
       </div>
     </dialog>

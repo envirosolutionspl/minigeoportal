@@ -40,6 +40,7 @@ search:
   list: Search results
   busy: Searching…
   none: No results.
+  unavailable: 'Not answering: {services}. The results may be incomplete.'
   results:
     one: '{count} result. Arrow keys down and up choose, Enter shows it on the map.'
     other: '{count} results. Arrow keys down and up choose, Enter shows it on the map.'

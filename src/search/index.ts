@@ -4,7 +4,7 @@ import { searchProviders } from '@/modules';
 import { parseCoordinates } from './coordinates';
 import type { SearchProvider } from './provider';
 
-export type { HitKind, SearchHit, SearchProvider } from './provider';
+export type { HitKind, SearchHit, SearchProvider, SearchResults } from './provider';
 
 /** Without a provider the box still finds coordinates. */
 const coordinatesOnly: SearchProvider = {

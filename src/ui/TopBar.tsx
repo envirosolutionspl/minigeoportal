@@ -61,6 +61,8 @@ const NO_PROMPT_MS = 600;
 export function TopBar() {
   const [query, setQuery] = useState('');
   const [hits, setHits] = useState<SearchHit[]>([]);
+  /** Services that did not answer the last search: said under its results. */
+  const [unavailable, setUnavailable] = useState('');
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   /** Highlighted hit for arrow keys; -1 means none. */
@@ -93,8 +95,10 @@ export function TopBar() {
       const found = await provider.search(q, controller.signal);
       if (controller.signal.aborted) return;
       setHits(found);
+      const missing = found.unavailable?.length ? t('search.unavailable', { services: found.unavailable.join(', ') }) : '';
+      setUnavailable(missing);
       setActive(-1);
-      setAnnounce(found.length ? t('search.results', { count: found.length }) : t('search.none'));
+      setAnnounce(`${found.length ? t('search.results', { count: found.length }) : t('search.none')} ${missing}`.trim());
       setOpen(true);
     } catch (e) {
       if (!(e instanceof DOMException && e.name === 'AbortError')) setHits([]);
@@ -122,6 +126,7 @@ export function TopBar() {
     // A provider that searches after Enter shows no results of an older text.
     if (q.length < 3 || !provider.instant) {
       setHits([]);
+      setUnavailable('');
       setAnnounce('');
       return;
     }
@@ -131,7 +136,8 @@ export function TopBar() {
     return () => window.clearTimeout(timer);
   }, [query]);
 
-  const listOpen = !toolOpen && open && (hits.length > 0 || busy);
+  // Also with no results when a service did not answer: the list says so.
+  const listOpen = !toolOpen && open && (hits.length > 0 || busy || Boolean(unavailable));
 
   const pick = async (hit: SearchHit) => {
     const mine = ++picked.current;
@@ -304,6 +310,11 @@ export function TopBar() {
           {busy && hits.length === 0 && (
             <li role="presentation" className="px-4 py-2 text-sm text-[var(--muted)]">
               {t('search.busy')}
+            </li>
+          )}
+          {unavailable && !busy && (
+            <li role="presentation" className="px-4 py-2 text-xs text-[var(--danger)]">
+              {unavailable}
             </li>
           )}
           {provider.credit && hits.length > 0 && (

@@ -127,6 +127,18 @@ describe('map tools', () => {
   });
 });
 
+describe('a service that did not answer', () => {
+  it('is named under the results, also when nothing was found', async () => {
+    const { searchProvider } = await import('@/search');
+    const spy = vi.spyOn(searchProvider, 'search').mockResolvedValue(Object.assign([], { unavailable: ['wyszukiwarka adresów (UUG)'] }));
+    render(<TopBar />);
+    await type('Kraków');
+    expect(screen.getByRole('listbox').textContent).toContain('Nie odpowiada: wyszukiwarka adresów (UUG). Wyniki mogą być niepełne.');
+    expect(screen.getAllByRole('status').some((s) => s.textContent?.includes('Wyniki mogą być niepełne'))).toBe(true);
+    spy.mockRestore();
+  });
+});
+
 describe('my location', () => {
   type Geo = Pick<Geolocation, 'getCurrentPosition'>;
   const withGeolocation = (geolocation: Geo | undefined) => vi.stubGlobal('navigator', { ...navigator, geolocation });

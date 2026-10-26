@@ -41,6 +41,7 @@ search:
   list: Wyniki wyszukiwania
   busy: Szukam…
   none: Brak wyników.
+  unavailable: 'Nie odpowiada: {services}. Wyniki mogą być niepełne.'
   results: 'Wyników: {count}. Strzałki w dół i w górę wybierają, Enter pokazuje na mapie.'
   nominatim:
     placeholder: Adres lub miejsce, Enter wyszukuje

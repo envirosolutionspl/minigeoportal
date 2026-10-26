@@ -21,13 +21,19 @@ export interface SearchHit {
   scale?: number;
 }
 
+/**
+ * What a search found. `unavailable` names the services that did not answer in time, so the list
+ * can say the results may be incomplete; a provider with one service simply throws instead.
+ */
+export type SearchResults = SearchHit[] & { unavailable?: string[] };
+
 export interface SearchProvider {
   /** Results while typing; otherwise after Enter (Nominatim allows one request a second). */
   instant: boolean;
   placeholder: string;
   /** Accessible name of the search box. */
   label: string;
-  search(query: string, signal: AbortSignal): Promise<SearchHit[]>;
+  search(query: string, signal: AbortSignal): Promise<SearchResults>;
   /**
    * The outline of a chosen hit, when the result list does not carry it (a building at an
    * address, a town boundary); `persist` keeps it on the map until the search is cleared.

@@ -2,7 +2,7 @@ import { fromLonLat } from 'ol/proj';
 import { PROJECTION } from '@/map/projection';
 import { unitNames, type UnitNames, type UnitLevel } from './units';
 import { normalize } from '@/services/text';
-import type { HitKind, SearchHit } from '@/search/provider';
+import type { HitKind, SearchHit, SearchResults } from '@/search/provider';
 import { t } from '@/i18n';
 
 /**
@@ -306,19 +306,41 @@ export async function findParcels(query: string, signal: AbortSignal): Promise<G
   });
 }
 
-export async function search(query: string, signal: AbortSignal): Promise<GugikHit[]> {
+/**
+ * How long a service may take: one that has not answered by then is left out and named under
+ * the results, so a slow one (the full-text search at times takes 20 s) does not hold back what
+ * the others found.
+ */
+const SOURCE_MS = 4000;
+
+/** A signal that gives up after `ms`, on the page's own clock (unlike AbortSignal.timeout, tests can move it). */
+function giveUpAfter(ms: number): AbortSignal {
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(new DOMException('No answer in time', 'TimeoutError')), ms);
+  return controller.signal;
+}
+
+/** The services the search asks, by the name the results give one that did not answer. */
+type Source = 'parcels' | 'addresses' | 'names' | 'units';
+
+export async function search(query: string, signal: AbortSignal): Promise<SearchResults & GugikHit[]> {
   const q = query.trim();
   if (PARCEL_ID.test(q)) return findParcels(q, signal);
   // Names have no digits or commas; anything else is an address or a parcel.
   const byName = !/[\d,]/.test(q);
-  const none = Promise.resolve<GugikHit[]>([]);
-  const settled = await Promise.allSettled([
-    PRECINCT_AND_NUMBER.test(q) ? findParcels(q, signal) : none,
-    uug(q, signal),
-    byName ? fts(q, signal) : none,
-    byName ? units(q, signal) : none,
-    byName ? nature(q, signal) : none,
-  ]);
+  const asked: [Source, ((s: AbortSignal) => Promise<GugikHit[]>) | false][] = [
+    ['parcels', PRECINCT_AND_NUMBER.test(q) && ((s) => findParcels(q, s))],
+    ['addresses', (s) => uug(q, s)],
+    ['names', byName && ((s) => fts(q, s))],
+    ['units', byName && ((s) => units(q, s))],
+    // Physiographic objects come from the same full-text search as the places.
+    ['names', byName && ((s) => nature(q, s))],
+  ];
+  const settled = await Promise.allSettled(
+    asked.map(([, load]) => (load ? load(AbortSignal.any([signal, giveUpAfter(SOURCE_MS)])) : Promise.resolve([]))),
+  );
+  signal.throwIfAborted();
+  const unavailable = [...new Set(asked.filter((_, i) => settled[i].status === 'rejected').map(([name]) => name))];
   const [parcels, geocoded, places, unitHits, natureHits] = settled.map((r) => (r.status === 'fulfilled' ? r.value : []));
 
   // Places in the full-text order (towns first), then the geocoder's places it did not know.
@@ -341,7 +363,8 @@ export async function search(query: string, signal: AbortSignal): Promise<GugikH
     merged.flatMap((h) => (h.teryt && !h.detail?.includes('woj.') ? [h.teryt] : [])),
     signal,
   );
-  return merged.map((h) => withUnits(h, names));
+  const hits = merged.map((h) => withUnits(h, names));
+  return unavailable.length > 0 ? Object.assign(hits, { unavailable: unavailable.map((s) => t(`search.gugik.unavailable.${s}`)) }) : hits;
 }
 
 /**

@@ -8,6 +8,12 @@ search:
   gugik:
     placeholder: Address, town, parcel…
     label: Search for an address, town or parcel
+    # Services that did not answer in time, named under the results.
+    unavailable:
+      parcels: the parcel search (ULDK)
+      addresses: the address search (UUG)
+      names: the search of place and object names (PRNG)
+      units: the search of administrative units (PRG)
 
 parcel:
   title: Find a parcel

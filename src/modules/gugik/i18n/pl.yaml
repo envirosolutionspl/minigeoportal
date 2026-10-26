@@ -8,6 +8,12 @@ search:
   gugik:
     placeholder: Adres, miejscowość, działka…
     label: Szukaj adresu, miejscowości lub działki
+    # Services that did not answer in time, named under the results.
+    unavailable:
+      parcels: wyszukiwarka działek (ULDK)
+      addresses: wyszukiwarka adresów (UUG)
+      names: wyszukiwarka nazw miejscowości i obiektów (PRNG)
+      units: wyszukiwarka jednostek administracyjnych (PRG)
 
 parcel:
   title: Znajdź działkę

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildingAt, findParcels, placeOutline, search, stripSrid, unitLabel, unitOutline } from './geocoder';
 import { clearUnitNames } from './units';
 import { stubFetch } from '@/test/helpers';
@@ -146,6 +146,35 @@ describe('search', () => {
     const hits = await search('Wiązowna Gminna 22/1', signal());
     expect(calls.filter((c) => !c.includes('/api/'))).toHaveLength(2);
     expect(hits.map((h) => h.kind)).toEqual(['parcel', 'street']);
+  });
+
+  it('does not wait for a service that does not answer: shows the others and names it', async () => {
+    vi.useFakeTimers();
+    // The full-text search hangs until it is given up; the address search answers at once.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes('capap.gugik.gov.pl'))
+          return new Promise<Response>((_, reject) => init?.signal?.addEventListener('abort', () => reject(init.signal!.reason)));
+        if (url.includes('services.gugik.gov.pl/uug')) return new Response(JSON.stringify(UUG_TWO_PLACES));
+        return new Response(url.includes('/api/dict/szukaj') ? '[]' : '{}', { headers: { 'content-type': 'application/json' } });
+      }),
+    );
+    const found = search('Komaszyce', signal());
+    await vi.advanceTimersByTimeAsync(4100);
+    const hits = await found;
+    expect(hits.map((h) => h.label)).toEqual(['Komaszyce', 'Komaszyce']);
+    expect(hits.unavailable).toEqual(['wyszukiwarka nazw miejscowości i obiektów (PRNG)']);
+    vi.useRealTimers();
+  });
+
+  it('names nothing when every service answered', async () => {
+    stubFetch([
+      ['services.gugik.gov.pl/uug', UUG_CITY],
+      ['capap.gugik.gov.pl', { type: 'FeatureCollection', features: [] }],
+      ['/api/dict', []],
+    ]);
+    expect((await search('Otwock', signal())).unavailable).toBeUndefined();
   });
 
   it('survives one failing service and an empty ULDK answer', async () => {

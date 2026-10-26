@@ -64,7 +64,7 @@ describe('MapMenu', () => {
     }
   });
 
-  it('keeps the confirmation while the mouse points at it', async () => {
+  it('keeps the confirmation while the mouse points at it, and lets it go 2 seconds after it leaves', async () => {
     vi.useFakeTimers();
     try {
       render(<MapMenu />);

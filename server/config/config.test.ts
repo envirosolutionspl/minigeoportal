@@ -31,8 +31,15 @@ describe('default configuration', () => {
   const config = clientConfig(loadConfig('config'), 'pl');
 
   it('stays what the app was built with (any change shows up here)', () => {
-    // Texts of the interface have their own tests (i18n.test.ts).
-    expect({ ...config, messages: undefined }).toMatchSnapshot();
+    // Texts of the interface have their own tests (i18n.test.ts), the Markdown ones markdown.test.ts
+    // and WelcomeDialog.test.tsx. Of the layers, one in full shows how layers.yaml reaches the app.
+    const { messages: _, content, layers, ...rest } = config;
+    expect({
+      ...rest,
+      content: Object.keys(content),
+      layers: { ...layers, overlays: layers.overlays.map((o) => o.id) },
+      overlay: layers.overlays.find((o) => o.id === 'kiut'),
+    }).toMatchSnapshot();
   });
 
   it('keeps the first view, the search and the modules', () => {

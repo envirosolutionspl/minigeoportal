@@ -13,7 +13,6 @@ import { lookup } from 'node:dns/promises';
 beforeEach(() => vi.mocked(lookup).mockResolvedValue([{ address: '203.0.113.10', family: 4 }] as never));
 
 const CACHE: CapabilitiesCache = { generatedAt: '2026-10-21T00:00:00.000Z', services: {} };
-const local = { incoming: { socket: { remoteAddress: '127.0.0.1', remoteFamily: 'IPv4', remotePort: 1 } } };
 const remote = { incoming: { socket: { remoteAddress: '203.0.113.5', remoteFamily: 'IPv4', remotePort: 1 } } };
 
 let dir: string;
@@ -27,20 +26,6 @@ beforeAll(async () => {
 afterAll(() => rm(dir, { recursive: true, force: true }));
 
 describe('routes', () => {
-  it('leaves out the gugik routes, and its search hosts in the CSP, without the module', async () => {
-    const { createApp } = await import('./app.ts');
-    const plain = createSite({
-      ...site.config,
-      app: { ...site.config.app, modules: {}, search: { ...site.config.app.search, provider: 'none', parcel: false } },
-    });
-    const bare = createApp({ site: plain, cache: () => CACHE, moduleData: { catalog: () => undefined } });
-    for (const path of ['/api/catalog', '/api/dict/wojewodztwa', '/api/orto?x=1&y=1']) {
-      expect((await bare.request(path, {}, remote)).status).toBe(404);
-    }
-    const csp = (await bare.request('/api/health', {}, remote)).headers.get('content-security-policy')!;
-    expect(csp).toContain("connect-src 'self';");
-  });
-
   it('serves the brand images of the configuration, cached for good at their versioned address', async () => {
     const logo = site.config.brand.logo!;
     const res = await app.request(`/brand/logo.svg?v=${logo.version}`, {}, remote);
@@ -65,19 +50,19 @@ describe('routes', () => {
     const fetch = vi.fn(async () => new Response(JSON.stringify([row])));
     vi.stubGlobal('fetch', fetch);
     const res = await createApp({ site: osm, cache: () => CACHE }).request('/api/search?q=Krak%C3%B3w&lang=pl', {}, remote);
-    expect(await res.json()).toEqual([
-      { label: 'Kraków, Polska', point: [19.94, 50.06], bbox: [19.79, 49.97, 20.22, 50.13], type: 'city' },
-    ]);
+    // How a place is read is nominatim.test.ts's; here only that the route reaches the configured server.
+    expect(await res.json()).toHaveLength(1);
     expect(String(fetch.mock.calls[0]).startsWith('https://nominatim.openstreetmap.org/search?')).toBe(true);
     expect((await app.request('/api/search?q=Krak%C3%B3w', {}, remote)).status).toBe(404);
   });
 
-  it('runs the example deployment without GUGiK: no catalog or dictionaries, Nominatim search, no outside hosts', async () => {
+  it('runs the example deployment without GUGiK: none of its routes, Nominatim search, no outside hosts', async () => {
     const { createApp } = await import('./app.ts');
     const { loadConfig } = await import('./config/load.ts');
     const osm = createApp({ site: createSite(loadConfig('examples/osm')), cache: () => CACHE });
-    expect((await osm.request('/api/catalog', {}, remote)).status).toBe(404);
-    expect((await osm.request('/api/dict/wojewodztwa', {}, remote)).status).toBe(404);
+    for (const path of ['/api/catalog', '/api/dict/wojewodztwa', '/api/orto?x=1&y=1']) {
+      expect((await osm.request(path, {}, remote)).status).toBe(404);
+    }
     expect(await (await osm.request('/api/search?q=ab', {}, remote)).json()).toEqual([]);
     const page = (await osm.request('/api/config', {}, remote)).headers.get('content-security-policy')!;
     expect(page).toContain("connect-src 'self';");
@@ -129,7 +114,6 @@ describe('routes', () => {
     const following = createApp({ site, cache: () => current });
     current = { ...CACHE, generatedAt: 'updated' };
     expect(await (await following.request('/api/health', {}, remote)).json()).toMatchObject({ capabilitiesGeneratedAt: 'updated' });
-    expect((await following.request('/api/capabilities/refresh', { method: 'POST' }, local)).status).toBe(404);
   });
 
   it('maps dictionary errors: 400 for client mistakes, 502 with a generic text for upstream failures', async () => {

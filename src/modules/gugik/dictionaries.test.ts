@@ -1,6 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { dictionary, parcelInPrecinct } from './dictionaries';
 import { stubFetch } from '@/test/helpers';
+
+// A failing test with fake timers must not leave them to the next one.
+afterEach(() => vi.useRealTimers());
 
 describe('dictionary', () => {
   it('builds the URL without a trailing slash for the top level and remembers answers', async () => {
@@ -29,7 +32,6 @@ describe('dictionary', () => {
     expect(await first).toBe('HTTP 503');
     expect(attempts).toBe(2);
     expect(await dictionary('gminy', '1261')).toEqual([{ id: '12', name: 'x' }]);
-    vi.useRealTimers();
   });
 });
 

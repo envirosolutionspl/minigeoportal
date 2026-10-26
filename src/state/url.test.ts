@@ -56,15 +56,21 @@ describe('writeUrl', () => {
     expect(window.location.search).toBe('');
     vi.advanceTimersByTime(300);
     expect(window.location.search).toBe('?x=637001&y=486000&z=12.3&b=orto&l=kieg,kiut.przewod_gazowy');
-    writeUrl({ center: [1, 2], zoom: 3, base: 'orto', overlays: [], sublayers: {}, time: '2007-01-01' });
+    vi.useRealTimers();
+  });
+
+  it('writes the date, the comparison and the layer of the time view, and reads them back', () => {
+    vi.useFakeTimers();
+    const view = { center: [1, 2] as [number, number], zoom: 3, base: 'orto', overlays: [], sublayers: {} };
+    writeUrl({ ...view, time: '2007-01-01' });
     vi.advanceTimersByTime(300);
     expect(window.location.search).toBe('?x=1&y=2&z=3.0&b=orto&l=&t=2007-01-01');
-    writeUrl({ center: [1, 2], zoom: 3, base: 'orto', overlays: [], sublayers: {}, time: '2007-01-01', compare: true });
+    const state = { ...view, time: '1965', compare: true, timeLayer: 'mapy-dawne' };
+    writeUrl(state);
     vi.advanceTimersByTime(300);
-    expect(window.location.search).toBe('?x=1&y=2&z=3.0&b=orto&l=&t=2007-01-01&c=1');
-    writeUrl({ center: [1, 2], zoom: 3, base: 'orto', overlays: [], sublayers: {}, time: '1965', timeLayer: 'mapy-dawne' });
-    vi.advanceTimersByTime(300);
-    expect(window.location.search).toBe('?x=1&y=2&z=3.0&b=orto&l=&t=1965&tl=mapy-dawne');
+    expect(window.location.search).toBe('?x=1&y=2&z=3.0&b=orto&l=&t=1965&c=1&tl=mapy-dawne');
+    expect(readUrl()).toEqual(state);
+    setSearch('');
     vi.useRealTimers();
   });
 
@@ -94,21 +100,6 @@ describe('writeUrl', () => {
     expect(window.location.search).toBe('?x=1&y=2&z=3.0&b=orto&l=ms%252EGleby.a%252Eb.c');
     expect(readUrl()).toEqual(state);
     setSearch('');
-    vi.useRealTimers();
-  });
-
-  it('round-trips through readUrl', () => {
-    vi.useFakeTimers();
-    const state = {
-      center: [500000, 465000] as [number, number],
-      zoom: 3,
-      base: 'teren',
-      overlays: ['rcn'],
-      sublayers: { rcn: ['dzialki'] },
-    };
-    writeUrl(state);
-    vi.advanceTimersByTime(300);
-    expect(readUrl()).toEqual(state);
     vi.useRealTimers();
   });
 });

@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { WelcomeDialog, useWelcome } from './WelcomeDialog';
 
 describe('WelcomeDialog', () => {
-  it('says what the service is for and where the data come from, briefly', () => {
+  it('says what the service is for and where the data come from, briefly, with links to the geoportal and the source code', () => {
     render(<WelcomeDialog />);
     act(() => useWelcome.getState().setOpen(true));
     expect(screen.getByText('Dane z geoportal.gov.pl – prościej i szybciej')).toBeTruthy();
@@ -19,11 +19,6 @@ describe('WelcomeDialog', () => {
     const links = screen.getAllByRole('link', { name: 'geoportal.gov.pl' });
     expect(links).toHaveLength(2);
     for (const link of links) expect(link.getAttribute('href')).toBe('https://www.geoportal.gov.pl');
-  });
-
-  it('links to the source code of the project', () => {
-    render(<WelcomeDialog />);
-    act(() => useWelcome.getState().setOpen(true));
     expect(screen.getByRole('link', { name: 'kod źródłowy na GitHubie' }).getAttribute('href')).toBe(
       'https://github.com/envirosolutionspl/minigeoportal',
     );

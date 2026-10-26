@@ -48,6 +48,11 @@ describe('topicOf', () => {
     expect(mod.topicOf('Osnowa szczegółowa', ['Specjalistyczne informacje geodezyjne'])).toBe('geodezja');
     expect(mod.topicOf('Defibrylatory', ['Obiekty użyteczności publicznej'])).toBe('inne');
   });
+
+  it('puts maps of downloadable data in a group of their own', () => {
+    expect(mod.topicOf('Działki', ['Dane do pobrania', 'Dane powiatowe'])).toBe('pobieranie');
+    expect(mod.topicOf('Działki LPIS', ['Dane innych instytucji'])).toBe('dzialki');
+  });
 });
 
 describe('catalogEntries', () => {
@@ -148,11 +153,6 @@ describe('catalogEntries', () => {
         .filter((e) => e.title === 'Mapy sozologiczne')
         .map((e) => e.id),
     ).toEqual(['msSozoArch', 'msSkorowidzeSozo_new', 'msSozoNajnowsze']);
-  });
-
-  it('puts maps of downloadable data in a group of their own', () => {
-    expect(mod.topicOf('Działki', ['Dane do pobrania', 'Dane powiatowe'])).toBe('pobieranie');
-    expect(mod.topicOf('Działki LPIS', ['Dane innych instytucji'])).toBe('dzialki');
   });
 });
 

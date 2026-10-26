@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
-import axe from 'axe-core';
 import { config } from '@/config/runtime';
 import { DisplayMenu, useDisplay } from './DisplayMenu';
 
@@ -30,14 +29,11 @@ describe('DisplayMenu', () => {
     expect(document.documentElement.style.fontSize).toBe('100%');
   });
 
-  it('closes with Escape and has no WCAG rule violations', async () => {
-    const { container } = render(<DisplayMenu />);
+  // Its WCAG rules: a11y.test.tsx, with the menu open in the top bar.
+  it('closes with Escape', () => {
+    render(<DisplayMenu />);
     fireEvent.click(screen.getByRole('button', { name: /Ułatwienia/ }));
-    const result = await axe.run(container, {
-      runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa'] },
-      rules: { 'color-contrast': { enabled: false } },
-    });
-    expect(result.violations.map((v) => v.id)).toEqual([]);
+    expect(screen.getByRole('group', { name: 'Ułatwienia' })).toBeTruthy();
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('group', { name: 'Ułatwienia' })).toBeNull();
   });

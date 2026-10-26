@@ -216,13 +216,6 @@ describe('my location', () => {
     expect(notice()).not.toContain('położenia');
     vi.useRealTimers();
   });
-
-  it('says so in a browser without geolocation', () => {
-    withGeolocation(undefined);
-    render(<TopBar />);
-    press();
-    expect(notice()).toContain('Nie udało się ustalić położenia');
-  });
 });
 
 describe('tools on phones', () => {

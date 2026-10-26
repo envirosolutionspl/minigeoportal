@@ -100,7 +100,11 @@ describe('LayerCatalog', () => {
     stubFetch([['/api/catalog', CATALOG]]);
     render(<LayerCatalog />);
     await section(/Zabytki i turystyka/);
-    fireEvent.change(screen.getByPlaceholderText(/Szukaj warstwy/), { target: { value: 'dziedzictwa' } });
+    const find = (value: string) => fireEvent.change(screen.getByPlaceholderText(/Szukaj warstwy/), { target: { value } });
+    find('zabytkow nieruch');
+    expect(screen.getByLabelText('Rejestr zabytków nieruchomych')).toBeTruthy();
+    // By the name of its group.
+    find('dziedzictwa');
     fireEvent.click(screen.getByLabelText('Rejestr zabytków nieruchomych'));
     expect(useMapStore.getState().overlays).toContain('msZabytki');
     expect(screen.getByText('Wczytuję warstwę…')).toBeTruthy();
@@ -155,9 +159,11 @@ describe('LayerCatalog', () => {
   });
 
   it('finds a sublayer by text, ignoring diacritics, and highlights it', () => {
-    render(<LayerCatalog />);
+    const { container } = render(<LayerCatalog />);
     fireEvent.change(screen.getByPlaceholderText(/Szukaj warstwy/), { target: { value: 'kanalizacja' } });
-    expect(screen.getByLabelText('Uzbrojenie terenu: Kanalizacja')).toBeTruthy();
+    const row = screen.getByLabelText('Uzbrojenie terenu: Kanalizacja').closest('li')!;
+    expect(row.className).toContain('font-medium');
+    expect(container.querySelectorAll('li.font-medium')).toHaveLength(1);
     expect(screen.queryByLabelText('Ewidencja gruntów i budynków')).toBeNull();
     fireEvent.change(screen.getByPlaceholderText(/Szukaj warstwy/), { target: { value: 'dzialki' } });
     expect(screen.getByLabelText('Ewidencja gruntów i budynków')).toBeTruthy();

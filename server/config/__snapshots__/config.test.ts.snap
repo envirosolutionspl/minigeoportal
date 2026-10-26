@@ -17,42 +17,10 @@ exports[`default configuration > stays what the app was built with (any change s
     "tagline": "Dane z geoportal.gov.pl – prościej i szybciej",
     "title": "MiniGeoportal: działki, plany i ortofotomapa",
   },
-  "content": {
-    "accessibility": "<p>EnviroSolutions zobowiązuje się zapewnić dostępność serwisu MiniGeoportal (minigeoportal.pl) zgodnie ze standardem WCAG 2.1 na poziomie AA (norma EN 301 549), wymaganym przez ustawę o dostępności cyfrowej stron internetowych i aplikacji mobilnych oraz ustawę o zapewnianiu spełniania wymagań dostępności niektórych produktów i usług.</p>
-<h3>Stan dostępności</h3>
-<p>Serwis jest częściowo zgodny z WCAG 2.1 AA z powodu niezgodności i wyłączeń wymienionych niżej.</p>
-<ul>
-<li>Obraz mapy, ortofotomapy i warstw pochodzi z usług GUGiK, starostw i gmin i nie ma opisu tekstowego. Treść mapy w danym miejscu można odczytać jako tekst: Enter na mapie albo kliknięcie otwiera panel informacji o miejscu, a wyszukiwarki podają adresy i działki tekstem.</li>
-<li>Legendy warstw są obrazami dostarczanymi przez usługi źródłowe.</li>
-<li>Raport o działce otwiera się w serwisie geoportal.gov.pl, za którego dostępność odpowiada GUGiK.</li>
-</ul>
-<h3>Obsługa z klawiatury</h3>
-<ul>
-<li>Tab przechodzi między elementami, pierwszy z nich przenosi od razu do mapy lub wyszukiwarki.</li>
-<li>Na mapie: strzałki przesuwają, plus i minus zmieniają skalę, Enter pokazuje informacje o środku mapy. Gdy warstwa odpowiada dopiero w większej skali, panel mówi od jakiej i przybliża mapę jednym przyciskiem.</li>
-<li>Pomiar: Enter dodaje punkt w środku mapy, drugi Enter w tym samym miejscu kończy pomiar, Esc anuluje rysowany kształt.</li>
-<li>Menu miejsca (kopiowanie współrzędnych, prowadzenie w Google Maps): klawisz menu albo Shift+F10 na mapie otwiera je dla środka mapy, strzałki wybierają pozycję, Esc zamyka. Myszą otwiera je prawy przycisk, na ekranie dotykowym dłuższe przytrzymanie palca.</li>
-<li>W wyszukiwarce: strzałki wybierają wynik, Enter pokazuje go na mapie, Esc zamyka listę.</li>
-<li>Esc zamyka okna, panel informacji i listę warstw.</li>
-</ul>
-<h3>Ułatwienia</h3>
-<p>Przycisk ułatwień obok wyszukiwarki powiększa tekst (A, A+, A++) i włącza wysoki kontrast (żółty na czarnym); wybór jest zapamiętywany. Serwis działa przy powiększeniu przeglądarki do 200% i na wąskich ekranach, ma tryb ciemny zgodny z ustawieniem systemu i wyłącza animacje, gdy system prosi o ograniczenie ruchu. Komunikaty o wynikach wyszukiwania, wczytywaniu danych i pomiarach są odczytywane przez czytniki ekranu.</p>
-<h3>Przygotowanie deklaracji</h3>
-<p>Deklarację sporządzono 2026-10-21 i zaktualizowano 2026-10-26 po przeglądzie dostępności (WCAG 2.1 AA, z kryteriami WCAG 2.2 jako celem) na podstawie samooceny przeprowadzonej przez EnviroSolutions, wspartej testami automatycznymi.</p>
-<h3>Informacje zwrotne i kontakt</h3>
-<p>Problemy z dostępnością prosimy zgłaszać przez <a href="#report" data-action="report">formularz zgłoszeń</a> (rodzaj „Dostępność”) albo e-mailem na adres <a href="mailto:office@envirosolutions.pl">office@envirosolutions.pl</a>. Można też poprosić o informację z mapy w innej, dostępnej formie. Odpowiadamy niezwłocznie, nie później niż w ciągu 7 dni.</p>
-",
-    "welcome": "<h2>Po co jest ten serwis</h2>
-<p>MiniGeoportal pokazuje te same publiczne dane co krajowy <a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">geoportal.gov.pl</a>, ale w formie przyjaznej dla osób, które nie zajmują się mapami zawodowo. Wyszukaj i przejrzyj oficjalne dane szybciej i łatwiej.</p>
-<p>Zobaczysz granice i numer działki, przeznaczenie w planie miejscowym lub ogólnym, ceny transakcyjne w okolicy, uzbrojenie terenu i zdjęcia lotnicze. Bez logowania i bez opłat, na komputerze i na telefonie.</p>
-<h2>Skąd są dane</h2>
-<p>Wszystkie dane pochodzą z publicznych usług Głównego Urzędu Geodezji i Kartografii (<a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">geoportal.gov.pl</a>) oraz serwerów starostw, gmin i innych instytucji, z którymi te usługi się łączą. Mapa pobiera je na bieżąco i niczego nie zmienia ani nie przechowuje. Aktualność danych zależy od urzędu, który je prowadzi.</p>
-<blockquote>
-<h2>Ważne</h2>
-<p>Informacje mają charakter poglądowy i nie są dokumentem urzędowym. Wiążące dane wydaje starostwo (ewidencja gruntów i budynków) lub gmina (plany zagospodarowania). MiniGeoportal to niezależny serwis open source (<a href="https://github.com/envirosolutionspl/minigeoportal" target="_blank" rel="noopener">kod źródłowy na GitHubie</a>), a nie serwis GUGiK.</p>
-</blockquote>
-",
-  },
+  "content": [
+    "welcome",
+    "accessibility",
+  ],
   "layers": {
     "drawOrder": [
       "mapy-dawne",
@@ -68,537 +36,17 @@ exports[`default configuration > stays what the app was built with (any change s
       "prg",
     ],
     "overlays": [
-      {
-        "catalogId": "msKIEG",
-        "description": "Działki, numery działek, budynki, obręby, użytki.",
-        "id": "kieg",
-        "keywords": [
-          "działki",
-          "ewidencja",
-          "egib",
-          "granice",
-          "numery",
-          "budynki",
-          "obręby",
-          "użytki",
-          "kontury",
-          "klasy",
-        ],
-        "kind": "wms",
-        "starter": true,
-        "sublayers": [
-          {
-            "name": "uzytki",
-            "title": "Użytki gruntowe",
-          },
-          {
-            "name": "kontury",
-            "title": "Kontury klasyfikacyjne",
-          },
-          {
-            "default": true,
-            "name": "obreby",
-            "title": "Granice obrębów",
-          },
-          {
-            "default": true,
-            "name": "dzialki",
-            "title": "Działki",
-          },
-          {
-            "name": "geoportal",
-            "title": "Działki uzupełnione z LPIS",
-          },
-          {
-            "default": true,
-            "name": "budynki",
-            "title": "Budynki",
-          },
-          {
-            "default": true,
-            "name": "numery_dzialek",
-            "title": "Numery działek",
-          },
-        ],
-        "title": "Ewidencja gruntów i budynków",
-        "topic": "dzialki",
-        "url": "https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow",
-      },
-      {
-        "catalogId": "msMPZP",
-        "description": "Miejscowe plany zagospodarowania przestrzennego.",
-        "id": "kimpzp",
-        "keywords": [
-          "mpzp",
-          "plan",
-          "zagospodarowanie",
-          "przeznaczenie",
-          "budowa",
-          "zabudowa",
-        ],
-        "kind": "wms",
-        "opacity": 0.8,
-        "starter": true,
-        "sublayers": [
-          {
-            "default": true,
-            "name": "raster",
-            "title": "Plany rastrowe (skany rysunków)",
-          },
-          {
-            "default": true,
-            "name": "wektor-str",
-            "title": "Strefy przeznaczenia",
-          },
-          {
-            "default": true,
-            "name": "wektor-pow",
-            "title": "Obiekty powierzchniowe",
-          },
-          {
-            "default": true,
-            "name": "wektor-lin",
-            "title": "Obiekty liniowe",
-          },
-          {
-            "default": true,
-            "name": "wektor-lzb",
-            "title": "Linie zabudowy",
-          },
-          {
-            "default": true,
-            "name": "wektor-pkt",
-            "title": "Obiekty punktowe",
-          },
-        ],
-        "title": "Plany miejscowe (MPZP)",
-        "topic": "planowanie",
-        "url": "https://mapy.geoportal.gov.pl/wss/ext/KrajowaIntegracjaMiejscowychPlanowZagospodarowaniaPrzestrzennego",
-      },
-      {
-        "catalogId": "msPlanyOgolneGmin",
-        "description": "Strefy planistyczne z uchwalonych planów ogólnych.",
-        "id": "pog",
-        "keywords": [
-          "pog",
-          "plan ogólny",
-          "strefy",
-          "planistyczne",
-        ],
-        "kind": "wms",
-        "opacity": 0.8,
-        "starter": true,
-        "sublayers": [
-          {
-            "default": true,
-            "name": "aktPlanowaniaprzestrzennego",
-            "title": "Zasięg planu ogólnego",
-          },
-          {
-            "default": true,
-            "name": "strefaPlanistyczna",
-            "title": "Strefy planistyczne",
-          },
-          {
-            "default": true,
-            "name": "obszarUzupelnieniaZabudowy",
-            "title": "Obszary uzupełnienia zabudowy",
-          },
-          {
-            "default": true,
-            "name": "obszarZabSrodmiejskiej",
-            "title": "Obszary zabudowy śródmiejskiej",
-          },
-        ],
-        "title": "Plany ogólne gmin (POG)",
-        "topic": "planowanie",
-        "url": "https://mapy.geoportal.gov.pl/wss/ext/PlanyOgolneGmin",
-      },
-      {
-        "catalogId": "msRejestrCenNieruchomosci",
-        "description": "Rejestr cen nieruchomości, tylko powiaty publikujące dane.",
-        "id": "rcn",
-        "keywords": [
-          "ceny",
-          "rcn",
-          "transakcje",
-          "wartość",
-          "sprzedaż",
-          "mieszkania",
-          "lokale",
-        ],
-        "kind": "wms",
-        "starter": true,
-        "sublayers": [
-          {
-            "default": true,
-            "name": "powiaty",
-            "title": "Powiaty z danymi",
-          },
-          {
-            "default": true,
-            "name": "dzialki",
-            "title": "Transakcje: działki",
-          },
-          {
-            "default": true,
-            "name": "budynki",
-            "title": "Transakcje: budynki",
-          },
-          {
-            "default": true,
-            "name": "lokale",
-            "title": "Transakcje: lokale",
-          },
-        ],
-        "title": "Ceny transakcyjne (RCN)",
-        "topic": "ceny",
-        "url": "https://mapy.geoportal.gov.pl/wss/service/rcn",
-      },
-      {
-        "catalogId": "msKIUT",
-        "description": "Sieci: woda, kanalizacja, gaz, prąd, telekomunikacja, ciepło.",
-        "id": "kiut",
-        "keywords": [
-          "uzbrojenie",
-          "gesut",
-          "sieci",
-          "przyłącze",
-          "media",
-        ],
-        "kind": "wms",
-        "starter": true,
-        "sublayers": [
-          {
-            "default": true,
-            "name": "gesut",
-            "title": "Powiaty z danymi",
-          },
-          {
-            "default": true,
-            "name": "przewod_wodociagowy",
-            "title": "Woda",
-          },
-          {
-            "default": true,
-            "name": "przewod_kanalizacyjny",
-            "title": "Kanalizacja",
-          },
-          {
-            "default": true,
-            "name": "przewod_gazowy",
-            "title": "Gaz",
-          },
-          {
-            "default": true,
-            "name": "przewod_elektroenergetyczny",
-            "title": "Elektroenergetyka",
-          },
-          {
-            "default": true,
-            "name": "przewod_telekomunikacyjny",
-            "title": "Telekomunikacja",
-          },
-          {
-            "default": true,
-            "name": "przewod_cieplowniczy",
-            "title": "Ciepłownictwo",
-          },
-          {
-            "default": true,
-            "name": "przewod_specjalny",
-            "title": "Sieć specjalna",
-          },
-          {
-            "default": true,
-            "name": "przewod_niezidentyfikowany",
-            "title": "Sieci niezidentyfikowane",
-          },
-          {
-            "default": true,
-            "name": "przewod_urzadzenia",
-            "title": "Urządzenia",
-          },
-        ],
-        "title": "Uzbrojenie terenu",
-        "topic": "uzbrojenie",
-        "url": "https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaUzbrojeniaTerenu",
-      },
-      {
-        "catalogId": "msKIBDOT",
-        "description": "Szczegółowa mapa zasadnicza: budowle, ogrodzenia, chodniki, drogi, skarpy.",
-        "id": "kibdot",
-        "keywords": [
-          "bdot500",
-          "mapa zasadnicza",
-          "topografia",
-          "ogrodzenia",
-          "budowle",
-          "chodniki",
-          "drogi",
-          "skarpy",
-          "kibdot",
-        ],
-        "kind": "wms",
-        "starter": true,
-        "sublayers": [
-          {
-            "default": true,
-            "name": "wdrozenia",
-            "title": "Powiaty z danymi",
-          },
-          {
-            "default": true,
-            "name": "bdot",
-            "title": "Obiekty topograficzne",
-          },
-        ],
-        "title": "Obiekty topograficzne (BDOT500)",
-        "topic": "dzialki",
-        "url": "https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaBazDanychObiektowTopograficznych",
-      },
-      {
-        "catalogId": "msSUiKZP",
-        "description": "Studium uwarunkowań i kierunków zagospodarowania gminy, gdzie nie ma planu.",
-        "id": "suikzp",
-        "keywords": [
-          "studium",
-          "suikzp",
-          "kierunki",
-          "zagospodarowanie",
-          "gmina",
-          "przeznaczenie",
-        ],
-        "kind": "wms",
-        "opacity": 0.8,
-        "starter": true,
-        "sublayers": [
-          {
-            "default": true,
-            "name": "gminy",
-            "title": "Gminy z danymi",
-          },
-          {
-            "default": true,
-            "name": "studium",
-            "title": "Studium",
-          },
-        ],
-        "title": "Studium zagospodarowania",
-        "topic": "planowanie",
-        "url": "https://mapy.geoportal.gov.pl/wss/ext/KrajowaIntegracjaStudiumKierunkowZagospodarowaniaPrzestrzennego",
-      },
-      {
-        "catalogId": "msAdresyUlice",
-        "description": "Punkty adresowe z numerami i osie ulic z gminnych ewidencji.",
-        "id": "kina",
-        "keywords": [
-          "adresy",
-          "numery",
-          "ulice",
-          "emuia",
-          "punkty adresowe",
-          "kina",
-        ],
-        "kind": "wms",
-        "starter": true,
-        "sublayers": [
-          {
-            "name": "A08_Ulice_Powierzchnie",
-            "title": "Ulice: obszary",
-          },
-          {
-            "default": true,
-            "name": "A08_Ulice_Linie",
-            "title": "Ulice: osie",
-          },
-          {
-            "default": true,
-            "name": "A07_Punkty_adresowe",
-            "title": "Punkty adresowe",
-          },
-        ],
-        "title": "Adresy i ulice",
-        "topic": "granice",
-        "url": "https://mapy.geoportal.gov.pl/wss/ext/KrajowaIntegracjaNumeracjiAdresowej",
-      },
-      {
-        "catalogId": "msPRG",
-        "description": "Granice województw, powiatów, gmin i obrębów, a także sądów, urzędów i nadleśnictw.",
-        "id": "prg",
-        "keywords": [
-          "granice",
-          "prg",
-          "gmina",
-          "powiat",
-          "województwo",
-          "obręb",
-          "jednostka",
-          "sąd",
-          "urząd skarbowy",
-          "nadleśnictwo",
-          "spis",
-        ],
-        "kind": "wms",
-        "starter": true,
-        "sublayers": [
-          {
-            "name": "R01_Granice_rejonow_statystycznych",
-            "title": "Rejony statystyczne",
-          },
-          {
-            "name": "U06_Nadlesnictwo",
-            "title": "Nadleśnictwa",
-          },
-          {
-            "name": "U02_Urzad_skarbowy",
-            "title": "Urzędy skarbowe",
-          },
-          {
-            "name": "S03_Sad_rejonowy",
-            "title": "Sądy rejonowe",
-          },
-          {
-            "name": "A06_Granice_obrebow_ewidencyjnych",
-            "title": "Obręby ewidencyjne",
-          },
-          {
-            "name": "A05_Granice_jednostek_ewidencyjnych",
-            "title": "Jednostki ewidencyjne",
-          },
-          {
-            "name": "A04_Granice_miast",
-            "title": "Miasta",
-          },
-          {
-            "default": true,
-            "name": "A03_Granice_gmin",
-            "title": "Gminy",
-          },
-          {
-            "default": true,
-            "name": "A02_Granice_powiatow",
-            "title": "Powiaty",
-          },
-          {
-            "default": true,
-            "name": "A01_Granice_wojewodztw",
-            "title": "Województwa",
-          },
-          {
-            "default": true,
-            "name": "A00_Granice_panstwa",
-            "title": "Granica państwa",
-          },
-        ],
-        "title": "Granice administracyjne (PRG)",
-        "topic": "granice",
-        "url": "https://mapy.geoportal.gov.pl/wss/service/PZGIK/PRG/WMS/AdministrativeBoundaries",
-      },
-      {
-        "catalogId": "msORTO_TIME_WMS",
-        "description": "Zdjęcia lotnicze z lat 1995–2025: stan na wybraną datę. Podróż w czasie pokazuje tylko daty, z których są tu zdjęcia.",
-        "format": "image/jpeg",
-        "id": "orto-archiwalna",
-        "keywords": [
-          "archiwalna",
-          "dawne",
-          "historyczne",
-          "zdjęcia",
-          "lata",
-          "czas",
-          "kiedyś",
-          "zmiany",
-        ],
-        "kind": "wms",
-        "sublayers": [
-          {
-            "default": true,
-            "name": "Raster",
-            "title": "Ortofotomapa archiwalna",
-          },
-        ],
-        "time": {
-          "param": "TIME",
-          "type": "dimension",
-          "values": "capabilities",
-        },
-        "title": "Ortofotomapa archiwalna",
-        "topic": "archiwalne",
-        "url": "https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/StandardResolutionTime",
-      },
-      {
-        "catalogId": "msTOPO_SERIA_10_1992",
-        "description": "Skany map topograficznych 1:10 000, 1:25 000 i 1:50 000 w układach 1942, 1965 i 1992, od lat 50. do 2000.",
-        "format": "image/jpeg",
-        "id": "mapy-dawne",
-        "keywords": [
-          "mapy",
-          "topograficzne",
-          "dawne",
-          "archiwalne",
-          "historyczne",
-          "układ 1965",
-          "układ 1942",
-          "skany",
-        ],
-        "kind": "wms",
-        "sublayers": [
-          {
-            "name": "Raster_50_1942",
-            "title": "Układ 1942, 1:50 000",
-          },
-          {
-            "name": "Raster_10_1942",
-            "title": "Układ 1942, 1:10 000",
-          },
-          {
-            "name": "Raster_50_1965",
-            "title": "Układ 1965, 1:50 000",
-          },
-          {
-            "name": "Raster_25_1965",
-            "title": "Układ 1965, 1:25 000",
-          },
-          {
-            "name": "Raster_10_1965",
-            "title": "Układ 1965, 1:10 000",
-          },
-          {
-            "default": true,
-            "name": "Raster_50_1992",
-            "title": "Układ 1992, 1:50 000",
-          },
-          {
-            "default": true,
-            "name": "Raster_10_1992",
-            "title": "Układ 1992, 1:10 000",
-          },
-        ],
-        "time": {
-          "editions": [
-            {
-              "label": "Mapy w układzie 1942, lata 50.–70.",
-              "layer": "Raster_50_1942,Raster_10_1942",
-              "value": "1942",
-            },
-            {
-              "label": "Mapy w układzie 1965, lata 70.–90.",
-              "layer": "Raster_50_1965,Raster_25_1965,Raster_10_1965",
-              "value": "1965",
-            },
-            {
-              "label": "Mapy w układzie 1992, lata 90. i 2000.",
-              "layer": "Raster_50_1992,Raster_10_1992",
-              "value": "1992",
-            },
-          ],
-          "type": "series",
-        },
-        "title": "Mapy topograficzne dawne",
-        "topic": "archiwalne",
-        "url": "https://mapy.geoportal.gov.pl/wss/service/img/guest/TOPO_SERIA/MapServer/WMSServer",
-      },
+      "kieg",
+      "kimpzp",
+      "pog",
+      "rcn",
+      "kiut",
+      "kibdot",
+      "suikzp",
+      "kina",
+      "prg",
+      "orto-archiwalna",
+      "mapy-dawne",
     ],
     "topics": [
       {
@@ -870,7 +318,6 @@ exports[`default configuration > stays what the app was built with (any change s
       "zoom": 3,
     },
   },
-  "messages": undefined,
   "modules": {
     "gugik": {
       "catalog": true,
@@ -881,6 +328,75 @@ exports[`default configuration > stays what the app was built with (any change s
       },
       "parcelReport": true,
     },
+  },
+  "overlay": {
+    "catalogId": "msKIUT",
+    "description": "Sieci: woda, kanalizacja, gaz, prąd, telekomunikacja, ciepło.",
+    "id": "kiut",
+    "keywords": [
+      "uzbrojenie",
+      "gesut",
+      "sieci",
+      "przyłącze",
+      "media",
+    ],
+    "kind": "wms",
+    "starter": true,
+    "sublayers": [
+      {
+        "default": true,
+        "name": "gesut",
+        "title": "Powiaty z danymi",
+      },
+      {
+        "default": true,
+        "name": "przewod_wodociagowy",
+        "title": "Woda",
+      },
+      {
+        "default": true,
+        "name": "przewod_kanalizacyjny",
+        "title": "Kanalizacja",
+      },
+      {
+        "default": true,
+        "name": "przewod_gazowy",
+        "title": "Gaz",
+      },
+      {
+        "default": true,
+        "name": "przewod_elektroenergetyczny",
+        "title": "Elektroenergetyka",
+      },
+      {
+        "default": true,
+        "name": "przewod_telekomunikacyjny",
+        "title": "Telekomunikacja",
+      },
+      {
+        "default": true,
+        "name": "przewod_cieplowniczy",
+        "title": "Ciepłownictwo",
+      },
+      {
+        "default": true,
+        "name": "przewod_specjalny",
+        "title": "Sieć specjalna",
+      },
+      {
+        "default": true,
+        "name": "przewod_niezidentyfikowany",
+        "title": "Sieci niezidentyfikowane",
+      },
+      {
+        "default": true,
+        "name": "przewod_urzadzenia",
+        "title": "Urządzenia",
+      },
+    ],
+    "title": "Uzbrojenie terenu",
+    "topic": "uzbrojenie",
+    "url": "https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaUzbrojeniaTerenu",
   },
   "report": {
     "categories": [

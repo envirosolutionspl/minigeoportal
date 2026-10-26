@@ -44,6 +44,36 @@ describe('examples/osm', () => {
     expect(serverScale(sheet, warsaw)).toBeGreaterThan(serverScale(sheet) * 1.5);
   });
 
+  it('shows the scale on the ground in the bottom bar, not the nominal one of the Mercator plane', async () => {
+    // OpenLayers watches the map size; jsdom has no ResizeObserver.
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    const { default: OlMap } = await import('ol/Map');
+    const { default: View } = await import('ol/View');
+    const { getPointResolution, transform } = await import('ol/proj');
+    const { PROJECTION, resolutionToScale } = await import('@/map/projection');
+    const { MapStatus, roundScale } = await import('@/map/mapStatus');
+    const warsaw = transform([21, 52.2], 'EPSG:4326', 'EPSG:3857');
+    const map = new OlMap({
+      target: document.createElement('div'),
+      view: new View({ projection: PROJECTION, center: warsaw, resolution: 10 }),
+      controls: [new MapStatus()],
+    });
+    map.setSize([800, 600]);
+    map.renderSync();
+    const shown = Number(map.getViewport()!.querySelector('.mp-scale')!.textContent!.split(':')[1].replace(/\D/g, ''));
+    // At 52° a Mercator metre is about 0.61 m on the ground: the bar says the smaller scale.
+    expect(shown).toBe(roundScale(resolutionToScale(getPointResolution(PROJECTION, 10, warsaw))));
+    expect(shown).toBeLessThan(resolutionToScale(10) * 0.65);
+    map.setTarget(undefined);
+  });
+
   it('reads typed coordinates as latitude and longitude, and writes the system by its name', async () => {
     const { parseCoordinates } = await import('@/search/coordinates');
     const hit = parseCoordinates('52.2318, 21.0067')!;

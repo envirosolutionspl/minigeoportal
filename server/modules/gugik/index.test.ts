@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { defaults } from '../../testSite.ts';
 
-// A catalog file of its own on a single instance (no shared data directory).
+// A catalog file of its own; it is there from the start, so nothing is built.
 let dir: string;
 let file: string;
 let gugik: typeof import('./index.ts');
@@ -13,7 +13,6 @@ beforeAll(async () => {
   file = join(dir, 'catalog.json');
   // Read when used, so it is set for the whole file (stubbed variables go back before each test).
   process.env.CATALOG_FILE = file;
-  vi.stubEnv('SHARED_DATA', '');
   vi.resetModules();
   gugik = await import('./index.ts');
 });

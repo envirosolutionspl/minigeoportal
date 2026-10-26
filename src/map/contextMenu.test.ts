@@ -87,12 +87,14 @@ describe('context menu of the map', () => {
     document.dispatchEvent(pointer('pointermove', 420, 300));
     vi.advanceTimersByTime(LONG_PRESS_MS);
     document.dispatchEvent(pointer('pointerup', 420, 300));
+    expect(useMapMenu.getState().at).toBeNull();
 
     viewport().dispatchEvent(pointer('pointerdown', 400, 300, 1));
     viewport().dispatchEvent(pointer('pointerdown', 450, 300, 2));
     vi.advanceTimersByTime(LONG_PRESS_MS);
     document.dispatchEvent(pointer('pointerup', 400, 300, 1));
     document.dispatchEvent(pointer('pointerup', 450, 300, 2));
+    expect(useMapMenu.getState().at).toBeNull();
 
     viewport().dispatchEvent(pointer('pointerdown', 400, 300, 3, 'mouse'));
     vi.advanceTimersByTime(LONG_PRESS_MS);

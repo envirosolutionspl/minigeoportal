@@ -55,13 +55,6 @@ describe('catalogSublayers', () => {
     const onlyGroup = { ...META, layers: { Root: { title: 'R', queryable: false, group: true } } };
     expect(catalogSublayers(ENTRY, onlyGroup).map((l) => l.name)).toEqual(['Root']);
   });
-
-  it('accepts geoportal ids with Polish letters and marks layers that fail to load', async () => {
-    expect(CATALOG_ID.test('groupDanePowPob_Działki')).toBe(true);
-    stubFetch([['/api/catalog/', 'gone', { status: 404 }]]);
-    expect(await loadCatalogLayer('msWyłozeniaModernizacja')).toBeUndefined();
-    expect(useCatalog.getState().failed.has('msWyłozeniaModernizacja')).toBe(true);
-  });
 });
 
 describe('loadCatalogLayer', () => {
@@ -87,8 +80,15 @@ describe('loadCatalogLayer', () => {
     expect(await loadCatalogLayer('msNope')).toBeUndefined();
     expect(await loadCatalogLayer('../api/x')).toBeUndefined();
     expect(calls).toEqual(['/api/catalog/msCLC', '/api/catalog/msNope']);
+  });
+
+  it('accepts geoportal ids with Polish letters, refuses others, and marks layers that fail to load', async () => {
     expect(CATALOG_ID.test('msKIEG')).toBe(true);
+    expect(CATALOG_ID.test('groupDanePowPob_Działki')).toBe(true);
     expect(CATALOG_ID.test('a b')).toBe(false);
+    stubFetch([['/api/catalog/', 'gone', { status: 404 }]]);
+    expect(await loadCatalogLayer('msWyłozeniaModernizacja')).toBeUndefined();
+    expect(useCatalog.getState().failed.has('msWyłozeniaModernizacja')).toBe(true);
   });
 
   it('prefers the configured overlay', async () => {

@@ -1,4 +1,4 @@
-import { mkdtemp, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -112,20 +112,22 @@ describe('precincts', () => {
     ]);
   });
 
-  it('serves the stale copy when ULDK fails, and does not write empty answers to disk', async () => {
-    // First: cached by the previous test. ULDK now fails: the list still comes back.
-    stubUpstream({
+  it('answers a stale copy from disk at once and keeps it when ULDK fails to refresh it', async () => {
+    const old = [{ id: '146502_8.0001', name: '1' }];
+    await writeFile(join(dir, 'obr-146502_8.json'), JSON.stringify({ fetchedAt: 0, entries: old }));
+    // No ULDK route: it answers 503.
+    const calls = stubUpstream({
       '/2/query': VOIVODESHIPS,
       '/1/query': COUNTIES_14,
-      '/0/query': json(
-        prgRows([
-          ['1417082', 'Wiązowna'],
-          ['1417021', 'Otwock'],
-        ]),
-      ),
+      '/0/query': json(prgRows([['1465011', 'Warszawa']])),
     });
-    expect((await dict.precincts('141708_2')).length).toBe(3);
+    expect(await dict.precincts('146502_8')).toEqual(old);
+    await vi.waitFor(() => expect(calls.some((u) => u.includes('uldk'))).toBe(true));
+    expect(await dict.precincts('146502_8')).toEqual(old);
+    expect(JSON.parse(await readFile(join(dir, 'obr-146502_8.json'), 'utf8')).entries).toEqual(old);
+  });
 
+  it('does not write empty answers to disk', async () => {
     stubUpstream({
       '/2/query': VOIVODESHIPS,
       '/1/query': COUNTIES_14,

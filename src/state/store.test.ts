@@ -137,6 +137,7 @@ describe('time view', () => {
     useMapStore.setState({ base: 'mapa', tool: 'none', timeStatus: 'error' });
     state().setTool('time');
     expect(state().base).toBe('orto');
+    // Choosing the open view again does not take the forced base map for the one before.
     state().setTool('time');
     expect(state().baseBeforeTime).toBe('mapa');
     state().setTool('none');

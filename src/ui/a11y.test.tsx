@@ -31,8 +31,9 @@ beforeEach(async () => {
 });
 
 describe('accessibility (axe, WCAG 2.1 AA)', () => {
-  it('search bar and tool buttons', async () => {
-    const { container } = render(<TopBar />);
+  it('search bar and tool buttons, with the display menu of computers open', async () => {
+    const { container, getByRole } = render(<TopBar />);
+    act(() => getByRole('button', { name: 'Ułatwienia: wielkość tekstu i kontrast' }).click());
     expect(await violations(container)).toEqual([]);
   });
 

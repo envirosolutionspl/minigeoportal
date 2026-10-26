@@ -1,7 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildingAt, findParcels, placeOutline, search, stripSrid, unitLabel, unitOutline } from './geocoder';
 import { clearUnitNames } from './units';
 import { stubFetch } from '@/test/helpers';
+
+// A failing test with fake timers must not leave them to the next one.
+afterEach(() => vi.useRealTimers());
 
 beforeEach(() => clearUnitNames());
 
@@ -165,7 +168,6 @@ describe('search', () => {
     const hits = await found;
     expect(hits.map((h) => h.label)).toEqual(['Komaszyce', 'Komaszyce']);
     expect(hits.unavailable).toEqual(['wyszukiwarka nazw miejscowości i obiektów (PRNG)']);
-    vi.useRealTimers();
   });
 
   it('names nothing when every service answered', async () => {

@@ -471,6 +471,19 @@ html[data-printing] #print-sheet {
   .ol-touch .ol-zoom-extent {
     bottom: calc(13.5rem + var(--safe-bottom));
   }
+  /* The scale at the right of the bar, as on a phone held upright, clear of the data credit;
+     with the layer list open, at the right of the map beside it. */
+  .map-status,
+  [data-panel='catalog'] .map-status {
+    left: auto;
+    right: 0.75rem;
+    transform: none;
+  }
+}
+@media (min-width: 640px) and (max-height: 500px) {
+  [data-panel='catalog'] .map-status {
+    right: calc(24rem + 0.75rem);
+  }
 }
 
 /*

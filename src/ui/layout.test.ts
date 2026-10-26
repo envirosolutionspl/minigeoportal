@@ -33,6 +33,14 @@ describe('small print', () => {
 });
 
 describe('phone screens', () => {
+  it('keeps the scale at the right of the bar on a phone held sideways, beside the layer list when it is open', () => {
+    const sideways = css.slice(css.indexOf('@media (max-height: 500px) {'));
+    expect(sideways).toMatch(/\[data-panel='catalog'\] \.map-status\s*\{\s*left:\s*auto;\s*right:\s*0\.75rem;\s*transform:\s*none/);
+    expect(css).toMatch(
+      /@media \(min-width: 640px\) and \(max-height: 500px\)\s*\{\s*\[data-panel='catalog'\] \.map-status\s*\{\s*right:\s*calc\(24rem \+ 0\.75rem\)/,
+    );
+  });
+
   it('stops the chrome growing past 125 % text, so the search field and buttons fit with the text at 200 %', () => {
     expect(css).toMatch(/@media \(max-width: 639px\)\s*\{\s*:root\s*\{\s*--spacing:\s*min\(0\.25rem,\s*5px\)/);
     expect(css).toMatch(/\.map-tools\s*\{\s*top:\s*min\(4\.25rem,\s*85px\)/);

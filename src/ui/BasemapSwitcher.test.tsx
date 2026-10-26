@@ -100,6 +100,20 @@ describe('the wheel of base maps', () => {
     expect(useMapStore.getState().base).toBe('teren');
   });
 
+  it('takes a tap beside it, so the map under it gets no click, and closes only for a tap that began there', () => {
+    render(<BasemapSwitcher />);
+    hold();
+    const backdrop = screen.getByTestId('wheel-backdrop');
+    expect(backdrop.className.split(' ')).toEqual(expect.arrayContaining(['fixed', 'inset-0']));
+    // The click that ends the press and hold lands here too: it keeps the wheel open.
+    fireEvent.click(backdrop);
+    expect(wheel()).toBeTruthy();
+    fireEvent.pointerDown(backdrop);
+    fireEvent.click(backdrop);
+    expect(wheel()).toBeNull();
+    expect(useMapStore.getState().base).toBe('mapa');
+  });
+
   it('closes with Escape or a tap outside, keeping the map it stopped on', () => {
     render(<BasemapSwitcher />);
     hold();

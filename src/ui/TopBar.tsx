@@ -32,6 +32,7 @@ import { useWelcome } from './WelcomeDialog';
 import { searchTool } from '@/modules';
 import { PROJECTION, zoomForScale } from '@/map/projection';
 import { DisplayMenu } from './DisplayMenu';
+import { useNotice } from './Notice';
 import { MoreSheet } from './MoreSheet';
 
 /** Scale per hit kind, unless the hit names its own; points zoom to it, outlines at most to it. */
@@ -54,6 +55,8 @@ const ICON: Record<HitKind, LucideIcon> = {
   point: Crosshair,
 };
 const provider = searchProvider;
+/** A refusal faster than this came without a prompt: the browser no longer asks this site. */
+const NO_PROMPT_MS = 600;
 
 export function TopBar() {
   const [query, setQuery] = useState('');
@@ -79,9 +82,7 @@ export function TopBar() {
   const setTool = useMapStore((m) => m.setTool);
   const measuring = tool === 'measure-line' || tool === 'measure-area';
   /** Message after copying the link; read out by screen readers. */
-  /** Message at the bottom of the screen; `reload` adds a button that reloads the page. */
-  const [notice, setNotice] = useState<{ text: string; reload?: boolean } | null>(null);
-  const noticeTimer = useRef<number | undefined>(undefined);
+  const { say, notice } = useNotice();
   const openWelcome = useWelcome((w) => w.setOpen);
   /** The sheet with the tools phones keep off the map. */
   const [more, setMore] = useState(false);
@@ -152,13 +153,6 @@ export function TopBar() {
     clearFocus();
   };
 
-  /** A short message at the bottom of the screen, read out by screen readers; longer ones stay longer. */
-  const say = (text: string, reload = false) => {
-    window.clearTimeout(noticeTimer.current);
-    setNotice({ text, reload });
-    noticeTimer.current = window.setTimeout(() => setNotice(null), reload ? 15000 : text.length > 80 ? 6000 : 4000);
-  };
-
   /** Link to this view with the base map and the layers that are on, ready to paste. */
   const copyLink = async () => {
     const link = linkFor(useMapStore.getState());
@@ -182,15 +176,19 @@ export function TopBar() {
   const locate = () => {
     // No geolocation at all (an old browser, a page without https): said, not silently ignored.
     if (!navigator.geolocation) return say(t('tools.locateFailed'));
+    const asked = performance.now();
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const c = fromLonLat([pos.coords.longitude, pos.coords.latitude], PROJECTION);
         focusOn({ center: [c[0], c[1]], zoom: zoomForScale(SCALE.point) });
       },
-      // A refused or dismissed permission prompt: browsers do not ask again on their own (Safari
-      // not until the page is loaded anew, and cannot tell a dismissal from a refusal), so the
-      // message says how, with a button that reloads the page and keeps the view in its address.
-      (error) => (error.code === error.PERMISSION_DENIED ? say(t('tools.locateDenied'), true) : say(t('tools.locateFailed'))),
+      // Refused: a prompt the visitor answered with "no" or closed is their choice, so nothing is
+      // said; a refusal that comes at once means the browser no longer asks (Safari after a
+      // dismissed prompt, any browser with the site blocked), so the message says to allow it by hand.
+      (error) => {
+        if (error.code !== error.PERMISSION_DENIED) return say(t('tools.locateFailed'));
+        if (performance.now() - asked < NO_PROMPT_MS) say(t('tools.locateBlocked'));
+      },
       { enableHighAccuracy: true, timeout: 8000 },
     );
   };
@@ -365,23 +363,7 @@ export function TopBar() {
           { label: t('tools.about'), icon: Info, onClick: () => openWelcome(true) },
         ]}
       />
-      <div
-        role="status"
-        className={`pointer-events-auto fixed bottom-20 left-1/2 z-50 max-w-[min(28rem,calc(100%-2rem))] -translate-x-1/2 rounded-xl bg-[var(--text)] px-4 py-2 text-sm break-words text-[var(--surface)] shadow-lg ${
-          notice ? '' : 'sr-only'
-        }`}
-      >
-        {notice?.text}
-        {notice?.reload && (
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="mt-2 block rounded-lg bg-[var(--surface)] px-3 py-1.5 font-semibold text-[var(--text)]"
-          >
-            {t('tools.reload')}
-          </button>
-        )}
-      </div>
+      {notice}
     </div>
   );
 }

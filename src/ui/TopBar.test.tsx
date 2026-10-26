@@ -151,27 +151,49 @@ describe('my location', () => {
     expect(notice()).not.toContain('lokalizac');
   });
 
-  it('says why nothing happens when the visitor refuses, or the position cannot be found', () => {
+  it('says to allow location by hand only when the browser refuses without asking', () => {
+    let wait = 0;
     let code = 1;
-    withGeolocation({ getCurrentPosition: (_, fail) => fail!(refused(code)) });
+    // The refusal comes `wait` ms after the request: at once when the browser no longer asks.
+    withGeolocation({
+      getCurrentPosition: (_, fail) => {
+        const at = performance.now() + wait;
+        vi.spyOn(performance, 'now').mockReturnValue(at);
+        fail!(refused(code));
+        vi.mocked(performance.now).mockRestore();
+      },
+    });
     render(<TopBar />);
+    // A prompt the visitor answered or closed: their choice, nothing to say.
+    wait = 3000;
     press();
-    expect(notice()).toContain('Przeglądarka nie dała zgody na lokalizację');
+    expect(notice()).not.toContain('Lokalizacja');
+    // Then the browser no longer asks.
+    wait = 5;
+    press();
+    expect(notice()).toContain('Lokalizacja jest zablokowana dla tej strony');
     expect(useMapStore.getState().focus).toBeNull();
     code = 3;
     press();
     expect(notice()).toContain('Nie udało się ustalić położenia');
-    expect(screen.queryByRole('button', { name: 'Odśwież stronę' })).toBeNull();
   });
 
-  it('offers to reload the page after a refused or dismissed prompt, since browsers do not ask again on their own', () => {
-    withGeolocation({ getCurrentPosition: (_, fail) => fail!(refused(1)) });
-    const reload = vi.fn();
-    vi.stubGlobal('location', { ...window.location, reload });
+  it('shows a message that goes by itself, stays while pointed at, and closes with its button', () => {
+    vi.useFakeTimers();
+    withGeolocation(undefined);
     render(<TopBar />);
     press();
-    fireEvent.click(screen.getByRole('button', { name: 'Odśwież stronę' }));
-    expect(reload).toHaveBeenCalledOnce();
+    const box = screen.getAllByRole('status').find((s) => s.textContent?.includes('położenia'))!;
+    fireEvent.mouseEnter(box);
+    act(() => vi.advanceTimersByTime(20000));
+    expect(notice()).toContain('Nie udało się ustalić położenia');
+    fireEvent.mouseLeave(box);
+    act(() => vi.advanceTimersByTime(9000));
+    expect(notice()).not.toContain('położenia');
+    press();
+    fireEvent.click(screen.getByRole('button', { name: 'Zamknij' }));
+    expect(notice()).not.toContain('położenia');
+    vi.useRealTimers();
   });
 
   it('says so in a browser without geolocation', () => {

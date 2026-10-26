@@ -26,8 +26,7 @@ map:
 tools:
   layers: Warstwy
   locate: Moja lokalizacja
-  locateDenied: Przeglądarka nie dała zgody na lokalizację. Odśwież stronę i spróbuj ponownie; jeśli pytanie o zgodę się nie pojawi, zezwól na lokalizację w ustawieniach strony (ikona obok jej adresu).
-  reload: Odśwież stronę
+  locateBlocked: Lokalizacja jest zablokowana dla tej strony. Zezwól na nią ręcznie w ustawieniach przeglądarki (ikona obok adresu strony).
   locateFailed: Nie udało się ustalić położenia. Spróbuj ponownie za chwilę.
   measure: Pomiar odległości i powierzchni
   link: Kopiuj link do tego widoku mapy

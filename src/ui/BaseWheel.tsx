@@ -35,6 +35,8 @@ export function BaseWheel({
   const settle = useRef<number | undefined>(undefined);
   const frame = useRef<number | undefined>(undefined);
   const labelId = useId();
+  /** A tap that began on the layer beside the wheel. */
+  const tapped = useRef(false);
 
   const rows = () => [...(list.current?.querySelectorAll<HTMLElement>('[role=option]') ?? [])];
   const middle = () => Math.min(maps.length - 1, Math.max(0, Math.round((list.current?.scrollTop ?? 0) / ROW)));
@@ -105,65 +107,75 @@ export function BaseWheel({
   }, [onClose]);
 
   return (
-    <div
-      ref={root}
-      className="absolute bottom-full left-0 mb-3 w-60 overflow-hidden rounded-2xl bg-[var(--surface)] shadow-xl ring-1 ring-black/5"
-    >
-      <p id={labelId} className="px-4 pt-3 text-xs font-semibold tracking-wide text-[var(--muted)] uppercase">
-        {t('basemaps.title')}
-      </p>
-      <div className="relative" style={{ height: VISIBLE * ROW }}>
-        {/* The band the chosen map stops in. */}
-        <div aria-hidden="true" className="absolute inset-x-2 rounded-xl bg-[var(--hover)]" style={{ top: PAD, height: ROW }} />
-        <div
-          ref={list}
-          role="listbox"
-          tabIndex={0}
-          aria-labelledby={labelId}
-          onScroll={onScroll}
-          onKeyDown={(e) => {
-            const i = middle();
-            const to = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: maps.length - 1 }[e.key];
-            if (to !== undefined) {
-              e.preventDefault();
-              turnTo(to);
-            } else if (e.key === 'Enter') {
-              e.preventDefault();
-              pick();
-              onClose();
-            }
-          }}
-          className="relative h-full snap-y snap-mandatory overflow-y-auto overscroll-contain outline-none [perspective:400px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          style={{ paddingBlock: PAD }}
-        >
-          {maps.map((m, i) => (
-            // Choosing happens in the listbox (arrow keys, Enter), as the pattern requires.
-            // eslint-disable-next-line jsx-a11y/click-events-have-key-events
-            <div
-              key={m.id}
-              id={`${labelId}-${i}`}
-              role="option"
-              tabIndex={-1}
-              aria-selected={m.id === current}
-              // A tap on the map in the band takes it and closes the wheel; on another row turns to it.
-              onClick={() => {
-                if (i !== middle()) return turnTo(i);
+    <div ref={root} className="contents">
+      {/* A tap beside the wheel only closes it: this layer takes it, so the map under it neither
+          pans nor answers the click with place information. It closes on the click, not on the
+          press, so it stays until the whole tap is over, and only for a tap that began on it
+          (not the end of the press and hold that opened the wheel). */}
+      <div
+        aria-hidden="true"
+        data-testid="wheel-backdrop"
+        className="fixed inset-0"
+        onPointerDown={() => (tapped.current = true)}
+        onClick={() => tapped.current && onClose()}
+      />
+      <div className="absolute bottom-full left-0 mb-3 w-60 overflow-hidden rounded-2xl bg-[var(--surface)] shadow-xl ring-1 ring-black/5">
+        <p id={labelId} className="px-4 pt-3 text-xs font-semibold tracking-wide text-[var(--muted)] uppercase">
+          {t('basemaps.title')}
+        </p>
+        <div className="relative" style={{ height: VISIBLE * ROW }}>
+          {/* The band the chosen map stops in. */}
+          <div aria-hidden="true" className="absolute inset-x-2 rounded-xl bg-[var(--hover)]" style={{ top: PAD, height: ROW }} />
+          <div
+            ref={list}
+            role="listbox"
+            tabIndex={0}
+            aria-labelledby={labelId}
+            onScroll={onScroll}
+            onKeyDown={(e) => {
+              const i = middle();
+              const to = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: maps.length - 1 }[e.key];
+              if (to !== undefined) {
+                e.preventDefault();
+                turnTo(to);
+              } else if (e.key === 'Enter') {
+                e.preventDefault();
                 pick();
                 onClose();
-              }}
-              className="flex snap-center items-center gap-3 px-4 text-[var(--text)] select-none [-webkit-touch-callout:none]"
-              style={{ height: ROW }}
-            >
-              <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg bg-[var(--map-bg)] ring-1 ring-black/10">
-                {m.thumb ? (
-                  <img src={m.thumb} alt="" draggable={false} className="h-full w-full object-cover" />
-                ) : (
-                  <Ban className="absolute inset-1.5 h-5 w-5 text-[#9db49e]" aria-hidden="true" />
-                )}
-              </span>
-              <span className="truncate font-medium">{m.title}</span>
-            </div>
-          ))}
+              }
+            }}
+            className="relative h-full snap-y snap-mandatory overflow-y-auto overscroll-contain outline-none [perspective:400px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            style={{ paddingBlock: PAD }}
+          >
+            {maps.map((m, i) => (
+              // Choosing happens in the listbox (arrow keys, Enter), as the pattern requires.
+              // eslint-disable-next-line jsx-a11y/click-events-have-key-events
+              <div
+                key={m.id}
+                id={`${labelId}-${i}`}
+                role="option"
+                tabIndex={-1}
+                aria-selected={m.id === current}
+                // A tap on the map in the band takes it and closes the wheel; on another row turns to it.
+                onClick={() => {
+                  if (i !== middle()) return turnTo(i);
+                  pick();
+                  onClose();
+                }}
+                className="flex snap-center items-center gap-3 px-4 text-[var(--text)] select-none [-webkit-touch-callout:none]"
+                style={{ height: ROW }}
+              >
+                <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg bg-[var(--map-bg)] ring-1 ring-black/10">
+                  {m.thumb ? (
+                    <img src={m.thumb} alt="" draggable={false} className="h-full w-full object-cover" />
+                  ) : (
+                    <Ban className="absolute inset-1.5 h-5 w-5 text-[#9db49e]" aria-hidden="true" />
+                  )}
+                </span>
+                <span className="truncate font-medium">{m.title}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

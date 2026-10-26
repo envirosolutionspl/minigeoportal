@@ -81,7 +81,7 @@ mapa.example.org {
 }
 ```
 
-Dane, które serwer przechowuje między uruchomieniami (metadane usług, katalog geoportalu, słowniki), są w `DATA_DIR`. Odświeżaj je raz dziennie, np. przez cron:
+Dane, które serwer przechowuje między uruchomieniami (metadane usług, katalog geoportalu, słowniki), są w `DATA_DIR`. Pojedynczy serwer sam odświeża metadane i katalog raz dziennie, więc cron nie jest konieczny; żeby odświeżyć je o stałej porze albo od razu po zmianie konfiguracji, uruchom `npm run update`. Serwer wczyta zapisane dane w ciągu minuty, bez restartu:
 
 ```
 0 4 * * * cd /srv/minigeoportal && CONFIG_DIR=/etc/minigeoportal DATA_DIR=/var/lib/minigeoportal npm run update
@@ -116,20 +116,20 @@ Bezpieczeństwo i budowa serwera: [Architektura](architektura.md).
 
 Ustawia się je w środowisku albo w pliku `.env` w katalogu aplikacji (wzór z opisami: `.env.example`; plik `.env` nie trafia do repozytorium).
 
-| Zmienna                                 | Domyślnie                                   | Znaczenie                                                                                                                        |
-| --------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `CONFIG_DIR`                            | `config`                                    | Katalog konfiguracji wdrożenia.                                                                                                  |
-| `DATA_DIR`                              | `server/data`                               | Katalog danych serwera (zob. niżej). Musi być zapisywalny.                                                                       |
-| `PORT`                                  | `8787`                                      | Port serwera.                                                                                                                    |
-| `HOST`                                  | `0.0.0.0` w produkcji, `127.0.0.1` poza nią | Adres nasłuchu. Za proxy na tej samej maszynie: `127.0.0.1`.                                                                     |
-| `NODE_ENV`                              |                                             | `production`: serwer udostępnia też zbudowaną aplikację z `dist/`. Obraz Dockera ustawia ją sam.                                 |
-| `APP_ORIGIN`                            |                                             | Publiczny adres aplikacji, np. `https://mapa.example.org`. Zgłoszenia mogą zawierać link tylko do niego; bez niego są bez linku. |
-| `TRUSTED_PROXY`                         |                                             | `1` za reverse proxy dopisującym adres klienta do `X-Forwarded-For`; limity zapytań liczą się wtedy dla każdego klienta.         |
-| `SHARED_DATA`                           |                                             | `1`, gdy kilka instancji dzieli `DATA_DIR`: dane zapisuje tylko `npm run update`, instancje wczytują je ponownie w ciągu minuty. |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | `587`, STARTTLS                             | Serwer poczty dla formularza zgłoszeń; port 465 oznacza TLS od początku, `SMTP_SECURE` tylko to zmienia.                         |
-| `SMTP_USER`, `SMTP_PASS`                |                                             | Logowanie do serwera poczty. Tylko w `.env` lub w środowisku, nigdy w konfiguracji.                                              |
-| `REPORT_FROM`, `REPORT_TO`              |                                             | Nadawca (domyślnie `SMTP_USER`) i adresat zgłoszeń. Bez `SMTP_HOST`, `REPORT_TO` i nadawcy formularz jest wyłączony.             |
-| `API_PORT`                              | `8787`                                      | Tylko przy pracy nad aplikacją: gdzie serwer Vite znajduje API.                                                                  |
+| Zmienna                                 | Domyślnie                                   | Znaczenie                                                                                                                                                                         |
+| --------------------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CONFIG_DIR`                            | `config`                                    | Katalog konfiguracji wdrożenia.                                                                                                                                                   |
+| `DATA_DIR`                              | `server/data`                               | Katalog danych serwera (zob. niżej). Musi być zapisywalny.                                                                                                                        |
+| `PORT`                                  | `8787`                                      | Port serwera.                                                                                                                                                                     |
+| `HOST`                                  | `0.0.0.0` w produkcji, `127.0.0.1` poza nią | Adres nasłuchu. Za proxy na tej samej maszynie: `127.0.0.1`.                                                                                                                      |
+| `NODE_ENV`                              |                                             | `production`: serwer udostępnia też zbudowaną aplikację z `dist/`. Obraz Dockera ustawia ją sam.                                                                                  |
+| `APP_ORIGIN`                            |                                             | Publiczny adres aplikacji, np. `https://mapa.example.org`. Zgłoszenia mogą zawierać link tylko do niego; bez niego są bez linku.                                                  |
+| `TRUSTED_PROXY`                         |                                             | `1` za reverse proxy dopisującym adres klienta do `X-Forwarded-For`; limity zapytań liczą się wtedy dla każdego klienta.                                                          |
+| `SHARED_DATA`                           |                                             | `1`, gdy kilka instancji dzieli `DATA_DIR`: dane zapisuje tylko `npm run update`, instancje wczytują je ponownie w ciągu minuty. Bez niego serwer sam odświeża dane raz dziennie. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | `587`, STARTTLS                             | Serwer poczty dla formularza zgłoszeń; port 465 oznacza TLS od początku, `SMTP_SECURE` tylko to zmienia.                                                                          |
+| `SMTP_USER`, `SMTP_PASS`                |                                             | Logowanie do serwera poczty. Tylko w `.env` lub w środowisku, nigdy w konfiguracji.                                                                                               |
+| `REPORT_FROM`, `REPORT_TO`              |                                             | Nadawca (domyślnie `SMTP_USER`) i adresat zgłoszeń. Bez `SMTP_HOST`, `REPORT_TO` i nadawcy formularz jest wyłączony.                                                              |
+| `API_PORT`                              | `8787`                                      | Tylko przy pracy nad aplikacją: gdzie serwer Vite znajduje API.                                                                                                                   |
 
 ## Ścieżki i pliki
 

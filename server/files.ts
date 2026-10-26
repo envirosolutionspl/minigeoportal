@@ -25,8 +25,9 @@ const modified = (file: string) =>
   );
 
 /**
- * Reads a file again whenever it changes (checked every `everyMs`): instances sharing the data
- * directory pick up what the updater wrote, all within a minute.
+ * Reads a file again whenever it changes (checked every `everyMs`): an instance picks up what
+ * its daily refresh, a cron run of `npm run update` or, with a shared data directory, the
+ * updater wrote, all within a minute.
  */
 export async function follow(file: string, read: () => Promise<void>, everyMs = 30000): Promise<() => void> {
   let seen = await modified(file);
@@ -35,6 +36,22 @@ export async function follow(file: string, read: () => Promise<void>, everyMs = 
     if (now === seen) return;
     seen = now;
     await read().catch((e: unknown) => console.warn(`${file}: ${errorMessage(e)}`));
+  }, everyMs);
+  timer.unref();
+  return () => clearInterval(timer);
+}
+
+/**
+ * Runs `task` every `everyMs`, never twice at once: a slow run (the catalog checks every service)
+ * makes the next one wait for the following turn.
+ */
+export function repeat(task: () => Promise<void>, everyMs: number, label: string): () => void {
+  let running = false;
+  const timer = setInterval(async () => {
+    if (running) return;
+    running = true;
+    await task().catch((e: unknown) => console.warn(`${label}: ${errorMessage(e)}`));
+    running = false;
   }, everyMs);
   timer.unref();
   return () => clearInterval(timer);

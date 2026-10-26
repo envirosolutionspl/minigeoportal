@@ -81,7 +81,7 @@ map.example.org {
 }
 ```
 
-Data the server keeps between starts (service metadata, the geoportal catalog, dictionaries) lives in `DATA_DIR`. Refresh it once a day, e.g. with cron:
+Data the server keeps between starts (service metadata, the geoportal catalog, dictionaries) lives in `DATA_DIR`. A single server refreshes the metadata and the catalog itself once a day, so cron is optional; to refresh them at a set hour, or at once after a change of the configuration, run `npm run update`. The server reads what it wrote within a minute, without a restart:
 
 ```
 0 4 * * * cd /srv/minigeoportal && CONFIG_DIR=/etc/minigeoportal DATA_DIR=/var/lib/minigeoportal npm run update
@@ -116,20 +116,20 @@ Security and how the server is built: [Architecture](architecture.md).
 
 Set them in the environment or in a `.env` file in the app directory (template with descriptions: `.env.example`; `.env` never goes into the repository).
 
-| Variable                                | Default                                        | Meaning                                                                                                                          |
-| --------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `CONFIG_DIR`                            | `config`                                       | The deployment's configuration directory.                                                                                        |
-| `DATA_DIR`                              | `server/data`                                  | The server's data directory (see below). Must be writable.                                                                       |
-| `PORT`                                  | `8787`                                         | The server's port.                                                                                                               |
-| `HOST`                                  | `0.0.0.0` in production, `127.0.0.1` otherwise | The listening address. Behind a proxy on the same machine: `127.0.0.1`.                                                          |
-| `NODE_ENV`                              |                                                | `production`: the server also serves the built app from `dist/`. The Docker image sets it.                                       |
-| `APP_ORIGIN`                            |                                                | Public address of the app, e.g. `https://map.example.org`. Bug reports may link only to it; without it they carry no link.       |
-| `TRUSTED_PROXY`                         |                                                | `1` behind a reverse proxy that appends the client address to `X-Forwarded-For`; rate limits then count per client.              |
-| `SHARED_DATA`                           |                                                | `1` when several instances share `DATA_DIR`: only `npm run update` writes the data, the instances read it again within a minute. |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | `587`, STARTTLS                                | The mail server for the report form; port 465 means TLS from the start, `SMTP_SECURE` only overrides that.                       |
-| `SMTP_USER`, `SMTP_PASS`                |                                                | Login to the mail server. Only in `.env` or the environment, never in the configuration.                                         |
-| `REPORT_FROM`, `REPORT_TO`              |                                                | Sender (default `SMTP_USER`) and recipient of bug reports. Without `SMTP_HOST`, `REPORT_TO` and a sender the form is off.        |
-| `API_PORT`                              | `8787`                                         | Development only: where the Vite server finds the API.                                                                           |
+| Variable                                | Default                                        | Meaning                                                                                                                                                                                      |
+| --------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CONFIG_DIR`                            | `config`                                       | The deployment's configuration directory.                                                                                                                                                    |
+| `DATA_DIR`                              | `server/data`                                  | The server's data directory (see below). Must be writable.                                                                                                                                   |
+| `PORT`                                  | `8787`                                         | The server's port.                                                                                                                                                                           |
+| `HOST`                                  | `0.0.0.0` in production, `127.0.0.1` otherwise | The listening address. Behind a proxy on the same machine: `127.0.0.1`.                                                                                                                      |
+| `NODE_ENV`                              |                                                | `production`: the server also serves the built app from `dist/`. The Docker image sets it.                                                                                                   |
+| `APP_ORIGIN`                            |                                                | Public address of the app, e.g. `https://map.example.org`. Bug reports may link only to it; without it they carry no link.                                                                   |
+| `TRUSTED_PROXY`                         |                                                | `1` behind a reverse proxy that appends the client address to `X-Forwarded-For`; rate limits then count per client.                                                                          |
+| `SHARED_DATA`                           |                                                | `1` when several instances share `DATA_DIR`: only `npm run update` writes the data, the instances read it again within a minute. Without it the server refreshes the data itself once a day. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | `587`, STARTTLS                                | The mail server for the report form; port 465 means TLS from the start, `SMTP_SECURE` only overrides that.                                                                                   |
+| `SMTP_USER`, `SMTP_PASS`                |                                                | Login to the mail server. Only in `.env` or the environment, never in the configuration.                                                                                                     |
+| `REPORT_FROM`, `REPORT_TO`              |                                                | Sender (default `SMTP_USER`) and recipient of bug reports. Without `SMTP_HOST`, `REPORT_TO` and a sender the form is off.                                                                    |
+| `API_PORT`                              | `8787`                                         | Development only: where the Vite server finds the API.                                                                                                                                       |
 
 ## Paths and files
 

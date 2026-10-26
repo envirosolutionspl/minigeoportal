@@ -11,6 +11,11 @@ import { MAX_QUERY, communes, counties, findUnits, precincts, unitNames, voivode
 import { fetchDrawOrder } from './drawOrder.ts';
 import { orthoAt } from './ortho.ts';
 import { topoAt } from './topo.ts';
+import { pointCache } from './pointCache.ts';
+
+/** Index answers kept an hour per point: the photos and sheets of a place change a few times a year. */
+const INDEX_TTL_MS = 3600 * 1000;
+const INDEX_POINTS = 2000;
 import { GUGIK_SEARCH_HOSTS } from './searchHosts.ts';
 import { CATALOG_TOPICS } from './topics.ts';
 
@@ -230,12 +235,17 @@ export function routes(app: Hono, { client, data, upstream, upstreamFailure, rev
     });
   }
 
+  const orthoCache = pointCache<Awaited<ReturnType<typeof orthoAt>>>(INDEX_TTL_MS, INDEX_POINTS);
+  const topoCache = pointCache<Awaited<ReturnType<typeof topoAt>>>(INDEX_TTL_MS, INDEX_POINTS);
+
   if (gugik.ortho) {
     /** Date and pixel size of the aerial photo at a map click; one request per click. */
     app.use('/api/orto', rateLimit(...(limits?.ortho ?? [10, 30])));
     app.get('/api/orto', async (c) => {
       try {
-        const info = await upstream(() => orthoAt(c.req.query('x'), c.req.query('y'), c.req.raw.signal));
+        const x = c.req.query('x');
+        const y = c.req.query('y');
+        const info = await orthoCache(`${x},${y}`, () => upstream(() => orthoAt(x, y, c.req.raw.signal)));
         if (!info) return c.text('Busy, try again shortly', 503);
         c.header('Cache-Control', 'public, max-age=86400');
         return c.json(info);
@@ -251,7 +261,9 @@ export function routes(app: Hono, { client, data, upstream, upstreamFailure, rev
     app.use('/api/topo', rateLimit(...(limits?.topo ?? [10, 30])));
     app.get('/api/topo', async (c) => {
       try {
-        const info = await upstream(() => topoAt(c.req.query('x'), c.req.query('y'), c.req.raw.signal));
+        const x = c.req.query('x');
+        const y = c.req.query('y');
+        const info = await topoCache(`${x},${y}`, () => upstream(() => topoAt(x, y, c.req.raw.signal)));
         if (!info) return c.text('Busy, try again shortly', 503);
         c.header('Cache-Control', 'public, max-age=86400');
         return c.json(info);

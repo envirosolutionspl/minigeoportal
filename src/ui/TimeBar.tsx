@@ -3,7 +3,8 @@ import { ChevronLeft, ChevronRight, Columns2, LoaderCircle, RotateCw, X, ZoomIn 
 import { config } from '@/config/runtime';
 import { t } from '@/i18n';
 import { dateText } from '@/map/format';
-import { currentTimeLayer, timeLayerDrawsAt, timeLayers } from '@/map/timeTravel';
+import { currentTimeLayer, timeLayerDrawsAt, timeLayerReaches, timeLayers } from '@/map/timeTravel';
+import { PROJECTION } from '@/map/projection';
 import { timeOptions, type TimeOption } from '@/modules';
 import { valueAt, yearly, type TimeValues } from '@/services/time';
 import { useMapStore } from '@/state/store';
@@ -12,6 +13,14 @@ import { useMapStore } from '@/state/store';
 const SETTLE_MS = 700;
 /** Scale the "zoom in" button goes to. */
 const ZOOM_SCALE = 20000;
+/**
+ * The middle of the map is asked about on a grid of this many metres: the photos and sheets of
+ * the indexes are kilometres wide, and neighbouring points share one answer, which the browser
+ * and the server keep.
+ */
+const GRID_M = 250;
+const grid = GRID_M / (PROJECTION.getMetersPerUnit() ?? 1);
+const onGrid = ([x, y]: [number, number]): [number, number] => [Math.round(x / grid) * grid, Math.round(y / grid) * grid];
 
 /**
  * The time view's bar (map.yaml: timeTravel): a switch between its layers when there are
@@ -50,11 +59,10 @@ function Bar({ id, title, spec }: { id: string; title: string; spec: TimeValues 
   const zoomToScale = useMapStore((m) => m.zoomToScale);
   const scale = useMapStore((m) => m.scale);
   const center = useMapStore((m) => m.center);
-  /** The dates a module knows at the centre; null until it answers (or without a module). */
-  const [options, setOptions] = useState<TimeOption[] | null>(null);
   /** A module that knows the dates of this layer at a place; without one the slider holds the layer's own values. */
   const ask = timeOptions(id);
-  const [checking, setChecking] = useState(ask !== undefined);
+  /** The module's last answer and the place it is for; a list of null means it did not answer there. */
+  const [answer, setAnswer] = useState<{ place: string; list: TimeOption[] | null } | null>(null);
   const sliderId = useId();
   const listId = useId();
   /** Where the slider is while it is being dragged; the date is asked for once it is let go. */
@@ -75,38 +83,44 @@ function Bar({ id, title, spec }: { id: string; title: string; spec: TimeValues 
     };
   }, []);
 
-  // Asked once the map has settled; a move of less than 100 m stays on the same photos.
-  const place = `${Math.round(center[0] / 100)},${Math.round(center[1] / 100)}`;
+  // Asked once the map has settled, about the grid point nearest the middle, and only where the
+  // layer draws at this scale: nothing is asked over the whole country.
+  const point = onGrid(center);
+  const place = `${id}|${point.join(',')}`;
+  const reaches = timeLayerReaches(chosen, scale);
   useEffect(() => {
-    if (!ask) return;
+    if (!ask || !reaches) return;
     const controller = new AbortController();
-    setChecking(true);
     const timer = window.setTimeout(() => {
-      ask(center, controller.signal)
-        .then((list) => setOptions(list))
-        .catch(() => undefined)
-        .finally(() => !controller.signal.aborted && setChecking(false));
+      ask(point, controller.signal)
+        .then((list) => setAnswer({ place, list }))
+        // An index that did not answer leaves the layer's own values, never another place's dates.
+        .catch(() => !controller.signal.aborted && setAnswer({ place, list: null }));
     }, SETTLE_MS);
     return () => {
       window.clearTimeout(timer);
       controller.abort();
     };
-    // The centre is read when the place changes, not on every move within it.
+    // The point is read when the place changes, not on every move within it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, place]);
+  }, [place, reaches]);
+  /** The answer is for this place; meanwhile the last place's dates stay on the slider, said to be checked. */
+  const fresh = answer?.place === place;
+  const checking = ask !== undefined && reaches && !fresh;
+  const options = answer?.list ?? null;
 
   const values = options?.map((o) => o.value) ?? yearly(spec.values);
   const draws = timeLayerDrawsAt(chosen, time, named, scale);
   const current = values.length > 0 ? valueAt(values, time ?? spec.current ?? values[values.length - 1]) : undefined;
   const index = current ? values.indexOf(current) : -1;
   // The date in the link is one the slider holds, so what is shown and what is shared agree;
-  // not before the module has answered, when the slider still holds the layer's own values.
-  const ready = options !== null || !checking;
+  // not before the module has answered here, when the slider still holds other values.
+  const ready = !ask || fresh;
   useEffect(() => {
     if (ready && current !== undefined && current !== time) setTime(current);
   }, [ready, current, time, setTime]);
   // What the module says draws this date (the sheets at the place), for the map.
-  const chosenLayer = current !== undefined ? (options?.find((o) => o.value === current)?.layer ?? null) : null;
+  const chosenLayer = fresh && current !== undefined ? (options?.find((o) => o.value === current)?.layer ?? null) : null;
   useEffect(() => {
     setTimeSublayers(chosenLayer);
   }, [chosenLayer, setTimeSublayers]);
@@ -158,7 +172,7 @@ function Bar({ id, title, spec }: { id: string; title: string; spec: TimeValues 
         </button>
       </>
     );
-  } else if (checking && options === null) {
+  } else if (checking) {
     line = (
       <>
         <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> {t('time.checking')}

@@ -173,17 +173,59 @@ describe('TimeBar', () => {
     expect(slider().disabled).toBe(true);
   });
 
-  it('asks the index again only once the map has moved to another place', async () => {
+  it('asks the index again only once the map has moved to another point of a 250 m grid', async () => {
     const { calls } = index();
     render(<TimeBar />);
     await settle();
     const asked = calls.length;
-    act(() => useMapStore.setState({ center: [636530, 486520] }));
+    act(() => useMapStore.setState({ center: [636600, 486400] }));
     await settle();
     expect(calls.length).toBe(asked);
-    act(() => useMapStore.setState({ center: [640000, 486500] }));
+    act(() => useMapStore.setState({ center: [640130, 486460] }));
     await settle();
     expect(calls.length).toBe(asked + 1);
+    expect(calls.at(-1)).toContain('/api/orto?x=640250&y=486500');
+  });
+
+  it('asks nothing while the map is too far out for the layer, and asks once it is close enough', async () => {
+    const { calls } = index();
+    useMapStore.setState({ scale: 1000000 });
+    render(<TimeBar />);
+    await settle();
+    expect(calls.some((u) => u.includes('/api/orto'))).toBe(false);
+    expect(screen.getByRole('status').textContent).toContain('Przybliż mapę');
+    act(() => useMapStore.setState({ scale: 10000 }));
+    await settle();
+    expect(calls.some((u) => u.includes('/api/orto'))).toBe(true);
+  });
+
+  it("says it checks a new place while the last place's dates stay, and keeps the chosen date meanwhile", async () => {
+    index();
+    useMapStore.setState({ time: '2011-04-21' });
+    render(<TimeBar />);
+    await settle();
+    expect(screen.getByRole('status').textContent).toBe('Stan na 21.04.2011, piksel 25 cm');
+    // The new place has only a photo of 2025: until it answers, nothing changes the date.
+    stubFetch([['/api/orto', { archived: 1, history: [{ date: '2025-04-27', pixel: 0.05 }] }]]);
+    act(() => useMapStore.setState({ center: [700000, 400000] }));
+    expect(screen.getByRole('status').textContent).toContain('Sprawdzam');
+    expect(useMapStore.getState().time).toBe('2011-04-21');
+    await settle();
+    expect(slider().max).toBe('0');
+    expect(useMapStore.getState().time).toBe('2025-04-27');
+  });
+
+  it("falls back to the layer's own values where the index does not answer, not to another place's dates", async () => {
+    index();
+    render(<TimeBar />);
+    await settle();
+    expect(slider().max).toBe('2');
+    stubFetch([['/api/orto', 'busy', { status: 429 }]]);
+    act(() => useMapStore.setState({ center: [700000, 400000] }));
+    await settle();
+    // One value a year of the service, 1995 to 2025.
+    expect(slider().max).toBe('30');
+    expect(screen.getByRole('status').textContent).not.toContain('Sprawdzam');
   });
 
   it('switches the comparison with the present on and off, and says how to move the curtain', async () => {

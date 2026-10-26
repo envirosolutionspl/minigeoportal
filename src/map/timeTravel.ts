@@ -137,6 +137,18 @@ export function attachTimeTravel(map: Map): () => void {
   };
 }
 
+/** Whether the view's layer draws anything at this scale, whatever the date (its widest sublayer). */
+export function timeLayerReaches(id: string | null, scale: number): boolean {
+  const entry = currentTimeLayer(id);
+  if (!entry) return false;
+  const range = resolutionRange(
+    entry.def,
+    entry.def.sublayers.map((l) => l.name),
+  );
+  const resolution = scaleToResolution(scale);
+  return resolution >= range.min && resolution <= range.max;
+}
+
 /** Whether the view's layer draws at this scale for this date (its service's limits). */
 export function timeLayerDrawsAt(id: string | null, time: string | null, named: string | null, scale: number): boolean {
   const entry = currentTimeLayer(id);

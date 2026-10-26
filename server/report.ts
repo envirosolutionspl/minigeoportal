@@ -4,8 +4,9 @@ import type { ClientConfig } from '../shared/config.ts';
 import { EMAIL_MAX, MESSAGE } from '../shared/report.ts';
 
 /**
- * Bug reports from the app, sent by e-mail to the administrator. The mail server and the
- * recipient come from the environment (see .env.example); without them the form is off.
+ * Bug reports from the app, sent by e-mail to the administrator (app.yaml admin), who also gets the
+ * critical errors of the server (alerts.ts). The mail server comes from the environment (see
+ * .env.example); without it or the address the form is off.
  *
  * The message is plain text built from validated fields only: the subject names a fixed
  * category, the sender's address goes to Reply-To, and nothing from the form is rendered as HTML.
@@ -25,6 +26,8 @@ export interface Report {
 
 export interface Mailer {
   send(report: Report, meta: { userAgent?: string }): Promise<void>;
+  /** A mail of the server itself to the administrator (alerts.ts). */
+  alert(subject: string, text: string): Promise<void>;
 }
 
 const EMAIL = /^[^\s@<>()",;:]{1,64}@[^\s@<>()",;:]+\.[^\s@<>()",;:]{2,}$/;
@@ -86,13 +89,13 @@ export function formatReport(report: Report, meta: { userAgent?: string }, form:
   return { subject: say('subject', { app: form.app.name, category }), text: lines.join('\n') };
 }
 
-/** SMTP mailer from the environment, or undefined when the form is not configured. */
-export function mailerFromEnv(form: ReportForm, env: NodeJS.ProcessEnv = process.env): Mailer | undefined {
-  const { SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS, REPORT_TO, REPORT_FROM } = env;
-  if (!SMTP_HOST || !REPORT_TO) return undefined;
+/** SMTP mailer to the administrator `to`, or undefined without a mail server or the address. */
+export function mailerFromEnv(form: ReportForm, to: string | undefined, env: NodeJS.ProcessEnv = process.env): Mailer | undefined {
+  const { SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS, REPORT_FROM } = env;
+  if (!SMTP_HOST || !to) return undefined;
   const from = REPORT_FROM ?? SMTP_USER;
   if (!from) {
-    console.warn('Bug reports off: set REPORT_FROM (or SMTP_USER) as the sender address.');
+    console.warn('Bug reports and alert mails off: set REPORT_FROM (or SMTP_USER) as the sender address.');
     return undefined;
   }
   const port = Number(SMTP_PORT ?? 587);
@@ -112,7 +115,10 @@ export function mailerFromEnv(form: ReportForm, env: NodeJS.ProcessEnv = process
   return {
     async send(report, meta) {
       const { subject, text } = formatReport(report, meta, form);
-      await transport.sendMail({ from, to: REPORT_TO, replyTo: report.email, subject, text });
+      await transport.sendMail({ from, to, replyTo: report.email, subject, text });
+    },
+    async alert(subject, text) {
+      await transport.sendMail({ from, to, subject, text });
     },
   };
 }

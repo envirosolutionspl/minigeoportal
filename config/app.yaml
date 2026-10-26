@@ -13,6 +13,9 @@ description:
   en: 'MiniGeoportal: a quick look at a parcel, its local plan, transaction prices and the orthophoto map, on GUGiK data.'
 domain: minigeoportal.pl
 contact: office@envirosolutions.pl
+# Bug reports and critical errors of the server go here by e-mail (the mail server: environment
+# variables SMTP_*); without it both are off.
+admin: office@envirosolutions.pl
 
 author:
   name: EnviroSolutions

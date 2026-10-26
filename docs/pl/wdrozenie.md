@@ -108,7 +108,13 @@ Dwie rzeczy są w `public/` i trafiają do builda: miniatury map podkładowych (
 - **Content Security Policy**: skrypty, style i czcionki tylko z serwisu, obrazy z dowolnego adresu https (kafle i obrazy usług), połączenia tylko do serwisu (i usług wyszukiwarki GUGiK, gdy moduł jest włączony). `frame-ancestors 'none'`: strony nie da się osadzić w ramce na innej stronie.
 - **Konfiguracja w kontenerze** jest w `/app/config`, tylko do odczytu; może zawierać `skins/`, `i18n/`, `content/`, `seed/` i `brand/`. Dane są w `/data` i są tylko pamięcią podręczną: wolumen można wyczyścić, serwer odbuduje je sam.
 - **Punkty kontrolne**: `GET /api/health` (`{ ok, capabilitiesGeneratedAt }`), `GET /api/config` (konfiguracja przekazywana aplikacji), `GET /api/report` (`{ enabled }`: czy formularz zgłoszeń działa), `GET /api/capabilities`, `GET /api/catalog` (moduł gugik).
-- **Logi**: na standardowym wyjściu; błędy usług źródłowych i powody wyłączenia formularza zgłoszeń (brak serwera poczty albo nadawcy); brak `APP_ORIGIN` daje tylko ostrzeżenie, że zgłoszenia nie będą zawierać linku do widoku mapy. Na SIGTERM serwer kończy trwające zapytania, najdłużej 10 sekund.
+- **Logi**: na standardowym wyjściu; błędy usług źródłowych, błędy krytyczne (zob. niżej) i powody wyłączenia formularza zgłoszeń (brak serwera poczty albo nadawcy); brak `APP_ORIGIN` daje tylko ostrzeżenie, że zgłoszenia nie będą zawierać linku do widoku mapy. Na SIGTERM serwer kończy trwające zapytania, najdłużej 10 sekund.
+
+## Błędy krytyczne
+
+Błąd krytyczny to coś, czego serwer nie naprawi sam: skonfigurowana usługa (mapa bazowa lub warstwa z konfiguracji), która nie odpowiedziała przy codziennym odświeżaniu, odświeżanie, które nie powiodło się w całości, i błąd, którego nic w serwerze nie przechwyciło (proces wtedy się zatrzymuje, a Docker lub menedżer usług uruchamia go ponownie). Trafia do logu jako wiersz zaczynający się od `CRITICAL`, a przy ustawionym serwerze poczty także e-mailem na adres `admin` z `app.yaml`, ten sam co zgłoszenia, w języku `report.locale`. Ten sam błąd idzie mailem najwyżej raz na dobę, a wszystkich najwyżej dziesięć na dobę. Warstwy katalogu geoportalu, które nie odpowiadają, nie są krytyczne: jest ich kilkaset i część zawsze nie działa.
+
+W Docker Compose usługa `updater` też czyta `.env`, więc jej odświeżanie wysyła maile przez ten sam serwer poczty.
 
 Bezpieczeństwo i budowa serwera: [Architektura](architektura.md).
 
@@ -126,9 +132,9 @@ Ustawia się je w środowisku albo w pliku `.env` w katalogu aplikacji (wzór z 
 | `APP_ORIGIN`                            |                                             | Publiczny adres aplikacji, np. `https://mapa.example.org`. Zgłoszenia mogą zawierać link tylko do niego; bez niego są bez linku.                                                  |
 | `TRUSTED_PROXY`                         |                                             | `1` za reverse proxy dopisującym adres klienta do `X-Forwarded-For`; limity zapytań liczą się wtedy dla każdego klienta.                                                          |
 | `SHARED_DATA`                           |                                             | `1`, gdy kilka instancji dzieli `DATA_DIR`: dane zapisuje tylko `npm run update`, instancje wczytują je ponownie w ciągu minuty. Bez niego serwer sam odświeża dane raz dziennie. |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | `587`, STARTTLS                             | Serwer poczty dla formularza zgłoszeń; port 465 oznacza TLS od początku, `SMTP_SECURE` tylko to zmienia.                                                                          |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | \1                                          | Serwer poczty dla maili do administratora (`admin` w `app.yaml`): zgłoszeń błędów i błędów krytycznych; port 465 oznacza TLS od początku, `SMTP_SECURE` tylko to zmienia.         |
 | `SMTP_USER`, `SMTP_PASS`                |                                             | Logowanie do serwera poczty. Tylko w `.env` lub w środowisku, nigdy w konfiguracji.                                                                                               |
-| `REPORT_FROM`, `REPORT_TO`              |                                             | Nadawca (domyślnie `SMTP_USER`) i adresat zgłoszeń. Bez `SMTP_HOST`, `REPORT_TO` i nadawcy formularz jest wyłączony.                                                              |
+| `REPORT_FROM`                           |                                             | Nadawca maili (domyślnie `SMTP_USER`). Bez `SMTP_HOST`, `admin` w `app.yaml` i nadawcy formularz zgłoszeń i maile o błędach są wyłączone.                                         |
 | `API_PORT`                              | `8787`                                      | Tylko przy pracy nad aplikacją: gdzie serwer Vite znajduje API.                                                                                                                   |
 
 ## Ścieżki i pliki

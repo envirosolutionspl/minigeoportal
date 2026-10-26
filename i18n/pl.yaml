@@ -184,6 +184,10 @@ report:
     noView: nie dołączono
     browser: Przeglądarka
     noBrowser: nieznana
+    # A critical error of the server (server/alerts.ts).
+    alert: '[{app}] Błąd krytyczny: {what}'
+    server: Serwer
+    time: Czas
   failed: Nie udało się wysłać zgłoszenia.
   offline: Brak połączenia z serwerem. Spróbuj ponownie.
   invalid: Zgłoszenie ma nieprawidłowe dane. Sprawdź opis i adres e-mail.

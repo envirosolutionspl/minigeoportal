@@ -32,6 +32,10 @@ services:
     restart: unless-stopped
     environment:
       SHARED_DATA: '1'
+    # The mail server, for critical errors of the refresh.
+    env_file:
+      - path: .env
+        required: false
     volumes:
       - data:/data
       - ./config:/app/config:ro

@@ -4,6 +4,7 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { compress } from 'hono/compress';
 import { etag } from 'hono/etag';
 import type { Context } from 'hono';
+import { alertOnCrash, alertsTo, critical } from './alerts.ts';
 import { createApp } from './app.ts';
 import { CACHE_FILE, readCache, refreshCache, startingCache } from './cache.ts';
 import { mailerFromEnv } from './report.ts';
@@ -18,6 +19,12 @@ import type { CapabilitiesCache } from '../src/services/meta.ts';
 
 /** A configuration with problems stops the server here, with every problem listed. */
 const site = createSite(loadConfig(config.configDir));
+
+// Bug reports and critical errors go to the administrator (app.yaml admin) by e-mail.
+const mailer = mailerFromEnv(site.mail, site.config.app.admin);
+if (!mailer) console.log('Bug reports and alert mails off: set SMTP_HOST and admin in app.yaml to turn them on.');
+alertsTo(mailer, site.mail);
+alertOnCrash();
 
 let capabilities: CapabilitiesCache = await startingCache(site.defaults, config.sharedData, (built) => {
   capabilities = built;
@@ -37,17 +44,19 @@ await follow(CACHE_FILE, async () => {
 if (!config.sharedData) {
   repeat(
     async () => {
-      await refreshCache(site.defaults);
-      await modules.update(site.defaults);
+      try {
+        await refreshCache(site.defaults);
+        await modules.update(site.defaults);
+      } catch (e) {
+        await critical('Data refresh failed', e);
+      }
     },
     24 * 60 * 60 * 1000,
     'refresh',
   );
 }
 
-const mailer = mailerFromEnv(site.mail);
 if (production && !config.origin) console.warn('APP_ORIGIN not set: bug reports cannot link to the map view.');
-if (!mailer) console.log('Bug reports off: set SMTP_HOST and REPORT_TO to turn them on.');
 const app = createApp({
   site,
   cache: () => capabilities,

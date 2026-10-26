@@ -24,7 +24,7 @@ interface AppOptions {
   /** Service metadata as last read; `npm run update` refreshes them (index.ts reads them again). */
   cache: () => CapabilitiesCache;
   /** Sends bug reports; without it the report form answers 503. */
-  mailer?: Mailer;
+  mailer?: Pick<Mailer, 'send'>;
   /** What the enabled modules keep (modules/index.ts start). */
   moduleData?: modules.ModuleData;
   /** Public address of the app; links in reports must point here. Defaults to the request's Origin. */

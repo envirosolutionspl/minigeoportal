@@ -1,4 +1,5 @@
 import { XMLParser } from 'fast-xml-parser';
+import { critical } from './alerts.ts';
 import { fetchPublic, readLimited, serviceUrl } from './http.ts';
 import * as modules from './modules/index.ts';
 import { errorMessage } from './config.ts';
@@ -269,9 +270,11 @@ export async function buildCache(config: ClientConfig, previous?: CapabilitiesCa
   const services: Record<string, ServiceMeta> = {};
   for (const [id, meta] of entries) {
     const old = previous?.services[id];
-    // A service that does not answer keeps its previous metadata, said out loud rather than hidden.
-    if (meta.kind === 'error' && old && old.kind !== 'error') console.warn(`${id}: ${meta.error} (previous metadata kept)`);
-    services[id] = meta.kind === 'error' && old && old.kind !== 'error' ? old : meta;
+    const kept = meta.kind === 'error' && old && old.kind !== 'error';
+    // A configured service that does not answer is a critical error (mailed to the administrator);
+    // it keeps its previous metadata, said out loud rather than hidden.
+    if (meta.kind === 'error') await critical(`${id}: ${meta.error}${kept ? ' (previous metadata kept)' : ''}`);
+    services[id] = kept ? old : meta;
   }
   const order = drawOrder ?? previous?.drawOrder;
   return { generatedAt: new Date().toISOString(), services, ...(order ? { drawOrder: order } : {}) };

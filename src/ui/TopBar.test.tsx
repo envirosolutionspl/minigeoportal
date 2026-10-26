@@ -204,10 +204,10 @@ describe('my location', () => {
     render(<TopBar />);
     press();
     const box = screen.getAllByRole('status').find((s) => s.textContent?.includes('położenia'))!;
-    fireEvent.mouseEnter(box);
+    fireEvent.pointerEnter(box, { pointerType: 'mouse' });
     act(() => vi.advanceTimersByTime(20000));
     expect(notice()).toContain('Nie udało się ustalić położenia');
-    fireEvent.mouseLeave(box);
+    fireEvent.pointerLeave(box, { pointerType: 'mouse' });
     act(() => vi.advanceTimersByTime(9000));
     expect(notice()).not.toContain('położenia');
     press();

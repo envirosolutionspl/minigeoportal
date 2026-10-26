@@ -46,6 +46,42 @@ describe('MapMenu', () => {
     expect(writeText.mock.lastCall?.[0]).toMatch(/^52\.\d{6}, 21\.\d{6}$/);
   });
 
+  it('lets the confirmation of a copy go by itself after 2 seconds', async () => {
+    vi.useFakeTimers();
+    try {
+      render(<MapMenu />);
+      open();
+      await act(async () => fireEvent.click(screen.getByRole('menuitem', { name: 'Kopiuj współrzędne (WGS 84)' })));
+      expect(screen.getByText(/^Skopiowano: 52\./)).toBeTruthy();
+      // A finger that tapped the menu where the message comes up does not keep it.
+      fireEvent.pointerEnter(screen.getByRole('status', { hidden: true }), { pointerType: 'touch' });
+      act(() => vi.advanceTimersByTime(1999));
+      expect(screen.queryByText(/^Skopiowano/)).toBeTruthy();
+      act(() => vi.advanceTimersByTime(1));
+      expect(screen.queryByText(/^Skopiowano/)).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('keeps the confirmation while the mouse points at it', async () => {
+    vi.useFakeTimers();
+    try {
+      render(<MapMenu />);
+      open();
+      await act(async () => fireEvent.click(screen.getByRole('menuitem', { name: 'Kopiuj współrzędne (WGS 84)' })));
+      const toast = screen.getByText(/^Skopiowano/).closest('[role=status]')!;
+      fireEvent.pointerEnter(toast, { pointerType: 'mouse' });
+      act(() => vi.advanceTimersByTime(5000));
+      expect(screen.queryByText(/^Skopiowano/)).toBeTruthy();
+      fireEvent.pointerLeave(toast, { pointerType: 'mouse' });
+      act(() => vi.advanceTimersByTime(2000));
+      expect(screen.queryByText(/^Skopiowano/)).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('shows the text to copy by hand when the clipboard is not allowed', async () => {
     writeText.mockRejectedValue(new Error('denied'));
     render(<MapMenu />);

@@ -9,6 +9,8 @@ import { NewTab } from './NewTab';
 
 /** Distance kept from the edges of the screen. */
 const EDGE = 8;
+/** The confirmation of a copy goes by itself this soon, unless pointed at or focused. */
+const COPIED_MS = 2000;
 
 /**
  * Context menu of a place on the map (map/contextMenu.ts opens it): its coordinates to copy in
@@ -61,7 +63,7 @@ export function MapMenu() {
     leave();
     try {
       await navigator.clipboard.writeText(text);
-      say(t('mapMenu.copied', { text }));
+      say(t('mapMenu.copied', { text }), COPIED_MS);
     } catch {
       // No clipboard access (e.g. an insecure page): the text is shown to copy by hand.
       say(text);

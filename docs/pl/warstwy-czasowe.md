@@ -22,7 +22,7 @@ values: { start: '2010', end: '2024', step: P2Y }
 values: { start: '2023-01', end: '2024-12', step: P1M }
 ```
 
-Przy `capabilities` serwer odczytuje wymiar z usługi (listę albo zakresy zapisane jako start/koniec/okres, jak zapisuje je WMS) przy odświeżaniu metadanych (`npm run update`).
+Przy `capabilities` serwer odczytuje wymiar z usługi (listę albo zakresy zapisane jako start/koniec/okres, jak zapisuje je WMS) przy odświeżaniu metadanych (raz na dobę albo od razu przez `npm run update`).
 
 ## Seria edycji
 
@@ -46,7 +46,7 @@ Każda edycja ma `value` i, jeśli różni się od warstwy, własny `url` lub `l
 
 ```yaml
 timeTravel:
-  layer: orto-archiwalna # warstwa z layers.yaml z blokiem time (dziś: wymiar jednej usługi)
+  layer: orto-archiwalna # warstwa z layers.yaml z blokiem time (dziś: WMS z wymiarem)
   base: orto # podkład wymuszany, póki podróż trwa (opcjonalnie)
 ```
 

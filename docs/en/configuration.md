@@ -77,7 +77,7 @@ Each layer of `overlays`:
 
 ### Layers of each kind
 
-Scale limits, legends, place information formats and time dimensions are read by the server from the service's capabilities on `npm run update` (and on a start with an empty data directory and no `seed/`); `layers.yaml` needs only the address and the layer names.
+Scale limits, legends, place information formats and time dimensions are read by the server from the service's capabilities once a day (a single server by itself, replicas through the updater), on `npm run update` and on a start with an empty data directory and no `seed/`; `layers.yaml` needs only the address and the layer names.
 
 ```yaml
 overlays:

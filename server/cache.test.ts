@@ -34,7 +34,7 @@ describe('startingCache', () => {
   });
 
   it('builds the metadata in the background on a single instance and hands it over', async () => {
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => new Response('down', { status: 503 })),

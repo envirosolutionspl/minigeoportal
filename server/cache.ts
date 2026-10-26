@@ -2,8 +2,9 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import type { ClientConfig } from '../shared/config.ts';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
+import { critical } from './alerts.ts';
 import { buildCache } from './capabilities.ts';
-import { config, dataPath, errorMessage } from './config.ts';
+import { config, dataPath } from './config.ts';
 import { writeAtomic } from './files.ts';
 
 /** Metadata of the configured services, refreshed by `npm run update`. */
@@ -47,7 +48,7 @@ export async function startingCache(
   if (!shared) {
     refreshCache(config)
       .then(onBuilt)
-      .catch((e: unknown) => console.warn(`capabilities: ${errorMessage(e)}`));
+      .catch((e: unknown) => critical('Data refresh failed', e));
   }
   return { generatedAt: '', services: {} };
 }

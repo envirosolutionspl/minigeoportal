@@ -77,7 +77,7 @@ Każda warstwa z `overlays`:
 
 ### Warstwy każdego rodzaju
 
-Zakresy skal, legendy, formaty informacji o miejscu i wymiary czasu serwer odczytuje z capabilities usługi przy `npm run update` (i przy starcie z pustym katalogiem danych, bez `seed/`); w `layers.yaml` wystarczy adres i nazwy warstw.
+Zakresy skal, legendy, formaty informacji o miejscu i wymiary czasu serwer odczytuje z capabilities usługi raz na dobę (pojedynczy serwer sam, repliki przez proces aktualizujący), przy `npm run update` i przy starcie z pustym katalogiem danych, bez `seed/`; w `layers.yaml` wystarczy adres i nazwy warstw.
 
 ```yaml
 overlays:

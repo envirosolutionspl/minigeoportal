@@ -2,7 +2,8 @@ import type { Context, Hono } from 'hono';
 import type { ClientConfig } from '../../../shared/config.ts';
 import type { QueryTarget } from '../../featureinfo.ts';
 import { RequestError, rateLimit } from '../../http.ts';
-import { config as env, errorMessage } from '../../config.ts';
+import { config as env } from '../../config.ts';
+import { critical } from '../../alerts.ts';
 import { follow } from '../../files.ts';
 import type { AppFile, LayersFile, MapFile } from '../../config/schema.ts';
 import { buildCatalog, catalogFile, catalogIndex, readCatalog, serviceKey, writeCatalog, type Catalog } from './catalog.ts';
@@ -85,7 +86,7 @@ export async function start(client: ClientConfig): Promise<Data> {
         catalog = built;
         await writeCatalog(built);
       })
-      .catch((e: unknown) => console.warn(`catalog: ${errorMessage(e)}`));
+      .catch((e: unknown) => critical('Catalog build failed', e));
   }
   await follow(catalogFile(), async () => {
     catalog = (await readCatalog()) ?? catalog;

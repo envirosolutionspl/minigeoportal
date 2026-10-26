@@ -22,7 +22,7 @@ values: { start: '2010', end: '2024', step: P2Y }
 values: { start: '2023-01', end: '2024-12', step: P1M }
 ```
 
-With `capabilities` the server reads the dimension from the service (a list, or ranges written start/end/period, as WMS writes them) when it refreshes the metadata (`npm run update`).
+With `capabilities` the server reads the dimension from the service (a list, or ranges written start/end/period, as WMS writes them) when it refreshes the metadata (once a day, or at once with `npm run update`).
 
 ## A series of editions
 
@@ -46,7 +46,7 @@ Each edition has a `value` and, where it differs from the layer, its own `url` o
 
 ```yaml
 timeTravel:
-  layer: orto-archiwalna # a layer of layers.yaml with a time block (today: a dimension of one service)
+  layer: orto-archiwalna # a layer of layers.yaml with a time block (today: a WMS with a dimension)
   base: orto # a base map forced while the view is open (optional)
 ```
 

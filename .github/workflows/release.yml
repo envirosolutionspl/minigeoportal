@@ -1,0 +1,53 @@
+# Publishes GitHub releases; the image of a version comes from image.yml.
+# A version tag (v1.2.3) is released when it is pushed: it must match the version in package.json.
+# A tag pushed before its text is released when .github/releases/<tag>.md reaches main. The text of
+# a release is that file; without it GitHub writes one from the changes since the last release.
+# A tag that already has a release is left as it is.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+    branches: [main]
+    # Applies to main only: GitHub does not filter tag pushes by path.
+    paths: ['.github/releases/**']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check the tag against package.json
+        if: github.ref_type == 'tag'
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if [ "v${VERSION}" != "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match package.json version ${VERSION}"
+            exit 1
+          fi
+
+      - name: Publish the releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            TAGS="$GITHUB_REF_NAME"
+          else
+            TAGS=$(find .github/releases -name 'v*.md' -exec basename {} .md \; | sort -V)
+          fi
+          for TAG in $TAGS; do
+            if ! git rev-parse -q --verify "refs/tags/$TAG" > /dev/null; then echo "$TAG: no tag yet"; continue; fi
+            if gh release view "$TAG" > /dev/null 2>&1; then echo "$TAG: already released"; continue; fi
+            FILE=".github/releases/$TAG.md"
+            if [ -f "$FILE" ]; then
+              gh release create "$TAG" --verify-tag --title "MiniGeoportal ${TAG#v}" --notes-file "$FILE"
+            else
+              gh release create "$TAG" --verify-tag --title "MiniGeoportal ${TAG#v}" --generate-notes
+            fi
+          done

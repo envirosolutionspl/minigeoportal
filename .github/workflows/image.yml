@@ -10,10 +10,32 @@ on:
     branches: [main]
     tags: ['v*']
     paths-ignore:
-      ['README.md', 'docs/**', 'examples/**', 'LICENSE', '.env.example', 'compose*.yaml', 'deploy/**', '.github/workflows/docs.yml']
+      [
+        'README.md',
+        'docs/**',
+        'examples/**',
+        'LICENSE',
+        '.env.example',
+        'compose*.yaml',
+        'deploy/**',
+        '.github/workflows/docs.yml',
+        '.github/workflows/release.yml',
+        '.github/releases/**',
+      ]
   pull_request:
     paths-ignore:
-      ['README.md', 'docs/**', 'examples/**', 'LICENSE', '.env.example', 'compose*.yaml', 'deploy/**', '.github/workflows/docs.yml']
+      [
+        'README.md',
+        'docs/**',
+        'examples/**',
+        'LICENSE',
+        '.env.example',
+        'compose*.yaml',
+        'deploy/**',
+        '.github/workflows/docs.yml',
+        '.github/workflows/release.yml',
+        '.github/releases/**',
+      ]
   workflow_dispatch:
 
 concurrency:

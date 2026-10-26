@@ -46,13 +46,46 @@ const NOT_PUBLISHED = /LayerNotDefined|Invalid layer|layer might be disabled/i;
  */
 export function queryLayers(def: Overlay, selected: string[], scale: number): string[] {
   if (def.kind === 'wmts') return wmtsMeta(def.id)?.infoFormats?.length ? selected : [];
-  const cache = def.kind === 'rest' ? restMeta(def.id) : undefined;
-  return (cache?.tiles ? Object.keys(cache.layers) : selected).filter((name) => {
+  return infoNames(def, selected).filter((name) => {
     const m = layerMeta(def.id, name);
     // Our own WMS are queried even before their capabilities are known.
     if (!m) return def.kind === 'wms';
     return m.queryable && scale >= (m.minScale ?? 0) && scale <= (m.maxScale ?? Infinity);
   });
+}
+
+/** Layers of the overlay that may answer: all of an ArcGIS tile cache (its image is one), else the chosen ones. */
+function infoNames(def: Overlay, selected: string[]): string[] {
+  const cache = def.kind === 'rest' ? restMeta(def.id) : undefined;
+  return cache?.tiles ? Object.keys(cache.layers) : selected;
+}
+
+/** A layer that answers at other scales than the map's: the scale to go to, just inside its range, and the range's edge. */
+export interface ScaleHint {
+  title: string;
+  scale: number;
+  limit: number;
+}
+
+/**
+ * When no layer of the overlay answers at this scale: the one that would with the smallest change
+ * of scale. Nothing when a layer answers now, or none ever does.
+ */
+export function nearestQueryable(def: Overlay, selected: string[], scale: number): ScaleHint | undefined {
+  if (def.kind === 'wmts') return undefined;
+  let best: (ScaleHint & { change: number }) | undefined;
+  for (const name of infoNames(def, selected)) {
+    const m = layerMeta(def.id, name);
+    if (!m?.queryable) continue;
+    const max = m.maxScale ?? Infinity;
+    const min = m.minScale ?? 0;
+    const limit = scale > max ? max : scale < min ? min : undefined;
+    if (limit === undefined) return undefined;
+    const target = scale > max ? limit * 0.9 : limit * 1.1;
+    const change = Math.abs(Math.log(target / scale));
+    if (!best || change < best.change) best = { title: m.title, scale: target, limit, change };
+  }
+  return best && { title: best.title, scale: best.scale, limit: best.limit };
 }
 
 /** WMTS answers in HTML tables like WMS; XML comes next, as GML needs more guessing. */

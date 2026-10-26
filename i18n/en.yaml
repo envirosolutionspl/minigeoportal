@@ -111,6 +111,10 @@ info:
   ready: Information about the place is ready.
   noLayers: Switch on a layer to see information about this place.
   openLayers: Open the layers
+  zoomInHint: The layer {title} gives information about a place from scale {scale}. Zoom in to see it.
+  zoomOutHint: The layer {title} gives information about a place up to scale {scale}. Zoom out to see it.
+  zoomIn: Zoom in
+  zoomOut: Zoom out
   reportPlace: 'Place: {place}'
   report: Something wrong? Report a problem
   error: The data could not be loaded. The server of the service does not answer or refused the request.

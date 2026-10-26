@@ -60,6 +60,8 @@ const PAIRS = [
   ['on-accent', 'accent'],
   ['danger', 'surface'],
   ['danger', 'danger-soft'],
+  ['highlight-ui', 'surface'],
+  ['highlight-ui', 'field'],
 ];
 
 describe.each(readdirSync('skins'))('skin %s', (name) => {

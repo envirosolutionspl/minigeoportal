@@ -2,7 +2,7 @@
 # the module. A deployment changes them in i18n/pl.yaml of its configuration directory, as any other.
 
 search:
-  parcel: Znajdź działkę po numerze i obrębie
+  parcel: 'Działka: znajdź po numerze i obrębie'
   parcelShort: Działka
   parcelHit: Działka {number}
   gugik:

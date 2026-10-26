@@ -20,6 +20,7 @@ Zacznij od kopii `skins/default/skin.css` i zmień wartości:
   --danger: #8a2c0d; /* tekst błędu */
   --danger-soft: #fde8e0; /* tło błędu */
   --highlight: #ff8142; /* znalezione obiekty i kliknięte miejsce na mapie, ramka wydruku */
+  --highlight-ui: #c2410c; /* ten sam kolor na panelach (ikony miejsca i działki); bez tego --highlight */
   --map-measure: #466946; /* mierzone linie i powierzchnie */
   --accent: #0b5d8f; /* przyciski, linki, włączone elementy */
   --on-accent: #ffffff; /* tekst na akcencie */

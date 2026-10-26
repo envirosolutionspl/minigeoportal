@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { OGC_PIXEL } from '@/map/projection';
 import { overlayById, type Overlay } from '@/config/runtime';
-import { fetchFeatureInfo, parseFeatureInfo, queryLayers } from './featureinfo';
+import { fetchFeatureInfo, nearestQueryable, parseFeatureInfo, queryLayers } from './featureinfo';
 import { createOverlayLayer } from './layers';
 import { registerMeta } from './meta';
 import { stubFetch, withCapabilities } from '@/test/helpers';
@@ -109,6 +109,20 @@ describe('queryLayers', () => {
     expect(queryLayers(kieg, ['obreby', 'dzialki', 'budynki', 'numery_dzialek'], 5000)).toEqual(['dzialki']);
     expect(queryLayers(kieg, ['obreby', 'dzialki'], 15000)).toEqual(['obreby']);
     expect(queryLayers(overlayById.get('pog')!, ['strefaPlanistyczna'], 5000)).toEqual(['strefaPlanistyczna']);
+  });
+});
+
+describe('nearestQueryable', () => {
+  it('names the queryable layer nearest in scale and a scale just inside its range', async () => {
+    await withCapabilities();
+    const kieg = overlayById.get('kieg')!;
+    // Zoomed out: the precincts (up to 1:25 000) come before the parcels (1:10 000).
+    expect(nearestQueryable(kieg, ['obreby', 'dzialki', 'budynki'], 47247)).toEqual({ title: 'Obręby', scale: 22500, limit: 25000 });
+    // Zoomed in past the precincts, with the parcels off: the precincts answer from 1:10 000 out.
+    expect(nearestQueryable(kieg, ['obreby'], 5000)).toEqual({ title: 'Obręby', scale: 11000, limit: 10000 });
+    // A layer answers now, or none is queryable: nothing to suggest.
+    expect(nearestQueryable(kieg, ['obreby', 'dzialki'], 5000)).toBeUndefined();
+    expect(nearestQueryable(kieg, ['budynki'], 47247)).toBeUndefined();
   });
 });
 

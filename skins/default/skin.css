@@ -17,6 +17,9 @@
   --muted: #59705b;
   --danger: #8a2c0d;
   --highlight: #ff8142;
+  /* The same orange on the surfaces of the interface (icons of the place and the found parcel, the
+     print frame): darker in light mode, so it keeps 4.5:1 against --surface and --field. */
+  --highlight-ui: #c2410c;
   /* Measured lines and areas on the map, the same in light and dark mode. */
   --map-measure: #466946;
   --danger-soft: #fde8e0;
@@ -39,6 +42,7 @@
     --muted: #b3cbb4;
     --danger: #ffb59a;
     --danger-soft: #4a2a1e;
+    --highlight-ui: #ff8142;
     --accent: #9db49e;
     --on-accent: #253326;
     --accent-soft: #34483a;

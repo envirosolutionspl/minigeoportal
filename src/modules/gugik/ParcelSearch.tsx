@@ -81,7 +81,7 @@ export function ParcelSearch({ onClose }: { onClose(): void }) {
         aria-label={t('parcel.found')}
         className="absolute inset-x-0 mt-2 flex items-center gap-3 rounded-2xl bg-[var(--surface)] px-4 py-3 shadow-lg ring-1 ring-black/5"
       >
-        <SquareDashed className="h-5 w-5 shrink-0 text-[var(--highlight)]" />
+        <SquareDashed className="h-5 w-5 shrink-0 text-[var(--highlight-ui,var(--highlight))]" aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">{shown.label}</p>
           <p className="truncate text-xs text-[var(--muted)]">{shown.detail}</p>

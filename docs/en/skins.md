@@ -20,6 +20,7 @@ Start from a copy of `skins/default/skin.css` and change the values:
   --danger: #8a2c0d; /* error text */
   --danger-soft: #fde8e0; /* error background */
   --highlight: #ff8142; /* found objects and the clicked place on the map, the print frame */
+  --highlight-ui: #c2410c; /* the same colour on panels (icons of the place and the parcel); without it --highlight */
   --map-measure: #466946; /* measured lines and areas */
   --accent: #0b5d8f; /* buttons, links, switched-on items */
   --on-accent: #ffffff; /* text on the accent */

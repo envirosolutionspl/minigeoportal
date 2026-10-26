@@ -16,11 +16,26 @@ const MARKER = new Style({
   image: new Circle({ radius: 7, fill: new Fill({ color: HIGHLIGHT }), stroke: new Stroke({ color: '#ffffff', width: 2.5 }) }),
 });
 
+interface Shown {
+  def: Overlay;
+  layer: OverlayLayer;
+}
+
+/** The overlays that are on and answer at this scale, each with the layers to ask it about. */
+export function infoTargets(shown: Shown[], scale: number): (Shown & { layers: string[] })[] {
+  const s = useMapStore.getState();
+  return shown
+    .filter(({ def }) => s.overlays.includes(def.id))
+    .map((o) => ({ ...o, layers: queryLayers(o.def, selectedSublayers(o.def, s.sublayers), scale) }))
+    .filter((t) => t.layers.length > 0);
+}
+
 /**
  * Map click queries every active overlay at that point and marks the spot. With the keyboard,
  * Enter on the focused map asks about the map centre (marked by a crosshair while focused).
+ * A place where no layer answered is asked about again once the map reaches a scale where one does.
  */
-export function attachFeatureInfo(map: Map, overlays: () => { def: Overlay; layer: OverlayLayer }[]): () => void {
+export function attachFeatureInfo(map: Map, overlays: () => Shown[]): () => void {
   const marker = new Feature<Point>();
   marker.setStyle(MARKER);
   const markerLayer = new VectorLayer({ source: new VectorSource<Feature<Point>>(), zIndex: 100 });
@@ -46,11 +61,7 @@ export function attachFeatureInfo(map: Map, overlays: () => { def: Overlay; laye
     const signal = controller.signal;
 
     const s = useMapStore.getState();
-    const scale = resolutionToScale(resolution);
-    const targets = overlays()
-      .filter(({ def }) => s.overlays.includes(def.id))
-      .map((o) => ({ ...o, layers: queryLayers(o.def, selectedSublayers(o.def, s.sublayers), scale) }))
-      .filter((t) => t.layers.length > 0);
+    const targets = infoTargets(overlays(), resolutionToScale(resolution));
 
     const coordinate: [number, number] = [evt.coordinate[0], evt.coordinate[1]];
     const info = useInfoStore.getState();
@@ -71,6 +82,14 @@ export function attachFeatureInfo(map: Map, overlays: () => { def: Overlay; laye
   };
 
   map.on('singleclick', onClick);
+  // The panel offered to zoom to where a layer answers: once there, the same place is asked about.
+  const onMoveEnd = () => {
+    const query = useInfoStore.getState().query;
+    const resolution = map.getView().getResolution();
+    if (!query || query.services.length > 0 || resolution === undefined || useMapStore.getState().tool !== 'none') return;
+    if (infoTargets(overlays(), resolutionToScale(resolution)).length > 0) onClick({ coordinate: query.coordinate });
+  };
+  map.on('moveend', onMoveEnd);
   const target = map.getTargetElement();
   const onKey = (e: KeyboardEvent) => {
     if (e.key !== 'Enter' || e.target !== target) return;
@@ -94,6 +113,7 @@ export function attachFeatureInfo(map: Map, overlays: () => { def: Overlay; laye
 
   return () => {
     map.un('singleclick', onClick);
+    map.un('moveend', onMoveEnd);
     target?.removeEventListener('keydown', onKey);
     unsubscribe();
     controller?.abort();

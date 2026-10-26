@@ -1,10 +1,10 @@
 import { Suspense } from 'react';
-import { Bug, ExternalLink, Layers, LoaderCircle, MapPin, X } from 'lucide-react';
-import { formatCoordinate } from '@/map/format';
-import { config } from '@/config/runtime';
+import { Bug, ExternalLink, Layers, LoaderCircle, MapPin, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { formatCoordinate, scaleText } from '@/map/format';
+import { config, selectedSublayers } from '@/config/runtime';
 import { infoFooter, infoHeader, type InfoPart } from '@/modules';
 import { overlayDef } from '@/services/catalog';
-import type { InfoRecord } from '@/services/featureinfo';
+import { nearestQueryable, type InfoRecord, type ScaleHint } from '@/services/featureinfo';
 import { useInfoStore, type InfoResult } from '@/state/info';
 import { useMapStore } from '@/state/store';
 import { useReport } from './ReportDialog';
@@ -14,7 +14,6 @@ import { t } from '@/i18n';
 export function InfoPanel() {
   const query = useInfoStore((s) => s.query);
   const close = useInfoStore((s) => s.close);
-  const setPanel = useMapStore((m) => m.setPanel);
   if (!query) return null;
 
   const loading = query.services.some((id) => query.results[id]?.status === 'loading');
@@ -26,7 +25,7 @@ export function InfoPanel() {
         sm:inset-x-auto sm:top-[4.75rem] sm:bottom-auto sm:left-4 sm:max-h-[calc(100dvh-9rem)] sm:w-[25rem] sm:rounded-2xl"
     >
       <header className="flex items-start gap-3 border-b border-[var(--hover)] px-4 pt-4 pb-3">
-        <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-[var(--highlight)]" />
+        <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-[var(--highlight-ui,var(--highlight))]" aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <h2 className="text-base font-semibold">{t('info.title')}</h2>
           <p className="text-xs text-[var(--muted)]">{formatCoordinate(query.coordinate)}</p>
@@ -42,16 +41,7 @@ export function InfoPanel() {
       </p>
       <div className="flex-1 overflow-y-auto px-4 py-3">
         {query.services.length === 0 ? (
-          <div className="py-4 text-sm">
-            <p>{t('info.noLayers')}</p>
-            <button
-              type="button"
-              onClick={() => setPanel('catalog')}
-              className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[var(--accent)] px-3 py-2 text-sm font-medium text-[var(--on-accent)]"
-            >
-              <Layers className="h-4 w-4" /> {t('info.openLayers')}
-            </button>
-          </div>
+          <NoAnswer />
         ) : (
           query.services.map((id) => <ServiceResult key={id} id={id} result={query.results[id]} />)
         )}
@@ -71,6 +61,53 @@ export function InfoPanel() {
         </button>
       </footer>
     </section>
+  );
+}
+
+/** The layer that is on and answers nearest to the map's scale, with its title as the list names it. */
+function scaleHint(overlays: string[], sublayers: Record<string, string[]>, scale: number): ScaleHint | undefined {
+  let best: ScaleHint | undefined;
+  for (const id of overlays) {
+    const def = overlayDef(id);
+    const near = def && nearestQueryable(def, selectedSublayers(def, sublayers), scale);
+    if (near && (!best || Math.abs(Math.log(near.scale / scale)) < Math.abs(Math.log(best.scale / scale)))) {
+      best = { ...near, title: def.title };
+    }
+  }
+  return best;
+}
+
+/**
+ * No layer answered here: the layers that are on answer at other scales only, so the panel says
+ * from which scale and offers to go there; with none on, it points to the list of layers.
+ */
+function NoAnswer() {
+  const setPanel = useMapStore((m) => m.setPanel);
+  const zoomToScale = useMapStore((m) => m.zoomToScale);
+  const overlays = useMapStore((m) => m.overlays);
+  const sublayers = useMapStore((m) => m.sublayers);
+  const scale = useMapStore((m) => m.scale);
+  const hint = scaleHint(overlays, sublayers, scale);
+  const button = 'mt-3 inline-flex items-center gap-2 rounded-xl bg-[var(--accent)] px-3 py-2 text-sm font-medium text-[var(--on-accent)]';
+  if (hint) {
+    const zoomIn = hint.scale < scale;
+    return (
+      <div className="py-4 text-sm">
+        <p>{t(zoomIn ? 'info.zoomInHint' : 'info.zoomOutHint', { title: hint.title, scale: scaleText(hint.limit) })}</p>
+        <button type="button" onClick={() => zoomToScale(hint.scale)} className={button}>
+          {zoomIn ? <ZoomIn className="h-4 w-4" aria-hidden="true" /> : <ZoomOut className="h-4 w-4" aria-hidden="true" />}
+          {t(zoomIn ? 'info.zoomIn' : 'info.zoomOut')}
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="py-4 text-sm">
+      <p>{t('info.noLayers')}</p>
+      <button type="button" onClick={() => setPanel('catalog')} className={button}>
+        <Layers className="h-4 w-4" aria-hidden="true" /> {t('info.openLayers')}
+      </button>
+    </div>
   );
 }
 

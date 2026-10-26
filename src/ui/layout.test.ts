@@ -12,7 +12,20 @@ const bottoms = (selector: string) =>
     .filter((m) => m[1].includes(selector))
     .flatMap((m) => [...m[2].matchAll(/bottom:\s*([^;]+);/g)].map((b) => b[1]));
 
+describe('keyboard focus', () => {
+  it('shows on the OpenLayers buttons as on every other button, instead of the outline OpenLayers hides', () => {
+    expect(css).not.toMatch(/\.ol-control button:focus\s*\{[^}]*outline:\s*none/);
+    expect(css).toMatch(/\.ol-control button:focus-visible\s*\{[^}]*outline:\s*3px solid var\(--accent\)/);
+  });
+});
+
 describe('phone screens', () => {
+  it('stops the chrome growing past 125 % text, so the search field and buttons fit with the text at 200 %', () => {
+    expect(css).toMatch(/@media \(max-width: 639px\)\s*\{\s*:root\s*\{\s*--spacing:\s*min\(0\.25rem,\s*5px\)/);
+    expect(css).toMatch(/\.map-tools\s*\{\s*top:\s*min\(4\.25rem,\s*85px\)/);
+    expect(css).toMatch(/\.ol-control button\s*\{\s*width:\s*min\(2\.5rem,\s*50px\)/);
+  });
+
   it.each(['.ol-zoom', '.ol-zoom-extent', '.ol-scale-line', '.map-status'])('keeps %s above the bar at the bottom', (selector) => {
     const values = bottoms(selector);
     expect(values.length).toBeGreaterThan(0);

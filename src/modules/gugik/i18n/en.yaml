@@ -2,7 +2,7 @@
 # the module. A deployment changes them in i18n/en.yaml of its configuration directory, as any other.
 
 search:
-  parcel: Find a parcel by its number and precinct
+  parcel: 'Parcel: find by number and precinct'
   parcelShort: Parcel
   parcelHit: Parcel {number}
   gugik:

@@ -110,6 +110,10 @@ info:
   ready: Informacje o miejscu są gotowe.
   noLayers: Włącz warstwę, aby zobaczyć informacje o tym miejscu.
   openLayers: Otwórz warstwy
+  zoomInHint: Warstwa {title} podaje informacje o miejscu od skali {scale}. Przybliż mapę, aby je zobaczyć.
+  zoomOutHint: Warstwa {title} podaje informacje o miejscu do skali {scale}. Oddal mapę, aby je zobaczyć.
+  zoomIn: Przybliż mapę
+  zoomOut: Oddal mapę
   reportPlace: 'Miejsce: {place}'
   report: Coś nie działa? Zgłoś błąd
   error: Nie udało się pobrać danych. Serwer usługi nie odpowiada albo odrzucił zapytanie.

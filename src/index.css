@@ -52,10 +52,13 @@ input[type='search']::-webkit-search-cancel-button {
   font-size: 1.25rem;
   margin: 0;
 }
-.ol-control button:hover,
-.ol-control button:focus {
+.ol-control button:hover {
   background: var(--hover);
-  outline: none;
+}
+/* Keyboard focus shows as on every other button (WCAG 2.4.7); OpenLayers' own style would hide it. */
+.ol-control button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
 }
 /* Above the author credit in the bottom-right corner. */
 .ol-zoom {
@@ -470,6 +473,30 @@ html[data-printing] #print-sheet {
   }
 }
 
+/*
+ * Phones: the text follows the system's size and A++, the chrome stops growing at 125 % (Tailwind
+ * sizes are multiples of --spacing), so the search field and the buttons still fit the screen
+ * with the text at 200 % (WCAG 1.4.4).
+ */
+@media (max-width: 639px) {
+  :root {
+    --spacing: min(0.25rem, 5px);
+  }
+  .ol-control button {
+    width: min(2.5rem, 50px);
+    height: min(2.5rem, 50px);
+    font-size: min(1.25rem, 25px);
+  }
+  .map-tools {
+    top: min(4.25rem, 85px);
+  }
+}
+@media (max-width: 639px) and (min-height: 501px) {
+  .ol-zoom {
+    bottom: calc(min(4.75rem, 95px) + var(--safe-bottom));
+  }
+}
+
 /* On phones the whole-country button is in the "More" sheet, the author credit at its foot, and
    the scale in numbers in the bottom bar is enough without the scale bar. */
 @media (max-width: 639px), (max-height: 500px) {
@@ -506,7 +533,7 @@ html[data-printing] #print-sheet {
 .print-preview {
   position: absolute;
   pointer-events: none;
-  outline: 3px dashed var(--highlight);
+  outline: 3px dashed var(--highlight-ui, var(--highlight));
   box-shadow: 0 0 0 100vmax rgb(37 51 38 / 0.18);
 }
 
@@ -522,6 +549,7 @@ html[data-contrast='high'] {
   --accent: #ffff00;
   --on-accent: #000000;
   --accent-soft: #000000;
+  --highlight-ui: #ffff00;
   color-scheme: dark;
 }
 html[data-contrast='high'] .ring-1,

@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { InfoPanel } from './InfoPanel';
 import { useInfoStore } from '@/state/info';
 import { useMapStore } from '@/state/store';
-import { stubFetch } from '@/test/helpers';
+import { stubFetch, withCapabilities } from '@/test/helpers';
 
 const point: [number, number] = [656849, 482462];
 
@@ -100,7 +100,20 @@ describe('InfoPanel', () => {
     expect(screen.queryByText('Stare')).toBeNull();
   });
 
+  it('says from which scale a layer that is on answers, and goes there', async () => {
+    await withCapabilities();
+    // Precincts answer up to 1:25 000, parcels up to 1:10 000: the precincts are the smaller step.
+    useMapStore.setState({ overlays: ['kieg'], sublayers: {}, scale: 47247, focus: null });
+    useInfoStore.getState().start(point, []);
+    render(<InfoPanel />);
+    expect(screen.getByText(/Ewidencja gruntów i budynków podaje informacje o miejscu od skali 1:25\s000/)).toBeTruthy();
+    expect(screen.queryByText(/Włącz warstwę/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Przybliż mapę' }));
+    expect(useMapStore.getState().focus?.scale).toBeCloseTo(22500);
+  });
+
   it('points to the catalog when no queryable layer is on, and closes', () => {
+    useMapStore.setState({ overlays: [] });
     useInfoStore.getState().start(point, []);
     render(<InfoPanel />);
     fireEvent.click(screen.getByRole('button', { name: 'Otwórz warstwy' }));

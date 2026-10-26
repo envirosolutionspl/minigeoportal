@@ -26,5 +26,7 @@ describe('deployment files', () => {
     expect(nginx).toContain('proxy_http_version 1.1;');
     expect(nginx).toMatch(/proxy_next_upstream error timeout http_502 http_503;/);
     expect(nginx).toMatch(/hash \$binary_remote_addr consistent;/);
+    // A compressed script of 68 KB is answered from memory, not from a temporary file.
+    expect(nginx).toContain('proxy_buffers 16 32k;');
   });
 });

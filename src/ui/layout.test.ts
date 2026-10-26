@@ -33,6 +33,18 @@ describe('small print', () => {
 });
 
 describe('phone screens', () => {
+  it('gives the place panel the whole height, over the screen upright and at the left side sideways', () => {
+    expect(source('src/ui/InfoPanel.tsx')).toContain('className="info-panel ');
+    expect(css).toMatch(
+      /@media \(max-width: 639px\), \(max-height: 500px\)\s*\{\s*\.info-panel\s*\{\s*inset:\s*0;\s*z-index:\s*40;[^}]*max-height:\s*none;[^}]*padding-top:\s*env\(safe-area-inset-top\)/,
+    );
+    expect(css).toMatch(/@media \(min-width: 640px\) and \(max-height: 500px\)\s*\{\s*\.info-panel\s*\{\s*right:\s*auto;\s*width:\s*24rem/);
+    // Sideways, the search bar moves out from under the panel.
+    expect(css).toMatch(/\[data-panel\]:has\(> \.info-panel\) \.search-box\s*\{\s*margin-left:\s*24rem/);
+    // The layer list makes way for it on a phone held either way, not only upright.
+    expect(source('src/map/featureInfoClick.ts')).toContain("matchMedia?.('(max-width: 639px), (max-height: 500px)')");
+  });
+
   it('keeps the scale at the right of the bar on a phone held sideways, beside the layer list when it is open', () => {
     const sideways = css.slice(css.indexOf('@media (max-height: 500px) {'));
     expect(sideways).toMatch(/\[data-panel='catalog'\] \.map-status\s*\{\s*left:\s*auto;\s*right:\s*0\.75rem;\s*transform:\s*none/);

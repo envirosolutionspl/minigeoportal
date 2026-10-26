@@ -70,7 +70,8 @@ export function attachFeatureInfo(map: Map, overlays: () => Shown[]): () => void
       targets.map((t) => t.def.id),
     );
     showMarker(coordinate);
-    if (s.panel === 'catalog' && window.innerWidth < 640) s.setPanel('none');
+    // On a phone, upright or sideways, the place panel takes the layer list's room.
+    if (s.panel === 'catalog' && window.matchMedia?.('(max-width: 639px), (max-height: 500px)').matches) s.setPanel('none');
 
     for (const t of targets) {
       fetchFeatureInfo(t.def, t.layer, coordinate, resolution, t.layers, signal)

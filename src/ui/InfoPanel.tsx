@@ -22,7 +22,8 @@ export function InfoPanel() {
   return (
     <section
       aria-label={t('info.title')}
-      className="absolute inset-x-0 bottom-0 z-30 flex max-h-[60dvh] flex-col rounded-t-3xl pb-[var(--safe-bottom)] bg-[var(--surface)] shadow-2xl
+      // On phones .info-panel (index.css) makes it a full-height sheet, as the layer list.
+      className="info-panel absolute inset-x-0 bottom-0 z-30 flex max-h-[60dvh] flex-col rounded-t-3xl pb-[var(--safe-bottom)] bg-[var(--surface)] shadow-2xl
         sm:inset-x-auto sm:top-[4.75rem] sm:bottom-auto sm:left-4 sm:max-h-[calc(100dvh-9rem)] sm:w-[25rem] sm:rounded-2xl"
     >
       <header className="flex items-start gap-3 border-b border-[var(--hover)] px-4 pt-4 pb-3">

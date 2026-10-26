@@ -542,6 +542,39 @@ html[data-printing] #print-sheet {
   }
 }
 
+/* The place panel (InfoPanel.tsx) on a phone takes the whole height, as the layer list does, so
+   long answers read without scrolling a small sheet: over the whole screen held upright, at the
+   left side held sideways (the layer list is at the right). It comes in like the other sheets. */
+@media (max-width: 639px), (max-height: 500px) {
+  .info-panel {
+    inset: 0;
+    z-index: 40;
+    width: auto;
+    max-height: none;
+    border-radius: 0;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: var(--safe-bottom);
+    animation: sheet-up 300ms ease-out;
+  }
+}
+@media (min-width: 640px) and (max-height: 500px) {
+  .info-panel {
+    right: auto;
+    width: 24rem;
+    animation-name: sheet-from-left;
+  }
+  /* The search bar moves out from under it, between the panel and the tools at the right. */
+  [data-panel]:has(> .info-panel) .search-box {
+    margin-left: 24rem;
+    width: calc(100% - 24rem - 3.5rem);
+  }
+}
+@keyframes sheet-from-left {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
 /* Print preview: the printed area, with the map around it dimmed; the map moves under it. */
 .print-preview {
   position: absolute;

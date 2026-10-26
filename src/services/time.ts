@@ -14,8 +14,8 @@ export interface TimeValues {
   /** Request parameter (TIME, DIM_…); none for a series, whose editions are separate services. */
   param?: string;
   values: string[];
-  /** The value drawn: the configured one, the service's default, or the newest. */
-  current: string;
+  /** The value drawn: the configured one, the service's default, or the newest; none while the service's values are not known yet. */
+  current?: string;
 }
 
 const PERIOD = /^P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)?$/;
@@ -71,8 +71,9 @@ export function timeValues(def: Overlay): TimeValues | undefined {
   } else {
     values = Array.isArray(time.values) ? time.values : expandRange(time.values.start, time.values.end, time.values.step);
   }
+  // Without the capabilities (not read yet) the layer draws without the parameter: the service's own default.
   const current = time.default ?? fallback ?? values[values.length - 1];
-  return current === undefined ? undefined : { param: time.param, values, current };
+  return { param: time.param, values, ...(current !== undefined ? { current } : {}) };
 }
 
 /**

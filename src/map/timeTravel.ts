@@ -49,7 +49,7 @@ export function attachTimeTravel(map: Map): () => void {
     layer.setVisible(open);
     if (!open || !spec.param || !(source instanceof ImageWMS)) return;
     const value = s.time ?? spec.current;
-    if (source.getParams()[spec.param] !== value) source.updateParams({ [spec.param]: value });
+    if (value !== undefined && source.getParams()[spec.param] !== value) source.updateParams({ [spec.param]: value });
   };
   apply();
 

@@ -110,7 +110,7 @@ export function createOverlayLayer(def: Overlay): OverlayLayer {
   const image = { url: def.url, projection: PROJECTION, ratio: 1.25, attributions: def.attribution ?? config.map.attribution };
   // A layer that changes over time is drawn at its current value (TIME=2020 and the like).
   const time = timeValues(def);
-  const when = time?.param ? { [time.param]: time.current } : {};
+  const when = time?.param && time.current !== undefined ? { [time.param]: time.current } : {};
   const source =
     def.kind === 'rest'
       ? new ImageArcGISRest({ ...image, params: { LAYERS: 'show:', FORMAT: 'png32', TRANSPARENT: true } })
@@ -137,7 +137,7 @@ function tileSource(def: Overlay): WMTS | XYZ | undefined {
       format: wmts.format ?? 'image/png',
       style: wmts.style ?? 'default',
       tileGrid: gridOf(wmts.matrixSet),
-      ...(time?.param ? { dimensions: { [time.param]: time.current } } : {}),
+      ...(time?.param && time.current !== undefined ? { dimensions: { [time.param]: time.current } } : {}),
     });
   }
   const cache = def.kind === 'rest' ? restMeta(def.id)?.tiles : undefined;

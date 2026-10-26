@@ -60,6 +60,17 @@ describe('timeValues', () => {
     const source = createOverlayLayer(def).getSource() as ImageWMS;
     expect(source.getParams().TIME).toBe('2018');
   });
+
+  it('draws without the parameter while the capabilities are not read yet', () => {
+    const def: Overlay = {
+      ...kieg,
+      id: 'time-unknown',
+      sublayers: [{ name: 'a', title: 'A', default: true }],
+      time: { type: 'dimension', param: 'TIME', values: 'capabilities' },
+    };
+    expect(timeValues(def)).toEqual({ param: 'TIME', values: [] });
+    expect((createOverlayLayer(def).getSource() as ImageWMS).getParams().TIME).toBeUndefined();
+  });
 });
 
 describe('valueAt', () => {

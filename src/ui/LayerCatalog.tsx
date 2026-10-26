@@ -6,7 +6,6 @@ import {
   ExternalLink,
   HelpCircle,
   LoaderCircle,
-  Minus,
   Search,
   TriangleAlert,
   X,
@@ -27,10 +26,11 @@ import { NewTab } from './NewTab';
 
 const STATUS_LABEL = (status: ServiceStatus) => t(`layers.status.${status}`);
 
-/** State of a service by shape, not colour alone (WCAG 1.4.1): a tick, a dash, a warning, a crossed circle. */
-const STATUS_ICON: Record<ServiceStatus, [LucideIcon, string]> = {
-  unknown: [Minus, 'text-[var(--muted)]'],
-  ok: [Check, 'text-[var(--accent)]'],
+/**
+ * Problems of a service by shape and name, not colour alone (WCAG 1.4.1): a crossed circle or a
+ * warning. A service that works, or has not been loaded yet, shows nothing: that is the normal state.
+ */
+const STATUS_ICON: Partial<Record<ServiceStatus, [LucideIcon, string]>> = {
   blocked: [CircleOff, 'text-[var(--muted)]'],
   down: [CircleOff, 'text-[var(--danger)]'],
   degraded: [TriangleAlert, 'text-[var(--danger)]'],
@@ -415,7 +415,9 @@ function Why({ status, detail, checked }: { status: WhyStatus; detail?: string; 
 }
 
 function StatusDot({ status }: { status: ServiceStatus }) {
-  const [Icon, colour] = STATUS_ICON[status];
+  const icon = STATUS_ICON[status];
+  if (!icon) return null;
+  const [Icon, colour] = icon;
   return (
     <Icon className={`h-3.5 w-3.5 shrink-0 ${colour}`} role="img" aria-label={STATUS_LABEL(status)}>
       <title>{STATUS_LABEL(status)}</title>

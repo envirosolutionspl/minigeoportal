@@ -95,8 +95,10 @@ describe('TimeBar', () => {
     expect(slider().getAttribute('aria-valuetext')).toBe('13.05.2001');
     expect(screen.getByRole('status').textContent).toBe('Puść, aby pokazać stan na 13.05.2001.');
     expect(screen.getByText('2001', { selector: 'span[aria-hidden]' })).toBeTruthy();
-    // Let go: one change event.
-    slider().dispatchEvent(new Event('change', { bubbles: true }));
+    // Let go: one change event, which the element itself listens for.
+    act(() => {
+      slider().dispatchEvent(new Event('change', { bubbles: true }));
+    });
     expect(useMapStore.getState().time).toBe('2001-05-13');
     expect(screen.getByRole('status').textContent).toBe('Stan na 13.05.2001, piksel 75 cm');
   });

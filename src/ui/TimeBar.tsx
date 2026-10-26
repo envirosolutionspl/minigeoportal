@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Columns2, LoaderCircle, RotateCw, X, ZoomIn } from 'lucide-react';
 import { config, overlayById } from '@/config/runtime';
 import { t } from '@/i18n';
@@ -54,6 +54,7 @@ function Bar({ id, title }: { id: string; title: string }) {
   const listId = useId();
   /** Where the slider is while it is being dragged; the date is asked for once it is let go. */
   const [dragging, setDragging] = useState<number | null>(null);
+  const slider = useRef<HTMLInputElement>(null);
 
   // Asked once the map has settled; a move of less than 100 m stays on the same photos.
   const place = `${Math.round(center[0] / 100)},${Math.round(center[1] / 100)}`;
@@ -88,16 +89,29 @@ function Bar({ id, title }: { id: string; title: string }) {
   }, [ready, current, time, setTime]);
 
   const choose = (i: number) => setTime(values[Math.min(Math.max(i, 0), values.length - 1)]);
+  const latest = useRef(values);
+  useEffect(() => {
+    latest.current = values;
+  });
   /**
-   * The browser sends input events for every date the thumb passes and a change event when the
-   * slider is let go (and after each key): only then is the service asked.
+   * The browser sends input events for every date the thumb passes (React's onChange) and a
+   * change event when the slider is let go, or after each key. Only then is the service asked.
+   * React drops that change event when the value did not move since the last input event, so
+   * the element itself listens for it.
    */
-  const onSlide = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const i = Number(e.target.value);
-    if (e.nativeEvent.type === 'change') {
+  useEffect(() => {
+    const el = slider.current;
+    if (!el) return;
+    const commit = () => {
       setDragging(null);
-      choose(i);
-    } else setDragging(i);
+      const list = latest.current;
+      setTime(list[Math.min(Math.max(Number(el.value), 0), list.length - 1)]);
+    };
+    el.addEventListener('change', commit);
+    return () => el.removeEventListener('change', commit);
+  }, [setTime]);
+  const onSlide = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.nativeEvent.type !== 'change') setDragging(Number(e.target.value));
   };
   const shown = dragging ?? index;
   const dragged = dragging !== null && values[dragging] !== undefined ? values[dragging] : undefined;
@@ -157,6 +171,7 @@ function Bar({ id, title }: { id: string; title: string }) {
         </button>
         <div className="flex min-w-0 flex-1 flex-col px-1">
           <input
+            ref={slider}
             id={sliderId}
             type="range"
             min={0}

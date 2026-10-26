@@ -52,6 +52,25 @@ export function coordinateBar(coordinate: number[]): string {
   );
 }
 
+/**
+ * The point as it is pasted elsewhere, with decimal points: X, Y in the map's system in the order
+ * its users write them (centimetres), and latitude, longitude in WGS 84 as Google Maps takes them
+ * (about 10 cm). The search box reads both back.
+ */
+export function coordinateTexts(coordinate: number[]): { system: string; wgs84: string } {
+  const [e, n] = coordinate;
+  const [lon, lat] = toLonLat(coordinate, PROJECTION);
+  const [x, y] = NORTH_FIRST ? [n, e] : [e, n];
+  const digits = PROJECTION.getUnits() === 'degrees' ? 6 : 2;
+  return { system: `${x.toFixed(digits)}, ${y.toFixed(digits)}`, wgs84: `${lat.toFixed(6)}, ${lon.toFixed(6)}` };
+}
+
+/** Directions to the point in Google Maps: its app on a phone that has it, its website elsewhere. */
+export function directionsUrl(coordinate: number[]): string {
+  const [lon, lat] = toLonLat(coordinate, PROJECTION);
+  return `https://www.google.com/maps/dir/?api=1&destination=${lat.toFixed(6)}%2C${lon.toFixed(6)}`;
+}
+
 /** Length in metres, as metres below a kilometre. */
 export function formatLength(metres: number): string {
   return metres < 1000 ? `${one.format(metres)} m` : `${two.format(metres / 1000)} km`;

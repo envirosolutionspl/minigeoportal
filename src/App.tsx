@@ -4,6 +4,7 @@ import { TopBar } from './ui/TopBar';
 import { LayerCatalog } from './ui/LayerCatalog';
 import { BasemapSwitcher } from './ui/BasemapSwitcher';
 import { InfoPanel } from './ui/InfoPanel';
+import { MapMenu } from './ui/MapMenu';
 import { MeasureBar } from './ui/MeasureBar';
 import { WelcomeDialog } from './ui/WelcomeDialog';
 import { ReportDialog } from './ui/ReportDialog';
@@ -47,6 +48,7 @@ export default function App() {
       <MapView />
       <BasemapSwitcher />
       <InfoPanel />
+      <MapMenu />
       <MeasureBar />
       <PrintPanel />
       <AuthorCredit />

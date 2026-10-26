@@ -11,6 +11,7 @@ import type { OverlayLayer } from '@/services/layers';
 import { fetchFeatureInfo, queryLayers } from '@/services/featureinfo';
 import { useInfoStore } from '@/state/info';
 import { useMapStore } from '@/state/store';
+import { consumeMapClick } from '@/state/mapMenu';
 
 const MARKER = new Style({
   image: new Circle({ radius: 7, fill: new Fill({ color: HIGHLIGHT }), stroke: new Stroke({ color: '#ffffff', width: 2.5 }) }),
@@ -82,7 +83,9 @@ export function attachFeatureInfo(map: Map, overlays: () => Shown[]): () => void
     }
   };
 
-  map.on('singleclick', onClick);
+  // A click while the context menu is open, or the end of the press that opened it, only closes it.
+  const onSingleClick = (evt: { coordinate: number[] }) => !consumeMapClick() && onClick(evt);
+  map.on('singleclick', onSingleClick);
   // The panel offered to zoom to where a layer answers: once there, the same place is asked about.
   const onMoveEnd = () => {
     const query = useInfoStore.getState().query;
@@ -113,7 +116,7 @@ export function attachFeatureInfo(map: Map, overlays: () => Shown[]): () => void
   });
 
   return () => {
-    map.un('singleclick', onClick);
+    map.un('singleclick', onSingleClick);
     map.un('moveend', onMoveEnd);
     target?.removeEventListener('keydown', onKey);
     unsubscribe();

@@ -17,11 +17,18 @@ brand:
 
 map:
   title: Map
-  keys: Arrow keys move the map, plus and minus change the scale, Enter shows information about the place in the middle of the map and, while measuring, adds a point there.
+  keys: Arrow keys move the map, plus and minus change the scale, Enter shows information about the place in the middle of the map and, while measuring, adds a point there. The menu key or Shift+F10 opens the menu of that place.
   zoomIn: Zoom in
   zoomOut: Zoom out
   scale: Scale
   scaleHint: 'Approximate scale: on screen it depends on the pixel size of the monitor'
+
+mapMenu:
+  title: Menu of the place on the map
+  copySystem: Copy coordinates ({system})
+  copyWgs84: Copy coordinates (WGS 84)
+  directions: Directions to this place in Google Maps
+  copied: 'Copied: {text}'
 
 tools:
   layers: Layers

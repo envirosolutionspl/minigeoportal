@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { fromLonLat } from 'ol/proj';
 import '@/map/projection';
-import { coordinateBar, dateText, formatArea, formatCoordinate, formatLength } from './format';
+import { coordinateBar, coordinateTexts, dateText, directionsUrl, formatArea, formatCoordinate, formatLength } from './format';
+import { parseCoordinates } from '@/search/coordinates';
 
 // Intl in pl-PL groups with a narrow no-break space; compare with plain spaces.
 const plain = (s: string) => s.replace(/\s/g, ' ');
@@ -43,5 +44,25 @@ describe('coordinateBar', () => {
     el.innerHTML = html;
     expect([...el.querySelectorAll('.mp-system')].map((s) => s.querySelector('b')?.textContent)).toEqual(['PL-1992', 'WGS 84']);
     expect(el.textContent).toMatch(/^PL-1992X \d{3} \d{3}Y \d{3} \d{3}WGS 8452,00000° N21,00000° E$/);
+  });
+});
+
+describe('coordinateTexts', () => {
+  it('copies PL-1992 as X (northing), Y with centimetres and WGS 84 as latitude, longitude, which the search reads back', () => {
+    const point = fromLonLat([21.0067, 52.2318], 'EPSG:2180');
+    const { system, wgs84 } = coordinateTexts(point);
+    expect(system).toMatch(/^\d{6}\.\d{2}, \d{6}\.\d{2}$/);
+    expect(wgs84).toBe('52.231800, 21.006700');
+    for (const text of [system, wgs84]) {
+      const hit = parseCoordinates(text)!;
+      expect(hit.center![0]).toBeCloseTo(point[0], 0);
+      expect(hit.center![1]).toBeCloseTo(point[1], 0);
+    }
+  });
+
+  it('leads Google Maps to the same latitude and longitude', () => {
+    expect(directionsUrl(fromLonLat([21.0067, 52.2318], 'EPSG:2180'))).toBe(
+      'https://www.google.com/maps/dir/?api=1&destination=52.231800%2C21.006700',
+    );
   });
 });

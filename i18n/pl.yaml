@@ -18,11 +18,18 @@ brand:
 
 map:
   title: Mapa
-  keys: Strzałki przesuwają mapę, plus i minus zmieniają skalę, Enter pokazuje informacje o miejscu w środku mapy, a podczas pomiaru dodaje tam punkt.
+  keys: Strzałki przesuwają mapę, plus i minus zmieniają skalę, Enter pokazuje informacje o miejscu w środku mapy, a podczas pomiaru dodaje tam punkt. Klawisz menu albo Shift+F10 otwiera menu tego miejsca.
   zoomIn: Przybliż
   zoomOut: Oddal
   scale: Skala
   scaleHint: 'Skala przybliżona: na ekranie zależy od wielkości piksela monitora'
+
+mapMenu:
+  title: Menu miejsca na mapie
+  copySystem: Kopiuj współrzędne ({system})
+  copyWgs84: Kopiuj współrzędne (WGS 84)
+  directions: Prowadź do tego miejsca w Google Maps
+  copied: 'Skopiowano: {text}'
 
 tools:
   layers: Warstwy

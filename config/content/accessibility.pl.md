@@ -13,6 +13,7 @@ Serwis jest częściowo zgodny z WCAG 2.1 AA z powodu niezgodności i wyłącze�
 - Tab przechodzi między elementami, pierwszy z nich przenosi od razu do mapy lub wyszukiwarki.
 - Na mapie: strzałki przesuwają, plus i minus zmieniają skalę, Enter pokazuje informacje o środku mapy. Gdy warstwa odpowiada dopiero w większej skali, panel mówi od jakiej i przybliża mapę jednym przyciskiem.
 - Pomiar: Enter dodaje punkt w środku mapy, drugi Enter w tym samym miejscu kończy pomiar, Esc anuluje rysowany kształt.
+- Menu miejsca (kopiowanie współrzędnych, prowadzenie w Google Maps): klawisz menu albo Shift+F10 na mapie otwiera je dla środka mapy, strzałki wybierają pozycję, Esc zamyka. Myszą otwiera je prawy przycisk, na ekranie dotykowym dłuższe przytrzymanie palca.
 - W wyszukiwarce: strzałki wybierają wynik, Enter pokazuje go na mapie, Esc zamyka listę.
 - Esc zamyka okna, panel informacji i listę warstw.
 

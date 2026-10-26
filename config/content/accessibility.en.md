@@ -13,6 +13,7 @@ The service is partially compliant with WCAG 2.1 AA because of the non-complianc
 - Tab moves between elements; the first ones lead straight to the map or the search.
 - On the map: arrow keys move it, plus and minus change the scale, Enter shows information about the middle of the map. When a layer answers only at a larger scale, the panel says from which one and zooms the map with one button.
 - Measuring: Enter adds a point in the middle of the map, a second Enter at the same place ends the measurement, Esc cancels the shape being drawn.
+- The menu of a place (copying coordinates, directions in Google Maps): the menu key or Shift+F10 on the map opens it for the middle of the map, arrow keys choose, Esc closes. With a mouse the right button opens it, on a touch screen a longer press of the finger.
 - In the search: arrow keys choose a result, Enter shows it on the map, Esc closes the list.
 - Esc closes windows, the place panel and the layer list.
 

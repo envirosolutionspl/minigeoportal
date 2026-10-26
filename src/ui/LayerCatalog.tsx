@@ -143,7 +143,8 @@ export function LayerCatalog() {
             </button>
           )}
         </label>
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        {/* On a phone the filters form one row that scrolls sideways, so the list keeps the screen. */}
+        <div className="mt-2 flex flex-wrap gap-1.5 phone:-mx-4 phone:flex-nowrap phone:overflow-x-auto phone:px-4 phone:[scrollbar-width:none] phone:[&>*]:shrink-0 phone:[&>*]:whitespace-nowrap phone:[&::-webkit-scrollbar]:hidden">
           <button
             type="button"
             onClick={() => setOnlyActive(!onlyActive)}

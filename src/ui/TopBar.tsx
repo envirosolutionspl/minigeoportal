@@ -358,7 +358,7 @@ export function TopBar() {
         items={[
           { label: t('tools.measure'), icon: Ruler, active: measuring, onClick: toggleMeasure },
           { label: t('tools.link'), icon: Link2, onClick: () => void copyLink() },
-          { label: t('tools.print'), icon: Printer, active: tool === 'print', onClick: togglePrint },
+          // No printing on a phone: the printed frame and the paper cannot be set well on its screen.
           { label: config.map.view.homeLabel, icon: Fullscreen, onClick: goHome },
           { label: t('tools.about'), icon: Info, onClick: () => openWelcome(true) },
         ]}

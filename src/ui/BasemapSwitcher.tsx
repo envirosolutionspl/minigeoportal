@@ -30,7 +30,8 @@ function useHold(onHold: () => void) {
   return {
     handlers: {
       onPointerDown: (e: React.PointerEvent) => {
-        if (e.button !== 0) return;
+        // Phones and tablets only: with a mouse the list opens on hover.
+        if (e.button !== 0 || e.pointerType === 'mouse') return;
         fired.current = false;
         start.current = [e.clientX, e.clientY];
         timer.current = window.setTimeout(() => {

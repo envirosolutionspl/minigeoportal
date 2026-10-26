@@ -13,8 +13,9 @@ export interface MoreItem {
 }
 
 /**
- * The tools phones keep out of the map, as in Google Maps or swisstopo: a sheet from the bottom
- * with every tool named in words, the display aids folded in, and the author's credit at its foot.
+ * The tools phones keep out of the map, as in Google Maps or swisstopo: a sheet with every tool
+ * named in words, the display aids folded in and the author's credit at its foot. It opens like
+ * the layer list: over the whole screen of a phone held upright, at the right side held sideways.
  */
 export function MoreSheet({ open, onClose, items }: { open: boolean; onClose: () => void; items: MoreItem[] }) {
   const { ref, onBackdropClick } = useModalDialog(open, onClose);
@@ -31,9 +32,9 @@ export function MoreSheet({ open, onClose, items }: { open: boolean; onClose: ()
       onClose={onClose}
       onClick={onBackdropClick}
       aria-labelledby={titleId}
-      className="pointer-events-auto mx-auto mt-auto mb-0 w-full max-w-md rounded-t-3xl bg-[var(--surface)] p-0 pb-[var(--safe-bottom)] text-[var(--text)] shadow-2xl outline-none backdrop:bg-[#253326]/30"
+      className="more-sheet pointer-events-auto m-0 h-dvh max-h-none w-full max-w-none bg-[var(--surface)] p-0 pt-[env(safe-area-inset-top)] pb-[var(--safe-bottom)] text-[var(--text)] shadow-2xl outline-none backdrop:bg-[#253326]/30 sm:ml-auto sm:w-96"
     >
-      <div className="max-h-[85dvh] overflow-y-auto px-2 pt-3 pb-2">
+      <div className="h-full overflow-y-auto px-2 pt-3 pb-2">
         <header className="flex items-center justify-between px-3 pb-1">
           <h2 id={titleId} className="font-semibold">
             {t('tools.more')}

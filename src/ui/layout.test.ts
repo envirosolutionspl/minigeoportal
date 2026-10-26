@@ -70,6 +70,16 @@ describe('phone screens', () => {
     expect(aside).not.toMatch(/h-\[\d+dvh\]/);
   });
 
+  it('puts the layer filters in one row that scrolls sideways on a phone', () => {
+    expect(source('src/ui/LayerCatalog.tsx')).toMatch(/phone:flex-nowrap phone:overflow-x-auto/);
+  });
+
+  it('opens the More sheet like the layer list: the whole screen upright, the right side sideways', () => {
+    const sheet = source('src/ui/MoreSheet.tsx');
+    expect(sheet).toMatch(/more-sheet [^"]* m-0 h-dvh max-h-none w-full max-w-none [^"]*sm:ml-auto sm:w-96/);
+    expect(css).toMatch(/\.more-sheet\[open\]\s*\{\s*animation: sheet-up/);
+  });
+
   it('draws the open search above the tool buttons', () => {
     expect(source('src/ui/TopBar.tsx')).toMatch(/search-box[^"]*\bz-10\b/);
   });

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { TopBar } from './TopBar';
 import { useMapStore } from '@/state/store';
 import { clearUnitNames } from '@/modules/gugik/units';
@@ -215,6 +215,10 @@ describe('tools on phones', () => {
     expect(more.parentElement?.className).toContain('phone:block');
     fireEvent.click(more);
     expect(more.getAttribute('aria-expanded')).toBe('true');
+    // No printing from a phone: the sheet lists every other tool.
+    const sheet = within(screen.getByRole('dialog'));
+    expect(sheet.queryByRole('button', { name: 'Drukuj mapę' })).toBeNull();
+    expect(sheet.getByRole('button', { name: 'Pomiar odległości i powierzchni' })).toBeTruthy();
     // The top bar lets taps through to the map; the sheet inside it must take them back.
     expect(container.querySelector('.pointer-events-none')?.contains(screen.getByRole('dialog'))).toBe(true);
     expect(screen.getByRole('dialog').className).toContain('pointer-events-auto');

@@ -65,6 +65,13 @@ describe('the wheel of base maps', () => {
     expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['Zdjęcia', 'Mapa', 'Teren', 'Prosta', 'Skany', 'Brak']);
   });
 
+  it('is for fingers only: a mouse held down does nothing, it has the list on hover', () => {
+    render(<BasemapSwitcher />);
+    fireEvent.pointerDown(thumb(), { button: 0, pointerType: 'mouse', clientX: 10, clientY: 10 });
+    act(() => vi.advanceTimersByTime(800));
+    expect(wheel()).toBeNull();
+  });
+
   it('is not a short tap or a finger panning the map', () => {
     render(<BasemapSwitcher />);
     hold(200);

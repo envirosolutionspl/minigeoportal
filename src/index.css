@@ -481,6 +481,27 @@ html[data-printing] #print-sheet {
   }
 }
 
+/* The "More" sheet (MoreSheet.tsx) comes in like the layer list: up from the bottom on a phone held
+   upright, in from the right held sideways (none with reduced motion, see above). */
+.more-sheet[open] {
+  animation: sheet-up 300ms ease-out;
+}
+@media (min-width: 640px) {
+  .more-sheet[open] {
+    animation-name: sheet-from-right;
+  }
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes sheet-from-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+
 /* Print preview: the printed area, with the map around it dimmed; the map moves under it. */
 .print-preview {
   position: absolute;

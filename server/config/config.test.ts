@@ -69,6 +69,7 @@ describe('default configuration', () => {
       ortho: { service: 'orto', history: 'orto-archiwalna' },
       topo: { history: 'mapy-dawne' },
       parcelReport: true,
+      elevation: true,
     });
   });
 });

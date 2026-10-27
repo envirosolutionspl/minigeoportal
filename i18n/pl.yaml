@@ -139,6 +139,12 @@ measure:
   hint: Klikaj kolejne punkty na mapie, dwuklik kończy pomiar. Z klawiatury Enter dodaje punkt w środku mapy, drugi Enter w tym miejscu kończy. Esc anuluje rysowany kształt.
   result: 'Wynik: {result}'
   perimeter: obwód {length}
+  profile: Profil terenu
+  profileLoading: Pobieram wysokości terenu…
+  profileError: Nie udało się pobrać wysokości terenu.
+  profileNone: Brak wysokości terenu wzdłuż tej linii.
+  profilePartial: Na części linii model terenu nie ma wysokości (np. za granicą).
+  profileSummary: 'Wysokość od {min} do {max} n.p.m. W górę {ascent}, w dół {descent}. Największe nachylenie {slope}.'
 
 time:
   tool: Podróż w czasie

@@ -193,6 +193,8 @@ export interface ClientConfig {
       /** `topo.history`: the overlay (a series) of the old topographic maps, whose dates at a point the index of those maps gives. */
       topo: { history: string } | false;
       parcelReport: boolean;
+      /** Heights of the terrain (the elevation model) in the place panel and along a measured line. */
+      elevation: boolean;
     };
   };
 }

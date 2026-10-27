@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Camera, Download, ExternalLink, FileText, History } from 'lucide-react';
 import { config } from '@/config/runtime';
-import { dateText } from '@/map/format';
+import { dateText, heightText } from '@/map/format';
 import { zoomForScale } from '@/map/projection';
 import { useInfoStore } from '@/state/info';
 import { useMapStore } from '@/state/store';
 import { locale, t } from '@/i18n';
 import { parcelReportUrl } from './parcelReport';
 import { orthoAt, pixelText, type OrthoEdition, type OrthoInfo } from './ortho';
+import { heightsAt } from './elevation';
 
 /** The layer of the time view that shows the archive of these photos (app.yaml: ortho.history), if it is one. */
 const HISTORY = config.modules.gugik?.ortho ? config.modules.gugik.ortho.history : undefined;
@@ -37,6 +38,20 @@ export function ParcelReportLink({ coordinate }: { coordinate: [number, number] 
       <ExternalLink className="h-3 w-3" aria-hidden="true" />
     </a>
   );
+}
+
+/** The height of the terrain at the clicked point; nothing until it is known, or where the model has none. */
+export function Elevation({ coordinate }: { coordinate: [number, number] }) {
+  const [height, setHeight] = useState<number | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    setHeight(null);
+    heightsAt([coordinate], controller.signal)
+      .then(([h]) => setHeight(h))
+      .catch(() => {});
+    return () => controller.abort();
+  }, [coordinate]);
+  return height === null ? null : <p className="text-xs text-[var(--muted)]">{t('info.height', { height: heightText(height) })}</p>;
 }
 
 /** The date of the photo matters only when the photos are on screen: a base map drawn by their tile service. */

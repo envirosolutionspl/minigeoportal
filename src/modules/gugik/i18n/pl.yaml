@@ -59,6 +59,7 @@ info:
     many: '{count} zdjęć od {year}'
     other: '{count} zdjęcia od {year}'
   seeChanges: Zobacz zmiany
+  height: 'Wysokość terenu: {height} n.p.m.'
 
 topo:
   sheet: 'arkusz 1:{scale} w układzie {system}'

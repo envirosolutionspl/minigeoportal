@@ -130,12 +130,14 @@ describe('size', () => {
 });
 
 describe('connections', () => {
-  it('opens the first map servers early and allows the GUGiK search hosts only with that search', () => {
+  it('opens the first map servers early and allows the GUGiK search hosts only with that search, the elevation model with its part', () => {
     const page = renderPage(TEMPLATE, defaults);
     expect(page).toContain('<link rel="preconnect" href="https://mapy.geoportal.gov.pl" crossorigin />');
     expect(page).toContain('<link rel="preconnect" href="https://integracja.gugik.gov.pl" />');
     expect(connectSources(defaults)).toEqual(["'self'", ...GUGIK_SEARCH_HOSTS]);
-    expect(connectSources({ ...defaults, search: { provider: 'none', parcel: false } })).toEqual(["'self'"]);
+    const noSearch = { ...defaults, search: { provider: 'none' as const, parcel: false } };
+    expect(connectSources(noSearch)).toEqual(["'self'", 'https://services.gugik.gov.pl']);
+    expect(connectSources({ ...noSearch, modules: { gugik: { ...defaults.modules.gugik!, elevation: false } } })).toEqual(["'self'"]);
   });
 
   it('lists every host the GUGiK search reaches', () => {

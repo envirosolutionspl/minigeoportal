@@ -323,6 +323,7 @@ exports[`default configuration > stays what the app was built with (any change s
     "gugik": {
       "catalog": true,
       "drawOrder": true,
+      "elevation": true,
       "ortho": {
         "history": "orto-archiwalna",
         "service": "orto",

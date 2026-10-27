@@ -84,6 +84,13 @@ export function formatLength(metres: number): string {
   return metres < 1000 ? `${one.format(metres)} m` : `${two.format(metres / 1000)} km`;
 }
 
+const percent = new Intl.NumberFormat(config.locale, { style: 'percent', maximumFractionDigits: 0 });
+/** A fraction as a whole percentage: 0.094 is 9%. */
+export const percentText = (fraction: number) => percent.format(fraction);
+
+/** Height in metres, to the decimetre: 113,1 m. */
+export const heightText = (metres: number) => `${one.format(metres)} m`;
+
 /** Area in square metres: m² for small areas, hectares (with m²) for parcels, km² for large ones. */
 export function formatArea(m2: number): string {
   if (m2 < 10000) return `${int.format(m2)} m²`;

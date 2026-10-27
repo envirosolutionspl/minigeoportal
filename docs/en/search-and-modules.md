@@ -31,6 +31,7 @@ modules:
     ortho: { service: orto, history: orto-archiwalna } # the date of the photo at a clicked place, and the photo archive
     topo: { history: mapy-dawne } # the years of the topographic map sheets in the time view
     parcelReport: true # a link to the parcel report of geoportal.gov.pl
+    elevation: true # the height of the terrain in the place panel and the profile of a measured line
 ```
 
 It works in PL-1992 only: the configuration is refused when the module is enabled with another `projection.code`.
@@ -40,6 +41,7 @@ It works in PL-1992 only: the configuration is refused when the module is enable
 - **ortho**: the date of the photo under the orthophoto map, with a link to download its sheet. `service` is the tile service of `map.yaml` that shows the photos: the date appears while a base map drawn by it is on screen (`orto` by default; `false` turns the part off). `history` is the layer of `layers.yaml` that shows the archive of these photos (a `time` block): when `map.yaml` names it in `timeTravel`, the time view offers only the dates the photo index has photos of at the middle of the map, and the place panel counts the archived photos and leads into the view.
 - **topo**: `history` is the layer of `layers.yaml` (a series of editions) with the scans of the old topographic maps. When `map.yaml` names it in `timeTravel`, the time view asks the index of topographic maps for the sheets at the middle of the map and offers their years (the field "cartographic currency": the year the map's content is current for, neither the date of the scan nor the name of the system), each year drawing its own sheets. Without this part the slider holds the editions of the series from `layers.yaml` (systems of coordinates, which are not years). `false` turns the part off.
 - **parcelReport**: a link in the place panel to the parcel report of geoportal.gov.pl.
+- **elevation**: the height of the terrain from the elevation model of GUGiK (NMT, a 1 m grid, the service `services.gugik.gov.pl/nmt`), which the browser asks directly. The place panel gives the height of the clicked point under its coordinates, and after a distance measurement the measurement bar has a "Terrain profile" button: a chart of the height along the last measured line (up to 101 points, no closer than a metre) and a summary (the range of heights, the total climb and descent, the steepest slope between neighbouring points). Where the model has no data (abroad, at sea) there is no line, and the profile leaves such points out.
 
 The GUGiK search (`search.provider: gugik`) and the parcel search (`search.parcel`) need the module too. Without it the server has none of its routes and the page connects to no GUGiK host directly.
 
@@ -47,6 +49,6 @@ A module lives in its own directories: `src/modules/gugik/` (the app side, with 
 
 ### Texts of the module
 
-The module brings its texts in `src/modules/gugik/i18n/pl.yaml` and `en.yaml`, added to the app's own only when the module is enabled: `search.gugik.*` and `search.parcel*` (the GUGiK search and the parcel button), `parcel.*` (the parcel search), `layers.catalog*` (loading the geoportal.gov.pl list), `info.parcelReport*` (the parcel report link) and `info.photo*`, `info.pixel`, `info.downloadSheet` (the date of the aerial photo). A deployment changes them in its `i18n/<lang>.yaml` like any other text, and a new language translates them there (see [Texts and languages](texts-and-languages.md#adding-a-language-step-by-step)).
+The module brings its texts in `src/modules/gugik/i18n/pl.yaml` and `en.yaml`, added to the app's own only when the module is enabled: `search.gugik.*` and `search.parcel*` (the GUGiK search and the parcel button), `parcel.*` (the parcel search), `layers.catalog*` (loading the geoportal.gov.pl list), `info.parcelReport*` (the parcel report link), `info.height` (the height of the terrain) and `info.photo*`, `info.pixel`, `info.downloadSheet` (the date of the aerial photo). A deployment changes them in its `i18n/<lang>.yaml` like any other text, and a new language translates them there (see [Texts and languages](texts-and-languages.md#adding-a-language-step-by-step)).
 
 The app's own texts name no GUGiK service; the default configuration words some of them for its data in `config/i18n/` (`layers.searchPlaceholder`, `layers.why.token`, `layers.why.refused`, `info.noLayers`, `report.intro`).

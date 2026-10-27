@@ -119,6 +119,8 @@ export const appSchema = z.strictObject({
            */
           topo: z.union([z.literal(false), z.strictObject({ history: id })]).default(false),
           parcelReport: z.boolean().default(true),
+          /** Heights of the terrain from the elevation model of GUGiK: in the place panel and along a measured line. */
+          elevation: z.boolean().default(true),
         })
         .optional(),
     })

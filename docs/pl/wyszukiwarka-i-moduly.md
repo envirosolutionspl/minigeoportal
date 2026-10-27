@@ -31,6 +31,7 @@ modules:
     ortho: { service: orto, history: orto-archiwalna } # data zdjęcia w klikniętym miejscu i archiwum zdjęć
     topo: { history: mapy-dawne } # lata arkuszy map topograficznych w podróży w czasie
     parcelReport: true # link do raportu o działce w geoportal.gov.pl
+    elevation: true # wysokość terenu w panelu miejsca i profil zmierzonej linii
 ```
 
 Działa tylko w PL-1992: konfiguracja jest odrzucana, gdy moduł jest włączony przy innym `projection.code`.
@@ -40,6 +41,7 @@ Działa tylko w PL-1992: konfiguracja jest odrzucana, gdy moduł jest włączony
 - **ortho**: data zdjęcia pod ortofotomapą i link do pobrania arkusza. `service` to usługa kafli z `map.yaml`, która pokazuje zdjęcia: data pojawia się, gdy na ekranie jest rysowany przez nią podkład (domyślnie `orto`; `false` wyłącza tę część). `history` to warstwa z `layers.yaml` pokazująca archiwum tych zdjęć (blok `time`): gdy `map.yaml` wskazuje ją w `timeTravel`, podróż w czasie oferuje tylko daty, z których skorowidz zna zdjęcia w środku mapy, a panel miejsca liczy zdjęcia z archiwum i prowadzi do podróży.
 - **topo**: `history` to warstwa z `layers.yaml` (seria edycji) ze skanami dawnych map topograficznych. Gdy `map.yaml` wskazuje ją w `timeTravel`, podróż w czasie pyta skorowidz map topograficznych o arkusze w środku mapy i oferuje ich lata (pole „aktualność kartograficzna”: rok, na który aktualna jest treść mapy, a nie data skanu ani nazwa układu), a każdy rok rysuje własne arkusze. Bez tej części suwak ma edycje serii z `layers.yaml` (układy współrzędnych, które nie są datami). `false` wyłącza tę część.
 - **parcelReport**: link w panelu informacji o miejscu do raportu o działce w geoportal.gov.pl.
+- **elevation**: wysokość terenu z numerycznego modelu terenu GUGiK (NMT, siatka 1 m, usługa `services.gugik.gov.pl/nmt`), o którą przeglądarka pyta bezpośrednio. Panel miejsca podaje wysokość klikniętego punktu pod współrzędnymi, a pasek pomiaru po zmierzeniu odległości ma przycisk „Profil terenu”: wykres wysokości wzdłuż ostatniej zmierzonej linii (do 101 punktów, nie gęściej niż co metr) i podsumowanie (zakres wysokości, suma podejść i zejść, największe nachylenie między sąsiednimi punktami). Tam, gdzie model nie ma danych (za granicą, na morzu), wiersza nie ma, a profil pomija takie punkty.
 
 Wyszukiwarka GUGiK (`search.provider: gugik`) i wyszukiwarka działek (`search.parcel`) też wymagają modułu. Bez niego serwer nie ma jego tras, a strona nie łączy się bezpośrednio z żadnym serwerem GUGiK.
 
@@ -47,6 +49,6 @@ Moduł ma własne katalogi: `src/modules/gugik/` (strona aplikacji, z napisami) 
 
 ### Napisy modułu
 
-Moduł ma swoje napisy w `src/modules/gugik/i18n/pl.yaml` i `en.yaml`, dodawane do napisów aplikacji tylko przy włączonym module: `search.gugik.*` i `search.parcel*` (wyszukiwarka GUGiK i przycisk działki), `parcel.*` (wyszukiwanie działki), `layers.catalog*` (wczytywanie listy geoportal.gov.pl), `info.parcelReport*` (link do raportu o działce) oraz `info.photo*`, `info.pixel`, `info.downloadSheet` (data zdjęcia lotniczego). Wdrożenie zmienia je w swoim `i18n/<język>.yaml` jak każdy inny napis, a nowy język tłumaczy je tam (zob. [Treści i języki](tresci-i-jezyki.md#dodawanie-języka-krok-po-kroku)).
+Moduł ma swoje napisy w `src/modules/gugik/i18n/pl.yaml` i `en.yaml`, dodawane do napisów aplikacji tylko przy włączonym module: `search.gugik.*` i `search.parcel*` (wyszukiwarka GUGiK i przycisk działki), `parcel.*` (wyszukiwanie działki), `layers.catalog*` (wczytywanie listy geoportal.gov.pl), `info.parcelReport*` (link do raportu o działce), `info.height` (wysokość terenu) oraz `info.photo*`, `info.pixel`, `info.downloadSheet` (data zdjęcia lotniczego). Wdrożenie zmienia je w swoim `i18n/<język>.yaml` jak każdy inny napis, a nowy język tłumaczy je tam (zob. [Treści i języki](tresci-i-jezyki.md#dodawanie-języka-krok-po-kroku)).
 
 Napisy samej aplikacji nie wymieniają żadnej usługi GUGiK; domyślna konfiguracja formułuje część z nich pod swoje dane w `config/i18n/` (`layers.searchPlaceholder`, `layers.why.token`, `layers.why.refused`, `info.noLayers`, `report.intro`).

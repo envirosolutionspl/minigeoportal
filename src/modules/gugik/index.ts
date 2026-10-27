@@ -24,10 +24,18 @@ export const parcelTool = config.search.parcel
   : undefined;
 
 // The place panel's parts start loading with the app, so they are there by the first click.
-const info = gugik && (gugik.parcelReport || gugik.ortho) ? import('./InfoParts') : undefined;
+const info = gugik && (gugik.parcelReport || gugik.ortho || gugik.elevation) ? import('./InfoParts') : undefined;
 
-/** The parcel report link under the coordinates of the place panel (parcelReport). */
-export const infoHeader = info && gugik?.parcelReport ? [lazy(() => info.then((m) => ({ default: m.ParcelReportLink })))] : [];
+/** Under the coordinates of the place panel: the height of the terrain (elevation) and the parcel report link (parcelReport). */
+export const infoHeader = [
+  ...(info && gugik?.elevation ? [lazy(() => info.then((m) => ({ default: m.Elevation })))] : []),
+  ...(info && gugik?.parcelReport ? [lazy(() => info.then((m) => ({ default: m.ParcelReportLink })))] : []),
+];
+
+/** Heights of the terrain at points of the map, from the elevation model (elevation). */
+export const heightsAt = gugik?.elevation
+  ? (points: [number, number][], signal: AbortSignal) => import('./elevation').then((m) => m.heightsAt(points, signal))
+  : undefined;
 
 /** The date of the aerial photo above the footer of the place panel (ortho). */
 export const infoFooter = info && gugik?.ortho ? [lazy(() => info.then((m) => ({ default: m.OrthoPhoto })))] : [];

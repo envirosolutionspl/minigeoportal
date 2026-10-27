@@ -49,6 +49,12 @@ export type TimeOptionsAt = (coordinate: [number, number], signal: AbortSignal) 
  */
 export const timeOptions: (layer: string) => TimeOptionsAt | undefined = gugik.timeOptions;
 
+/** Heights of the terrain at points of the map, in metres; null where the model has none. */
+export type HeightsAt = (points: [number, number][], signal: AbortSignal) => Promise<(number | null)[]>;
+
+/** Heights of the terrain from a module that knows them (the elevation model of the gugik module): the place panel, the profile of a measured line. */
+export const heightsAt: HeightsAt | undefined = gugik.heightsAt;
+
 /** Under the coordinates in the header of the place panel. */
 export const infoHeader: InfoPart[] = [...gugik.infoHeader];
 

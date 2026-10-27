@@ -81,6 +81,8 @@ export function attachMeasure(map: Map): () => void {
       const text = measure(e.feature.getGeometry()!);
       if (current) current.element.classList.add('measure-label-done');
       if (text) useMapStore.getState().setMeasureResult(text);
+      const geometry = e.feature.getGeometry();
+      if (geometry instanceof LineString) useMapStore.getState().setMeasureLine(geometry.getCoordinates() as [number, number][]);
       current = null;
     });
     draw.on('drawabort', () => {

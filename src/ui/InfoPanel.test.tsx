@@ -45,11 +45,26 @@ describe('InfoPanel', () => {
     );
 
     // On a drawn map the line goes and the backend is not asked again.
-    const asked = calls.length;
+    const photoCalls = () => calls.filter((u) => u.includes('/api/orto')).length;
+    const asked = photoCalls();
     act(() => useMapStore.setState({ base: 'mapa' }));
     expect(screen.queryByText('27.04.2025')).toBeNull();
     act(() => useInfoStore.getState().start([656849, 482000], []));
-    expect(calls.length).toBe(asked);
+    expect(photoCalls()).toBe(asked);
+  });
+
+  it('says the height of the terrain at the point, northing first to the elevation model, and nothing where it has none', async () => {
+    useMapStore.setState({ base: 'mapa' });
+    const { calls } = stubFetch([['services.gugik.gov.pl/nmt', '113.1']]);
+    useInfoStore.getState().start(point, []);
+    render(<InfoPanel />);
+    expect(await screen.findByText('Wysokość terenu: 113,1 m n.p.m.')).toBeTruthy();
+    const asked = calls.find((u) => u.includes('GetHByXY'))!;
+    expect(asked).toContain(`x=${point[1].toFixed(2)}&y=${point[0].toFixed(2)}`);
+    stubFetch([['services.gugik.gov.pl/nmt', '0']]);
+    act(() => useInfoStore.getState().start([656849, 482000], []));
+    await act(async () => {});
+    expect(screen.queryByText(/Wysokość terenu/)).toBeNull();
   });
 
   it('counts the archived photos and leads into the time view at the place; in the view it names the photo as of the date', async () => {

@@ -16,7 +16,7 @@ import { pointCache } from './pointCache.ts';
 /** Index answers kept an hour per point: the photos and sheets of a place change a few times a year. */
 const INDEX_TTL_MS = 3600 * 1000;
 const INDEX_POINTS = 2000;
-import { GUGIK_SEARCH_HOSTS } from './searchHosts.ts';
+import { ELEVATION_HOST, GUGIK_SEARCH_HOSTS } from './searchHosts.ts';
 import { CATALOG_TOPICS } from './topics.ts';
 
 /**
@@ -70,9 +70,13 @@ export function validate(app: AppFile, map?: MapFile, layers?: LayersFile): Prob
   return problems;
 }
 
-/** Hosts the page asks directly: the GUGiK search services, with that search or the parcel search. */
-export const connectSources = (client: ClientConfig) =>
-  client.search.provider === 'gugik' || client.search.parcel ? GUGIK_SEARCH_HOSTS : [];
+/** Hosts the page asks directly: the GUGiK search services, with that search or the parcel search; the elevation model. */
+export const connectSources = (client: ClientConfig) => [
+  ...new Set([
+    ...(client.search.provider === 'gugik' || client.search.parcel ? GUGIK_SEARCH_HOSTS : []),
+    ...(client.modules.gugik?.elevation ? [ELEVATION_HOST] : []),
+  ]),
+];
 
 /** The drawing order of geoportal.gov.pl for the configured layers (modules.gugik.drawOrder). */
 export const drawOrder = (client: ClientConfig): Promise<string[] | undefined> =>

@@ -54,6 +54,8 @@ interface MapStore {
   measureClears: number;
   /** Text of the last finished measurement, announced to screen readers. */
   measureResult: string;
+  /** The last line measured, in map coordinates, for its profile of the terrain; null after clearing. */
+  measureLine: [number, number][] | null;
   /** Print in progress; the map takes it up and clears it when the print dialog closes. */
   printRequest: PrintOptions | null;
   /** Sheet chosen in the print panel; the map outlines the area it covers. */
@@ -94,6 +96,7 @@ interface MapStore {
   setTool(tool: Tool): void;
   clearMeasurements(): void;
   setMeasureResult(text: string): void;
+  setMeasureLine(line: [number, number][] | null): void;
   setPrintSettings(settings: Partial<PrintOptions>): void;
   requestPrint(options: PrintOptions): void;
   printDone(): void;
@@ -143,6 +146,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
   tool: timeAtStart ? 'time' : 'none',
   measureClears: 0,
   measureResult: '',
+  measureLine: null,
   printRequest: null,
   printFromTime: false,
   printSettings: { paper: 'A4', orientation: 'landscape', scale: 10000, title: '' },
@@ -199,8 +203,9 @@ export const useMapStore = create<MapStore>((set, get) => ({
         return { tool, base: s.baseBeforeTime, baseBeforeTime: undefined, timeStatus: 'idle', printFromTime: false };
       return { tool, printFromTime: false, ...(leaving ? { timeStatus: 'idle' as const } : {}) };
     }),
-  clearMeasurements: () => set((s) => ({ measureClears: s.measureClears + 1, measureResult: '' })),
+  clearMeasurements: () => set((s) => ({ measureClears: s.measureClears + 1, measureResult: '', measureLine: null })),
   setMeasureResult: (measureResult) => set({ measureResult }),
+  setMeasureLine: (measureLine) => set({ measureLine }),
   setPrintSettings: (settings) => set((s) => ({ printSettings: { ...s.printSettings, ...settings } })),
   requestPrint: (options) => set({ printRequest: { ...options } }),
   printDone: () => set({ printRequest: null }),

@@ -10,6 +10,7 @@ import {
   Landmark,
   Layers,
   Link2,
+  LoaderCircle,
   LocateFixed,
   Mountain,
   Printer,
@@ -224,7 +225,12 @@ export function TopBar() {
             </span>
           </button>
           <span className="h-6 w-px shrink-0 bg-[var(--hover)]" aria-hidden="true" />
-          <Search className="h-5 w-5 shrink-0 text-[var(--muted)]" aria-hidden="true" />
+          {/* While a service is asked, the magnifier turns: a slow answer is not taken for none. */}
+          {busy ? (
+            <LoaderCircle className="h-5 w-5 shrink-0 animate-spin text-[var(--accent)]" aria-hidden="true" />
+          ) : (
+            <Search className="h-5 w-5 shrink-0 text-[var(--muted)]" aria-hidden="true" />
+          )}
           <input
             id="search"
             type="search"
@@ -334,7 +340,7 @@ export function TopBar() {
           )}
         </ul>
         <p role="status" className="sr-only">
-          {toolOpen ? '' : announce}
+          {toolOpen ? '' : busy ? t('search.busy') : announce}
         </p>
       </div>
 

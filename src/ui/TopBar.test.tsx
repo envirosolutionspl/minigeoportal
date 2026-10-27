@@ -137,6 +137,24 @@ describe('map tools', () => {
   });
 });
 
+describe('a slow search', () => {
+  it('shows and says that it is searching until the answer comes', async () => {
+    const { searchProvider } = await import('@/search');
+    let answer: (hits: never[]) => void = () => {};
+    const spy = vi.spyOn(searchProvider, 'search').mockReturnValue(new Promise((r) => (answer = r)));
+    const { container } = render(<TopBar />);
+    const spinner = () => container.querySelector('.search-box .animate-spin');
+    expect(spinner()).toBeNull();
+    await type('Kraków');
+    expect(spinner()).not.toBeNull();
+    expect(screen.getAllByRole('status').some((s) => s.textContent === 'Szukam…')).toBe(true);
+    await act(async () => answer([]));
+    expect(spinner()).toBeNull();
+    expect(screen.getAllByRole('status').some((s) => s.textContent === 'Brak wyników.')).toBe(true);
+    spy.mockRestore();
+  });
+});
+
 describe('a service that did not answer', () => {
   it('is named under the results, also when nothing was found', async () => {
     const { searchProvider } = await import('@/search');

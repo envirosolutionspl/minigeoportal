@@ -1,10 +1,14 @@
 /**
  * Heights of the terrain from the elevation model of GUGiK (NMT, a 1 m grid), asked from the
  * browser (the service sends CORS headers). It takes PL-1992 coordinates northing first; for a
- * point it has no data for (abroad, at sea) and when it fails it answers 0, which is no height.
+ * point it has no data for (abroad, at sea) it answers 0, which is no height. Now and then it
+ * answers 0 for every point of a request that has data a moment later, so such an answer is
+ * asked again before it counts.
  */
 
 const NMT = 'https://services.gugik.gov.pl/nmt/';
+/** Requests for one set of points while every answer is 0. */
+const ATTEMPTS = 3;
 
 /** A height from the service's text; 0 and anything not a number is none. */
 const height = (text: string | undefined): number | null => {
@@ -15,9 +19,7 @@ const height = (text: string | undefined): number | null => {
 /** "N E" of a map point (east, north), to the centimetre. */
 const northFirst = ([east, north]: [number, number]) => `${north.toFixed(2)} ${east.toFixed(2)}`;
 
-/** Heights in metres above sea level at points of the map, in their order; null where the model has none. */
-export async function heightsAt(points: [number, number][], signal: AbortSignal): Promise<(number | null)[]> {
-  if (points.length === 0) return [];
+async function ask(points: [number, number][], signal: AbortSignal): Promise<(number | null)[]> {
   if (points.length === 1) {
     const [x, y] = northFirst(points[0]).split(' ');
     const res = await fetch(`${NMT}?request=GetHByXY&x=${x}&y=${y}`, { signal });
@@ -30,4 +32,12 @@ export async function heightsAt(points: [number, number][], signal: AbortSignal)
   // "N E h,N E h,…" in the order asked.
   const answers = (await res.text()).trim().split(',');
   return points.map((_, i) => height(answers[i]?.trim().split(/\s+/)[2]));
+}
+
+/** Heights in metres above sea level at points of the map, in their order; null where the model has none. */
+export async function heightsAt(points: [number, number][], signal: AbortSignal): Promise<(number | null)[]> {
+  if (points.length === 0) return [];
+  let heights = await ask(points, signal);
+  for (let i = 1; i < ATTEMPTS && heights.every((h) => h === null); i++) heights = await ask(points, signal);
+  return heights;
 }

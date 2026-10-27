@@ -25,6 +25,20 @@ describe('heightsAt', () => {
     expect(decodeURIComponent(calls[0])).toContain('list=485686.00 637714.00,485700.00 637800.00,485800.00 637900.00');
   });
 
+  it('asks again while every answer is 0, which the service now and then gives where it has data', async () => {
+    const { fetchMock } = stubFetch([['GetHByPointList', '1 2 0.0,3 4 0.0']]);
+    fetchMock.mockResolvedValueOnce(new Response('1 2 0.0,3 4 0.0')).mockResolvedValueOnce(new Response('1 2 1428.3,3 4 1435.9'));
+    const points: [number, number][] = [
+      [2, 1],
+      [4, 3],
+    ];
+    expect(await heightsAt(points, signal)).toEqual([1428.3, 1435.9]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    // Where the model has no data at all, three answers of 0 are none.
+    expect(await heightsAt(points, signal)).toEqual([null, null]);
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+  });
+
   it('fails on an error of the service and asks nothing for no points', async () => {
     stubFetch([['nmt', 'down', { status: 503 }]]);
     await expect(heightsAt([[1, 2]], signal)).rejects.toThrow('HTTP 503');

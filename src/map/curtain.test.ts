@@ -1,38 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import Map from 'ol/Map';
-import View from 'ol/View';
+import type Map from 'ol/Map';
 import ImageLayer from 'ol/layer/Image';
 import ImageWMS from 'ol/source/ImageWMS';
 import RenderEvent from 'ol/render/Event';
-import { PROJECTION } from './projection';
 import { attachCurtain } from './curtain';
 import { consumeMapClick } from '@/state/mapMenu';
 import { useMapStore } from '@/state/store';
+import { testMap } from '@/test/helpers';
 
 let map: Map;
 let layer: ImageLayer<ImageWMS>;
 let detach: () => void;
+let detachMap: () => void;
 
 beforeEach(() => {
-  vi.stubGlobal(
-    'ResizeObserver',
-    class {
-      observe() {}
-      unobserve() {}
-      disconnect() {}
-    },
-  );
   useMapStore.setState({ tool: 'time', time: '2007-01-01', compare: true, curtain: 0.5 });
-  const target = document.createElement('div');
-  document.body.append(target);
-  map = new Map({
-    target,
-    view: new View({ projection: PROJECTION, center: [600000, 500000], resolution: 10 }),
-    controls: [],
-    interactions: [],
-  });
-  map.setSize([800, 600]);
-  vi.spyOn(viewport(), 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 800, 600));
+  ({ map, detach: detachMap } = testMap());
   layer = new ImageLayer({ source: new ImageWMS({ url: 'https://example.org/wms', params: { LAYERS: 'a' } }) });
   map.addLayer(layer);
   detach = attachCurtain(map, [layer]);
@@ -40,7 +23,7 @@ beforeEach(() => {
 
 afterEach(() => {
   detach();
-  map.setTarget(undefined);
+  detachMap();
   useMapStore.setState({ tool: 'none', compare: false, curtain: 0.5 });
 });
 

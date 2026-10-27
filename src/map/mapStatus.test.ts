@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import OlMap from 'ol/Map';
 import View from 'ol/View';
 import MousePosition from 'ol/control/MousePosition';
@@ -20,15 +20,6 @@ describe('roundScale', () => {
 describe('MapStatus', () => {
   // The scale on the ground in a Mercator map: src/config/osm.test.ts.
   it('shows the numeric scale in the bottom bar, with the cursor position beside it, and follows the zoom', () => {
-    // OpenLayers watches the map size; jsdom has no ResizeObserver.
-    vi.stubGlobal(
-      'ResizeObserver',
-      class {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      },
-    );
     const view = new View({ projection: PROJECTION, center: [500000, 500000], resolution: 47247.1183 * OGC_PIXEL });
     const status = new MapStatus();
     const map = new OlMap({

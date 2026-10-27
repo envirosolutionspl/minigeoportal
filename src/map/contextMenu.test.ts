@@ -1,38 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import Map from 'ol/Map';
-import View from 'ol/View';
-import { PROJECTION } from './projection';
+import type Map from 'ol/Map';
 import { attachContextMenu, LONG_PRESS_MS } from './contextMenu';
 import { useMapMenu } from '@/state/mapMenu';
 import { useMapStore } from '@/state/store';
+import { testMap } from '@/test/helpers';
 
 let map: Map;
-let target: HTMLDivElement;
+let target: HTMLElement;
 let detach: () => void;
+let detachMap: () => void;
 
 beforeEach(() => {
   vi.useFakeTimers();
-  // The map watches its target's size; jsdom has no ResizeObserver.
-  vi.stubGlobal(
-    'ResizeObserver',
-    class {
-      observe() {}
-      unobserve() {}
-      disconnect() {}
-    },
-  );
-  target = document.createElement('div');
-  document.body.append(target);
-  map = new Map({
-    target,
-    view: new View({ projection: PROJECTION, center: [600000, 500000], resolution: 10 }),
-    controls: [],
-    interactions: [],
-  });
-  map.setSize([800, 600]);
-  map.renderSync();
-  // jsdom lays nothing out: the map fills the window from its top left corner.
-  vi.spyOn(viewport(), 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 800, 600));
+  ({ map, detach: detachMap } = testMap());
+  target = map.getTargetElement()!;
   detach = attachContextMenu(map);
   useMapStore.setState({ tool: 'none' });
   useMapMenu.getState().close();
@@ -40,8 +21,7 @@ beforeEach(() => {
 
 afterEach(() => {
   detach();
-  map.setTarget(undefined);
-  target.remove();
+  detachMap();
   vi.useRealTimers();
 });
 

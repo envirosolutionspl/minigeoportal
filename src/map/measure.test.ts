@@ -1,12 +1,10 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { LineString, Point, Polygon } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
-import Map from 'ol/Map';
-import View from 'ol/View';
-import { PROJECTION } from '@/map/projection';
 import VectorLayer from 'ol/layer/Vector';
 import { attachMeasure, measure } from './measure';
 import { useMapStore } from '@/state/store';
+import { testMap } from '@/test/helpers';
 
 const plain = (s?: string) => s?.replace(/\s/g, ' ');
 
@@ -54,25 +52,13 @@ describe('measure', () => {
 
 /** A map in jsdom with the measurement attached, drawn on with Enter at its centre. */
 function keyboardMap() {
-  // The map watches its target's size; jsdom has no ResizeObserver.
-  vi.stubGlobal(
-    'ResizeObserver',
-    class {
-      observe() {}
-      unobserve() {}
-      disconnect() {}
-    },
-  );
-  const target = document.createElement('div');
-  document.body.append(target);
-  const map = new Map({
-    target,
-    view: new View({ projection: PROJECTION, center: [600000, 500000], zoom: 10 }),
-    controls: [],
-    interactions: [],
-  });
-  const detach = attachMeasure(map);
-  const enter = () => target.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+  const { map, detach: detachMap } = testMap({ zoom: 10 });
+  const detachMeasure = attachMeasure(map);
+  const detach = () => {
+    detachMeasure();
+    detachMap();
+  };
+  const enter = () => map.getTargetElement()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
   /** A line from the centre to a point east of it. */
   const line = (east: number) => {
     map.getView().setCenter([600000, 500000]);
@@ -100,7 +86,6 @@ describe('measuring with the keyboard', () => {
     enter();
     expect(useMapStore.getState().measureResult).toMatch(/^99\d,\d m$/);
     detach();
-    map.setTarget(undefined);
     useMapStore.setState({ tool: 'none', measureResult: '' });
   });
 });
@@ -130,7 +115,7 @@ describe('opening a drawing tool', () => {
 
 describe('the terrain profile tool', () => {
   it('draws one line at a time apart from the measurements, and drops it when closed', () => {
-    const { map, detach, line, features } = keyboardMap();
+    const { detach, line, features } = keyboardMap();
     useMapStore.setState({ tool: 'measure-line', measureResult: '', profileLine: null });
     line(500);
     expect(features()).toBe(1);
@@ -149,7 +134,6 @@ describe('the terrain profile tool', () => {
     expect(useMapStore.getState().profileLine).toBeNull();
     expect(features()).toBe(1);
     detach();
-    map.setTarget(undefined);
     useMapStore.setState({ tool: 'none', measureResult: '' });
   });
 });

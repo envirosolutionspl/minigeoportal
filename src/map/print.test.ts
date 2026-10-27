@@ -1,9 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import OlMap from 'ol/Map';
-import View from 'ol/View';
 import { attachPrint, nearestPrintScale, printExtent, printLayout, serverScale } from './print';
-import { PROJECTION } from './projection';
 import { useMapStore } from '@/state/store';
+import { testMap } from '@/test/helpers';
 
 describe('printLayout', () => {
   it('fits the map frame between margins, header and footer, and sets the resolution for the scale', () => {
@@ -46,40 +44,24 @@ describe('attachPrint', () => {
     useMapStore.setState({ printRequest: null });
   });
 
-  /** A map that renders into whatever target it gets; `rendered()` finishes the render. */
-  const fakeMap = () => {
-    const rendered: { done?: () => void } = {};
-    const view = {
-      getCenter: vi.fn(() => [637000, 486980]),
-      getResolution: vi.fn(() => 10),
-      setCenter: vi.fn(),
-      setResolution: vi.fn(),
-      on: vi.fn(),
-      un: vi.fn(),
-    };
+  /**
+   * A map at home in the page, whose moves between targets and resolutions are watched. jsdom
+   * draws nothing: the map does not render, and `rendered()` says a render is complete.
+   */
+  const homeMap = () => {
     const home = document.getElementById('home')!;
-    const map = {
-      getView: () => view,
-      getTargetElement: () => home,
-      setTarget: vi.fn(),
-      once: vi.fn((_: string, cb: () => void) => {
-        rendered.done = cb;
-        return { target: map, type: 'rendercomplete', listener: cb };
-      }),
-      render: vi.fn(),
-      getViewport: () => document.createElement('div'),
-      getOverlayContainer: () => undefined,
-      on: vi.fn(),
-      un: vi.fn(),
-      removeEventListener: vi.fn(),
-      getSize: () => undefined,
-    } as unknown as OlMap;
-    return { map, view, home, rendered };
+    const { map } = testMap({ center: [637000, 486980], resolution: 10 });
+    map.setTarget(home);
+    const setTarget = vi.spyOn(map, 'setTarget');
+    const setResolution = vi.spyOn(map.getView(), 'setResolution');
+    vi.spyOn(map, 'render').mockImplementation(() => {});
+    const rendered = () => map.dispatchEvent('rendercomplete');
+    return { map, home, setTarget, setResolution, rendered };
   };
   const printing = () => document.documentElement.hasAttribute('data-printing');
 
   it('renders into the sheet at the print scale, prints, then puts the map back', () => {
-    const { map, view, home, rendered } = fakeMap();
+    const { map, home, setTarget, setResolution, rendered } = homeMap();
     const print = vi.fn(() => {
       expect(printing()).toBe(true);
       expect(document.head.textContent).toContain('@page { size: A4 landscape; margin: 10mm; }');
@@ -90,17 +72,17 @@ describe('attachPrint', () => {
     const detach = attachPrint(map);
 
     useMapStore.getState().requestPrint({ paper: 'A4', orientation: 'landscape', scale: 1000, title: '' });
-    expect(map.setTarget).toHaveBeenLastCalledWith(document.getElementById('print-map'));
+    expect(setTarget).toHaveBeenLastCalledWith(document.getElementById('print-map'));
     // 1:1000 on the ground in Warsaw, where a grid metre is 0.9985 m.
-    expect(view.setResolution.mock.lastCall![0]).toBeCloseTo(1 / 6 / 0.9985, 4);
+    expect(setResolution.mock.lastCall![0]).toBeCloseTo(1 / 6 / 0.9985, 4);
     expect(document.getElementById('print-map')!.style.width).toBe('1662px');
-    rendered.done!();
+    rendered();
     // A later render (the timer, a pan) must not open the print dialog again.
-    rendered.done!();
+    rendered();
 
     expect(print).toHaveBeenCalledOnce();
-    expect(map.setTarget).toHaveBeenLastCalledWith(home);
-    expect(view.setResolution).toHaveBeenLastCalledWith(10);
+    expect(setTarget).toHaveBeenLastCalledWith(home);
+    expect(setResolution).toHaveBeenLastCalledWith(10);
     expect(printing()).toBe(false);
     expect(document.head.textContent).not.toContain('@page');
     expect(useMapStore.getState().printRequest).toBeNull();
@@ -109,20 +91,20 @@ describe('attachPrint', () => {
 
   it('keeps the sheet until the print dialog closes, and gives the map back when no browser says so', () => {
     vi.useFakeTimers();
-    const { map, home, rendered } = fakeMap();
+    const { map, home, setTarget, rendered } = homeMap();
     // Phones return from print() at once and capture the page afterwards.
     vi.stubGlobal('print', vi.fn());
     const detach = attachPrint(map);
 
     useMapStore.getState().requestPrint({ paper: 'A4', orientation: 'portrait', scale: 2000, title: '' });
-    rendered.done!();
+    rendered();
     expect(printing()).toBe(true);
-    expect(map.setTarget).not.toHaveBeenLastCalledWith(home);
+    expect(setTarget).not.toHaveBeenLastCalledWith(home);
     vi.advanceTimersByTime(30000);
     expect(printing()).toBe(true);
     vi.advanceTimersByTime(30000);
     expect(printing()).toBe(false);
-    expect(map.setTarget).toHaveBeenLastCalledWith(home);
+    expect(setTarget).toHaveBeenLastCalledWith(home);
     detach();
     vi.useRealTimers();
   });
@@ -130,22 +112,12 @@ describe('attachPrint', () => {
 
 describe('print preview', () => {
   it('outlines the printed area at the centre while the print tool is on', () => {
-    // OpenLayers watches the map size; jsdom has no ResizeObserver.
-    vi.stubGlobal(
-      'ResizeObserver',
-      class {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      },
-    );
     useMapStore.setState({
       tool: 'none',
       printRequest: null,
       printSettings: { paper: 'A4', orientation: 'landscape', scale: 10000, title: '' },
     });
-    const map = new OlMap({ view: new View({ projection: PROJECTION, center: [500000, 500000], resolution: 10 }) });
-    map.setSize([1000, 800]);
+    const { map } = testMap({ center: [500000, 500000], resolution: 10, size: [1000, 800] });
     const detach = attachPrint(map);
     const frame = map.getViewport()!.querySelector<HTMLElement>('.print-preview')!;
     expect(frame.hidden).toBe(true);

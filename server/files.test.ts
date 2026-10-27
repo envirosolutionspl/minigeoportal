@@ -38,16 +38,20 @@ describe('writeAtomic from several writers', () => {
 
 describe('follow', () => {
   it('reads a file again only after it changed', async () => {
+    vi.useFakeTimers();
     const file = join(await tempDir(), 'cache.json');
     await writeAtomic(file, '1');
     const read = vi.fn(async () => {});
     const stop = await follow(file, read, 20);
-    await new Promise((r) => setTimeout(r, 60));
+    // Three checks of an unchanged file.
+    await vi.advanceTimersByTimeAsync(60);
     expect(read).not.toHaveBeenCalled();
     await writeAtomic(file, '2');
     await utimes(file, new Date(), new Date(Date.now() + 5000));
+    // The check reads the file's time from the disk, so the clock is turned while that comes.
     await vi.waitFor(() => expect(read).toHaveBeenCalledOnce());
     stop();
+    vi.useRealTimers();
   });
 });
 

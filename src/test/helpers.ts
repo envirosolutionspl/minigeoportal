@@ -1,6 +1,39 @@
 import { vi } from 'vitest';
+import Map from 'ol/Map';
+import View from 'ol/View';
+import { PROJECTION } from '@/map/projection';
 import type { CapabilitiesCache } from '@/services/meta';
 import { clearCapabilities, loadCapabilities } from '@/services/meta';
+
+/**
+ * A map in jsdom: in the page, without controls or interactions, of a fixed size, rendered once,
+ * and laid out from the window's top left corner (jsdom lays nothing out) so pixels and
+ * coordinates answer each other. `detach` takes it out of the page again.
+ */
+export function testMap({
+  center = [600000, 500000],
+  resolution = 10,
+  zoom,
+  size = [800, 600],
+}: { center?: [number, number]; resolution?: number; zoom?: number; size?: [number, number] } = {}) {
+  const target = document.createElement('div');
+  document.body.append(target);
+  const map = new Map({
+    target,
+    view: new View({ projection: PROJECTION, center, ...(zoom === undefined ? { resolution } : { zoom }) }),
+    controls: [],
+    interactions: [],
+  });
+  map.setSize(size);
+  map.renderSync();
+  const viewport = map.getViewport() as HTMLElement;
+  vi.spyOn(viewport, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, size[0], size[1]));
+  const detach = () => {
+    map.setTarget(undefined);
+    target.remove();
+  };
+  return { map, viewport, detach };
+}
 
 /** A fetch stub that answers by URL substring; unknown URLs get 404. */
 export type Route = [match: string | RegExp, body: string | object, init?: ResponseInit];

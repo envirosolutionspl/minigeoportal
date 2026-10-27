@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import Map from 'ol/Map';
-import View from 'ol/View';
+import type Map from 'ol/Map';
 import ImageLayer from 'ol/layer/Image';
 import ImageWMS from 'ol/source/ImageWMS';
 import { ImageSourceEvent } from 'ol/source/Image';
 import type ImageWrapper from 'ol/Image';
-import { PROJECTION, scaleToResolution } from './projection';
+import { scaleToResolution } from './projection';
 import { attachTimeTravel, sublayersFor, timeCaption, timeLayerDrawsAt, timeLayers } from './timeTravel';
 import { overlayById } from '@/config/runtime';
 import { registerMeta } from '@/services/meta';
 import { useMapStore } from '@/state/store';
+import { testMap } from '@/test/helpers';
 
 /** What the blank check (blank.ts, which needs a real canvas) says of the next image. */
 const blank = vi.hoisted(() => ({ next: false }));
@@ -17,6 +17,7 @@ vi.mock('./blank', () => ({ isBlank: () => blank.next }));
 
 let map: Map;
 let detach: () => void;
+let detachMap: () => void;
 
 /** The map's layers of the time view (map.yaml: timeTravel): the archival orthophoto map and the old maps. */
 const wmsLayer = (url: string) =>
@@ -31,14 +32,6 @@ const timeLayer = () => wmsLayer('StandardResolutionTime');
 const oldMaps = () => wmsLayer('TOPO_SERIA');
 
 beforeEach(() => {
-  vi.stubGlobal(
-    'ResizeObserver',
-    class {
-      observe() {}
-      unobserve() {}
-      disconnect() {}
-    },
-  );
   registerMeta('orto-archiwalna', {
     kind: 'wms',
     fetchedAt: '',
@@ -64,19 +57,13 @@ beforeEach(() => {
     },
   });
   useMapStore.setState({ tool: 'none', time: null, timeLayer: null, timeStatus: 'idle', focus: null, printFromTime: false });
-  map = new Map({
-    target: document.createElement('div'),
-    view: new View({ projection: PROJECTION, center: [600000, 500000], resolution: scaleToResolution(10000) }),
-    controls: [],
-    interactions: [],
-  });
-  map.setSize([800, 600]);
+  ({ map, detach: detachMap } = testMap({ resolution: scaleToResolution(10000) }));
   detach = attachTimeTravel(map);
 });
 
 afterEach(() => {
   detach();
-  map.setTarget(undefined);
+  detachMap();
 });
 
 describe('attachTimeTravel', () => {

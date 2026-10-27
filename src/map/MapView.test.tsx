@@ -12,14 +12,6 @@ import { withCapabilities } from '@/test/helpers';
 let added: BaseLayer[] = [];
 
 beforeEach(async () => {
-  vi.stubGlobal(
-    'ResizeObserver',
-    class {
-      observe() {}
-      unobserve() {}
-      disconnect() {}
-    },
-  );
   await withCapabilities();
   added = [];
   const addLayer = OlMap.prototype.addLayer;

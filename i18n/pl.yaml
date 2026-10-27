@@ -169,15 +169,15 @@ time:
   loading: Wczytuję stan na {date}…
   checking: Sprawdzam, z których lat są tu dane…
   none: Brak danych w tym miejscu.
-  error: Serwer nie odpowiedział.
-  blank: Serwer zwrócił pusty obraz. Może nie mieć tu danych albo chwilowo nie działa.
+  error: 'Usługa warstwy {title} nie odpowiedziała.'
+  blank: 'Brak obrazu warstwy {title} w tym miejscu: nie ma tu danych z tej daty albo usługa warstwy chwilowo nie działa.'
   retry: Spróbuj ponownie
   zoomHint: Przybliż mapę, aby zobaczyć warstwę {title}.
   pick: Puść, aby pokazać stan na {date}.
   compare: Porównaj z aktualnymi danymi
   now: Dziś
   curtain: 'Kurtyna: po lewej wybrana data, po prawej dziś'
-  curtainHint: Przeciągnij kurtynę albo kliknij na jej wysokości, gdzie ma stanąć. Strzałki w lewo i w prawo przesuwają ją z klawiatury.
+  curtainHint: 'Przeciągnij pionową linię, aby przesunąć granicę porównania: po lewej mapa z wybranej daty, po prawej dzisiejsza. Z klawiatury przesuwają ją strzałki w lewo i w prawo.'
 
 print:
   title: Drukuj mapę

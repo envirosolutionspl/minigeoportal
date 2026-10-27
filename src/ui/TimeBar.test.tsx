@@ -153,10 +153,10 @@ describe('TimeBar', () => {
     act(() => useMapStore.setState({ timeStatus: 'loading' }));
     expect(screen.getByRole('status').textContent).toContain('Wczytuję stan na 27.04.2025');
     act(() => useMapStore.setState({ timeStatus: 'error' }));
-    expect(screen.getByRole('status').textContent).toContain('Serwer nie odpowiedział');
+    expect(screen.getByRole('status').textContent).toContain('Usługa warstwy Ortofotomapa archiwalna nie odpowiedziała.');
     act(() => useMapStore.setState({ timeStatus: 'blank' }));
     expect(screen.getByRole('status').textContent).toContain(
-      'Serwer zwrócił pusty obraz. Może nie mieć tu danych albo chwilowo nie działa.',
+      'Brak obrazu warstwy Ortofotomapa archiwalna w tym miejscu: nie ma tu danych z tej daty albo usługa warstwy chwilowo nie działa.',
     );
     const retries = useMapStore.getState().timeRetries;
     fireEvent.click(screen.getByRole('button', { name: 'Spróbuj ponownie' }));
@@ -240,7 +240,7 @@ describe('TimeBar', () => {
     expect(compare.getAttribute('aria-pressed')).toBe('false');
     fireEvent.click(compare);
     expect(useMapStore.getState().compare).toBe(true);
-    expect(screen.getByRole('status').textContent).toContain('Przeciągnij kurtynę');
+    expect(screen.getByRole('status').textContent).toContain('Przeciągnij pionową linię');
     fireEvent.click(compare);
     expect(useMapStore.getState().compare).toBe(false);
   });

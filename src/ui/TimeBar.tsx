@@ -183,7 +183,7 @@ function Bar({ id, title, spec }: { id: string; title: string; spec: TimeValues 
   } else if (status === 'error' || status === 'blank') {
     line = (
       <>
-        {t(status === 'error' ? 'time.error' : 'time.blank')}{' '}
+        {t(status === 'error' ? 'time.error' : 'time.blank', { title })}{' '}
         <button type="button" onClick={retry} className={action}>
           <RotateCw className="h-3.5 w-3.5" aria-hidden="true" /> {t('time.retry')}
         </button>

@@ -8,6 +8,7 @@ import {
   LoaderCircle,
   Search,
   TriangleAlert,
+  Hourglass,
   X,
   ZoomIn,
   ZoomOut,
@@ -34,10 +35,11 @@ const STATUS_ICON: Partial<Record<ServiceStatus, [LucideIcon, string]>> = {
   blocked: [CircleOff, 'text-[var(--muted)]'],
   down: [CircleOff, 'text-[var(--danger)]'],
   degraded: [TriangleAlert, 'text-[var(--danger)]'],
+  slow: [Hourglass, 'text-[var(--accent)]'],
 };
 
 /** Why a layer cannot be shown, in plain language, by the result of the last check. */
-type WhyStatus = Exclude<CatalogStatus, 'ok'> | 'degraded';
+type WhyStatus = Exclude<CatalogStatus, 'ok'> | 'degraded' | 'slow';
 const WHY = (status: WhyStatus) => t(`layers.why.${status}`, { system: config.map.projection.name, code: config.map.projection.code });
 
 /** Shown at once for a long topic; the rest after "show more". */
@@ -391,7 +393,7 @@ function Why({ status, detail, checked }: { status: WhyStatus; detail?: string; 
         className="inline-flex min-h-6 items-center gap-1 text-xs text-[var(--accent)] underline-offset-2 hover:underline"
       >
         <HelpCircle className="h-3.5 w-3.5" aria-hidden="true" />
-        {status === 'degraded' ? t('layers.whyDegraded') : t('layers.whyBlocked')}
+        {status === 'degraded' ? t('layers.whyDegraded') : status === 'slow' ? t('layers.whySlow') : t('layers.whyBlocked')}
       </button>
       {open && (
         <div className="mt-1 rounded-lg bg-[var(--field)] px-3 py-2 text-xs leading-relaxed">
@@ -432,7 +434,10 @@ function OverlayItem({ s, hits, startOpen = false }: { s: Overlay; hits: string[
   const toggle = useMapStore((m) => m.toggleOverlay);
   const opacity = useMapStore((m) => overlayOpacity(s.id, m.opacity));
   const setOpacity = useMapStore((m) => m.setOpacity);
-  const status = useStatusStore((st) => statusOf(st.status, s.id));
+  const status = useStatusStore((st) => {
+    const known = statusOf(st.status, s.id);
+    return st.slow.includes(s.id) && (known === 'ok' || known === 'unknown') ? 'slow' : known;
+  });
   const [expanded, setExpanded] = useState(startOpen);
   const blocked = status === 'blocked';
   const open = expanded || hits.length > 0;
@@ -469,7 +474,7 @@ function OverlayItem({ s, hits, startOpen = false }: { s: Overlay; hits: string[
         )}
       </div>
 
-      {(status === 'blocked' || status === 'down' || status === 'degraded') && (
+      {(status === 'blocked' || status === 'down' || status === 'degraded' || status === 'slow') && (
         <Why status={status === 'blocked' ? 'refused' : status} detail={serviceError(s.id)} />
       )}
 

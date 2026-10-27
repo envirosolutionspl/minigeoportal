@@ -219,6 +219,7 @@ exports[`default configuration > stays what the app was built with (any change s
       472.4712,
       236.2356,
     ],
+    "slowLoad": 8,
     "tileGrid": {
       "matrixIdPrefix": "EPSG:2180:",
       "matrixSet": "EPSG:2180",

@@ -7,6 +7,7 @@ import { InfoPanel } from './ui/InfoPanel';
 import { MapMenu } from './ui/MapMenu';
 import { MeasureBar } from './ui/MeasureBar';
 import { ProfilePanel } from './ui/ProfilePanel';
+import { SlowNotice } from './ui/SlowNotice';
 import { TimeBar } from './ui/TimeBar';
 import { WelcomeDialog } from './ui/WelcomeDialog';
 import { ReportDialog } from './ui/ReportDialog';
@@ -59,6 +60,7 @@ export default function App() {
       <MapMenu />
       <MeasureBar />
       <ProfilePanel />
+      <SlowNotice />
       <TimeBar />
       <PrintPanel />
       <AuthorCredit />

@@ -160,6 +160,8 @@ export const mapSchema = z.strictObject({
     .strictObject({ layers: z.array(z.strictObject({ id, label: text, base: id.optional() })).min(1), base: id.optional() })
     .optional(),
   attribution: text,
+  /** Seconds a layer's tile or image may take before the map says the layer loads slowly. */
+  slowLoad: z.number().positive().default(8),
   tileServices: z
     .array(
       z.discriminatedUnion('kind', [

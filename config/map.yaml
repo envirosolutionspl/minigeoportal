@@ -61,6 +61,9 @@ timeTravel:
 
 attribution: 'Dane: [GUGiK, geoportal.gov.pl](https://www.geoportal.gov.pl)'
 
+# Seconds a layer's tile or image may take before the map says the layer loads slowly.
+slowLoad: 8
+
 # WMTS services; firstLevel and levels say which of the zoom levels above each one publishes.
 tileServices:
   - id: orto

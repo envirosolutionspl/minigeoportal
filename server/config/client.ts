@@ -72,6 +72,7 @@ export function clientConfig({ app, map, layers, content, brand, messages }: App
         overlays: map.view.overlays,
       },
       attribution: creditHtml(t(map.attribution)),
+      slowLoad: map.slowLoad,
       tileServices: map.tileServices,
       ...(map.timeTravel
         ? {

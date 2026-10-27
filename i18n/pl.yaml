@@ -83,6 +83,8 @@ layers:
   failed: Nie udało się wczytać tej warstwy. Spróbuj później
   failedFallback: albo zobacz ją w
   whyDegraded: Dlaczego dane się nie wczytują?
+  whySlow: Dlaczego to trwa?
+  slow: 'Wolno wczytuje się: {titles}'
   whyBlocked: Niedostępna u nas. Dlaczego?
   serverAnswer: 'Odpowiedź serwera: {detail}.'
   checked: Sprawdzono {date}.
@@ -101,12 +103,14 @@ layers:
     blocked: Niedostępna u nas
     down: Usługa nie odpowiada
     degraded: Część danych nie ładuje się w tym miejscu
+    slow: Wczytuje się długo
   why:
     token: Usługa wymaga klucza dostępu, którego ta aplikacja nie ma.
     refused: Serwer tej usługi odrzuca zapytania z innych serwisów.
     down: Serwer usługi nie odpowiadał przy ostatnim sprawdzeniu. Sprawdzimy go ponownie przy kolejnym odświeżeniu listy warstw.
     unsupported: Usługa nie podaje mapy w układzie {system} ({code}), a tylko w nim rysujemy, żeby mapa była szybka.
     degraded: Usługa kieruje do serwera powiatu lub gminy, który w tym miejscu nie odpowiada albo odrzuca zapytania.
+    slow: Serwer tej usługi odpowiada wolno i dane wciąż się wczytują. Warstwa pojawi się na mapie, gdy przyjdą.
 
 basemaps:
   title: Podkłady

@@ -7,17 +7,21 @@ import { serviceError } from './meta';
  * unknown: nothing loaded yet; ok: the last load succeeded; degraded: recent loads keep
  * failing in the current area (integration services redirect to county and city servers,
  * which may be down or refuse); blocked: the service answered 401/403 to the metadata request;
- * down: the service did not answer the metadata request.
+ * down: the service did not answer the metadata request; slow: data asked for on the map is long
+ * in coming (slow.ts), shown over ok and unknown.
  *
  * No extra network probes: the server's capabilities cache says whether the service answered,
  * and the map's own tile and image loads say whether data arrives.
  */
-export type ServiceStatus = 'unknown' | 'ok' | 'degraded' | 'blocked' | 'down';
+export type ServiceStatus = 'unknown' | 'ok' | 'slow' | 'degraded' | 'blocked' | 'down';
 
 interface StatusStore {
   status: Record<string, ServiceStatus>;
+  /** Layers whose data is long in coming (slow.ts), in the order they became slow. */
+  slow: string[];
   /** Called from tile and image load events of the map layers. */
   reportLoad(id: string, ok: boolean): void;
+  setSlow(ids: string[]): void;
 }
 
 const failures = new Map<string, number>();
@@ -30,6 +34,13 @@ function initialStatus(id: string): ServiceStatus {
 
 export const useStatusStore = create<StatusStore>((set, get) => ({
   status: {},
+  slow: [],
+  setSlow: (ids) => {
+    const now = get().slow;
+    // The ones slow already keep their place; a new one goes last.
+    const next = [...now.filter((id) => ids.includes(id)), ...ids.filter((id) => !now.includes(id))];
+    if (next.length !== now.length || next.some((id, i) => id !== now[i])) set({ slow: next });
+  },
   reportLoad: (id, ok) => {
     // One overlay image covers the whole view, so a single failure matters; tiles fail more often.
     const threshold = tileServiceById.has(id) ? 2 : 1;

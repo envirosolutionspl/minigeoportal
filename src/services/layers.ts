@@ -11,6 +11,7 @@ import { config, overlayById, type Overlay, type TileService } from '@/config/ru
 import { useCatalog } from './catalog';
 import { cachedDrawOrder, layerMeta, restMeta, wmtsMeta, type WmtsMeta } from './meta';
 import { useStatusStore } from './status';
+import { loadEnded, loadStarted } from './slow';
 import { timeValues } from './time';
 
 const report = (id: string, ok: boolean) => useStatusStore.getState().reportLoad(id, ok);
@@ -103,8 +104,15 @@ export function createOverlayLayer(def: Overlay, image: { ratio?: number; crossO
   const options = { visible: false, opacity: def.opacity ?? 1, zIndex: 10 + drawIndex(def.id) };
   const tiles = tileSource(def);
   if (tiles) {
-    tiles.on('tileloadend', () => report(def.id, true));
-    tiles.on('tileloaderror', () => report(def.id, false));
+    tiles.on('tileloadstart', (e) => loadStarted(def.id, e.tile));
+    tiles.on('tileloadend', (e) => {
+      loadEnded(def.id, e.tile);
+      report(def.id, true);
+    });
+    tiles.on('tileloaderror', (e) => {
+      loadEnded(def.id, e.tile);
+      report(def.id, false);
+    });
     return new TileLayer({ source: tiles, ...options });
   }
   const common = {
@@ -124,8 +132,15 @@ export function createOverlayLayer(def: Overlay, image: { ratio?: number; crossO
           ...common,
           params: { LAYERS: '', FORMAT: def.format ?? 'image/png', TRANSPARENT: def.format !== 'image/jpeg', VERSION: '1.3.0', ...when },
         });
-  source.on('imageloadend', () => report(def.id, true));
-  source.on('imageloaderror', () => report(def.id, false));
+  source.on('imageloadstart', (e) => loadStarted(def.id, e.image));
+  source.on('imageloadend', (e) => {
+    loadEnded(def.id, e.image);
+    report(def.id, true);
+  });
+  source.on('imageloaderror', (e) => {
+    loadEnded(def.id, e.image);
+    report(def.id, false);
+  });
   return new ImageLayer({ source, ...options });
 }
 

@@ -84,6 +84,8 @@ layers:
   failed: This layer could not be loaded. Try again later
   failedFallback: or see it on
   whyDegraded: Why does the data not load?
+  whySlow: Why does it take so long?
+  slow: 'Loading slowly: {titles}'
   whyBlocked: Not available here. Why?
   serverAnswer: 'Server answer: {detail}.'
   checked: Checked on {date}.
@@ -102,12 +104,14 @@ layers:
     blocked: Not available here
     down: The service does not answer
     degraded: Part of the data does not load here
+    slow: Loading slowly
   why:
     token: The service needs an access key this app does not have.
     refused: The server of this service refuses requests from other sites.
     down: The server of the service did not answer at the last check. It will be checked again at the next refresh of the layer list.
     unsupported: The service does not give its map in {system} ({code}), the only system the map draws in, which keeps it fast.
     degraded: The service forwards to a county or municipal server that does not answer here or refuses the requests.
+    slow: The server of this service answers slowly and the data is still loading. The layer appears on the map once it arrives.
 
 basemaps:
   title: Base maps

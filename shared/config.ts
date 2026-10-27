@@ -160,6 +160,8 @@ export interface ClientConfig {
     };
     /** Source credit of the map as HTML (links only). */
     attribution: string;
+    /** Seconds a layer's tile or image may take before the map says the layer loads slowly. */
+    slowLoad: number;
     tileServices: TileService[];
     baseMaps: BaseMap[];
     /**

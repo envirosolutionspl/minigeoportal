@@ -581,6 +581,40 @@ html[data-printing] #print-sheet {
  * (the view forces its base map). Phones: the bar runs the whole width at the foot of the
  * screen, with its own rounded top, and the zoom buttons move up above it.
  */
+/* The line about slowly loading layers (SlowNotice.tsx): centred in the free strip above the bottom
+   bar, between the base map switcher with the scale bar and the credit (or the layer list); above
+   the time bar while it is open. */
+.slow-notice {
+  display: flex;
+  justify-content: center;
+  left: 12rem;
+  right: 12rem;
+  bottom: calc(2.75rem + var(--safe-bottom));
+}
+.slow-notice > div {
+  max-width: 28rem;
+}
+[data-tool='time'] .slow-notice {
+  bottom: calc(var(--time-bar, 6rem) + 3rem + var(--safe-bottom));
+}
+@media (min-width: 640px) {
+  [data-panel='catalog'] .slow-notice {
+    right: 25rem;
+  }
+}
+/* Phones: beside the base map switcher, clear of the zoom buttons. */
+@media (max-width: 639px) {
+  .slow-notice {
+    left: 7.75rem;
+    right: 3.75rem;
+  }
+}
+@media (max-width: 639px) and (min-height: 501px) {
+  [data-tool='time'] .slow-notice {
+    left: 0.75rem;
+    bottom: calc(var(--time-bar) + 0.75rem + var(--safe-bottom));
+  }
+}
 .time-bar {
   left: 50%;
   bottom: calc(2.5rem + var(--safe-bottom));

@@ -8,7 +8,7 @@ import { clearCatalog } from '@/services/catalog';
 
 beforeEach(async () => {
   useMapStore.setState({ overlays: ['kieg'], sublayers: {}, opacity: {}, panel: 'catalog', scale: 47247 });
-  useStatusStore.setState({ status: {} });
+  useStatusStore.setState({ status: {}, slow: [] });
   clearCatalog();
   await withCapabilities();
 });
@@ -224,5 +224,16 @@ describe('LayerCatalog', () => {
     expect(normal.querySelector('.rounded-full.h-2')).toBeTruthy();
     fireEvent.click(within(item).getByRole('button', { name: 'Niedostępna u nas. Dlaczego?' }));
     expect(within(item).getByText(/Odpowiedź serwera: HTTP 403/)).toBeTruthy();
+  });
+
+  it('marks a layer whose data is long in coming, and says why on request', () => {
+    useStatusStore.setState({ slow: ['kieg'] });
+    render(<LayerCatalog />);
+    const item = screen.getByLabelText('Ewidencja gruntów i budynków').closest('.rounded-xl') as HTMLElement;
+    expect(within(item).getByRole('img', { name: 'Wczytuje się długo' })).toBeTruthy();
+    fireEvent.click(within(item).getByRole('button', { name: 'Dlaczego to trwa?' }));
+    expect(within(item).getByText(/Serwer tej usługi odpowiada wolno/)).toBeTruthy();
+    act(() => useStatusStore.setState({ slow: [] }));
+    expect(within(item).queryByRole('img')).toBeNull();
   });
 });

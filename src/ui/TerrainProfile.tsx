@@ -11,7 +11,7 @@ const H = 90;
 /** Labels at the bends closer than this share of the chart to the last one shown are left out, not overlapped. */
 const LABEL_GAP = 0.15;
 /** Distances of bends this close to either end would run into the start and the length under the chart. */
-const END_GAP = 0.2;
+const END_GAP = 0.25;
 
 type State = { status: 'loading' } | { status: 'done'; profile: Profile | undefined } | { status: 'error' };
 

@@ -63,6 +63,26 @@ describe('ProfilePanel', () => {
     expect(screen.getByText(/Punkty załamania linii: 133,0 m w odległości 33\d,\d m od początku\./)).toBeTruthy();
   });
 
+  it('leaves out the distance of a bend near the end, where the length stands', async () => {
+    stubFetch([['GetHByPointList', Array.from({ length: 101 }, (_, i) => `0 0 ${100 + i}`).join(',')]]);
+    useMapStore.setState({
+      tool: 'profile',
+      profileLine: [
+        [600000, 500000],
+        [600770, 500000],
+        [600770, 500230],
+      ],
+    });
+    const { container } = render(<ProfilePanel />);
+    await screen.findByText(/Nachylenie największe/);
+    // Its height above the chart stays; under it only the start and the length.
+    expect(screen.getByText('177,0 m')).toBeTruthy();
+    expect([...container.querySelectorAll('figure div.relative.flex > span')].map((s) => s.textContent)).toEqual([
+      '0 m',
+      expect.stringMatching(/ m$/),
+    ]);
+  });
+
   it('says when the heights cannot be had', async () => {
     stubFetch([['GetHByPointList', 'down', { status: 503 }]]);
     useMapStore.setState({

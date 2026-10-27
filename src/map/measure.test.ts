@@ -105,6 +105,29 @@ describe('measuring with the keyboard', () => {
   });
 });
 
+describe('opening a drawing tool', () => {
+  it('moves the focus to the map, so the first Enter adds a point', () => {
+    const { map, detach, enter } = keyboardMap();
+    map.getTargetElement()!.tabIndex = 0;
+    useMapStore.setState({ tool: 'none', measureResult: '', profileLine: null });
+    const button = document.createElement('button');
+    document.body.append(button);
+    button.focus();
+    useMapStore.getState().setTool('profile');
+    expect(document.activeElement).toBe(map.getTargetElement());
+    enter();
+    map.getView().setCenter([600500, 500000]);
+    enter();
+    enter();
+    expect(useMapStore.getState().profileLine).toHaveLength(2);
+    // Closing leaves the focus where it is.
+    useMapStore.getState().setTool('none');
+    expect(document.activeElement).toBe(map.getTargetElement());
+    button.remove();
+    detach();
+  });
+});
+
 describe('the terrain profile tool', () => {
   it('draws one line at a time apart from the measurements, and drops it when closed', () => {
     const { map, detach, line, features } = keyboardMap();

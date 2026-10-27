@@ -150,6 +150,9 @@ export function attachMeasure(map: Map): () => void {
       else if (s.tool === 'measure-area') start('Polygon', measurements);
       else if (s.tool === 'profile') start('LineString', profile);
       else stop();
+      // The focus goes to the map, so Enter adds the first point there at once, as the hint says,
+      // and does not press the tool's button again.
+      if (draw) map.getTargetElement()?.focus({ preventScroll: true });
     }
     if (s.measureClears !== prev.measureClears) clear(measurements);
   });

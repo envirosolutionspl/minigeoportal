@@ -171,14 +171,14 @@ time:
   checking: Checking which years have data here…
   none: No data at this place.
   error: 'The service of the layer {title} did not answer.'
-  blank: 'No image of the layer {title} here: there is no data from this date, or the layer''s service is down for a while.'
+  blank: "No image of the layer {title} here: there is no data from this date, or the layer's service is down for a while."
   retry: Try again
   zoomHint: Zoom in to see the layer {title}.
   pick: Let go to show the state as of {date}.
   compare: Compare with the present
   now: Today
   curtain: 'Curtain: the chosen date on the left, today on the right'
-  curtainHint: 'Drag the vertical line to move the border of the comparison: the map of the chosen date on the left, today''s on the right. The left and right arrow keys move it too.'
+  curtainHint: "Drag the vertical line to move the border of the comparison: the map of the chosen date on the left, today's on the right. The left and right arrow keys move it too."
 
 print:
   title: Print the map

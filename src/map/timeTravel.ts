@@ -10,9 +10,8 @@ import { resolutionToScale, scaleToResolution } from './projection';
 /** Scale the view zooms to when the time view opens too far out for its layer to draw. */
 const OPENING_SCALE = 20000;
 
-/** Between the base map and the overlays; what was added later lies on the layer. */
+/** Between the base map and the overlays. */
 const Z_INDEX = 5;
-const ADDED_Z_INDEX = 6;
 /** The last date's image stays while the next loads, faded so the wait shows on the map too. */
 const LOADING_OPACITY = 0.5;
 
@@ -45,22 +44,6 @@ export function sublayersFor(def: Overlay, spec: TimeValues, value: string | und
 const valueFor = (spec: TimeValues, time: string | null) => (time === null ? spec.current : (valueAt(spec.values, time) ?? spec.current));
 
 /**
- * What was added after the date the view's layer shows (map.yaml: timeTravel.layers[].added): the
- * overlay, its years later than the year of that date and the sublayers they draw. None for a
- * layer without it; no years when the date is as late as the overlay's last.
- */
-export function addedAfter(id: string | null, time: string | null): { def: Overlay; years: string[]; sublayers: string[] } | undefined {
-  const shown = currentTimeLayer(id);
-  const entry = config.map.timeTravel?.layers.find((l) => l.id === shown?.def.id);
-  const def = entry?.added ? overlayById.get(entry.added) : undefined;
-  const spec = def && timeValues(def);
-  if (!shown || !def || !spec) return undefined;
-  const after = (valueFor(shown.spec, time) ?? '').slice(0, 4);
-  const years = after ? spec.values.filter((v) => v.slice(0, 4) > after) : [];
-  return { def, years, sublayers: years.flatMap((v) => sublayersFor(def, spec, v)) };
-}
-
-/**
  * The time view (map.yaml: timeTravel): its layers, one drawn over the base map while the view is
  * open, at the date chosen on the time bar (ui/TimeBar.tsx). A layer with a time dimension is a
  * WMS asked for one image per view and date; a series draws the sublayers of its edition.
@@ -90,16 +73,6 @@ export function attachTimeTravel(map: Map): () => void {
     map,
     shown.map((s) => s.layer),
   );
-  // What was added later, over the whole map: on the old photo where it will stand, on today's what it is.
-  const addedIds = [...new Set((config.map.timeTravel?.layers ?? []).flatMap((l) => l.added ?? []))];
-  const added = addedIds.flatMap((id) => {
-    const def = overlayById.get(id);
-    if (!def) return [];
-    const layer = createOverlayLayer(def, { ratio: 1 });
-    layer.setZIndex(ADDED_Z_INDEX);
-    map.addLayer(layer);
-    return [{ def, layer }];
-  });
 
   /** The shown layer's scale range for the chosen value. */
   const rangeOf = (entry: (typeof shown)[number], value: string | undefined, named: string | null) =>
@@ -128,16 +101,6 @@ export function attachTimeTravel(map: Map): () => void {
         entry.source.updateParams({ [entry.spec.param]: value });
       }
     }
-    const later = open && s.timeAdded ? addedAfter(s.timeLayer, s.time) : undefined;
-    for (const entry of added) {
-      const names = later?.def.id === entry.def.id ? later.sublayers : [];
-      entry.layer.setVisible(names.length > 0);
-      if (names.length === 0) continue;
-      showSublayers(entry.layer, names);
-      const range = resolutionRange(entry.def, names);
-      entry.layer.setMinResolution(range.min);
-      entry.layer.setMaxResolution(range.max);
-    }
   };
   apply();
 
@@ -158,14 +121,7 @@ export function attachTimeTravel(map: Map): () => void {
   if (useMapStore.getState().tool === 'time') zoomIn();
 
   const unsubscribe = useMapStore.subscribe((s, prev) => {
-    if (
-      s.tool !== prev.tool ||
-      s.time !== prev.time ||
-      s.timeLayer !== prev.timeLayer ||
-      s.timeSublayers !== prev.timeSublayers ||
-      s.timeAdded !== prev.timeAdded
-    )
-      apply();
+    if (s.tool !== prev.tool || s.time !== prev.time || s.timeLayer !== prev.timeLayer || s.timeSublayers !== prev.timeSublayers) apply();
     if (s.tool === 'time' && (prev.tool !== 'time' || s.timeLayer !== prev.timeLayer)) zoomIn();
     if (s.timeRetries !== prev.timeRetries) shown.forEach((e) => e.source?.refresh());
     if (s.timeStatus !== prev.timeStatus) fade();
@@ -174,7 +130,7 @@ export function attachTimeTravel(map: Map): () => void {
   return () => {
     unsubscribe();
     detachCurtain();
-    for (const entry of [...shown, ...added]) {
+    for (const entry of shown) {
       map.removeLayer(entry.layer);
       (entry.layer as OverlayLayer).dispose();
     }

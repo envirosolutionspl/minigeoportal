@@ -13,7 +13,6 @@ const CONFIG = `export const config = {
         //  layerId: 'msBudynkiBDOT10k',
         //},
         { layerId: 'groupDaneArch' },
-        { layerId: 'msBudynkiBDOT10k', visible: false },
         { layerId: 'msSUiKZP', visible: false },
         { layerId: 'msMPZP', visible: false },
         { layerId: 'msPlanyOgolneGmin', visible: false },
@@ -59,7 +58,6 @@ ${MAIN}`),
       'msBDOO_BDOT10k_base',
       'msTOPO_SERIA_10_1992',
       'msORTO_TIME_WMS',
-      'msBudynkiBDOT10k',
       'msSUiKZP',
       'msMPZP',
       'msPlanyOgolneGmin',
@@ -82,7 +80,7 @@ describe('overlayOrder', () => {
 ${MAIN}`,
         defaults.layers.overlays,
       ),
-    ).toEqual(['mapy-dawne', 'orto-archiwalna', 'nowe-budynki', 'suikzp', 'kimpzp', 'pog', 'kibdot', 'kiut', 'kieg', 'rcn', 'kina', 'prg']);
+    ).toEqual(['mapy-dawne', 'orto-archiwalna', 'suikzp', 'kimpzp', 'pog', 'kibdot', 'kiut', 'kieg', 'rcn', 'kina', 'prg']);
   });
 
   it('follows a changed order', () => {
@@ -96,7 +94,7 @@ ${MAIN}`,
 ${MAIN}`,
         defaults.layers.overlays,
       ),
-    ).toEqual(['mapy-dawne', 'orto-archiwalna', 'nowe-budynki', 'suikzp', 'kimpzp', 'pog', 'kibdot', 'kieg', 'kiut', 'rcn', 'kina', 'prg']);
+    ).toEqual(['mapy-dawne', 'orto-archiwalna', 'suikzp', 'kimpzp', 'pog', 'kibdot', 'kieg', 'kiut', 'rcn', 'kina', 'prg']);
   });
 
   it('gives up when an overlay is missing, so the built-in order is used', () => {

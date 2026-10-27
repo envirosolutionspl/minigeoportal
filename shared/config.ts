@@ -166,11 +166,9 @@ export interface ClientConfig {
      * The time view: `layers` are overlays with a `time` block, each with the name the bar's
      * switch shows, drawn one at a time at the date chosen on the time bar over a base map forced
      * while the view is open: the layer's own `base` (the present of the same kind: today's
-     * photos under old photos, today's map under old maps), else the view's `base`. `added`: an
-     * overlay (a series of years) of what was added later, which the bar offers to draw over the
-     * layer with the years after the chosen date (the buildings built since the photo).
+     * photos under old photos, today's map under old maps), else the view's `base`.
      */
-    timeTravel?: { layers: { id: string; label: string; base?: string; added?: string }[]; base?: string };
+    timeTravel?: { layers: { id: string; label: string; base?: string }[]; base?: string };
   };
   layers: {
     topics: Topic[];

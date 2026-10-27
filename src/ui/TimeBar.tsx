@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Columns2, LoaderCircle, RotateCw, X, ZoomIn 
 import { config } from '@/config/runtime';
 import { t } from '@/i18n';
 import { dateText } from '@/map/format';
-import { addedAfter, currentTimeLayer, timeLayerDrawsAt, timeLayerReaches, timeLayers } from '@/map/timeTravel';
+import { currentTimeLayer, timeLayerDrawsAt, timeLayerReaches, timeLayers } from '@/map/timeTravel';
 import { PROJECTION } from '@/map/projection';
 import { timeOptions, type TimeOption } from '@/modules';
 import { valueAt, yearly, type TimeValues } from '@/services/time';
@@ -26,8 +26,7 @@ const onGrid = ([x, y]: [number, number]): [number, number] => [Math.round(x / g
  * The time view's bar (map.yaml: timeTravel): a switch between its layers when there are
  * several, a slider over the dates the layer has at the centre of the map, buttons to the date
  * before and after (also for keyboards and for anyone who cannot drag), what is shown or
- * loading, a hint when the map is too far out for the layer to draw, and a switch for what was
- * added after the date (the buildings built since the photo) where the layer has it. At the foot of the map
+ * loading, and a hint when the map is too far out for the layer to draw. At the foot of the map
  * on a phone, in the middle on wider screens.
  */
 export function TimeBar() {
@@ -60,8 +59,6 @@ function Bar({ id, title, spec }: { id: string; title: string; spec: TimeValues 
   const zoomToScale = useMapStore((m) => m.zoomToScale);
   const scale = useMapStore((m) => m.scale);
   const center = useMapStore((m) => m.center);
-  const showAdded = useMapStore((m) => m.timeAdded);
-  const setShowAdded = useMapStore((m) => m.setTimeAdded);
   /** A module that knows the dates of this layer at a place; without one the slider holds the layer's own values. */
   const ask = timeOptions(id);
   /** The module's last answer and the place it is for; a list of null means it did not answer there. */
@@ -162,10 +159,6 @@ function Bar({ id, title, spec }: { id: string; title: string; spec: TimeValues 
     const detail = options?.find((o) => o.value === value)?.detail;
     return detail ? `${named}, ${detail}` : named;
   };
-
-  /** What was added in the years after the date shown, when the layer has it and there are such years. */
-  const added = current !== undefined ? addedAfter(chosen, current) : undefined;
-  const addedYears = added && added.years.length > 0 ? [added.years[0], added.years[added.years.length - 1]] : undefined;
 
   let line: React.ReactNode;
   if (dragged) {
@@ -285,25 +278,9 @@ function Bar({ id, title, spec }: { id: string; title: string; spec: TimeValues 
           <X className="h-5 w-5" aria-hidden="true" />
         </button>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-x-3 px-2 pt-1 text-xs">
-        <p role="status" className="flex min-h-5 items-center gap-1.5 text-[var(--muted)]">
-          {line}
-        </p>
-        {added && addedYears && (
-          <label title={added.def.description} className="flex min-h-8 cursor-pointer items-center gap-1.5 font-medium">
-            <input
-              type="checkbox"
-              checked={showAdded}
-              onChange={(e) => setShowAdded(e.target.checked)}
-              className="h-4 w-4 accent-[var(--accent)]"
-            />
-            {t('time.added', {
-              title: added.def.title,
-              years: addedYears[0] === addedYears[1] ? addedYears[0] : `${addedYears[0]}–${addedYears[1]}`,
-            })}
-          </label>
-        )}
-      </div>
+      <p role="status" className="flex min-h-5 items-center gap-1.5 px-2 pt-1 text-xs text-[var(--muted)]">
+        {line}
+      </p>
     </section>
   );
 }

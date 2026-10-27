@@ -2,10 +2,10 @@ import { PROJECTION } from '@/map/projection';
 
 /**
  * Map state lives in the URL query so every view is a shareable link:
- * ?x=637000&y=486000&z=12&b=orto&l=kieg,kiut.przewod_wodociagowy.przewod_gazowy&t=2007-01-01&c=1&tl=mapy-dawne&a=1
+ * ?x=637000&y=486000&z=12&b=orto&l=kieg,kiut.przewod_wodociagowy.przewod_gazowy&t=2007-01-01&c=1&tl=mapy-dawne
  * An overlay without sublayers uses its defaults. `t` is the date of the time view, which the
  * link then opens; `c=1` compares it with the present behind a curtain; `tl` names the view's
- * layer when it is not the first; `a=1` draws what was added after the date.
+ * layer when it is not the first.
  */
 
 interface UrlState {
@@ -21,8 +21,6 @@ interface UrlState {
   compare?: boolean;
   /** The time view's layer, when not the first. */
   timeLayer?: string;
-  /** The time view draws what was added after its date. */
-  timeAdded?: boolean;
 }
 
 /** An overlay id as links carry it. */
@@ -60,7 +58,6 @@ export function readUrl(): Partial<UrlState> {
     if (q.get('c') === '1') state.compare = true;
     const layer = q.get('tl');
     if (layer && ID.test(layer)) state.timeLayer = layer;
-    if (q.get('a') === '1') state.timeAdded = true;
   }
   return state;
 }
@@ -80,7 +77,6 @@ function queryFor(state: UrlState): string {
   if (state.time) q.set('t', state.time);
   if (state.time && state.compare) q.set('c', '1');
   if (state.time && state.timeLayer) q.set('tl', state.timeLayer);
-  if (state.time && state.timeAdded) q.set('a', '1');
   return `?${q.toString().replace(/%2C/g, ',')}`;
 }
 

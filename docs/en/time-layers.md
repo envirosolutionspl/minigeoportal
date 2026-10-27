@@ -48,7 +48,7 @@ Each edition has a `value` and, where it differs from the layer, its own `layer`
 timeTravel:
   base: orto # a base map forced while the view is open (optional)
   layers:
-    - { id: orto-archiwalna, label: Photos, added: nowe-budynki } # a dimension of one service, over the photos
+    - { id: orto-archiwalna, label: Photos } # a dimension of one service, over the photos
     - { id: mapy-dawne, label: Old maps, base: mapa } # a series of editions, over today's map
 ```
 
@@ -58,8 +58,6 @@ The "Time travel" tool (a button beside the measurement on a computer, an entry 
 
 The bar's "Compare with the present" button splits the map with a curtain: the layer as of the chosen date on the left, the base map (today) on the right. The handle on the line drags with a mouse or a finger, a click at the handle's height puts the line there, and the left and right arrow keys move it from the keyboard.
 
-A layer with `added` gets a switch on the bar for what came after the chosen date: `added` names a layer with a series of years (an edition a year, e.g. `budynki_2019`), and the bar draws over the time layer the editions of the years later than the year of the chosen date, over the whole map, right of the curtain too. With the photos these are the buildings added to BDOT10k after the photo: the old photo shows where they will stand, today's what is new. The switch goes away when there are no later years. BDOT10k usually gets a building a year or two after it is built, so some outlines may already be on the photo.
-
 Switching the layer keeps the date, and the slider stands on the newest value of the new layer not after it (a photo of 2007 shows the last sheet before 2007 on the old maps).
 
-A link to the view carries the date (`t=2007-01-01`, with the comparison `c=1`, with another layer than the first `tl=mapy-dawne`, with the new buildings `a=1`) and opens the map in the time view; Escape ends it and brings the base map used before it back.
+A link to the view carries the date (`t=2007-01-01`, with the comparison `c=1`, with another layer than the first `tl=mapy-dawne`) and opens the map in the time view; Escape ends it and brings the base map used before it back.

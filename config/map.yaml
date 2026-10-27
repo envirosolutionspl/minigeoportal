@@ -56,8 +56,7 @@ view:
 timeTravel:
   base: orto
   layers:
-    # `added`: the buildings added to the topographic database after the chosen date, on request.
-    - { id: orto-archiwalna, label: { pl: Zdjęcia, en: Photos }, added: nowe-budynki }
+    - { id: orto-archiwalna, label: { pl: Zdjęcia, en: Photos } }
     - { id: mapy-dawne, label: { pl: Mapy dawne, en: Old maps }, base: mapa }
 
 attribution: 'Dane: [GUGiK, geoportal.gov.pl](https://www.geoportal.gov.pl)'

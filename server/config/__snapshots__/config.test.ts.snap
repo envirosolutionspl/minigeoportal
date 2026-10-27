@@ -25,7 +25,6 @@ exports[`default configuration > stays what the app was built with (any change s
     "drawOrder": [
       "mapy-dawne",
       "orto-archiwalna",
-      "nowe-budynki",
       "suikzp",
       "kimpzp",
       "pog",
@@ -48,7 +47,6 @@ exports[`default configuration > stays what the app was built with (any change s
       "prg",
       "orto-archiwalna",
       "mapy-dawne",
-      "nowe-budynki",
     ],
     "topics": [
       {
@@ -290,7 +288,6 @@ exports[`default configuration > stays what the app was built with (any change s
       "base": "orto",
       "layers": [
         {
-          "added": "nowe-budynki",
           "id": "orto-archiwalna",
           "label": "Zdjęcia",
         },

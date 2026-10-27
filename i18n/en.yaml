@@ -160,7 +160,6 @@ time:
   compare: Compare with the present
   now: Today
   curtain: 'Curtain: the chosen date on the left, today on the right'
-  added: '{title}: {years}'
   curtainHint: Drag the curtain, or click at its height where it should stand. The left and right arrow keys move it too.
 
 print:

@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Check,
   ChevronDown,
@@ -22,7 +22,7 @@ import { loadCatalogLayer, useCatalog } from '@/services/catalog';
 import type { CatalogIndexEntry, CatalogStatus } from '@/services/catalogTypes';
 import { overlayOpacity, useMapStore } from '@/state/store';
 import { dateText, scaleText } from '@/map/format';
-import { locale, t } from '@/i18n';
+import { t } from '@/i18n';
 import { NewTab } from './NewTab';
 
 const STATUS_LABEL = (status: ServiceStatus) => t(`layers.status.${status}`);
@@ -50,10 +50,8 @@ function words(query: string): string[] {
   return normalize(query).split(/\s+/).filter(Boolean);
 }
 
-function textMatches(text: string, q: string[]): boolean {
-  const hay = normalize(text);
-  return q.every((w) => hay.includes(w));
-}
+/** Whether a normalized text has every word of the query; none for a text that is not known. */
+const textMatches = (text: string | undefined, q: string[]) => text !== undefined && q.every((w) => text.includes(w));
 
 const TOPICS = config.layers.topics;
 const TOPIC_TITLE = new Map(TOPICS.map((t) => [t.id, t.title]));
@@ -64,11 +62,11 @@ function serviceText(s: Overlay): string {
   return [s.title, s.description, ...s.keywords, TOPIC_TITLE.get(s.topic)].join(' ');
 }
 
-const entryText = (e: CatalogIndexEntry) => [e.title, ...e.path, TOPIC_TITLE.get(e.topic)].join(' ');
+/** Search text of our own services and of their sublayers (by "service/sublayer"), normalized once, not on each keystroke. */
+const OVERLAY_TEXT = new Map(config.layers.overlays.map((s) => [s.id, normalize(serviceText(s))]));
+const SUBLAYER_TEXT = new Map(config.layers.overlays.flatMap((s) => s.sublayers.map((l) => [`${s.id}/${l.name}`, normalize(l.title)])));
 
-/** Available layers first, then by title. */
-const byAvailability = (a: CatalogIndexEntry, b: CatalogIndexEntry) =>
-  Number(a.status !== 'ok') - Number(b.status !== 'ok') || a.title.localeCompare(b.title, locale());
+const entryText = (e: CatalogIndexEntry) => [e.title, ...e.path, TOPIC_TITLE.get(e.topic)].join(' ');
 
 export function LayerCatalog() {
   const close = useMapStore((m) => m.setPanel);
@@ -83,10 +81,15 @@ export function LayerCatalog() {
   const catalogState = useCatalog((c) => c.state);
   const entries = useCatalog((c) => c.entries);
   const panel = useMapStore((m) => m.panel);
+  const heading = useRef<HTMLHeadingElement>(null);
 
   // The geoportal list (gugik module) loads when the panel is first opened; our own layers work without it.
+  // Focus goes to the heading, so keyboards and screen readers are in the panel: not to the search
+  // field, which would raise the phone's keyboard over the list.
   useEffect(() => {
-    if (panel === 'catalog' && config.modules.gugik?.catalog) void useCatalog.getState().load();
+    if (panel !== 'catalog') return;
+    if (config.modules.gugik?.catalog) void useCatalog.getState().load();
+    heading.current?.focus();
   }, [panel]);
 
   /** Search text of every geoportal layer, normalized once instead of on each keystroke. */
@@ -99,25 +102,23 @@ export function LayerCatalog() {
         .filter((s) => (topic === null || s.topic === topic) && (!onlyActive || active.includes(s.id)))
         .map((s) => {
           if (q.length === 0) return { s, hits: [] as string[] };
-          const hits = s.sublayers.filter((l) => textMatches(l.title, q)).map((l) => l.name);
-          return hits.length > 0 || textMatches(serviceText(s), q) ? { s, hits } : null;
+          const hits = s.sublayers.filter((l) => textMatches(SUBLAYER_TEXT.get(`${s.id}/${l.name}`), q)).map((l) => l.name);
+          return hits.length > 0 || textMatches(OVERLAY_TEXT.get(s.id), q) ? { s, hits } : null;
         })
         .filter((r): r is { s: Overlay; hits: string[] } => r !== null),
     [q, topic, onlyActive, active],
   );
 
-  /** Geoportal layers that our own entries do not already show. */
+  /** Geoportal layers that our own entries do not already show, in the order the list came in (available first, then by title). */
   const others = useMemo(
     () =>
-      entries
-        .filter(
-          (e) =>
-            !e.curated &&
-            (topic === null || e.topic === topic) &&
-            (!onlyActive || active.includes(e.id)) &&
-            (q.length === 0 || q.every((w) => texts.get(e.id)?.includes(w))),
-        )
-        .sort(byAvailability),
+      entries.filter(
+        (e) =>
+          !e.curated &&
+          (topic === null || e.topic === topic) &&
+          (!onlyActive || active.includes(e.id)) &&
+          (q.length === 0 || textMatches(texts.get(e.id), q)),
+      ),
     [entries, texts, q, topic, onlyActive, active],
   );
 
@@ -127,12 +128,14 @@ export function LayerCatalog() {
   return (
     <section className="flex h-full flex-col" aria-label={t('layers.panel')}>
       <header className="flex items-center gap-2 px-4 pt-4 pb-2">
-        <h2 className="flex-1 text-base font-semibold">{t('layers.title')}</h2>
+        <h2 ref={heading} tabIndex={-1} className="flex-1 text-base font-semibold">
+          {t('layers.title')}
+        </h2>
         <button
           type="button"
           onClick={() => close('none')}
           aria-label={t('common.close')}
-          className="rounded-full p-2 hover:bg-[var(--hover)]"
+          className="flex items-center justify-center rounded-full p-2 hover:bg-[var(--hover)] phone:h-11 phone:w-11"
         >
           <X className="h-5 w-5" />
         </button>
@@ -167,21 +170,21 @@ export function LayerCatalog() {
             type="button"
             onClick={() => setOnlyActive(!onlyActive)}
             aria-pressed={onlyActive}
-            className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ring-1 ring-[var(--accent)] transition ${
+            className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ring-1 ring-[var(--accent)] transition phone:py-2 ${
               onlyActive ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'text-[var(--accent)] hover:bg-[var(--hover)]'
             }`}
           >
             {onlyActive && <Check className="h-3.5 w-3.5" aria-hidden="true" />}
             {t('layers.onlyActive', { count: active.length })}
           </button>
-          {TOPICS.map(({ id: t, title }) => (
+          {TOPICS.map(({ id, title }) => (
             <button
-              key={t}
+              key={id}
               type="button"
-              onClick={() => setTopic(topic === t ? null : t)}
-              aria-pressed={topic === t}
-              className={`rounded-full px-3 py-1 text-xs transition ${
-                topic === t ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'bg-[var(--field)] hover:bg-[var(--hover)]'
+              onClick={() => setTopic(topic === id ? null : id)}
+              aria-pressed={topic === id}
+              className={`rounded-full px-3 py-1 text-xs transition phone:py-2 ${
+                topic === id ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'bg-[var(--field)] hover:bg-[var(--hover)]'
               }`}
             >
               {title}
@@ -211,12 +214,12 @@ export function LayerCatalog() {
               ))}
             </Group>
             <Group title={t('layers.all')}>
-              {TOPICS.map(({ id: t }) => (
+              {TOPICS.map(({ id }) => (
                 <TopicSection
-                  key={t}
-                  topic={t}
-                  own={results.filter((r) => !r.s.starter && r.s.topic === t).map((r) => r.s)}
-                  entries={others.filter((e) => e.topic === t)}
+                  key={id}
+                  topic={id}
+                  own={results.filter((r) => !r.s.starter && r.s.topic === id).map((r) => r.s)}
+                  entries={others.filter((e) => e.topic === id)}
                 />
               ))}
             </Group>
@@ -327,40 +330,24 @@ function CatalogItem({ entry }: { entry: CatalogIndexEntry }) {
   const checkedOn = dateText(entry.checked.slice(0, 10));
 
   return (
-    <div className={`rounded-xl px-3 py-2 ${active ? 'bg-[var(--accent-soft)]' : ''}`}>
-      <div className={`flex items-start gap-3 ${available ? '' : 'opacity-60'}`}>
-        <input
-          id={`gp-${entry.id}`}
-          type="checkbox"
-          checked={active}
-          disabled={!available}
-          onChange={() => toggle(entry.id)}
-          aria-label={entry.title}
-          className="mt-1 h-4 w-4 shrink-0 accent-[var(--accent)] phone:h-5 phone:w-5"
-        />
-        <label htmlFor={`gp-${entry.id}`} className={`min-w-0 flex-1 ${available ? 'cursor-pointer' : ''}`}>
-          <span className="block text-sm font-medium">{entry.title}</span>
-          {entry.path.length > 0 && <span className="block text-xs text-[var(--muted)]">{entry.path.join(' › ')}</span>}
-          {(active || expanded) && !failed && (
-            <span className="mt-1 flex items-center gap-1.5 text-xs text-[var(--muted)]">
-              <LoaderCircle className="h-3 w-3 animate-spin" aria-hidden="true" />{' '}
-              {active ? t('layers.loadingLayer') : t('layers.loadingSublayers')}
-            </span>
-          )}
-        </label>
-        {available && (entry.parts ?? 0) > 1 && (
-          <button
-            type="button"
-            onClick={expand}
-            aria-expanded={expanded}
-            aria-label={t('layers.serviceLayers', { title: entry.title })}
-            className="rounded-full p-1 text-[var(--muted)] hover:bg-[var(--hover)]"
-          >
-            <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
-          </button>
-        )}
-      </div>
-      {!available && <Why status={entry.status as Exclude<CatalogStatus, 'ok'>} detail={entry.detail} checked={checkedOn} />}
+    <LayerRow
+      id={`gp-${entry.id}`}
+      title={entry.title}
+      subtitle={entry.path.length > 0 ? entry.path.join(' › ') : undefined}
+      active={active}
+      disabled={!available}
+      expandable={available && (entry.parts ?? 0) > 1}
+      expanded={expanded}
+      onToggle={() => toggle(entry.id)}
+      onExpand={expand}
+    >
+      {(active || expanded) && !failed && (
+        <p className="mt-1 ml-7 flex items-center gap-1.5 text-xs text-[var(--muted)]">
+          <LoaderCircle className="h-3 w-3 animate-spin" aria-hidden="true" />{' '}
+          {active ? t('layers.loadingLayer') : t('layers.loadingSublayers')}
+        </p>
+      )}
+      {entry.status !== 'ok' && <Why status={entry.status} detail={entry.detail} checked={checkedOn} />}
       {available && failed && (
         <p role="status" className="mt-1 ml-7 text-xs text-[var(--danger)]">
           {t('layers.failed')}
@@ -377,6 +364,73 @@ function CatalogItem({ entry }: { entry: CatalogIndexEntry }) {
           .
         </p>
       )}
+    </LayerRow>
+  );
+}
+
+/**
+ * The row of one layer, ours or the geoportal's: a checkbox, its title and subtitle, and the
+ * button that unfolds its sublayers; what belongs to the layer (why it is unavailable, its
+ * sublayers, its opacity) goes below the row, inside the same box.
+ */
+function LayerRow({
+  id,
+  title,
+  subtitle,
+  titleExtra,
+  active,
+  disabled,
+  expandable,
+  expanded,
+  onToggle,
+  onExpand,
+  children,
+}: {
+  id: string;
+  title: string;
+  subtitle?: string;
+  /** Beside the title: the status of the service. */
+  titleExtra?: React.ReactNode;
+  active: boolean;
+  disabled: boolean;
+  expandable: boolean;
+  expanded: boolean;
+  onToggle(): void;
+  onExpand(): void;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className={`rounded-xl px-3 py-2 ${active ? 'bg-[var(--accent-soft)]' : ''}`}>
+      <div className={`flex items-start gap-3 ${disabled ? 'opacity-60' : ''}`}>
+        <input
+          id={id}
+          type="checkbox"
+          checked={active}
+          disabled={disabled}
+          onChange={onToggle}
+          aria-label={title}
+          className="mt-1 h-4 w-4 shrink-0 accent-[var(--accent)] phone:h-5 phone:w-5"
+        />
+        <label htmlFor={id} className={`min-w-0 flex-1 ${disabled ? '' : 'cursor-pointer'}`}>
+          <span className="flex items-center gap-2 text-sm font-medium">
+            {title}
+            {titleExtra}
+          </span>
+          {subtitle && <span className="block text-xs text-[var(--muted)]">{subtitle}</span>}
+        </label>
+        {expandable && (
+          <button
+            type="button"
+            onClick={onExpand}
+            aria-expanded={expanded}
+            aria-label={t('layers.serviceLayers', { title })}
+            className="rounded-full p-1 text-[var(--muted)] hover:bg-[var(--hover)] phone:p-2.5"
+          >
+            <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+          </button>
+        )}
+      </div>
+      {children}
     </div>
   );
 }
@@ -443,37 +497,18 @@ function OverlayItem({ s, hits, startOpen = false }: { s: Overlay; hits: string[
   const open = expanded || hits.length > 0;
 
   return (
-    <div className={`rounded-xl px-3 py-2 ${active ? 'bg-[var(--accent-soft)]' : ''}`}>
-      <div className={`flex items-start gap-3 ${blocked ? 'opacity-60' : ''}`}>
-        <input
-          id={`ov-${s.id}`}
-          type="checkbox"
-          checked={active}
-          disabled={blocked}
-          onChange={() => toggle(s.id)}
-          aria-label={s.title}
-          className="mt-1 h-4 w-4 shrink-0 accent-[var(--accent)] phone:h-5 phone:w-5"
-        />
-        <label htmlFor={`ov-${s.id}`} className="min-w-0 flex-1 cursor-pointer">
-          <span className="flex items-center gap-2 text-sm font-medium">
-            {s.title}
-            <StatusDot status={status} />
-          </span>
-          <span className="block text-xs text-[var(--muted)]">{s.description}</span>
-        </label>
-        {s.sublayers.length > 1 && (
-          <button
-            type="button"
-            onClick={() => setExpanded(!open)}
-            aria-expanded={open}
-            aria-label={t('layers.serviceLayers', { title: s.title })}
-            className="rounded-full p-1 text-[var(--muted)] hover:bg-[var(--hover)]"
-          >
-            <ChevronDown className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
-          </button>
-        )}
-      </div>
-
+    <LayerRow
+      id={`ov-${s.id}`}
+      title={s.title}
+      subtitle={s.description}
+      titleExtra={<StatusDot status={status} />}
+      active={active}
+      disabled={blocked}
+      expandable={s.sublayers.length > 1}
+      expanded={open}
+      onToggle={() => toggle(s.id)}
+      onExpand={() => setExpanded(!open)}
+    >
       {(status === 'blocked' || status === 'down' || status === 'degraded' || status === 'slow') && (
         <Why status={status === 'blocked' ? 'refused' : status} detail={serviceError(s.id)} />
       )}
@@ -499,7 +534,7 @@ function OverlayItem({ s, hits, startOpen = false }: { s: Overlay; hits: string[
           className="mt-1 ml-7 h-6 w-[calc(100%-1.75rem)] cursor-pointer accent-[var(--accent)]"
         />
       )}
-    </div>
+    </LayerRow>
   );
 }
 

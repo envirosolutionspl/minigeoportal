@@ -30,11 +30,14 @@ export interface OrthoInfo {
   history: OrthoEdition[];
 }
 
-export async function orthoAt([x, y]: [number, number], signal: AbortSignal): Promise<OrthoInfo> {
-  const res = await fetch(`/api/orto?x=${Math.round(x)}&y=${Math.round(y)}`, { signal });
+/** What the backend knows at a point of the map, from one of its point endpoints (/api/orto, /api/topo), asked at the whole metre. */
+export async function pointInfo<T>(path: string, [x, y]: [number, number], signal: AbortSignal): Promise<T> {
+  const res = await fetch(`${path}?x=${Math.round(x)}&y=${Math.round(y)}`, { signal });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return (await res.json()) as OrthoInfo;
+  return (await res.json()) as T;
 }
+
+export const orthoAt = (point: [number, number], signal: AbortSignal) => pointInfo<OrthoInfo>('/api/orto', point, signal);
 
 /** "5 cm", "25 cm", "1 m". */
 export const pixelText = (metres: number) => (metres < 1 ? `${Math.round(metres * 100)} cm` : `${metres.toLocaleString(locale())} m`);

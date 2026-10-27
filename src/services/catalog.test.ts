@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CATALOG_ID, clearCatalog, loadCatalogLayer, overlayDef, useCatalog } from './catalog';
 import { catalogSublayers } from './catalogSublayers';
 import { layerMeta } from './meta';
@@ -30,6 +30,47 @@ const META = {
 beforeEach(async () => {
   clearCatalog();
   await withCapabilities();
+});
+/**
+ * A connection that hangs: fetch never answers, unless the request was given up (its signal is
+ * aborted). The timeout the app asks for is already over, as the browser's own timers are not the
+ * tests' fake ones.
+ */
+const hangingFetch = () => {
+  const timeout = vi
+    .spyOn(AbortSignal, 'timeout')
+    .mockImplementation(() => AbortSignal.abort(new DOMException('Timed out', 'TimeoutError')));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((_url: string, init?: RequestInit) =>
+      init?.signal?.aborted ? Promise.reject(init.signal.reason) : new Promise<Response>(() => {}),
+    ),
+  );
+  return timeout;
+};
+
+describe('useCatalog.load', () => {
+  it('lists the available layers first, then every layer by title, once, as the list arrives', async () => {
+    const index = (id: string, title: string, status = 'ok') => ({ ...ENTRY, id, title, status });
+    stubFetch([['/api/catalog', { generatedAt: 'x', entries: [index('b', 'Żwir', 'down'), index('c', 'Zieleń'), index('a', 'Ścieżki')] }]]);
+    await useCatalog.getState().load();
+    expect(useCatalog.getState().state).toBe('ready');
+    expect(useCatalog.getState().entries.map((e) => e.id)).toEqual(['a', 'c', 'b']);
+  });
+
+  it('gives up on a connection that hangs, so the list can be asked for again', async () => {
+    const timeout = hangingFetch();
+    await useCatalog.getState().load();
+    expect(timeout).toHaveBeenCalledWith(10_000);
+    expect(useCatalog.getState().state).toBe('error');
+  });
+
+  it('marks a layer whose definition does not come in time as failed', async () => {
+    const timeout = hangingFetch();
+    expect(await loadCatalogLayer('msZabytki')).toBeUndefined();
+    expect(timeout).toHaveBeenCalledWith(10_000);
+    expect(useCatalog.getState().failed.has('msZabytki')).toBe(true);
+  });
 });
 
 describe('catalogSublayers', () => {

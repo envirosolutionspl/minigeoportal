@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { overlayById, type Overlay } from '@/config/runtime';
+import { locale } from '@/i18n';
 import { registerMeta } from './meta';
 import { catalogSublayers } from './catalogSublayers';
 import type { CatalogEntry, CatalogIndex, CatalogIndexEntry, CatalogMeta } from './catalogTypes';
@@ -11,6 +12,13 @@ import type { CatalogEntry, CatalogIndex, CatalogIndexEntry, CatalogMeta } from 
  */
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'preparing' | 'error';
+
+/** Our own API answers in well under this; a connection that hangs must not leave the panel loading for good. */
+const TIMEOUT_MS = 10_000;
+
+/** Available layers first, then by title: the order the panel lists them in, settled once for the hundreds of entries. */
+const byAvailability = (a: CatalogIndexEntry, b: CatalogIndexEntry) =>
+  Number(a.status !== 'ok') - Number(b.status !== 'ok') || a.title.localeCompare(b.title, locale());
 
 interface CatalogStore {
   state: LoadState;
@@ -34,11 +42,12 @@ export const useCatalog = create<CatalogStore>((set, get) => ({
     if (get().state === 'loading' || get().state === 'ready') return;
     set({ state: 'loading' });
     try {
-      const res = await fetch('/api/catalog');
+      const res = await fetch('/api/catalog', { signal: AbortSignal.timeout(TIMEOUT_MS) });
       if (res.status === 503) return set({ state: 'preparing' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const index = (await res.json()) as CatalogIndex;
-      set({ state: 'ready', entries: index.entries, byId: new Map(index.entries.map((e) => [e.id, e])) });
+      const entries = [...index.entries].sort(byAvailability);
+      set({ state: 'ready', entries, byId: new Map(entries.map((e) => [e.id, e])) });
     } catch {
       set({ state: 'error' });
     }
@@ -65,7 +74,7 @@ export function loadCatalogLayer(id: string): Promise<Overlay | undefined> {
   if (!CATALOG_ID.test(id)) return Promise.resolve(undefined);
   let request = pending.get(id);
   if (!request) {
-    request = fetch(`/api/catalog/${encodeURIComponent(id)}`)
+    request = fetch(`/api/catalog/${encodeURIComponent(id)}`, { signal: AbortSignal.timeout(TIMEOUT_MS) })
       .then(async (res) => {
         if (!res.ok) return undefined;
         const { entry, meta } = (await res.json()) as { entry: CatalogEntry; meta?: CatalogMeta };

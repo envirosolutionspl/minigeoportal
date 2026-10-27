@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { loadConfig } from './server/config/load.ts';
 import { createSite, pickLocale, renderPage } from './server/html.ts';
+import { preloadTags } from './scripts/preload.ts';
 
 /**
  * In development the page gets the configuration the way the server gives it (server/html.ts),
@@ -27,10 +28,26 @@ function configPage(): Plugin {
   };
 }
 
+/** The built page says early which files it will need (scripts/preload.ts). */
+function preloadLinks(): Plugin {
+  let base = '/';
+  return {
+    name: 'preload-links',
+    apply: 'build',
+    configResolved(resolved) {
+      base = resolved.base;
+    },
+    transformIndexHtml: {
+      order: 'post',
+      handler: (_html, { bundle }) => (bundle ? preloadTags(bundle, base) : []),
+    },
+  };
+}
+
 const API = `http://localhost:${process.env.API_PORT ?? 8787}`;
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), configPage()],
+  plugins: [react(), tailwindcss(), configPage(), preloadLinks()],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },

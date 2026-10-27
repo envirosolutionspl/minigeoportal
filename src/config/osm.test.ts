@@ -45,15 +45,6 @@ describe('examples/osm', () => {
   });
 
   it('shows the scale on the ground in the bottom bar, not the nominal one of the Mercator plane', async () => {
-    // OpenLayers watches the map size; jsdom has no ResizeObserver.
-    vi.stubGlobal(
-      'ResizeObserver',
-      class {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      },
-    );
     const { default: OlMap } = await import('ol/Map');
     const { default: View } = await import('ol/View');
     const { getPointResolution, transform } = await import('ol/proj');
@@ -83,8 +74,11 @@ describe('examples/osm', () => {
   });
 
   it('searches with Nominatim after Enter, without the parcel search or any other part of the gugik module', async () => {
-    const { searchProvider, loadSearchProvider } = await import('@/search');
+    const { searchProvider, loadSearchProvider, subscribeSearchProvider } = await import('@/search');
+    const told = vi.fn();
+    subscribeSearchProvider(told);
     await loadSearchProvider();
+    expect(told).toHaveBeenCalledTimes(1);
     expect(searchProvider.instant).toBe(false);
     expect(searchProvider.placeholder).toBe('Address or place, Enter searches');
     expect(osm.search).toEqual({ provider: 'nominatim', parcel: false });

@@ -2,7 +2,7 @@ import type Map from 'ol/Map';
 import ImageWMS from 'ol/source/ImageWMS';
 import type { ImageSourceEvent } from 'ol/source/Image';
 import { config, defaultSublayers, overlayById, type Overlay } from '@/config/runtime';
-import { createOverlayLayer, resolutionRange, showSublayers, type OverlayLayer } from '@/services/layers';
+import { createOverlayLayer, resolutionRange, showSublayers } from '@/services/layers';
 import { timeValues, valueAt, type TimeValues } from '@/services/time';
 import { timeShown, useMapStore } from '@/state/store';
 import { attachCurtain } from './curtain';
@@ -140,7 +140,7 @@ export function attachTimeTravel(map: Map): () => void {
     detachCurtain();
     for (const entry of shown) {
       map.removeLayer(entry.layer);
-      (entry.layer as OverlayLayer).dispose();
+      entry.layer.dispose();
     }
   };
 }

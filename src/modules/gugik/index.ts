@@ -23,13 +23,18 @@ export const parcelTool = config.search.parcel
     }
   : undefined;
 
-// The place panel's parts start loading with the app, so they are there by the first click.
-const info = gugik && (gugik.parcelReport || gugik.ortho || gugik.elevation) ? import('./InfoParts') : undefined;
+// The place panel's parts are not needed by the first screen, so they load once the browser is
+// idle after the start, or at the first click, whichever comes first: not with the app, whose
+// first requests they would crowd. A browser without requestIdleCallback (Safari) loads them at
+// the first click.
+let parts: Promise<typeof import('./InfoParts')> | undefined;
+const info = gugik && (gugik.parcelReport || gugik.ortho || gugik.elevation) ? () => (parts ??= import('./InfoParts')) : undefined;
+if (info && 'requestIdleCallback' in window) window.requestIdleCallback(() => void info());
 
 /** Under the coordinates of the place panel: the height of the terrain (elevation) and the parcel report link (parcelReport). */
 export const infoHeader = [
-  ...(info && gugik?.elevation ? [lazy(() => info.then((m) => ({ default: m.Elevation })))] : []),
-  ...(info && gugik?.parcelReport ? [lazy(() => info.then((m) => ({ default: m.ParcelReportLink })))] : []),
+  ...(info && gugik?.elevation ? [lazy(() => info().then((m) => ({ default: m.Elevation })))] : []),
+  ...(info && gugik?.parcelReport ? [lazy(() => info().then((m) => ({ default: m.ParcelReportLink })))] : []),
 ];
 
 /** Heights of the terrain at points of the map, from the elevation model (elevation). */
@@ -38,7 +43,7 @@ export const heightsAt = gugik?.elevation
   : undefined;
 
 /** The date of the aerial photo above the footer of the place panel (ortho). */
-export const infoFooter = info && gugik?.ortho ? [lazy(() => info.then((m) => ({ default: m.OrthoPhoto })))] : [];
+export const infoFooter = info && gugik?.ortho ? [lazy(() => info().then((m) => ({ default: m.OrthoPhoto })))] : [];
 
 /** The layers of the time view the module knows the dates of: the archival photos (ortho.history), the old maps (topo.history). */
 const photos = gugik && gugik.ortho ? gugik.ortho.history : undefined;

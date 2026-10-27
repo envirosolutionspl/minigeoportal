@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Columns2, LoaderCircle, RotateCw, X, ZoomIn } from 'lucide-react';
+import { clamp } from 'ol/math';
 import { config } from '@/config/runtime';
 import { t } from '@/i18n';
 import { dateText } from '@/map/format';
@@ -40,7 +41,9 @@ export function TimeBar() {
 /** The date as its year, for the ends of the slider and beside it. */
 const year = (value: string) => value.slice(0, 4);
 
-const action = 'inline-flex shrink-0 items-center gap-1 rounded-lg px-1.5 py-0.5 font-medium text-[var(--accent)] hover:bg-[var(--hover)]';
+/** A button in the status line: small text, but tall enough for a finger on a phone. */
+const action =
+  'inline-flex min-h-6 shrink-0 items-center gap-1 rounded-lg px-1.5 py-0.5 font-medium text-[var(--accent)] hover:bg-[var(--hover)] phone:min-h-9';
 const step =
   'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl hover:bg-[var(--hover)] disabled:opacity-40 disabled:hover:bg-transparent';
 
@@ -58,7 +61,8 @@ function Bar({ id, title, spec }: { id: string; title: string; spec: TimeValues 
   const setCompare = useMapStore((m) => m.setCompare);
   const zoomToScale = useMapStore((m) => m.zoomToScale);
   const scale = useMapStore((m) => m.scale);
-  const center = useMapStore((m) => m.center);
+  // The grid point nearest the middle of the map, as text: a pan within one cell changes nothing here.
+  const gridPoint = useMapStore((m) => onGrid(m.center).join(','));
   /** A module that knows the dates of this layer at a place; without one the slider holds the layer's own values. */
   const ask = timeOptions(id);
   /** The module's last answer and the place it is for; a list of null means it did not answer there. */
@@ -85,8 +89,8 @@ function Bar({ id, title, spec }: { id: string; title: string; spec: TimeValues 
 
   // Asked once the map has settled, about the grid point nearest the middle, and only where the
   // layer draws at this scale: nothing is asked over the whole country.
-  const point = onGrid(center);
-  const place = `${id}|${point.join(',')}`;
+  const point = gridPoint.split(',').map(Number) as [number, number];
+  const place = `${id}|${gridPoint}`;
   const reaches = timeLayerReaches(chosen, scale);
   useEffect(() => {
     if (!ask || !reaches) return;
@@ -109,7 +113,9 @@ function Bar({ id, title, spec }: { id: string; title: string; spec: TimeValues 
   const checking = ask !== undefined && reaches && !fresh;
   const options = answer?.list ?? null;
 
-  const values = options?.map((o) => o.value) ?? yearly(spec.values);
+  /** The layer's own values, one a year: kept between renders, as the list may be hundreds of dates. */
+  const own = useMemo(() => yearly(spec.values), [spec.values]);
+  const values = options?.map((o) => o.value) ?? own;
   const draws = timeLayerDrawsAt(chosen, time, named, scale);
   const current = values.length > 0 ? valueAt(values, time ?? spec.current ?? values[values.length - 1]) : undefined;
   const index = current ? values.indexOf(current) : -1;
@@ -125,7 +131,7 @@ function Bar({ id, title, spec }: { id: string; title: string; spec: TimeValues 
     setTimeSublayers(chosenLayer);
   }, [chosenLayer, setTimeSublayers]);
 
-  const choose = (i: number) => setTime(values[Math.min(Math.max(i, 0), values.length - 1)]);
+  const choose = (i: number) => setTime(values[clamp(i, 0, values.length - 1)]);
   const latest = useRef(values);
   useEffect(() => {
     latest.current = values;
@@ -142,7 +148,7 @@ function Bar({ id, title, spec }: { id: string; title: string; spec: TimeValues 
     const commit = () => {
       setDragging(null);
       const list = latest.current;
-      setTime(list[Math.min(Math.max(Number(el.value), 0), list.length - 1)]);
+      setTime(list[clamp(Number(el.value), 0, list.length - 1)]);
     };
     el.addEventListener('change', commit);
     return () => el.removeEventListener('change', commit);

@@ -46,12 +46,24 @@ export function expandRange(start: string, end: string, step: string): string[] 
 /** A date at midnight as some servers write it (2015-01-01T00:00:00.000Z) is the date. */
 const day = (value: string) => value.replace(/T00:00:00(?:\.0+)?Z$/, '');
 
+/**
+ * The values of each list read so far: a list is asked for on every render of the time bar, and a
+ * range of decades by the month is hundreds of dates; the same array lets the bar keep what it
+ * made of it.
+ */
+const parsed = new Map<string, string[]>();
+
 /** A list as WMS capabilities give it: values and start/end/period ranges, separated by commas. */
 export function parseValues(list: string): string[] {
-  return list.split(',').flatMap((v) => {
-    const [start, end, step] = v.trim().split('/').map(day);
-    return end && step ? expandRange(start, end, step) : [start];
-  });
+  let values = parsed.get(list);
+  if (!values) {
+    values = list.split(',').flatMap((v) => {
+      const [start, end, step] = v.trim().split('/').map(day);
+      return end && step ? expandRange(start, end, step) : [start];
+    });
+    parsed.set(list, values);
+  }
+  return values;
 }
 
 /** The name capabilities give a dimension: TIME is time, DIM_ELEVATION is elevation. */
@@ -74,7 +86,8 @@ export function timeValues(def: Overlay): TimeValues | undefined {
     values = dimension ? parseValues(dimension.values) : [];
     fallback = dimension?.default;
   } else {
-    values = Array.isArray(time.values) ? time.values : expandRange(time.values.start, time.values.end, time.values.step);
+    // A configured range is read as a capabilities range: once, for the same reasons.
+    values = Array.isArray(time.values) ? time.values : parseValues(`${time.values.start}/${time.values.end}/${time.values.step}`);
   }
   // Without the capabilities (not read yet) the layer draws without the parameter: the service's own default.
   const current = time.default ?? fallback ?? values[values.length - 1];

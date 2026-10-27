@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { LayerCatalog } from './LayerCatalog';
 import { useMapStore } from '@/state/store';
@@ -6,11 +6,15 @@ import { useStatusStore } from '@/services/status';
 import { stubFetch, withCapabilities } from '@/test/helpers';
 import { clearCatalog } from '@/services/catalog';
 
-beforeEach(async () => {
+// The capabilities stay loaded across the tests: nothing here clears them. The geoportal list is
+// asked anew by each test, from the server's answer below unless a test gives another.
+beforeAll(() => withCapabilities());
+
+beforeEach(() => {
   useMapStore.setState({ overlays: ['kieg'], sublayers: {}, opacity: {}, panel: 'catalog', scale: 47247 });
   useStatusStore.setState({ status: {}, slow: [] });
   clearCatalog();
-  await withCapabilities();
+  stubFetch([['/api/catalog', CATALOG]]);
 });
 
 /** The header of a topic section of the full list (the topic chips above have the same names). */
@@ -67,24 +71,54 @@ const CATALOG = {
       status: 'unsupported',
       checked: '2026-10-22T08:00:00Z',
     },
+    {
+      id: 'msArcheo',
+      title: 'Archeologia',
+      path: [],
+      topic: 'zabytki',
+      kind: 'wms',
+      order: 8,
+      status: 'ok',
+      checked: '2026-10-22T08:00:00Z',
+    },
   ],
 };
 
 describe('LayerCatalog', () => {
   it('lists starters first, then every geoportal layer by topic, without repeating our own', async () => {
-    stubFetch([['/api/catalog', CATALOG]]);
     render(<LayerCatalog />);
     expect(screen.getByText('Najpopularniejsze')).toBeTruthy();
     expect(screen.getByLabelText('Plany ogólne gmin (POG)')).toBeTruthy();
-    fireEvent.click(await section(/Zabytki i turystyka/));
+    const zabytki = await section(/Zabytki i turystyka/);
+    fireEvent.click(zabytki);
     expect(screen.getByLabelText('Rejestr zabytków nieruchomych')).toBeTruthy();
     expect(screen.getByText('Dane innych instytucji › Narodowy Instytut Dziedzictwa')).toBeTruthy();
     // Our own entry stands for msKIEG, so it is listed once.
     expect(screen.getAllByLabelText('Ewidencja gruntów i budynków')).toHaveLength(1);
+    // The topic lists the geoportal layers by title, not in the order the server sent them.
+    const listed = [...zabytki.parentElement!.querySelectorAll('input[type=checkbox]')].map((i) => i.getAttribute('aria-label'));
+    expect(listed).toEqual(['Archeologia', 'Rejestr zabytków nieruchomych']);
+  });
+
+  it('puts focus on its heading when it opens, not on the search field', () => {
+    useMapStore.setState({ panel: 'none' });
+    render(<LayerCatalog />);
+    expect(document.activeElement).toBe(document.body);
+    act(() => useMapStore.getState().setPanel('catalog'));
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Warstwy' }));
+  });
+
+  it('gives the close button, the chevrons and the topic chips room for a finger on a phone', () => {
+    render(<LayerCatalog />);
+    const close = screen.getByRole('button', { name: 'Zamknij' }).className;
+    expect(close).toContain('phone:h-11');
+    expect(close).toContain('phone:w-11');
+    expect(screen.getByRole('button', { name: 'Warstwy usługi: Ewidencja gruntów i budynków' }).className).toContain('phone:p-2.5');
+    expect(screen.getByRole('button', { name: 'Ceny' }).className).toContain('phone:py-2');
+    expect(screen.getByRole('button', { name: 'Tylko włączone (1)' }).className).toContain('phone:py-2');
   });
 
   it('keeps unavailable layers in their topic, greyed out, with the reason on request', async () => {
-    stubFetch([['/api/catalog', CATALOG]]);
     render(<LayerCatalog />);
     fireEvent.click(await section(/Środowisko/));
     const clc = screen.getByLabelText('Corine Land Cover 2018') as HTMLInputElement;
@@ -97,7 +131,6 @@ describe('LayerCatalog', () => {
   });
 
   it('finds geoportal layers by name or group and switches them on', async () => {
-    stubFetch([['/api/catalog', CATALOG]]);
     render(<LayerCatalog />);
     await section(/Zabytki i turystyka/);
     const find = (value: string) => fireEvent.change(screen.getByPlaceholderText(/Szukaj warstwy/), { target: { value } });
@@ -134,7 +167,6 @@ describe('LayerCatalog', () => {
 
   it('shows only the layers switched on, ours and the geoportal ones, when asked', async () => {
     useMapStore.setState({ overlays: ['kieg', 'msZabytki'] });
-    stubFetch([['/api/catalog', CATALOG]]);
     render(<LayerCatalog />);
     await section(/Zabytki i turystyka/);
     fireEvent.click(screen.getByRole('button', { name: 'Tylko włączone (2)' }));

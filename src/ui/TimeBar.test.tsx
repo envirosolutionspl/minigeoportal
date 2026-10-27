@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Profiler } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { TimeBar } from './TimeBar';
 import { useMapStore } from '@/state/store';
@@ -177,18 +178,36 @@ describe('TimeBar', () => {
     expect(slider().disabled).toBe(true);
   });
 
-  it('asks the index again only once the map has moved to another point of a 250 m grid', async () => {
+  it('asks the index again only once the map has moved to another point of a 250 m grid, and does not even redraw before', async () => {
     const { calls } = index();
-    render(<TimeBar />);
+    const rendered = vi.fn();
+    render(
+      <Profiler id="bar" onRender={rendered}>
+        <TimeBar />
+      </Profiler>,
+    );
     await settle();
     const asked = calls.length;
+    const drawn = rendered.mock.calls.length;
     act(() => useMapStore.setState({ center: [636600, 486400] }));
     await settle();
     expect(calls.length).toBe(asked);
+    expect(rendered.mock.calls.length).toBe(drawn);
     act(() => useMapStore.setState({ center: [640130, 486460] }));
     await settle();
     expect(calls.length).toBe(asked + 1);
     expect(calls.at(-1)).toContain('/api/orto?x=640250&y=486500');
+    expect(rendered.mock.calls.length).toBeGreaterThan(drawn);
+  });
+
+  it('gives the buttons of the status line room for a finger on a phone', async () => {
+    index();
+    useMapStore.setState({ scale: 100000 });
+    render(<TimeBar />);
+    await settle();
+    const zoom = screen.getByRole('button', { name: 'Przybliż mapę' }).className;
+    expect(zoom).toContain('min-h-6');
+    expect(zoom).toContain('phone:min-h-9');
   });
 
   it('asks nothing while the map is too far out for the layer, and asks once it is close enough', async () => {

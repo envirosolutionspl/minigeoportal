@@ -28,6 +28,10 @@ describe('parseValues', () => {
     expect(parseValues('1995-01-01T00:00:00.000Z/1995-03-01T00:00:00.000Z/P1M')).toEqual(['1995-01-01', '1995-02-01', '1995-03-01']);
     expect(parseValues('2015-06-01T12:00:00Z')).toEqual(['2015-06-01T12:00:00Z']);
   });
+
+  it('gives the same array for the same list, so what was made of it can be kept', () => {
+    expect(parseValues('1995-01-01/2025-11-01/P1M')).toBe(parseValues('1995-01-01/2025-11-01/P1M'));
+  });
 });
 
 describe('timeValues', () => {
@@ -68,8 +72,15 @@ describe('timeValues', () => {
       time: { type: 'dimension', param: 'TIME', values: 'capabilities' },
     };
     expect(timeValues(def)).toEqual({ param: 'TIME', values: ['2015', '2018', '2020'], current: '2018' });
+    expect(timeValues(def)?.values).toBe(timeValues(def)?.values);
     const source = createOverlayLayer(def).getSource() as ImageWMS;
     expect(source.getParams().TIME).toBe('2018');
+  });
+
+  it('steps through a configured range once', () => {
+    const def: Overlay = { ...kieg, time: { type: 'dimension', param: 'TIME', values: { start: '2015', end: '2020', step: 'P1Y' } } };
+    expect(timeValues(def)).toEqual({ param: 'TIME', values: ['2015', '2016', '2017', '2018', '2019', '2020'], current: '2020' });
+    expect(timeValues(def)?.values).toBe(timeValues(def)?.values);
   });
 
   it('draws without the parameter while the capabilities are not read yet', () => {

@@ -1,5 +1,6 @@
 import { locale, t } from '@/i18n';
 import type { TimeOption } from '@/modules';
+import { pointInfo } from './ortho';
 
 /** A sheet of the old topographic maps at a point, from the backend (GUGiK index of topographic maps). */
 export interface TopoSheet {
@@ -20,11 +21,7 @@ export interface TopoInfo {
   sheets: TopoSheet[];
 }
 
-export async function topoAt([x, y]: [number, number], signal: AbortSignal): Promise<TopoInfo> {
-  const res = await fetch(`/api/topo?x=${Math.round(x)}&y=${Math.round(y)}`, { signal });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return (await res.json()) as TopoInfo;
-}
+export const topoAt = (point: [number, number], signal: AbortSignal) => pointInfo<TopoInfo>('/api/topo', point, signal);
 
 /**
  * The dates of the old maps at a point for the time bar: one per day, drawing every sheet of

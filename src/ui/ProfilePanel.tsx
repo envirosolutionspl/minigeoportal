@@ -7,7 +7,9 @@ import { TerrainProfile } from './TerrainProfile';
 
 /**
  * The terrain profile tool, where a module knows the heights of the terrain: a line drawn on the
- * map (measure.ts) and the profile along it. A new line replaces the last one.
+ * map (measure.ts) and the profile along it. A new line replaces the last one. On a computer the
+ * panel is as wide as the search bar above it, so the chart has room; on a phone it is a sheet
+ * across the bottom of the screen, as the print panel, and the map above stays free to draw on.
  */
 export function ProfilePanel() {
   const open = useMapStore((m) => m.tool === 'profile');
@@ -19,7 +21,8 @@ export function ProfilePanel() {
   return (
     <section
       aria-labelledby={`${id}-title`}
-      className="pointer-events-auto absolute top-[4.25rem] left-3 z-30 w-[calc(100%-5.5rem)] rounded-2xl bg-[var(--surface)] p-2 shadow-lg ring-1 ring-black/5 sm:top-[4.75rem] sm:left-4 sm:w-96"
+      className="pointer-events-auto absolute inset-x-0 bottom-0 z-30 max-h-[60dvh] overflow-y-auto rounded-t-3xl bg-[var(--surface)] p-2 pb-[calc(0.5rem+var(--safe-bottom))] shadow-2xl ring-1 ring-black/5
+        sm:inset-x-auto sm:top-[4.75rem] sm:bottom-auto sm:left-4 sm:max-h-none sm:w-lg sm:rounded-2xl sm:pb-2 sm:shadow-lg"
     >
       <header className="flex items-center gap-2 px-2">
         <Mountain className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" />

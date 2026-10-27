@@ -28,9 +28,7 @@ describe('ProfilePanel', () => {
       ]),
     );
     expect(screen.getByText('Pobieram wysokości terenu…')).toBeTruthy();
-    expect(
-      await screen.findByText('Wysokość od 100,0 m do 110,0 m n.p.m. W górę 10,0 m, w dół 10,0 m. Największe nachylenie 2%.'),
-    ).toBeTruthy();
+    expect(await screen.findByText('Wysokość od 100,0 m do 110,0 m n.p.m. Nachylenie największe 2%, średnie 2%.')).toBeTruthy();
     expect(calls).toHaveLength(1);
     act(() =>
       useMapStore.getState().setProfileLine([
@@ -39,7 +37,7 @@ describe('ProfilePanel', () => {
       ]),
     );
     expect(screen.getByText('Pobieram wysokości terenu…')).toBeTruthy();
-    await screen.findByText(/Największe nachylenie/);
+    await screen.findByText(/Nachylenie największe/);
     expect(calls).toHaveLength(2);
   });
 
@@ -54,11 +52,15 @@ describe('ProfilePanel', () => {
       ],
     });
     const { container } = render(<ProfilePanel />);
-    await screen.findByText(/Największe nachylenie/);
+    await screen.findByText(/Nachylenie największe/);
     expect(container.querySelectorAll('line[stroke-dasharray]')).toHaveLength(1);
-    // The bend is the 34th of 101 samples.
-    expect(screen.getByText('133,0 m')).toBeTruthy();
-    expect(screen.getByText('Wysokości w punktach załamania linii: 133,0 m.', { exact: false })).toBeTruthy();
+    // The bend is the 34th of 101 samples: its height above the chart, how far along it lies under it.
+    const chart = container.querySelector('svg[viewBox="0 0 300 90"]')!;
+    const height = screen.getByText('133,0 m');
+    const along = screen.getByText(/^33\d,\d m$/);
+    expect(height.compareDocumentPosition(chart) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(along.compareDocumentPosition(chart) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    expect(screen.getByText(/Punkty załamania linii: 133,0 m w odległości 33\d,\d m od początku\./)).toBeTruthy();
   });
 
   it('says when the heights cannot be had', async () => {

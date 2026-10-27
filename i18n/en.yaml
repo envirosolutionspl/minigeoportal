@@ -154,8 +154,9 @@ profile:
   error: The heights of the terrain could not be loaded.
   none: No heights of the terrain along this line.
   partial: The terrain model has no heights for part of the line (e.g. abroad).
-  bends: 'Heights at the bends of the line: {heights}.'
-  summary: 'Height from {min} to {max} above sea level. Up {ascent}, down {descent}. Steepest slope {slope}.'
+  bends: 'Bends of the line: {points}.'
+  bend: '{height} at {distance} from the start'
+  summary: 'Height from {min} to {max} above sea level. Slope at most {slope}, on average {mean}.'
 
 time:
   tool: Time travel

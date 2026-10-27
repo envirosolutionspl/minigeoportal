@@ -106,7 +106,7 @@ describe('accessibility (axe, WCAG 2.1 AA)', () => {
         <ProfilePanel />
       </main>,
     );
-    await screen.findByText(/Największe nachylenie/);
+    await screen.findByText(/Nachylenie największe/);
     expect(await violations(container)).toEqual([]);
   });
 

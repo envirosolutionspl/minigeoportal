@@ -53,11 +53,10 @@ export interface Profile {
   length: number;
   min: number;
   max: number;
-  /** Metres climbed and descended walking the line. */
-  ascent: number;
-  descent: number;
   /** Steepest stretch between neighbouring samples, as a fraction (0.09 is 9 %). */
   slope: number;
+  /** The mean slope along the line: every metre up or down over the metres walked, as a fraction. */
+  meanSlope: number;
   /** Samples the model has no height for (abroad, at sea). */
   missing: number;
   /** The bends of the line, with their heights where the model has them. */
@@ -71,25 +70,23 @@ export function profileOf(samples: ProfileSample[], heights: (number | null)[]):
     return height === null || height === undefined ? [] : [{ distance: s.distance, height }];
   });
   if (points.length < 2) return undefined;
-  let ascent = 0;
-  let descent = 0;
   let slope = 0;
+  let climb = 0;
   for (let i = 1; i < points.length; i++) {
-    const rise = points[i].height - points[i - 1].height;
+    const rise = Math.abs(points[i].height - points[i - 1].height);
     const run = points[i].distance - points[i - 1].distance;
-    if (rise > 0) ascent += rise;
-    else descent -= rise;
-    if (run > 0) slope = Math.max(slope, Math.abs(rise) / run);
+    climb += rise;
+    if (run > 0) slope = Math.max(slope, rise / run);
   }
+  const walked = points[points.length - 1].distance - points[0].distance;
   const all = points.map((p) => p.height);
   return {
     points,
     length: samples[samples.length - 1].distance,
     min: Math.min(...all),
     max: Math.max(...all),
-    ascent,
-    descent,
     slope,
+    meanSlope: walked > 0 ? climb / walked : 0,
     missing: samples.length - points.length,
     bends: samples.flatMap((s, i) => (s.bend ? [{ distance: s.distance, height: heights[i] ?? null }] : [])),
   };

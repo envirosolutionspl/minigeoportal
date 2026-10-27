@@ -8,14 +8,16 @@ import { t } from '@/i18n';
 /** Drawing area of the chart; the SVG stretches it to the bar's width. */
 const W = 300;
 const H = 90;
-/** Heights under the bends closer than this share of the chart to the last one shown are left out, not overlapped. */
+/** Labels at the bends closer than this share of the chart to the last one shown are left out, not overlapped. */
 const LABEL_GAP = 0.15;
+/** Distances of bends this close to either end would run into the start and the length under the chart. */
+const END_GAP = 0.2;
 
 type State = { status: 'loading' } | { status: 'done'; profile: Profile | undefined } | { status: 'error' };
 
 /**
  * The profile of the terrain along a drawn line: a chart of the height over the distance and
- * a summary in words (the range of heights, the climb and descent, the steepest slope), which is
+ * a summary in words (the range of heights, the steepest and the mean slope), which is
  * what screen readers get. A new line asks again; a line left before its answer is not waited for.
  */
 export function TerrainProfile({ line, heightsAt }: { line: [number, number][]; heightsAt: HeightsAt }) {
@@ -54,14 +56,37 @@ export function TerrainProfile({ line, heightsAt }: { line: [number, number][]; 
   /** Where on the chart, in per cent, so dots and labels in HTML keep their shape as the chart stretches. */
   const left = (d: number) => `${(x(d) / W) * 100}%`;
   const measured = profile.bends.filter((b): b is { distance: number; height: number } => b.height !== null);
-  const labelled = measured.reduce<typeof measured>((shown, b) => {
-    const last = shown[shown.length - 1];
-    return last && (b.distance - last.distance) / profile.length < LABEL_GAP ? shown : [...shown, b];
-  }, []);
+  /** Those of the bends far enough apart to be labelled, left to right. */
+  const spaced = <T extends { distance: number }>(bends: T[]) =>
+    bends.reduce<T[]>((shown, b) => {
+      const last = shown[shown.length - 1];
+      return last && (b.distance - last.distance) / profile.length < LABEL_GAP ? shown : [...shown, b];
+    }, []);
+  const heights = spaced(measured);
+  const distances = spaced(
+    profile.bends.filter((b) => b.distance / profile.length >= END_GAP && b.distance / profile.length <= 1 - END_GAP),
+  );
 
   return (
     <figure className="px-2 pt-2">
       <div aria-hidden="true" className="grid grid-cols-[auto_1fr] gap-x-1.5 text-[11px] text-[var(--muted)] tabular-nums">
+        {/* Above the chart, the height of each bend; under it, how far along the line it lies. */}
+        {heights.length > 0 && (
+          <>
+            <span />
+            <div className="relative h-4">
+              {heights.map((b) => (
+                <span
+                  key={b.distance}
+                  className="absolute -translate-x-1/2 whitespace-nowrap text-[var(--text)]"
+                  style={{ left: left(b.distance) }}
+                >
+                  {heightText(b.height)}
+                </span>
+              ))}
+            </div>
+          </>
+        )}
         <div className="flex flex-col justify-between text-right">
           <span>{heightText(profile.max)}</span>
           <span>{heightText(profile.min)}</span>
@@ -97,25 +122,14 @@ export function TerrainProfile({ line, heightsAt }: { line: [number, number][]; 
             />
           ))}
         </div>
-        {labelled.length > 0 && (
-          <>
-            <span />
-            <div className="relative h-4">
-              {labelled.map((b) => (
-                <span
-                  key={b.distance}
-                  className="absolute -translate-x-1/2 whitespace-nowrap text-[var(--text)]"
-                  style={{ left: left(b.distance) }}
-                >
-                  {heightText(b.height)}
-                </span>
-              ))}
-            </div>
-          </>
-        )}
         <span />
-        <div className="flex justify-between">
+        <div className="relative flex h-4 justify-between">
           <span>0 m</span>
+          {distances.map((b) => (
+            <span key={b.distance} className="absolute -translate-x-1/2 whitespace-nowrap" style={{ left: left(b.distance) }}>
+              {formatLength(b.distance)}
+            </span>
+          ))}
           <span>{formatLength(profile.length)}</span>
         </div>
       </div>
@@ -123,13 +137,19 @@ export function TerrainProfile({ line, heightsAt }: { line: [number, number][]; 
         {t('profile.summary', {
           min: heightText(profile.min),
           max: heightText(profile.max),
-          ascent: heightText(profile.ascent),
-          descent: heightText(profile.descent),
           slope: percentText(profile.slope),
+          mean: percentText(profile.meanSlope),
         })}
         {profile.missing > 0 && ` ${t('profile.partial')}`}
         {measured.length > 0 && (
-          <span className="sr-only"> {t('profile.bends', { heights: measured.map((b) => heightText(b.height)).join(', ') })}</span>
+          <span className="sr-only">
+            {' '}
+            {t('profile.bends', {
+              points: measured
+                .map((b) => t('profile.bend', { distance: formatLength(b.distance), height: heightText(b.height) }))
+                .join(', '),
+            })}
+          </span>
         )}
       </figcaption>
     </figure>

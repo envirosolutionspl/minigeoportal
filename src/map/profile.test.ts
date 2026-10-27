@@ -55,10 +55,12 @@ describe('profileSamples', () => {
 describe('profileOf', () => {
   const at = (...distances: number[]) => distances.map((distance) => ({ coordinate: [0, 0] as [number, number], distance }));
 
-  it('adds up the climb and descent and finds the steepest stretch', () => {
+  it('finds the steepest stretch and the mean slope along the line', () => {
     const profile = profileOf(at(0, 10, 20, 30), [100, 105, 103, 104])!;
-    expect(profile).toMatchObject({ length: 30, min: 100, max: 105, ascent: 6, descent: 2 });
+    expect(profile).toMatchObject({ length: 30, min: 100, max: 105 });
     expect(profile.slope).toBeCloseTo(0.5, 6);
+    // 5 up, 2 down and 1 up over 30 m.
+    expect(profile.meanSlope).toBeCloseTo(8 / 30, 6);
   });
 
   it('leaves out the points without a height, and needs two heights', () => {

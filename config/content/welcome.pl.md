@@ -2,7 +2,7 @@
 
 MiniGeoportal pokazuje te same publiczne dane co krajowy [geoportal.gov.pl](https://www.geoportal.gov.pl), ale w formie przyjaznej dla osób, które nie zajmują się mapami zawodowo. Wyszukaj i przejrzyj oficjalne dane szybciej i łatwiej.
 
-Zobaczysz granice i numer działki, przeznaczenie w planie miejscowym lub ogólnym, ceny transakcyjne w okolicy, uzbrojenie terenu i zdjęcia lotnicze, a [podróż w czasie](app:time) pokaże archiwalne zdjęcia od 1995 r. i dawne mapy topograficzne. Bez logowania i bez opłat, na komputerze i na telefonie.
+Zobaczysz granice i numer działki, przeznaczenie w planie miejscowym lub ogólnym, ceny transakcyjne w okolicy, uzbrojenie terenu, zdjęcia lotnicze i wysokość terenu, a [podróż w czasie](app:time) pokaże archiwalne zdjęcia od 1995 r. i dawne mapy topograficzne. Bez logowania i bez opłat, na komputerze i na telefonie.
 
 ## Skąd są dane
 

@@ -10,31 +10,32 @@
 
 _A simple, fast web map for public map services. Documentation in English: [docs/en](docs/en/README.md)._
 
-![Wyszukanie adresu, informacje o działce z linkiem do raportu, menu kontekstowe, wyszukiwarka działek i lista warstw](docs/img/prezentacja.gif)
+![Wyszukanie adresu, informacje o działce, menu kontekstowe, wyszukiwarka działek, lista warstw, profil terenu i podróż w czasie](docs/img/prezentacja.gif)
 
 ## Co potrafi
 
-- **Wyszukiwarka** adresów, miejscowości i obiektów; działkę znajdzie też po numerze i obrębie, a punkt po współrzędnych.
-- **Informacje o miejscu** po kliknięciu w mapę: działka z ewidencji gruntów, przeznaczenie w planie miejscowym i dane innych włączonych warstw, z linkiem do **raportu o działce** na geoportal.gov.pl. Gdy warstwa odpowiada dopiero przy większym przybliżeniu, panel mówi, od jakiej skali, i przybliża mapę jednym przyciskiem.
-- **Ponad 400 warstw** geoportal.gov.pl w jednej liście z wyszukiwarką i tematami, z przezroczystością i wyborem podwarstw. Przy warstwach, których nie da się pokazać, jest wyjaśnienie „Dlaczego?”.
-- **Menu kontekstowe** (prawy przycisk myszy albo przytrzymanie palca): kopiuje współrzędne w PL-1992 i WGS 84 i prowadzi do miejsca w Google Maps.
-- **Pomiar** odległości i powierzchni, **profil terenu** wzdłuż narysowanej linii i wysokość terenu w panelu miejsca (z NMT GUGiK), **wydruk** w skali na A4 lub A3 (także do PDF) i **link** do bieżącego widoku mapy.
-- **Podkłady**: mapa i ortofotomapa z datą zdjęcia, przełączane jednym kliknięciem.
-- **Podróż w czasie**: archiwalne ortofotomapy GUGiK od 1995 r. i skany dawnych map topograficznych. Suwak pokazuje tylko daty, z których są zdjęcia albo arkusze map w oglądanym miejscu (ze skorowidzów GUGiK; przy mapach rok aktualności treści arkusza, nie nazwa układu współrzędnych), a przycisk „Porównaj” dzieli mapę kurtyną: po lewej wybrana data, po prawej dzisiejsze zdjęcia albo dzisiejsza mapa topograficzna. Link do widoku niesie datę, więc „jak to wyglądało w 2007” da się wysłać. W panelu miejsca liczba zdjęć z archiwum prowadzi prosto do podróży.
-- **Telefon**: panele na cały ekran, przytrzymanie palca zamiast prawego przycisku, przycisk „Moja lokalizacja”.
-- **Dostępność** na poziomie WCAG 2.1 AA, z wyjątkami opisanymi w deklaracji dostępności: obsługa klawiaturą (także pomiaru i menu miejsca), czytniki ekranu, tryb ciemny, powiększenie tekstu i wysoki kontrast. Interfejs po polsku i angielsku.
+- **Wyszukiwarka** adresów, miejscowości i obiektów. Działkę znajdzie po numerze i obrębie, punkt po współrzędnych.
+- **Informacje o miejscu** po kliknięciu w mapę: działka, przeznaczenie w planie miejscowym, wysokość terenu i dane innych włączonych warstw. Link prowadzi do **raportu o działce** na geoportal.gov.pl.
+- **Ponad 400 warstw** geoportal.gov.pl w jednej liście, z wyszukiwarką, tematami i przezroczystością. Gdy warstwy nie da się pokazać albo długo się wczytuje, lista mówi dlaczego.
+- **Menu kontekstowe** (prawy przycisk myszy albo przytrzymanie palca): współrzędne w PL-1992 i WGS 84 oraz dojazd w Google Maps.
+- **Profil terenu**: narysuj linię, a zobaczysz wykres wysokości wzdłuż niej, z najwyższym punktem i nachyleniem (dane NMT GUGiK).
+- **Pomiar** odległości i powierzchni, **wydruk** w skali na A4 lub A3 (także do PDF) i **link** do bieżącego widoku.
+- **Podróż w czasie**: archiwalne zdjęcia lotnicze od 1995 r. i dawne mapy topograficzne. Suwak pokazuje tylko lata, z których są dane w oglądanym miejscu. Kurtyna porównuje wybrany rok z dniem dzisiejszym. Widok z datą można wysłać linkiem albo wydrukować.
+- **Telefon**: panele na cały ekran, przytrzymanie palca zamiast prawego przycisku, „Moja lokalizacja”.
+- **Dostępność** WCAG 2.1 AA (wyjątki opisuje deklaracja dostępności): klawiatura, czytniki ekranu, tryb ciemny, większy tekst, wysoki kontrast. Interfejs po polsku i angielsku.
 
 ## Zrzuty ekranu
 
-|                                        | Komputer                                                            | Telefon                                                            |
-| -------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Wyszukiwarka adresów                   | <img src="docs/img/komputer-wyszukiwarka-adresow.webp" width="520"> | <img src="docs/img/telefon-wyszukiwarka-adresow.webp" width="180"> |
-| Wyszukiwarka działek                   | <img src="docs/img/komputer-wyszukiwarka-dzialek.webp" width="520"> | <img src="docs/img/telefon-wyszukiwarka-dzialek.webp" width="180"> |
-| Znaleziona działka                     | <img src="docs/img/komputer-znaleziona-dzialka.webp" width="520">   | <img src="docs/img/telefon-znaleziona-dzialka.webp" width="180">   |
-| Informacje o miejscu, raport o działce | <img src="docs/img/komputer-raport-o-dzialce.webp" width="520">     | <img src="docs/img/telefon-raport-o-dzialce.webp" width="180">     |
-| Menu kontekstowe                       | <img src="docs/img/komputer-menu-kontekstowe.webp" width="520">     | <img src="docs/img/telefon-menu-kontekstowe.webp" width="180">     |
-| Lista warstw                           | <img src="docs/img/komputer-warstwy.webp" width="520">              | <img src="docs/img/telefon-warstwy.webp" width="180">              |
-| Podróż w czasie: 2007 i dziś           | <img src="docs/img/komputer-podroz-w-czasie.webp" width="520">      | <img src="docs/img/telefon-podroz-w-czasie.webp" width="180">      |
+|                                         | Komputer                                                            | Telefon                                                            |
+| --------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Wyszukiwarka adresów                    | <img src="docs/img/komputer-wyszukiwarka-adresow.webp" width="520"> | <img src="docs/img/telefon-wyszukiwarka-adresow.webp" width="180"> |
+| Wyszukiwarka działek                    | <img src="docs/img/komputer-wyszukiwarka-dzialek.webp" width="520"> | <img src="docs/img/telefon-wyszukiwarka-dzialek.webp" width="180"> |
+| Znaleziona działka                      | <img src="docs/img/komputer-znaleziona-dzialka.webp" width="520">   | <img src="docs/img/telefon-znaleziona-dzialka.webp" width="180">   |
+| Informacje o miejscu, raport o działce  | <img src="docs/img/komputer-raport-o-dzialce.webp" width="520">     | <img src="docs/img/telefon-raport-o-dzialce.webp" width="180">     |
+| Menu kontekstowe                        | <img src="docs/img/komputer-menu-kontekstowe.webp" width="520">     | <img src="docs/img/telefon-menu-kontekstowe.webp" width="180">     |
+| Lista warstw                            | <img src="docs/img/komputer-warstwy.webp" width="520">              | <img src="docs/img/telefon-warstwy.webp" width="180">              |
+| Profil terenu: z Zakopanego na Kasprowy | <img src="docs/img/komputer-profil-terenu.webp" width="520">        | <img src="docs/img/telefon-profil-terenu.webp" width="180">        |
+| Podróż w czasie: 2007 i dziś            | <img src="docs/img/komputer-podroz-w-czasie.webp" width="520">      | <img src="docs/img/telefon-podroz-w-czasie.webp" width="180">      |
 
 Link „Raport o działce” (obwiedziony na zrzutach) otwiera raport geoportal.gov.pl dla klikniętej działki, z wydrukiem i zapisem do PDF:
 
@@ -42,10 +43,10 @@ Link „Raport o działce” (obwiedziony na zrzutach) otwiera raport geoportal.
 
 ## Własna mapa
 
-Jedna aplikacja obsługuje dowolny zestaw usług mapowych (WMS, WMTS, ArcGIS REST, kafle XYZ) w dowolnym układzie współrzędnych. Wdrożenie to katalog plików YAML i Markdown, bez zmian w kodzie. W repozytorium są dwa:
+Aplikacja nie jest przywiązana do GUGiK. Pokaże dowolne usługi mapowe (WMS, WMTS, ArcGIS REST, kafle XYZ) w dowolnym układzie współrzędnych. Własna mapa to katalog plików YAML i Markdown, bez zmian w kodzie. W repozytorium są dwa przykłady:
 
-- `config/`: [minigeoportal.pl](https://minigeoportal.pl), usługi GUGiK w układzie PL-1992 z modułem `gugik` (działki, plany, ceny transakcyjne, uzbrojenie terenu, ortofotomapa, katalog warstw geoportalu).
-- `examples/osm/`: OpenStreetMap w Web Mercator, wyszukiwarka Nominatim i jedna warstwa WMS, bez usług GUGiK. Dobry punkt wyjścia dla własnego wdrożenia.
+- `config/`: [minigeoportal.pl](https://minigeoportal.pl), usługi GUGiK w układzie PL-1992 z modułem `gugik` (działki, plany, ceny, uzbrojenie, ortofotomapa, wysokości terenu, katalog warstw geoportalu).
+- `examples/osm/`: OpenStreetMap, wyszukiwarka Nominatim i jedna warstwa WMS, bez usług GUGiK. Dobry punkt wyjścia.
 
 ## Szybki start
 
@@ -59,7 +60,7 @@ npm run dev                            # wdrożenie z config/, aplikacja na porc
 CONFIG_DIR=examples/osm npm run dev    # inne wdrożenie
 ```
 
-Na serwer: gotowy obraz Dockera `ghcr.io/envirosolutionspl/minigeoportal` z Caddy albo za istniejącym nginx, opisany w [Wdrożeniu](docs/pl/wdrozenie.md).
+Na serwer: gotowy obraz Dockera `ghcr.io/envirosolutionspl/minigeoportal`, z Caddy albo za istniejącym nginx. Opis w [Wdrożeniu](docs/pl/wdrozenie.md).
 
 ## Dokumentacja
 
@@ -77,4 +78,4 @@ Na serwer: gotowy obraz Dockera `ghcr.io/envirosolutionspl/minigeoportal` z Cadd
 
 ## Licencja i dane
 
-Projekt open source na licencji MIT, tworzony przez [EnviroSolutions](https://envirosolutions.pl). Aplikacja pobiera dane na bieżąco z usług wskazanych w konfiguracji i ich nie przechowuje; za dane odpowiadają ich wydawcy, a informacje mają charakter poglądowy.
+Projekt open source na licencji MIT, tworzony przez [EnviroSolutions](https://envirosolutions.pl). Aplikacja pobiera dane na bieżąco z usług wskazanych w konfiguracji i ich nie przechowuje. Za dane odpowiadają ich wydawcy; informacje mają charakter poglądowy.

@@ -37,8 +37,14 @@ Start from a copy of `skins/default/skin.css` and change the values. The example
 }
 ```
 
-Keep the text readable: `--text`, `--muted`, `--accent` and `--highlight-ui` need a contrast of at least 4.5:1 against `--surface` and `--field`, `--on-accent` against `--accent` and `--danger` against `--surface` and `--danger-soft`, in both modes (WCAG 2.1 AA). The tests of the app check this for every skin in `skins/`, so a skin kept there needs `--highlight-ui` too.
+Keep the text readable (WCAG 2.1 AA). In both modes a contrast of at least 4.5:1 is needed:
+
+- `--text`, `--muted`, `--accent` and `--highlight-ui` against `--surface` and `--field`;
+- `--on-accent` against `--accent`;
+- `--danger` against `--surface` and `--danger-soft`.
+
+The tests of the app check this for every skin in `skins/`, so a skin kept there needs `--highlight-ui` too.
 
 High contrast (yellow on black, in the display menu) is the same for every skin, so it always works.
 
-The layout and the icons are not part of a skin; the classes in the components are not a stable interface and may change between versions.
+The layout and the icons are not part of a skin. The classes in the components are not a stable interface and may change between versions.

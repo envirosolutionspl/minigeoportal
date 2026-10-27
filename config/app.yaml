@@ -82,5 +82,5 @@ modules:
     # sheets the index of topographic maps knows at a point, each drawing its own sheet.
     topo: { history: mapy-dawne }
     parcelReport: true
-    # Heights of the terrain (the elevation model): in the place panel and the profile of a measured line.
+    # Heights of the terrain (the elevation model): in the place panel and the "Terrain profile" tool.
     elevation: true

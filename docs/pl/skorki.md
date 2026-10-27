@@ -37,8 +37,14 @@ Zacznij od kopii `skins/default/skin.css` i zmień wartości. Przykład niżej t
 }
 ```
 
-Tekst musi być czytelny: `--text`, `--muted`, `--accent` i `--highlight-ui` potrzebują kontrastu co najmniej 4,5:1 względem `--surface` i `--field`, `--on-accent` względem `--accent`, a `--danger` względem `--surface` i `--danger-soft`, w obu trybach (WCAG 2.1 AA). Testy aplikacji sprawdzają to dla każdej skórki w `skins/`, więc skórka trzymana tam musi mieć też `--highlight-ui`.
+Tekst musi być czytelny (WCAG 2.1 AA). W obu trybach potrzebny jest kontrast co najmniej 4,5:1:
+
+- `--text`, `--muted`, `--accent` i `--highlight-ui` względem `--surface` i `--field`;
+- `--on-accent` względem `--accent`;
+- `--danger` względem `--surface` i `--danger-soft`.
+
+Testy aplikacji sprawdzają to dla każdej skórki w `skins/`, więc skórka trzymana tam musi mieć też `--highlight-ui`.
 
 Wysoki kontrast (żółty na czarnym, w menu ułatwień) jest wspólny dla wszystkich skórek, więc zawsze działa.
 
-Układ i ikony nie należą do skórki; klasy w komponentach nie są stabilnym interfejsem i mogą się zmieniać między wersjami.
+Układ i ikony nie należą do skórki. Klasy w komponentach nie są stabilnym interfejsem i mogą się zmieniać między wersjami.

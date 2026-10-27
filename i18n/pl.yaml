@@ -153,6 +153,7 @@ profile:
   error: Nie udało się pobrać wysokości terenu.
   none: Brak wysokości terenu wzdłuż tej linii.
   partial: Na części linii model terenu nie ma wysokości (np. za granicą).
+  bends: 'Wysokości w punktach załamania linii: {heights}.'
   summary: 'Wysokość od {min} do {max} n.p.m. W górę {ascent}, w dół {descent}. Największe nachylenie {slope}.'
 
 time:

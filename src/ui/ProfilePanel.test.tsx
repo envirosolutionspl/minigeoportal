@@ -43,6 +43,24 @@ describe('ProfilePanel', () => {
     expect(calls).toHaveLength(2);
   });
 
+  it('marks the bends of the line with a dashed line and their heights', async () => {
+    stubFetch([['GetHByPointList', Array.from({ length: 101 }, (_, i) => `0 0 ${100 + i}`).join(',')]]);
+    useMapStore.setState({
+      tool: 'profile',
+      profileLine: [
+        [600000, 500000],
+        [600333, 500000],
+        [600333, 500667],
+      ],
+    });
+    const { container } = render(<ProfilePanel />);
+    await screen.findByText(/Największe nachylenie/);
+    expect(container.querySelectorAll('line[stroke-dasharray]')).toHaveLength(1);
+    // The bend is the 34th of 101 samples.
+    expect(screen.getByText('133,0 m')).toBeTruthy();
+    expect(screen.getByText('Wysokości w punktach załamania linii: 133,0 m.', { exact: false })).toBeTruthy();
+  });
+
   it('says when the heights cannot be had', async () => {
     stubFetch([['GetHByPointList', 'down', { status: 503 }]]);
     useMapStore.setState({

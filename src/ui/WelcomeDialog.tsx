@@ -5,6 +5,7 @@ import { useReport } from './ReportDialog';
 import { useAccessibility } from './AccessibilityDialog';
 import { Content, type ContentAction } from './Content';
 import { config } from '@/config/runtime';
+import { useMapStore } from '@/state/store';
 import { t } from '@/i18n';
 import { useModalDialog } from './useModalDialog';
 import { NewTab } from './NewTab';
@@ -50,6 +51,8 @@ export function WelcomeDialog() {
     close();
     if (action === 'report') useReport.getState().openReport();
     if (action === 'accessibility') useAccessibility.getState().setOpen(true);
+    // The time view, where the deployment has one (map.yaml: timeTravel).
+    if (action === 'time' && config.map.timeTravel) useMapStore.getState().setTool('time');
   };
 
   return (

@@ -1,7 +1,7 @@
 import type { MouseEvent } from 'react';
 
 /** Actions a link in a text may start: [report form](app:report) (server/config/markdown.ts). */
-export type ContentAction = 'report' | 'accessibility' | 'welcome';
+export type ContentAction = 'report' | 'accessibility' | 'welcome' | 'time';
 
 /**
  * A text of the deployment (config/content), as HTML the server made from Markdown: escaped,

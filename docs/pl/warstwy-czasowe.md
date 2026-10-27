@@ -58,6 +58,8 @@ Narzędzie „Podróż w czasie” (na komputerze przycisk obok pomiaru, na tele
 
 Przycisk „Porównaj z aktualnymi danymi” w pasku dzieli mapę kurtyną: po lewej warstwa na wybraną datę, po prawej podkład (dziś). Uchwyt na linii przeciąga się myszą lub palcem, klik na wysokości uchwytu stawia linię w tym miejscu, strzałki w lewo i w prawo przesuwają ją z klawiatury.
 
+Wydruk otwarty w trakcie podróży drukuje warstwę na wybraną datę nad jej podkładem, bez kurtyny, a stopka podaje nazwę warstwy i datę („Ortofotomapa archiwalna, stan na 01.01.2007”). Po zamknięciu wydruku podróż trwa dalej.
+
 Przy zmianie warstwy data zostaje, a suwak staje na najpóźniejszej wartości nowej warstwy nie późniejszej od niej (zdjęcie z 2007 na mapach dawnych pokazuje ostatni arkusz sprzed 2007).
 
 Link do widoku niesie datę (`t=2007-01-01`, z porównaniem `c=1`, z inną warstwą niż pierwsza `tl=mapy-dawne`) i otwiera mapę od razu w podróży; Escape ją kończy i przywraca podkład sprzed niej.

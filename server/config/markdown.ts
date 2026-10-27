@@ -9,7 +9,7 @@ import { Marked, type Tokens } from 'marked';
 export const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 /** Actions a link may start in the app (src/ui/Content.tsx). */
-export const APP_ACTIONS = new Set(['report', 'accessibility', 'welcome']);
+export const APP_ACTIONS = new Set(['report', 'accessibility', 'welcome', 'time']);
 
 const markdown = new Marked({
   gfm: true,

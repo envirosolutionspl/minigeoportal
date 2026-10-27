@@ -4,7 +4,7 @@ import View from 'ol/View';
 import ImageLayer from 'ol/layer/Image';
 import ImageWMS from 'ol/source/ImageWMS';
 import { PROJECTION, scaleToResolution } from './projection';
-import { attachTimeTravel, sublayersFor, timeLayerDrawsAt, timeLayers } from './timeTravel';
+import { attachTimeTravel, sublayersFor, timeCaption, timeLayerDrawsAt, timeLayers } from './timeTravel';
 import { overlayById } from '@/config/runtime';
 import { registerMeta } from '@/services/meta';
 import { useMapStore } from '@/state/store';
@@ -57,7 +57,7 @@ beforeEach(() => {
       Raster_10_1992: { title: '', queryable: false, maxScale: 23623 },
     },
   });
-  useMapStore.setState({ tool: 'none', time: null, timeLayer: null, timeStatus: 'idle', focus: null });
+  useMapStore.setState({ tool: 'none', time: null, timeLayer: null, timeStatus: 'idle', focus: null, printFromTime: false });
   map = new Map({
     target: document.createElement('div'),
     view: new View({ projection: PROJECTION, center: [600000, 500000], resolution: scaleToResolution(10000) }),
@@ -125,6 +125,20 @@ describe('attachTimeTravel', () => {
     expect(oldMaps().getMaxResolution()).toBeCloseTo(scaleToResolution(47246), 6);
     useMapStore.getState().setTimeSublayers(null);
     expect(oldMaps().getSource()!.getParams().LAYERS).toBe('Raster_50_1965,Raster_25_1965,Raster_10_1965');
+  });
+
+  it('stays on a print opened from the view, and names its layer and date for the footer', () => {
+    useMapStore.getState().setTool('time');
+    useMapStore.getState().setTime('2007-01-01');
+    useMapStore.getState().setTool('print');
+    expect(timeLayer().getVisible()).toBe(true);
+    expect(timeLayer().getSource()!.getParams().TIME).toBe('2007-01-01');
+    useMapStore.getState().setTool('measure-line');
+    expect(timeLayer().getVisible()).toBe(false);
+    expect(timeCaption(null, '2007-01-01')).toBe('Ortofotomapa archiwalna, stan na 01.01.2007');
+    expect(timeCaption('mapy-dawne', '1982')).toBe('Mapy topograficzne dawne, stan na 1982');
+    expect(timeCaption('mapy-dawne', '1965')).toBe('Mapy topograficzne dawne: Mapy w układzie 1965');
+    expect(timeCaption(null, null)).toBeNull();
   });
 
   it('zooms in when the view opens too far out for the layer', () => {

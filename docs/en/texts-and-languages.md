@@ -14,7 +14,7 @@ The file of the default language must exist; another language without its file s
 
 - headings, paragraphs, lists, emphasis and quotes as usual; a quote is drawn as a highlighted box (the "Important" box of the default welcome text);
 - HTML written into the Markdown is shown as text, never run;
-- links may lead to web addresses (they open in a new tab) and to e-mail addresses (`mailto:`); a link `app:report` opens the bug report form, `app:accessibility` the accessibility statement and `app:welcome` the welcome window: `[report form](app:report)`; other links become plain text;
+- links may lead to web addresses (they open in a new tab) and to e-mail addresses (`mailto:`); a link `app:report` opens the bug report form, `app:accessibility` the accessibility statement, `app:welcome` the welcome window and `app:time` the time view (where the deployment has one): `[report form](app:report)`; other links become plain text;
 - images are not shown.
 
 ## Interface texts

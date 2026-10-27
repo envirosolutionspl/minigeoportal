@@ -60,6 +60,8 @@ interface MapStore {
   printSettings: PrintOptions;
   /** Centre of the sheet being printed, for its caption. */
   printCenter: [number, number] | null;
+  /** The print panel was opened from the time view, whose layer and base map stay on the sheet. */
+  printFromTime: boolean;
   /** Date shown in the time view; null before one is chosen (the layer's own current value). */
   time: string | null;
   timeStatus: TimeStatus;
@@ -142,6 +144,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
   measureClears: 0,
   measureResult: '',
   printRequest: null,
+  printFromTime: false,
   printSettings: { paper: 'A4', orientation: 'landscape', scale: 10000, title: '' },
   printCenter: null,
   time: timeAtStart ? (initial.time ?? null) : null,
@@ -182,15 +185,19 @@ export const useMapStore = create<MapStore>((set, get) => ({
   goHome: () => get().focusOn({ extent: HOME_EXTENT, zoom: 0 }),
   zoomToScale: (scale) => get().focusOn({ scale, zoom: 0 }),
   // The time view forces the base map of its layer (the photos under the archival photos, the
-  // map under the old maps) and gives the one used before back when it closes.
+  // map under the old maps) and gives the one used before back when it closes. Printing from it
+  // keeps its layer and base map on the sheet, and closing the print goes back to it.
   setTool: (tool) =>
     set((s) => {
       if (tool === s.tool) return {};
+      if (s.tool === 'time' && tool === 'print') return { tool, printFromTime: true };
+      if (s.printFromTime && (tool === 'none' || tool === 'time')) return { tool: 'time', printFromTime: false };
+      const leaving = timeShown(s);
       const forced = forcedBase(s.timeLayer);
       if (tool === 'time' && forced) return { tool, base: forced, baseBeforeTime: s.base };
-      if (s.tool === 'time' && s.baseBeforeTime !== undefined)
-        return { tool, base: s.baseBeforeTime, baseBeforeTime: undefined, timeStatus: 'idle' };
-      return { tool, ...(s.tool === 'time' ? { timeStatus: 'idle' as const } : {}) };
+      if (leaving && s.baseBeforeTime !== undefined)
+        return { tool, base: s.baseBeforeTime, baseBeforeTime: undefined, timeStatus: 'idle', printFromTime: false };
+      return { tool, printFromTime: false, ...(leaving ? { timeStatus: 'idle' as const } : {}) };
     }),
   clearMeasurements: () => set((s) => ({ measureClears: s.measureClears + 1, measureResult: '' })),
   setMeasureResult: (measureResult) => set({ measureResult }),
@@ -212,6 +219,9 @@ export const useMapStore = create<MapStore>((set, get) => ({
   setTimeSublayers: (timeSublayers) => set((s) => (s.timeSublayers === timeSublayers ? {} : { timeSublayers })),
 }));
 
+/** The time view's layer is on the map: in the view, or on a print opened from it. */
+export const timeShown = (s: Pick<MapStore, 'tool' | 'printFromTime'>) => s.tool === 'time' || (s.tool === 'print' && s.printFromTime);
+
 /** What a link to the map carries: the view, the layers and, while the time view is open, its date. */
 export const urlState = (s: MapStore) => ({
   center: s.center,
@@ -219,7 +229,7 @@ export const urlState = (s: MapStore) => ({
   base: s.base,
   overlays: s.overlays,
   sublayers: s.sublayers,
-  ...(s.tool === 'time' && s.time
+  ...(timeShown(s) && s.time
     ? { time: s.time, ...(s.compare ? { compare: true } : {}), ...(s.timeLayer ? { timeLayer: s.timeLayer } : {}) }
     : {}),
 });

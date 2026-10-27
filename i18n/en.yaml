@@ -180,6 +180,8 @@ print:
   center: 'centre:'
   base: 'Base map: {title}'
   noBase: none
+  time: '{title} as of {date}'
+  timeEdition: '{title}: {edition}'
   layers: 'Layers: {titles}'
   note: 'An overview map, not an official document. Coordinate system {system} ({code}).'
 

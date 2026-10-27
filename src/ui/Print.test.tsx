@@ -66,6 +66,17 @@ describe('PrintSheet', () => {
     expect(container.querySelector('#print-map')).toBeTruthy();
   });
 
+  it('names the layer of the time view and its date when printed from it', () => {
+    const request = { paper: 'A4' as const, orientation: 'landscape' as const, scale: 1000, title: '' };
+    useMapStore.setState({ printRequest: request, printFromTime: true, timeLayer: null, time: '2007-01-01' });
+    const { container, rerender } = render(<PrintSheet />);
+    expect(container.textContent).toContain('Podkład: Mapa · Ortofotomapa archiwalna, stan na 01.01.2007');
+    act(() => useMapStore.setState({ printFromTime: false }));
+    rerender(<PrintSheet />);
+    expect(container.textContent).not.toContain('Ortofotomapa archiwalna');
+    useMapStore.setState({ printRequest: null, time: null });
+  });
+
   it('credits a layer with its own source next to the map', () => {
     const kieg = overlayById.get('kieg')!;
     kieg.attribution = '<a href="https://powiat.example">Powiat</a>';

@@ -2,7 +2,7 @@
 
 MiniGeoportal shows the same public data as the national [geoportal.gov.pl](https://www.geoportal.gov.pl), in a form friendly to people who do not work with maps for a living. Find and browse official data faster and more easily.
 
-You will see the boundaries and number of a parcel, its use in the local or general plan, transaction prices nearby, utility networks and aerial photos. No login and no fees, on a computer and on a phone.
+You will see the boundaries and number of a parcel, its use in the local or general plan, transaction prices nearby, utility networks and aerial photos, and [time travel](app:time) shows archival photos since 1995 and old topographic maps. No login and no fees, on a computer and on a phone.
 
 ## Where the data comes from
 

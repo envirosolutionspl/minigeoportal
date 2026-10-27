@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { WelcomeDialog, useWelcome } from './WelcomeDialog';
+import { useMapStore } from '@/state/store';
 
 describe('WelcomeDialog', () => {
   it('says what the service is for and where the data come from, briefly, with links to the geoportal and the source code', () => {
@@ -22,6 +23,16 @@ describe('WelcomeDialog', () => {
     expect(screen.getByRole('link', { name: 'kod źródłowy na GitHubie' }).getAttribute('href')).toBe(
       'https://github.com/envirosolutionspl/minigeoportal',
     );
+  });
+
+  it('leads to the time travel from its text', () => {
+    useMapStore.setState({ tool: 'none' });
+    render(<WelcomeDialog />);
+    act(() => useWelcome.getState().setOpen(true));
+    fireEvent.click(screen.getByRole('link', { name: 'podróż w czasie' }));
+    expect(useWelcome.getState().open).toBe(false);
+    expect(useMapStore.getState().tool).toBe('time');
+    act(() => useMapStore.getState().setTool('none'));
   });
 
   it('is seen once: going to the map remembers that, so the next visit starts on the map', () => {

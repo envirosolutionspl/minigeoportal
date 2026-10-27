@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { HOME_EXTENT } from '@/map/projection';
 import { config } from '@/config/runtime';
-import { overlayOpacity, urlState, useMapStore } from './store';
+import { overlayOpacity, timeShown, urlState, useMapStore } from './store';
 
 const state = () => useMapStore.getState();
 
@@ -175,6 +175,27 @@ describe('time view', () => {
     expect(state().base).toBe('mapa');
     expect(state().baseBeforeTime).toBeUndefined();
     expect(state().timeStatus).toBe('idle');
+  });
+
+  it('keeps its layer and base map on a print opened from it, and goes back to it when the print closes', () => {
+    useMapStore.setState({ base: 'mapa', tool: 'none', timeLayer: null, printFromTime: false, time: '2007-01-01' });
+    state().setTool('time');
+    state().setTool('print');
+    expect(state()).toMatchObject({ tool: 'print', printFromTime: true, base: 'orto', baseBeforeTime: 'mapa' });
+    expect(timeShown(state())).toBe(true);
+    expect(urlState(state()).time).toBe('2007-01-01');
+    state().setTool('none');
+    expect(state()).toMatchObject({ tool: 'time', printFromTime: false, base: 'orto', baseBeforeTime: 'mapa' });
+    // Another tool from such a print ends the time view and gives the base map back.
+    state().setTool('print');
+    state().setTool('measure-line');
+    expect(state()).toMatchObject({ tool: 'measure-line', printFromTime: false, base: 'mapa', baseBeforeTime: undefined });
+    expect(timeShown(state())).toBe(false);
+    // A print opened outside the view is a plain print.
+    state().setTool('print');
+    expect(state().printFromTime).toBe(false);
+    state().setTool('none');
+    expect(state().tool).toBe('none');
   });
 
   it('puts the date, the layer and the comparison into links only while the view is open', () => {

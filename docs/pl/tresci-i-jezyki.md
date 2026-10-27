@@ -14,7 +14,7 @@ Plik języka domyślnego musi istnieć; inny język bez własnego pliku pokazuje
 
 - nagłówki, akapity, listy, wyróżnienia i cytaty jak zwykle; cytat jest rysowany jako wyróżniona ramka (ramka „Ważne” w domyślnym powitaniu);
 - HTML wpisany w Markdown jest pokazywany jako tekst, nigdy nie jest wykonywany;
-- linki mogą prowadzić do adresów www (otwierają się w nowej karcie) i adresów e-mail (`mailto:`); link `app:report` otwiera formularz zgłoszeń, `app:accessibility` deklarację dostępności, a `app:welcome` okno powitalne: `[formularz zgłoszeń](app:report)`; inne linki stają się zwykłym tekstem;
+- linki mogą prowadzić do adresów www (otwierają się w nowej karcie) i adresów e-mail (`mailto:`); link `app:report` otwiera formularz zgłoszeń, `app:accessibility` deklarację dostępności, `app:welcome` okno powitalne, a `app:time` podróż w czasie (gdy wdrożenie ją ma): `[formularz zgłoszeń](app:report)`; inne linki stają się zwykłym tekstem;
 - obrazy nie są pokazywane.
 
 ## Napisy interfejsu

@@ -5,6 +5,7 @@ import { overlayDef } from '@/services/catalog';
 import { layerMeta, visibleAtScale } from '@/services/meta';
 import { useMapStore } from '@/state/store';
 import { formatCoordinate, scaleText } from '@/map/format';
+import { timeCaption } from '@/map/timeTravel';
 import { PRINT_SCALES, SHEET_VARS, printLayout, serverScale, type PrintOptions } from '@/map/print';
 import { APP_DOMAIN, APP_NAME } from './Brand';
 import { locale, t } from '@/i18n';
@@ -180,6 +181,8 @@ export function PrintSheet() {
   // Read only while printing, so map moves do not re-render the sheet.
   const center = useMapStore((m) => (m.printRequest ? (m.printCenter ?? m.center) : null));
   const layout = request ? printLayout(request, center ?? undefined) : null;
+  // Printed from the time view: its layer, as of the chosen date, lies on the base map.
+  const time = useMapStore((m) => (m.printRequest && m.printFromTime ? timeCaption(m.timeLayer, m.time) : null));
 
   const layers = request ? printedLayers(overlays, sublayers, request, center ?? undefined) : [];
   const legends = layers.flatMap(({ def, names }) =>
@@ -217,6 +220,7 @@ export function PrintSheet() {
           </p>
           <p>
             {t('print.base', { title: baseMap?.title ?? t('print.noBase') })}
+            {time && ` · ${time}`}
             {layers.length > 0 && ` · ${t('print.layers', { titles: layers.map(({ def }) => def.title).join(', ') })}`}
           </p>
           {legends.length > 0 && (

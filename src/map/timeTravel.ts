@@ -3,9 +3,11 @@ import ImageWMS from 'ol/source/ImageWMS';
 import { config, defaultSublayers, overlayById, type Overlay } from '@/config/runtime';
 import { createOverlayLayer, resolutionRange, showSublayers, type OverlayLayer } from '@/services/layers';
 import { timeValues, valueAt, type TimeValues } from '@/services/time';
-import { useMapStore } from '@/state/store';
+import { timeShown, useMapStore } from '@/state/store';
 import { attachCurtain } from './curtain';
 import { resolutionToScale, scaleToResolution } from './projection';
+import { dateText } from './format';
+import { t } from '@/i18n';
 
 /** Scale the view zooms to when the time view opens too far out for its layer to draw. */
 const OPENING_SCALE = 20000;
@@ -80,7 +82,7 @@ export function attachTimeTravel(map: Map): () => void {
 
   const apply = () => {
     const s = useMapStore.getState();
-    const open = s.tool === 'time';
+    const open = timeShown(s);
     const current = currentTimeLayer(s.timeLayer)?.def.id;
     for (const entry of shown) {
       const visible = open && entry.def.id === current;
@@ -135,6 +137,16 @@ export function attachTimeTravel(map: Map): () => void {
       (entry.layer as OverlayLayer).dispose();
     }
   };
+}
+
+/** What a print says of the time view's layer: its name and date, or the name of its edition. */
+export function timeCaption(id: string | null, time: string | null): string | null {
+  const entry = currentTimeLayer(id);
+  if (!entry || time === null) return null;
+  const edition = entry.spec.editions?.[time]?.label;
+  return edition
+    ? t('print.timeEdition', { title: entry.def.title, edition })
+    : t('print.time', { title: entry.def.title, date: dateText(time) });
 }
 
 /** Whether the view's layer draws anything at this scale, whatever the date (its widest sublayer). */

@@ -8,7 +8,7 @@ import { HOME_EXTENT, PROJECTION, RESOLUTIONS, resolutionToScale, scaleToResolut
 import { config, overlayById, selectedSublayers, tileServiceById, type Overlay } from '@/config/runtime';
 import { loadCatalogLayer, overlayDef, useCatalog } from '@/services/catalog';
 import { createOverlayLayer, createTileLayer, resolutionRange, showSublayers, type OverlayLayer } from '@/services/layers';
-import { hasInitialView, overlayOpacity, useMapStore } from '@/state/store';
+import { hasInitialView, overlayOpacity, timeShown, useMapStore } from '@/state/store';
 import { attachFeatureInfo } from './featureInfoClick';
 import { attachFocus } from './focus';
 import { attachMeasure } from './measure';
@@ -114,7 +114,7 @@ export function MapView() {
           continue;
         }
         const names = selectedSublayers(def, s.sublayers);
-        const visible = names.length > 0 && !(s.tool === 'time' && timeUrls.has(def.url));
+        const visible = names.length > 0 && !(timeShown(s) && timeUrls.has(def.url));
         layer.setVisible(visible);
         if (!visible) continue;
         showSublayers(layer, names);

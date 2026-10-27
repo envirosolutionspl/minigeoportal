@@ -179,6 +179,8 @@ print:
   center: 'środek:'
   base: 'Podkład: {title}'
   noBase: brak
+  time: '{title}, stan na {date}'
+  timeEdition: '{title}: {edition}'
   layers: 'Warstwy: {titles}'
   note: 'Mapa poglądowa, nie jest dokumentem urzędowym. Układ współrzędnych {system} ({code}).'
 

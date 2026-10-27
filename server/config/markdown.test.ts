@@ -13,6 +13,7 @@ describe('renderMarkdown', () => {
     expect(html).toContain('<a href="https://www.geoportal.gov.pl" target="_blank" rel="noopener">geoportal</a>');
     expect(html).toContain('<a href="mailto:a@b.pl">poczta</a>');
     expect(html).toContain('<a href="#report" data-action="report">formularz</a>');
+    expect(renderMarkdown('[podróż w czasie](app:time)')).toContain('<a href="#time" data-action="time">podróż w czasie</a>');
   });
 
   it('shows raw HTML as text and drops links and images it does not trust', () => {

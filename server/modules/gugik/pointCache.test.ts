@@ -23,6 +23,22 @@ describe('pointCache', () => {
     expect(await cache('a', async () => 3)).toBe(3);
   });
 
+  it('asks upstream once for a point several visitors ask for at the same time', async () => {
+    const cache = pointCache<number>(1000, 10);
+    let answer!: (value: number) => void;
+    const load = vi.fn(() => new Promise<number>((r) => (answer = r)));
+    const first = cache('1,2', load);
+    const second = cache('1,2', load);
+    expect(load).toHaveBeenCalledTimes(1);
+    answer(7);
+    expect(await Promise.all([first, second])).toEqual([7, 7]);
+    // Once answered, the point is served from memory; after a failure it is asked again.
+    expect(await cache('1,2', load)).toBe(7);
+    expect(load).toHaveBeenCalledTimes(1);
+    await expect(cache('3,4', async () => Promise.reject(new Error('down')))).rejects.toThrow('down');
+    expect(await cache('3,4', async () => 5)).toBe(5);
+  });
+
   it('drops the oldest point when full', async () => {
     const cache = pointCache<string>(60000, 2);
     const load = vi.fn(async () => 'x');

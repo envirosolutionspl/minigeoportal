@@ -4,6 +4,13 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RequestError } from '../../http.ts';
 
+// Counted, to see that the unit search normalizes the lists once, not on every query.
+vi.mock('../../../src/services/text.ts', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../../../src/services/text.ts')>();
+  return { ...original, normalize: vi.fn(original.normalize) };
+});
+import { normalize } from '../../../src/services/text.ts';
+
 // The cache directory is read when the module loads, so it is set before the import.
 let dir: string;
 let dict: typeof import('./dictionaries.ts');
@@ -226,6 +233,15 @@ describe('findUnits', () => {
       ['gm', 'Otwock'],
       ['pow', 'otwocki'],
     ]);
+  });
+
+  it('normalizes the names of a list once, whatever the number of queries', async () => {
+    await dict.findUnits('otw');
+    vi.mocked(normalize).mockClear();
+    expect((await dict.findUnits('krak')).map((h) => h.name)).toEqual(['krakowski', 'Kraków']);
+    expect((await dict.findUnits('wiązowna')).map((h) => h.name)).toEqual(['Wiązowna']);
+    // Once per query, for the query itself; the lists keep their normalized names.
+    expect(normalize).toHaveBeenCalledTimes(2);
   });
 
   it('limits the level with a leading word and ignores odd input', async () => {

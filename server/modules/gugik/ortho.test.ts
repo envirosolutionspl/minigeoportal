@@ -45,8 +45,8 @@ describe('orthoAt', () => {
   it('refuses points outside Poland without asking upstream', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
-    await expect(orthoAt('1', '2')).rejects.toThrow(RequestError);
-    await expect(orthoAt('abc', '486500')).rejects.toThrow(RequestError);
+    await expect(orthoAt(1, 2)).rejects.toThrow(RequestError);
+    await expect(orthoAt(NaN, 486500)).rejects.toThrow(RequestError);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -64,7 +64,7 @@ describe('orthoAt', () => {
         return new Response(PAGE);
       }),
     );
-    expect(await orthoAt('636500', '486500')).toEqual({
+    expect(await orthoAt(636500, 486500)).toEqual({
       latest: expect.objectContaining({ pixel: 0.05 }),
       archived: 4,
       history: [

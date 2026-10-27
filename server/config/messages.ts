@@ -52,6 +52,9 @@ function readMessages(file: string, problems: string[], required: boolean): Reco
   }
 }
 
+/** Keys the app makes up as it goes (readable names of the attributes a service answers with): a deployment adds them freely. */
+const OPEN = ['info.fields.'];
+
 /** Messages of every language, complete: what a language lacks comes from the default one. */
 export function loadMessages(
   configDir: string,
@@ -59,13 +62,26 @@ export function loadMessages(
   problems: string[],
   modules: string[] = [],
 ) {
+  /** The app's own texts: the built-in file and those of the enabled modules. */
+  const own = (locale: string) =>
+    Object.assign(
+      {},
+      ...[join(BUILT_IN, `${locale}.yaml`), ...modules.map((m) => join(MODULES, m, 'i18n', `${locale}.yaml`))].map((f) =>
+        readMessages(f, problems, false),
+      ),
+    ) as Record<string, Message>;
+  const base = own(locales.default);
   const of = (locale: string) => {
-    const files = [
-      join(BUILT_IN, `${locale}.yaml`),
-      ...modules.map((m) => join(MODULES, m, 'i18n', `${locale}.yaml`)),
-      join(configDir, 'i18n', `${locale}.yaml`),
-    ];
-    return Object.assign({}, ...files.map((f) => readMessages(f, problems, false))) as Record<string, Message>;
+    const texts = locale === locales.default ? base : own(locale);
+    const file = join(configDir, 'i18n', `${locale}.yaml`);
+    const changes = readMessages(file, problems, false);
+    // A key the app does not have is a typo, not a new text: the app would never show it.
+    for (const key of Object.keys(changes)) {
+      if (!(key in base) && !(key in texts) && !OPEN.some((prefix) => key.startsWith(prefix))) {
+        problems.push(`${file} ${key}: not a text of the app`);
+      }
+    }
+    return { ...texts, ...changes };
   };
   const fallback = of(locales.default);
   if (Object.keys(fallback).length === 0) problems.push(`i18n/${locales.default}.yaml: no texts for the default language`);

@@ -1,20 +1,46 @@
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
+import { dirname, join } from 'node:path';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { ConfigError, loadConfig } from './load.ts';
 import { clientConfig, creditHtml, textIn } from './client.ts';
 
-const dirs: string[] = [];
-afterAll(() => dirs.forEach((d) => rmSync(d, { recursive: true, force: true })));
+/** The default configuration, read once: most tests only look at it. */
+const DEFAULT = loadConfig('config');
 
-/** A copy of the default configuration with one file edited. */
+// One copy of the default configuration serves every test: the files a test writes are put back after it.
+let copy: string;
+const touched = new Set<string>();
+beforeAll(() => {
+  copy = mkdtempSync(join(tmpdir(), 'config-'));
+  cpSync('config', copy, { recursive: true });
+});
+afterAll(() => rmSync(copy, { recursive: true, force: true }));
+
+/** Puts back the original of each file written: the file itself, or nothing where the original has none. */
+function restore(): void {
+  for (const file of touched) {
+    const parts = file.split('/');
+    const added = parts.findIndex((_, i) => !existsSync(join('config', ...parts.slice(0, i + 1))));
+    if (added < 0) copyFileSync(join('config', file), join(copy, file));
+    else rmSync(join(copy, ...parts.slice(0, added + 1)), { recursive: true, force: true });
+  }
+  touched.clear();
+}
+afterEach(restore);
+
+/** Writes a file of the copy (a path with slashes), to be put back after the test. */
+function put(file: string, text: string): string {
+  touched.add(file);
+  mkdirSync(dirname(join(copy, file)), { recursive: true });
+  writeFileSync(join(copy, file), text);
+  return copy;
+}
+
+/** The default configuration with one file edited; what the test edited before is put back first. */
 function broken(file: string, edit: (source: string) => string): string {
-  const dir = mkdtempSync(join(tmpdir(), 'config-'));
-  dirs.push(dir);
-  cpSync('config', dir, { recursive: true });
-  writeFileSync(join(dir, file), edit(readFileSync(join(dir, file), 'utf8')));
-  return dir;
+  restore();
+  return put(file, edit(readFileSync(join('config', file), 'utf8')));
 }
 
 const problems = (dir: string) => {
@@ -28,7 +54,7 @@ const problems = (dir: string) => {
 };
 
 describe('default configuration', () => {
-  const config = clientConfig(loadConfig('config'), 'pl');
+  const config = clientConfig(DEFAULT, 'pl');
 
   it('stays what the app was built with (any change shows up here)', () => {
     // Texts of the interface have their own tests (i18n.test.ts), the Markdown ones markdown.test.ts
@@ -36,6 +62,8 @@ describe('default configuration', () => {
     const { messages: _, content, layers, ...rest } = config;
     expect({
       ...rest,
+      // The logo's address carries the file's hash: a new logo is not a change of the configuration.
+      app: { ...rest.app, author: { ...rest.app.author, logo: rest.app.author.logo?.replace(/\?v=\w+$/, '?v=HASH') } },
       content: Object.keys(content),
       layers: { ...layers, overlays: layers.overlays.map((o) => o.id) },
       overlay: layers.overlays.find((o) => o.id === 'kiut'),
@@ -75,7 +103,7 @@ describe('default configuration', () => {
 });
 
 describe('default configuration in English', () => {
-  const en = clientConfig(loadConfig('config'), 'en');
+  const en = clientConfig(DEFAULT, 'en');
 
   it('gives every text in English, the interface and the Markdown too', () => {
     expect(en.app).toMatchObject({ name: 'MiniGeoportal', tagline: 'Data from geoportal.gov.pl, simpler and faster' });
@@ -145,7 +173,7 @@ describe('loadConfig', () => {
     expect(problems(dir).join('\n')).toMatch(/map\.yaml:\d+:\d+ timeTravel\.layers\.1\.id: "kieg" is not an overlay with a time block/);
     expect(problems(dir).join('\n')).toMatch(/map\.yaml:\d+:\d+ timeTravel\.base: unknown base map "zdjecia"/);
     expect(problems(dir).join('\n')).toMatch(/map\.yaml:\d+:\d+ timeTravel\.layers\.1\.base: unknown base map "mapka"/);
-    const config = clientConfig(loadConfig('config'), 'pl');
+    const config = clientConfig(DEFAULT, 'pl');
     expect(config.map.timeTravel).toEqual({
       layers: [
         { id: 'orto-archiwalna', label: 'Zdjęcia' },
@@ -153,7 +181,7 @@ describe('loadConfig', () => {
       ],
       base: 'orto',
     });
-    expect(clientConfig(loadConfig('config'), 'en').map.timeTravel?.layers[1].label).toBe('Old maps');
+    expect(clientConfig(DEFAULT, 'en').map.timeTravel?.layers[1].label).toBe('Old maps');
     const oldMaps = config.layers.overlays.find((o) => o.id === 'mapy-dawne')!;
     expect(oldMaps.time).toMatchObject({ type: 'series' });
     expect((oldMaps.time as { editions: unknown[] }).editions).toHaveLength(3);
@@ -171,7 +199,7 @@ describe('loadConfig', () => {
       /layers\.yaml:\d+:\d+ topics: the geoportal catalog needs the topics zabytki/,
     );
     const dir = broken('layers.yaml', noTopic);
-    writeFileSync(join(dir, 'app.yaml'), readFileSync(join(dir, 'app.yaml'), 'utf8').replace('    catalog: true', '    catalog: false'));
+    put('app.yaml', readFileSync(join(dir, 'app.yaml'), 'utf8').replace('    catalog: true', '    catalog: false'));
     expect(problems(dir)).toEqual([]);
   });
 
@@ -195,29 +223,23 @@ describe('loadConfig', () => {
   });
 
   it('finds the skin in the configuration directory or among the built-in ones', () => {
-    expect(loadConfig('config').skin).toContain('--accent: #466946');
+    expect(DEFAULT.skin).toContain('--accent: #466946');
     const own = broken('app.yaml', (s) => `${s}skin: moja\n`);
     expect(problems(own).join(' ')).toMatch(/skin: skins\/moja\/skin\.css not found/);
-    mkdirSync(join(own, 'skins', 'moja'), { recursive: true });
-    writeFileSync(join(own, 'skins', 'moja', 'skin.css'), ':root { --accent: #123456; }');
+    put('skins/moja/skin.css', ':root { --accent: #123456; }');
     expect(loadConfig(own).skin).toContain('#123456');
   });
 
   it('reads the brand images and gives them addresses that change with the file', () => {
-    const config = loadConfig('config');
-    expect(config.brand.logo).toMatchObject({ path: '/brand/logo.svg', type: 'image/svg+xml' });
-    expect(config.brand.icon).toBeUndefined();
-    expect(clientConfig(config, 'pl').app.author.logo).toBe(`/brand/logo.svg?v=${config.brand.logo?.version}`);
-    const own = broken(
-      'app.yaml',
-      (s) => `${s}icon: brand/sign.png
-`,
-    );
+    expect(DEFAULT.brand.logo).toMatchObject({ path: '/brand/logo.svg', type: 'image/svg+xml' });
+    expect(DEFAULT.brand.icon).toBeUndefined();
+    expect(clientConfig(DEFAULT, 'pl').app.author.logo).toBe(`/brand/logo.svg?v=${DEFAULT.brand.logo?.version}`);
+    const own = broken('app.yaml', (s) => `${s}icon: brand/sign.png\n`);
     expect(problems(own).join(' ')).toMatch(/app\.yaml:\d+:\d+ icon: brand\/sign\.png not found/);
-    writeFileSync(join(own, 'brand', 'sign.png'), 'one');
+    put('brand/sign.png', 'one');
     const first = loadConfig(own).brand.icon;
     expect(first).toMatchObject({ path: '/brand/icon.png', type: 'image/png' });
-    writeFileSync(join(own, 'brand', 'sign.png'), 'two');
+    put('brand/sign.png', 'two');
     expect(loadConfig(own).brand.icon?.version).not.toBe(first?.version);
     expect(clientConfig(loadConfig(own), 'pl').app.icon).toMatch(/^\/brand\/icon\.png\?v=[0-9a-f]{12}$/);
     for (const path of ['../logo.svg', 'brand/../../logo.svg', '.hidden/logo.svg', 'brand/logo.gif']) {
@@ -231,10 +253,45 @@ describe('loadConfig', () => {
     expect(problems(dir).join(' ')).toMatch(/layers\.yaml:\d+:\d+ layer "kieg" needs an https address/);
   });
 
+  it('needs https for every image the browser loads: legends, editions of a series, thumbnails', () => {
+    const legend = broken('layers.yaml', (s) =>
+      s.replace('      - name: uzytki\n', '      - name: uzytki\n        legend: http://a.example/legend.png\n'),
+    );
+    expect(problems(legend).join('\n')).toMatch(/layers\.yaml:\d+:\d+ overlays\.0\.sublayers\.0\.legend: an https address/);
+    const edition = broken('layers.yaml', (s) => s.replace(/( {8}- value: '?1942'?)\n/, '$1\n          url: http://a.example/wms\n'));
+    expect(problems(edition).join('\n')).toMatch(/layers\.yaml:\d+:\d+ overlays\.\d+\.time\.editions\.0\.url: an https address/);
+    const thumb = broken('map.yaml', (s) => s.replace('thumb: /thumbs/orto.jpg', 'thumb: http://a.example/orto.jpg'));
+    expect(problems(thumb).join('\n')).toMatch(/map\.yaml:\d+:\d+ baseMaps\.0\.thumb: a path such as/);
+    expect(problems(broken('map.yaml', (s) => s.replace('thumb: /thumbs/orto.jpg', 'thumb: https://a.example/orto.jpg')))).toEqual([]);
+  });
+
+  it('refuses a service address the server would never ask: an odd port or a private address', () => {
+    const port = broken('layers.yaml', (s) => s.replace('url: https://integracja.gugik.gov.pl', 'url: https://wms.intranet:8181'));
+    expect(problems(port).join('\n')).toMatch(/layers\.yaml:\d+:\d+ layer "kieg": port 8181 is not a web port \(80, 443, 8080, 8443\)/);
+    const inside = broken('map.yaml', (s) =>
+      s.replace(/url: https:\/\/mapy\.geoportal\.gov\.pl\/wss\/service\/PZGIK\/ORTO\/WMTS/, 'url: https://10.0.0.5/wmts'),
+    );
+    expect(problems(inside).join('\n')).toMatch(/map\.yaml:\d+:\d+ tile service "orto": a private address/);
+  });
+
+  it('needs every text given per language in the default language', () => {
+    const dir = broken('app.yaml', (s) => s.replace("  en: 'MiniGeoportal: parcels, plans and orthophoto map'\n", ''));
+    expect(problems(dir).join('\n')).toMatch(/app\.yaml:\d+:\d+ title: no text in the default language \(en\)/);
+    const deep = broken('layers.yaml', (s) =>
+      s.replace("title: { pl: 'Użytki gruntowe', en: 'Land use' }", "title: { pl: 'Użytki gruntowe' }"),
+    );
+    expect(problems(deep).join('\n')).toMatch(
+      /layers\.yaml:\d+:\d+ overlays\.0\.sublayers\.0\.title: no text in the default language \(en\)/,
+    );
+  });
+
   it('says which file is missing', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'config-'));
-    dirs.push(dir);
-    expect(problems(dir)).toContain('app.yaml: file not found');
+    const empty = mkdtempSync(join(tmpdir(), 'config-'));
+    try {
+      expect(problems(empty)).toContain('app.yaml: file not found');
+    } finally {
+      rmSync(empty, { recursive: true, force: true });
+    }
   });
 });
 
@@ -253,7 +310,7 @@ describe('texts and credits', () => {
   });
 
   it('names the fallback map as configured, else after its host', () => {
-    const named = clientConfig(loadConfig('config'), 'pl');
+    const named = clientConfig(DEFAULT, 'pl');
     expect(named.links.fallbackMap).toEqual({ url: 'https://mapy.geoportal.gov.pl/imap/Imgp_2.html', name: 'geoportal.gov.pl' });
     const unnamed = broken('app.yaml', (s) =>
       s.replace(/^ {2}fallbackName: .*\n/m, '').replace('https://mapy.geoportal', 'https://www.geoportal'),
@@ -264,7 +321,7 @@ describe('texts and credits', () => {
   });
 
   it('keeps the GUGiK texts in the deployment, not in the app', () => {
-    const own = clientConfig(loadConfig('config'), 'pl').messages;
+    const own = clientConfig(DEFAULT, 'pl').messages;
     expect(own['info.fields.opis_oznac']).toBe('Przeznaczenie');
     expect(own['print.note']).toContain('geoportal.gov.pl');
     const plain = clientConfig(loadConfig('examples/osm'), 'pl').messages;
@@ -272,8 +329,24 @@ describe('texts and credits', () => {
     expect(plain['print.note']).not.toMatch(/geoportal\.gov\.pl|GUGiK/);
   });
 
+  it('reports a changed text the app does not have, but lets a deployment name attributes freely', () => {
+    const typo = broken('i18n/pl.yaml', (s) => s.replace('searchPlaceholder:', 'searchPlacehodler:'));
+    expect(problems(typo).join('\n')).toMatch(/i18n[\\/]pl\.yaml layers\.searchPlacehodler: not a text of the app/);
+    const named = broken('i18n/pl.yaml', (s) => s.replace('  fields:\n', '  fields:\n    nowy_atrybut: Nowy atrybut\n'));
+    expect(problems(named)).toEqual([]);
+    // Texts of a module are the app's only with the module on.
+    const off = broken('app.yaml', (s) =>
+      s
+        .replace('    enabled: true', '    enabled: false')
+        .replace('provider: gugik', 'provider: none')
+        .replace('parcel: true', 'parcel: false'),
+    );
+    put('i18n/pl.yaml', 'parcel:\n  title: Działka\n');
+    expect(problems(off).join('\n')).toMatch(/i18n[\\/]pl\.yaml parcel\.title: not a text of the app/);
+  });
+
   it('adds the texts of the gugik module only when the module is on', () => {
-    expect(clientConfig(loadConfig('config'), 'en').messages['parcel.title']).toBe('Find a parcel');
+    expect(clientConfig(DEFAULT, 'en').messages['parcel.title']).toBe('Find a parcel');
     const plain = clientConfig(loadConfig('examples/osm'), 'pl').messages;
     expect(
       Object.keys(plain).filter((k) => /^(parcel|search\.gugik|search\.parcel)|^layers\.catalog|^info\.(parcelReport|photo)/.test(k)),

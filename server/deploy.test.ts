@@ -6,10 +6,35 @@ import { parse } from 'yaml';
 const compose = parse(readFileSync('compose.yaml', 'utf8')) as { services: Record<string, Record<string, unknown>> };
 const proxy = parse(readFileSync('compose.proxy.yaml', 'utf8')) as { services: Record<string, Record<string, unknown>> };
 const nginx = readFileSync('deploy/nginx/minigeoportal.conf', 'utf8');
+const dockerfile = readFileSync('Dockerfile', 'utf8');
+const dockerignore = readFileSync('.dockerignore', 'utf8').split('\n');
+const env = readFileSync('.env.example', 'utf8');
 
 describe('deployment files', () => {
   it('lets every replica hold far more than the 1024 open files Docker gives by default', () => {
     expect(compose.services.app.ulimits).toEqual({ nofile: { soft: 65536, hard: 65536 } });
+  });
+
+  it('leaves the public address to app.yaml: APP_ORIGIN is an override, not something Compose must repeat', () => {
+    expect(compose.services.app.environment).not.toHaveProperty('APP_ORIGIN');
+    expect(env).toMatch(/^# APP_ORIGIN=/m);
+  });
+
+  it('enables nothing by copying .env.example: every line is a comment', () => {
+    expect(env.split('\n').filter((line) => line.trim() && !line.startsWith('#'))).toEqual([]);
+  });
+
+  it('checks the health on the port the container is given and leaves tests out of the image', () => {
+    expect(dockerfile).toContain('CMD wget -qO- "http://127.0.0.1:${PORT}/api/health"');
+    for (const pattern of ['**/*.test.ts', '**/*.test.tsx', '**/__snapshots__', 'src/test', 'server/testSite.ts']) {
+      expect(dockerignore).toContain(pattern);
+    }
+    // The exclusions come after the whitelist, or the whitelist would let the files back in.
+    expect(dockerignore.indexOf('**/*.test.ts')).toBeGreaterThan(dockerignore.indexOf('!server'));
+  });
+
+  it('tells nobody the nginx version', () => {
+    expect(nginx).toMatch(/server_name example\.org;[\s\S]*server_tokens off;/);
   });
 
   it('runs two replicas behind nginx, on the two ports the nginx template names', () => {

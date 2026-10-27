@@ -1,10 +1,12 @@
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Hono } from 'hono';
+import { Hono } from 'hono';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
-import { site } from './testSite.ts';
+import { MESSAGE } from '../shared/report.ts';
+import type { Mailer } from './report.ts';
+import { client, site } from './testSite.ts';
 import { createSite } from './html.ts';
 
 // Upstream hosts resolve to a public address unless a test says otherwise.
@@ -13,7 +15,7 @@ import { lookup } from 'node:dns/promises';
 beforeEach(() => vi.mocked(lookup).mockResolvedValue([{ address: '203.0.113.10', family: 4 }] as never));
 
 const CACHE: CapabilitiesCache = { generatedAt: '2026-10-21T00:00:00.000Z', services: {} };
-const remote = { incoming: { socket: { remoteAddress: '203.0.113.5', remoteFamily: 'IPv4', remotePort: 1 } } };
+const remote = client();
 
 let dir: string;
 let app: Hono;
@@ -35,6 +37,9 @@ describe('routes', () => {
     // An old address gets the current file, but asks again next time.
     expect((await app.request('/brand/logo.svg?v=old', {}, remote)).headers.get('cache-control')).toBe('no-cache');
     expect((await app.request('/brand/icon.svg', {}, remote)).status).toBe(404);
+    // An SVG of tens of kilobytes goes out compressed.
+    const packed = await app.request(`/brand/logo.svg?v=${logo.version}`, { headers: { 'accept-encoding': 'gzip' } }, remote);
+    expect(packed.headers.get('content-encoding')).toBe('gzip');
   });
 
   it('searches OpenStreetMap places through Nominatim only when configured to', async () => {
@@ -94,13 +99,19 @@ describe('routes', () => {
     expect(await res.json()).toEqual({ ok: true, capabilitiesGeneratedAt: CACHE.generatedAt });
     expect(res.headers.get('content-security-policy')).toContain("frame-ancestors 'none'");
     expect(res.headers.get('x-content-type-options')).toBe('nosniff');
+    // Half a year of HTTPS for this host alone: what else lives under the domain is not the app's to promise.
+    expect(res.headers.get('strict-transport-security')).toBe('max-age=15552000');
     const caps = await app.request('/api/capabilities', {}, remote);
     // Revalidated every time, so a refresh reaches the app at once; unchanged costs a 304.
     expect(caps.headers.get('cache-control')).toBe('no-cache');
     const etag = caps.headers.get('etag')!;
-    expect(etag).toBe(`"${CACHE.generatedAt}"`);
+    expect(etag).toMatch(/^"[ -~]+"$/);
     const again = await app.request('/api/capabilities', { headers: { 'if-none-match': etag } }, remote);
     expect(again.status).toBe(304);
+    // A refresh changes the tag, so the app gets the new metadata at once.
+    const { createApp } = await import('./app.ts');
+    const refreshed = createApp({ site, cache: () => ({ ...CACHE, generatedAt: 'later' }) });
+    expect((await refreshed.request('/api/capabilities', { headers: { 'if-none-match': etag } }, remote)).status).toBe(200);
   });
 
   it('answers 404 for unknown API paths', async () => {
@@ -114,6 +125,27 @@ describe('routes', () => {
     const following = createApp({ site, cache: () => current });
     current = { ...CACHE, generatedAt: 'updated' };
     expect(await (await following.request('/api/health', {}, remote)).json()).toMatchObject({ capabilitiesGeneratedAt: 'updated' });
+  });
+
+  it('serves the built app: the page, assets for a year, icons and thumbnails for a day, no page for a missing file', async () => {
+    const { serveBuilt } = await import('./app.ts');
+    const dist = await mkdtemp(join(tmpdir(), 'dist-'));
+    await mkdir(join(dist, 'assets'));
+    await mkdir(join(dist, 'thumbs'));
+    await writeFile(join(dist, 'assets', 'index-abc123.js'), 'console.log(1)');
+    await writeFile(join(dist, 'thumbs', 'mapa.jpg'), 'jpg');
+    await writeFile(join(dist, 'favicon.svg'), '<svg/>');
+    const built = new Hono();
+    serveBuilt(built, (c) => c.html('<p>page</p>'), dist);
+    const header = async (path: string) => (await built.request(path)).headers.get('cache-control');
+    expect(await header('/assets/index-abc123.js')).toBe('public, max-age=31536000, immutable');
+    expect(await header('/thumbs/mapa.jpg')).toBe('public, max-age=86400');
+    expect(await header('/favicon.svg')).toBe('public, max-age=86400');
+    expect(await header('/assets/index-old.js')).toBeNull();
+    expect((await built.request('/assets/index-old.js')).status).toBe(404);
+    expect((await built.request('/apple-touch-icon.png')).status).toBe(404);
+    for (const path of ['/', '/index.html', '/en/']) expect(await (await built.request(path)).text()).toBe('<p>page</p>');
+    await rm(dist, { recursive: true, force: true });
   });
 
   it('maps dictionary errors: 400 for client mistakes, 502 with a generic text for upstream failures', async () => {
@@ -131,14 +163,14 @@ describe('routes', () => {
   });
 
   it('rate limits the dictionaries per client', async () => {
-    const client = { incoming: { socket: { remoteAddress: '198.51.100.7', remoteFamily: 'IPv4', remotePort: 1 } } };
+    const visitor = client('198.51.100.7');
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => new Response('boom', { status: 503 })),
     );
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     const statuses = [];
-    for (let i = 0; i < 3; i++) statuses.push((await app.request('/api/dict/wojewodztwa', {}, client)).status);
+    for (let i = 0; i < 3; i++) statuses.push((await app.request('/api/dict/wojewodztwa', {}, visitor)).status);
     expect(statuses).toEqual([502, 502, 429]);
   });
 
@@ -148,25 +180,99 @@ describe('routes', () => {
       vi.fn(async () => new Response('boom', { status: 503 })),
     );
     vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const client = { incoming: { socket: { remoteAddress: '198.51.100.8', remoteFamily: 'IPv4', remotePort: 1 } } };
-    expect((await app.request('/api/dict/jednostki?teryt=abc', {}, client)).status).toBe(400);
-    expect((await app.request('/api/dict/jednostki?teryt=141708', {}, client)).status).toBe(502);
+    const visitor = client('198.51.100.8');
+    expect((await app.request('/api/dict/jednostki?teryt=abc', {}, visitor)).status).toBe(400);
+    expect((await app.request('/api/dict/jednostki?teryt=141708', {}, visitor)).status).toBe(502);
   });
 
   it('searches units by name, answering short queries without asking upstream', async () => {
     const fetchMock = vi.fn(async () => new Response('boom', { status: 503 }));
     vi.stubGlobal('fetch', fetchMock);
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const client = { incoming: { socket: { remoteAddress: '198.51.100.9', remoteFamily: 'IPv4', remotePort: 1 } } };
-    const short = await app.request('/api/dict/szukaj?q=w', {}, client);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const visitor = client('198.51.100.9');
+    const short = await app.request('/api/dict/szukaj?q=w', {}, visitor);
     expect(await short.json()).toEqual([]);
     expect(fetchMock).not.toHaveBeenCalled();
-    expect((await app.request('/api/dict/szukaj?q=otwock', {}, client)).status).toBe(502);
+    const down = await app.request('/api/dict/szukaj?q=otwock', {}, visitor);
+    expect(down.status).toBe(502);
+    expect(await down.text()).toBe('Upstream service unavailable');
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^\/api\/dict\/szukaj: /));
   });
 
   it('answers 400 for an orthophoto query outside Poland', async () => {
-    const client = { incoming: { socket: { remoteAddress: '198.51.100.10', remoteFamily: 'IPv4', remotePort: 1 } } };
-    expect((await app.request('/api/orto?x=1&y=2', {}, client)).status).toBe(400);
+    const visitor = client('198.51.100.10');
+    expect((await app.request('/api/orto?x=1&y=2', {}, visitor)).status).toBe(400);
+    expect((await app.request('/api/orto?x=abc&y=2', {}, visitor)).status).toBe(400);
+  });
+
+  it('asks the photo index once for the spellings of one point', async () => {
+    const visitor = client('198.51.100.11');
+    const page =
+      '<script>skorDo5cm.push({url:"https://opendata.geoportal.gov.pl/a.tif", godlo:"N", aktualnosc:"2025-04-27", wielkoscPiksela:"0.05", kolor:"RGB"});</script>';
+    const fetchMock = vi.fn(async () => new Response(page));
+    vi.stubGlobal('fetch', fetchMock);
+    for (const query of ['x=500000&y=600000', 'x=500000.0&y=600000', 'x=5e5&y=600000.4']) {
+      const res = await app.request(`/api/orto?${query}`, {}, visitor);
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ archived: 1 });
+    }
+    expect(fetchMock.mock.calls.map(String).filter((url) => url.includes('GetFeatureInfo'))).toHaveLength(1);
+  });
+
+  it('answers 400 for a map sheet query outside Poland or without a number for a coordinate', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const visitor = client('198.51.100.12');
+    for (const query of ['x=1&y=2', 'x=abc&y=600000', 'x=500000', 'x=Infinity&y=600000']) {
+      expect((await app.request(`/api/topo?${query}`, {}, visitor)).status).toBe(400);
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('serves the map sheets of a point for a day, asking the index once, and reports the index being down in one sentence', async () => {
+    const visitor = client('198.51.100.13');
+    const page =
+      '<table><thead><tr><th>Arkusz N-34-139-A Układ PL-1992</th></tr></thead><tbody><tr><th>Skala:</th> <td>1:50 000</td></tr><tr><th>Aktualność kartograficzna:</th> <td>1996</td></tr></tbody></table>';
+    const fetchMock = vi.fn(async () => new Response(page, { headers: { 'content-type': 'text/html' } }));
+    vi.stubGlobal('fetch', fetchMock);
+    for (const query of ['x=639000&y=487000', 'x=639000.4&y=487000.0']) {
+      const res = await app.request(`/api/topo?${query}`, {}, visitor);
+      expect(res.status).toBe(200);
+      expect(res.headers.get('cache-control')).toBe('public, max-age=86400');
+      expect(await res.json()).toEqual({
+        sheets: [{ date: '1996', scale: 50000, system: '1992', layer: 'Raster_50_1992', sheet: 'N-34-139-A' }],
+      });
+    }
+    expect(fetchMock).toHaveBeenCalledOnce();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('boom', { status: 503 })),
+    );
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const down = await app.request('/api/topo?x=640000&y=488000', {}, visitor);
+    expect(down.status).toBe(502);
+    expect(await down.text()).toBe('Upstream service unavailable');
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^\/api\/topo: /));
+  });
+
+  it('links reports to the configured domain unless APP_ORIGIN says otherwise', async () => {
+    const { createApp } = await import('./app.ts');
+    const send = vi.fn<Mailer['send']>(async () => {});
+    const view = `https://${site.config.app.domain}/?x=1`;
+    const post = (to: Hono) =>
+      to.request(
+        '/api/report',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ category: site.mail.report.categories[0].id, message: 'x'.repeat(MESSAGE.min), view }),
+        },
+        remote,
+      );
+    expect((await post(createApp({ site, cache: () => CACHE, mailer: { send } }))).status).toBe(200);
+    expect(send.mock.calls[0][0]).toMatchObject({ view });
+    await post(createApp({ site, cache: () => CACHE, mailer: { send }, origin: 'https://staging.example' }));
+    expect(send.mock.calls[1][0]).not.toHaveProperty('view', view);
   });
 
   it('returns feature info as plain text with the upstream type in a header', async () => {
@@ -236,32 +342,32 @@ describe('catalog routes', () => {
       },
     },
   };
-  const client = { incoming: { socket: { remoteAddress: '198.51.100.20', remoteFamily: 'IPv4', remotePort: 1 } } };
+  const visitor = client('198.51.100.20');
 
   it('answers 503 while the first catalog is being built', async () => {
     const { createApp } = await import('./app.ts');
     const building = createApp({ site, cache: () => CACHE, moduleData: { catalog: () => undefined } });
-    expect((await building.request('/api/catalog', {}, client)).status).toBe(503);
+    expect((await building.request('/api/catalog', {}, visitor)).status).toBe(503);
   });
 
   it('lists the layers without addresses and gives one layer with its metadata, revalidated by ETag', async () => {
     const { createApp } = await import('./app.ts');
     const withCatalog = createApp({ site, cache: () => CACHE, moduleData: { catalog: () => CATALOG } });
-    const list = await withCatalog.request('/api/catalog', {}, client);
+    const list = await withCatalog.request('/api/catalog', {}, visitor);
     const body = (await list.json()) as { entries: Record<string, unknown>[] };
     expect(body.entries.map((e) => e.id)).toEqual(['msZabytki', 'msCLC']);
     expect(body.entries[0].url).toBeUndefined();
-    expect((await withCatalog.request('/api/catalog', { headers: { 'if-none-match': list.headers.get('etag')! } }, client)).status).toBe(
+    expect((await withCatalog.request('/api/catalog', { headers: { 'if-none-match': list.headers.get('etag')! } }, visitor)).status).toBe(
       304,
     );
 
-    const one = (await (await withCatalog.request('/api/catalog/msZabytki', {}, client)).json()) as {
+    const one = (await (await withCatalog.request('/api/catalog/msZabytki', {}, visitor)).json()) as {
       entry: { url: string };
       meta: { title: string };
     };
     expect(one.entry.url).toBe('https://nid.example/wms');
     expect(one.meta.title).toBe('NID');
-    expect((await withCatalog.request('/api/catalog/msNope', {}, client)).status).toBe(404);
+    expect((await withCatalog.request('/api/catalog/msNope', {}, visitor)).status).toBe(404);
   });
 
   it('serves layers whose geoportal id has Polish letters', async () => {
@@ -270,7 +376,7 @@ describe('catalog routes', () => {
     const res = await createApp({ site, cache: () => CACHE, moduleData: { catalog: () => polish } }).request(
       `/api/catalog/${encodeURIComponent('msWyłozeniaModernizacja')}`,
       {},
-      client,
+      visitor,
     );
     expect(res.status).toBe(200);
     expect(res.headers.get('etag')).toMatch(/^"[ -~]+"$/);
@@ -282,8 +388,8 @@ describe('catalog routes', () => {
     const fetchMock = vi.fn(async (_url: string) => new Response('<a/>', { headers: { 'content-type': 'text/xml' } }));
     vi.stubGlobal('fetch', fetchMock);
     const q = 'QUERY_LAYERS=monuments&BBOX=1,2,3,4&WIDTH=10&HEIGHT=10&I=1&J=1&INFO_FORMAT=text/xml';
-    expect((await withCatalog.request(`/api/featureinfo/msZabytki?${q}`, {}, client)).status).toBe(200);
+    expect((await withCatalog.request(`/api/featureinfo/msZabytki?${q}`, {}, visitor)).status).toBe(200);
     expect(String(fetchMock.mock.calls[0][0])).toContain('https://nid.example/wms?');
-    expect((await withCatalog.request(`/api/featureinfo/msCLC?${q}`, {}, client)).status).toBe(400);
+    expect((await withCatalog.request(`/api/featureinfo/msCLC?${q}`, {}, visitor)).status).toBe(400);
   });
 });

@@ -72,8 +72,7 @@ docker compose up -d
 npm ci
 npm run build
 NODE_ENV=production HOST=127.0.0.1 TRUSTED_PROXY=1 \
-  CONFIG_DIR=/etc/minigeoportal DATA_DIR=/var/lib/minigeoportal \
-  APP_ORIGIN=https://map.example.org npm start
+  CONFIG_DIR=/etc/minigeoportal DATA_DIR=/var/lib/minigeoportal npm start
 ```
 
 The server serves the app and the API on `PORT` (8787). `HOST=127.0.0.1` is needed together with `TRUSTED_PROXY=1`: otherwise someone connecting directly could give a false client address and get round the rate limits. Put a reverse proxy with HTTPS in front of it, e.g. Caddy:
@@ -108,10 +107,10 @@ Two things live in `public/` and go into the build: the thumbnails of the base m
 ## Running the server
 
 - **Rate limits** per client address (IPv6 counted by /64): place information 40 at once and 60 a minute, parcel dictionaries 30 and 60, the orthophoto index 10 and 30, Nominatim 10 and 30, bug reports 3 at once and then one in 10 minutes. The server opens at most 24 connections to the upstream services at a time and answers 503 beyond that. Each instance counts on its own; Caddy sends a visitor always to the same replica. Behind a proxy set `TRUSTED_PROXY=1`, otherwise everyone shares the proxy's limit.
-- **Content Security Policy**: scripts, styles and fonts only from the site, images from any https address (tiles and service images), connections only to the site (and to the GUGiK search services with the module on). `frame-ancestors 'none'`: the page cannot be embedded in a frame on another site.
+- **Content Security Policy**: scripts, styles and fonts only from the site, images from any https address (tiles and service images), connections only to the site (and to the GUGiK search services with the module on). `frame-ancestors 'none'`: the page cannot be embedded in a frame on another site. The server also sends `Strict-Transport-Security` for half a year for the app's host alone (no subdomains), so the proxy need not add it.
 - **The configuration in the container** is `/app/config`, read-only; it may contain `skins/`, `i18n/`, `content/`, `seed/` and `brand/`. Data is in `/data` and is only a cache: the volume can be wiped, the server rebuilds it.
 - **Endpoints to check**: `GET /api/health` (`{ ok, capabilitiesGeneratedAt }`), `GET /api/config` (the configuration given to the app), `GET /api/report` (`{ enabled }`: whether the report form works), `GET /api/capabilities`, `GET /api/catalog` (gugik module).
-- **Logs**: on standard output; upstream errors, critical errors (see below) and why the report form and the alert mails are off (no mail server, no `admin` in `app.yaml` or no sender); a missing `APP_ORIGIN` only gives a warning that reports will carry no link to the map view. On SIGTERM the server finishes requests in progress, for 10 seconds at most.
+- **Logs**: on standard output; upstream errors, critical errors (see below) and why the report form and the alert mails are off (no mail server, no `admin` in `app.yaml` or no sender). On SIGTERM the server finishes requests in progress, for 10 seconds at most.
 
 ## Critical errors
 
@@ -132,7 +131,7 @@ Set them in the environment or in a `.env` file in the app directory (template w
 | `PORT`                                  | `8787`                                         | The server's port.                                                                                                                                                                           |
 | `HOST`                                  | `0.0.0.0` in production, `127.0.0.1` otherwise | The listening address. Behind a proxy on the same machine: `127.0.0.1`.                                                                                                                      |
 | `NODE_ENV`                              |                                                | `production`: the server also serves the built app from `dist/`. The Docker image sets it.                                                                                                   |
-| `APP_ORIGIN`                            |                                                | Public address of the app, e.g. `https://map.example.org`. Bug reports may link only to it; without it they carry no link.                                                                   |
+| `APP_ORIGIN`                            | `https://` + `domain` of `app.yaml`            | Public address of the app when it differs from the domain of `app.yaml` (a staging site, say). Bug reports may link only to it.                                                              |
 | `TRUSTED_PROXY`                         |                                                | `1` behind a reverse proxy that appends the client address to `X-Forwarded-For`; rate limits then count per client.                                                                          |
 | `SHARED_DATA`                           |                                                | `1` when several instances share `DATA_DIR`: only `npm run update` writes the data, the instances read it again within a minute. Without it the server refreshes the data itself once a day. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | `587`, STARTTLS                                | The mail server for the mails to the administrator (`admin` in `app.yaml`): bug reports and critical errors; port 465 means TLS from the start, `SMTP_SECURE` only overrides that.           |

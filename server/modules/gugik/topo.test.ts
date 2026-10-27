@@ -36,8 +36,17 @@ describe('topoAt', () => {
   it('refuses points outside Poland without asking upstream', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
-    await expect(topoAt('1', '2')).rejects.toThrow(RequestError);
+    await expect(topoAt(1, 2)).rejects.toThrow(RequestError);
+    await expect(topoAt(NaN, 487000)).rejects.toThrow(RequestError);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('answers with no sheets where the index has none', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('<p>nothing</p>', { headers: { 'content-type': 'text/html' } })),
+    );
+    expect(await topoAt(639000, 487000)).toEqual({ sheets: [] });
   });
 
   it('asks the index at the point, northing first, and sorts the sheets by date, coarser first on a day', async () => {
@@ -49,7 +58,7 @@ describe('topoAt', () => {
         return new Response(PAGE, { headers: { 'content-type': 'text/html' } });
       }),
     );
-    const info = await topoAt('639000', '487000');
+    const info = await topoAt(639000, 487000);
     expect(calls[0]).toContain('SkorowidzMapTopograficznych?');
     expect(calls[0]).toContain('BBOX=486999.00%2C638999.00%2C487001.00%2C639001.00');
     expect(calls[0]).toContain('QUERY_LAYERS=topo_10_42%2Ctopo_10_65%2Ctopo_10_92%2Ctopo_25_65%2Ctopo_50_42%2Ctopo_50_65%2Ctopo_50_92');

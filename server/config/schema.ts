@@ -10,7 +10,12 @@ import type { Message } from '../../shared/config.ts';
 const id = z.string().regex(/^[\p{L}\p{N}][\p{L}\p{N}_.-]{0,80}$/u, 'letters, digits, _ . - (starting with a letter or digit)');
 const locale = z.string().regex(/^[a-z]{2,3}(-[A-Z]{2})?$/, 'a language code such as pl or en-GB');
 const url = z.url({ protocol: /^https?$/ });
-const text = z.union([z.string().min(1), z.record(locale, z.string().min(1))]);
+/** An address the browser loads an image from: the page allows images from https only. */
+const httpsUrl = z.url({ protocol: /^https$/, error: 'an https address' });
+/** A picture of the app: one of its own files (public/) by its path, or an https address. */
+const picture = z.union([z.string().regex(/^\/(?!\/)/), httpsUrl], { error: 'a path such as /thumbs/map.jpg or an https address' });
+/** A text of the configuration: one string, or one per language (load.ts checks the default language is among them). */
+export const text = z.union([z.string().min(1), z.record(locale, z.string().min(1))]);
 const point = z.tuple([z.number(), z.number()]);
 const extent = z
   .tuple([z.number(), z.number(), z.number(), z.number()])
@@ -41,7 +46,7 @@ const timeSpec = z.discriminatedUnion('type', [
   z.strictObject({
     type: z.literal('series'),
     editions: z
-      .array(z.strictObject({ value: z.string(), url: url.optional(), layer: z.string().optional(), label: text.optional() }))
+      .array(z.strictObject({ value: z.string(), url: httpsUrl.optional(), layer: z.string().optional(), label: text.optional() }))
       .min(1),
   }),
 ]);
@@ -189,7 +194,7 @@ export const mapSchema = z.strictObject({
         id,
         title: text,
         description: text,
-        thumb: z.string().optional(),
+        thumb: picture.optional(),
         sources: z.array(z.strictObject({ service: id, minScale: scale.optional(), maxScale: scale.optional() })),
       }),
     )
@@ -216,7 +221,7 @@ export const layersSchema = z.strictObject({
         /** Image format a WMS is asked for: image/png (the default, transparent) or image/jpeg (smaller, opaque). */
         format: z.enum(['image/png', 'image/jpeg']).optional(),
         sublayers: z
-          .array(z.strictObject({ name: z.string().min(1), title: text, default: z.boolean().optional(), legend: url.optional() }))
+          .array(z.strictObject({ name: z.string().min(1), title: text, default: z.boolean().optional(), legend: httpsUrl.optional() }))
           .min(1),
         time: timeSpec.optional(),
       }),

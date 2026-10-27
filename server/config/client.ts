@@ -46,7 +46,6 @@ export function clientConfig({ app, map, layers, content, brand, messages }: App
       title: t(app.title),
       description: t(app.description),
       domain: app.domain,
-      contact: app.contact,
       author: { name: app.author.name, url: app.author.url, ...(brand.logo ? { logo: brandUrl(brand.logo) } : {}) },
       ...(brand.icon ? { icon: brandUrl(brand.icon) } : {}),
       storagePrefix: `${app.id}.`,

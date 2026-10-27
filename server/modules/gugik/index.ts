@@ -1,5 +1,8 @@
 import type { Context, Hono } from 'hono';
+import { etag } from 'hono/etag';
 import type { ClientConfig } from '../../../shared/config.ts';
+import type { CatalogEntry } from '../../../src/services/catalogTypes.ts';
+import type { Limits } from '../../app.ts';
 import type { QueryTarget } from '../../featureinfo.ts';
 import { RequestError, rateLimit } from '../../http.ts';
 import { config as env } from '../../config.ts';
@@ -122,6 +125,17 @@ export async function update(client: ClientConfig): Promise<void> {
   console.log(`catalog: ${catalog.entries.length} layers in ${Math.round((Date.now() - started) / 1000)} s:`, count);
 }
 
+/** The entries of a catalog by id, built once per catalog read (a catalog replaced by a refresh takes its index with it). */
+const entriesById = new WeakMap<Catalog, Map<string, CatalogEntry>>();
+function entryOf(catalog: Catalog, id: string): CatalogEntry | undefined {
+  let byId = entriesById.get(catalog);
+  if (!byId) {
+    byId = new Map(catalog.entries.map((e) => [e.id, e]));
+    entriesById.set(catalog, byId);
+  }
+  return byId.get(id);
+}
+
 /**
  * A layer of the catalog may be queried when its service answered the last check: a WMS for the
  * layer names of its capabilities and of the geoportal configuration, a WMTS that lists
@@ -129,7 +143,7 @@ export async function update(client: ClientConfig): Promise<void> {
  */
 export function queryTarget(data: Data, id: string): QueryTarget | undefined {
   const current = data.catalog?.();
-  const entry = current?.entries.find((e) => e.id === id);
+  const entry = current && entryOf(current, id);
   if (!current || !entry || entry.status !== 'ok') return undefined;
   const meta = current.services[serviceKey(entry)]?.meta;
   if (meta?.kind === 'wmts') {
@@ -157,38 +171,25 @@ export function queryTarget(data: Data, id: string): QueryTarget | undefined {
   return { url: entry.url, layers: new Set([...named, ...(entry.sublayers ?? []).map((l) => l.name)]) };
 }
 
-/** What the routes share with the rest of the API (server/app.ts). */
+/** What the routes share with the rest of the API (server/app.ts), which also answers their errors (app.onError). */
 export interface RouteDeps {
   client: ClientConfig;
   data: Data;
   /** Upstream requests at once, shared with the point queries. */
   upstream: <T>(task: () => Promise<T>) => Promise<T | undefined>;
-  /** Logs an upstream error and answers 502 in one generic sentence. */
-  upstreamFailure: (c: Context, where: string, e: unknown) => Response;
-  /** Answers that change only with the caches: kept by the browser, checked every time (ETag). */
-  revalidated: (c: Context, version: string, body: () => unknown) => Response;
-  limits?: {
-    dict?: [burst: number, perMinute: number];
-    ortho?: [burst: number, perMinute: number];
-    topo?: [burst: number, perMinute: number];
-  };
+  limits?: Limits;
 }
 
 /** The module's routes: TERYT dictionaries of the parcel and unit search, the geoportal catalog, the photo index. */
-export function routes(app: Hono, { client, data, upstream, upstreamFailure, revalidated, limits }: RouteDeps): void {
+export function routes(app: Hono, { client, data, upstream, limits }: RouteDeps): void {
   const gugik = client.modules.gugik;
   if (!gugik) return;
 
   const dictionary = (load: (parent: string) => Promise<DictEntry[]>) => async (c: Context) => {
-    try {
-      const entries = await load(c.req.param('parent') ?? '');
-      // An empty answer may mean the office was down: kept as long as the server keeps it (dictionaries.ts).
-      c.header('Cache-Control', entries.length > 0 ? 'public, max-age=86400' : 'public, max-age=21600');
-      return c.json(entries);
-    } catch (e) {
-      if (e instanceof RequestError) return c.text(e.message, 400);
-      return upstreamFailure(c, 'dict', e);
-    }
+    const entries = await load(c.req.param('parent') ?? '');
+    // An empty answer may mean the office was down: kept as long as the server keeps it (dictionaries.ts).
+    c.header('Cache-Control', entries.length > 0 ? 'public, max-age=86400' : 'public, max-age=21600');
+    return c.json(entries);
   };
   app.use('/api/dict/*', rateLimit(...(limits?.dict ?? [30, 60])));
   app.get(
@@ -199,82 +200,60 @@ export function routes(app: Hono, { client, data, upstream, upstreamFailure, rev
   app.get('/api/dict/gminy/:parent', dictionary(communes));
   app.get('/api/dict/obreby/:parent', dictionary(precincts));
   app.get('/api/dict/szukaj', async (c) => {
-    try {
-      const hits = await findUnits((c.req.query('q') ?? '').slice(0, MAX_QUERY));
-      c.header('Cache-Control', 'public, max-age=86400');
-      return c.json(hits);
-    } catch (e) {
-      return upstreamFailure(c, 'dict', e);
-    }
+    const hits = await findUnits((c.req.query('q') ?? '').slice(0, MAX_QUERY));
+    c.header('Cache-Control', 'public, max-age=86400');
+    return c.json(hits);
   });
   app.get('/api/dict/jednostki', async (c) => {
-    try {
-      const names = await unitNames((c.req.query('teryt') ?? '').split(',').filter(Boolean));
-      c.header('Cache-Control', 'public, max-age=86400');
-      return c.json(names);
-    } catch (e) {
-      if (e instanceof RequestError) return c.text(e.message, 400);
-      return upstreamFailure(c, 'dict', e);
-    }
+    const names = await unitNames((c.req.query('teryt') ?? '').split(',').filter(Boolean));
+    c.header('Cache-Control', 'public, max-age=86400');
+    return c.json(names);
   });
 
   if (gugik.catalog) {
-    /** Every layer of geoportal.gov.pl with its topic and availability; metadata come per layer. */
+    /**
+     * Every layer of geoportal.gov.pl with its topic and availability; metadata come per layer.
+     * Both change only with the catalog: the browser keeps them and asks every time whether
+     * they are current (ETag), so a refresh reaches people at once. The tag names the catalog's
+     * build, so no digest of the body is taken per request.
+     */
     let index: { of: Catalog; body: ReturnType<typeof catalogIndex> } | undefined;
-    app.get('/api/catalog', (c) => {
+    app.get('/api/catalog', etag(), (c) => {
       const current = data.catalog?.();
       if (!current) return c.text('Catalog not ready yet', 503);
       // The index is built once per catalog, not per request.
       if (index?.of !== current) index = { of: current, body: catalogIndex(current) };
-      return revalidated(c, current.generatedAt, () => index!.body);
+      c.header('Cache-Control', 'no-cache');
+      c.header('ETag', `"${current.generatedAt}"`);
+      return c.json(index.body);
     });
-    app.get('/api/catalog/:id', (c) => {
+    app.get('/api/catalog/:id', etag(), (c) => {
       const current = data.catalog?.();
-      const entry = current?.entries.find((e) => e.id === c.req.param('id'));
+      const entry = current && entryOf(current, c.req.param('id'));
       if (!current || !entry) return c.text('Not found', 404);
-      return revalidated(c, `${current.generatedAt}-${encodeURIComponent(entry.id)}`, () => ({
-        entry,
-        meta: current.services[serviceKey(entry)]?.meta,
-      }));
+      c.header('Cache-Control', 'no-cache');
+      c.header('ETag', `"${current.generatedAt}-${encodeURIComponent(entry.id)}"`);
+      return c.json({ entry, meta: current.services[serviceKey(entry)]?.meta });
     });
   }
 
-  const orthoCache = pointCache<Awaited<ReturnType<typeof orthoAt>>>(INDEX_TTL_MS, INDEX_POINTS);
-  const topoCache = pointCache<Awaited<ReturnType<typeof topoAt>>>(INDEX_TTL_MS, INDEX_POINTS);
-
-  if (gugik.ortho) {
-    /** Date and pixel size of the aerial photo at a map click; one request per click. */
-    app.use('/api/orto', rateLimit(...(limits?.ortho ?? [10, 30])));
-    app.get('/api/orto', async (c) => {
-      try {
-        const x = c.req.query('x');
-        const y = c.req.query('y');
-        const info = await orthoCache(`${x},${y}`, () => upstream(() => orthoAt(x, y, c.req.raw.signal)));
-        if (!info) return c.text('Busy, try again shortly', 503);
-        c.header('Cache-Control', 'public, max-age=86400');
-        return c.json(info);
-      } catch (e) {
-        if (e instanceof RequestError) return c.text(e.message, 400);
-        return upstreamFailure(c, 'orto', e);
-      }
+  /** An index asked at a map click, one request per click; answers are shared by point for a while. */
+  const pointRoute = <T>(path: string, at: (x: number, y: number, abort: AbortSignal) => Promise<T>, limit: [number, number]) => {
+    const cache = pointCache<T>(INDEX_TTL_MS, INDEX_POINTS);
+    app.use(path, rateLimit(...limit));
+    app.get(path, async (c) => {
+      // The indexes answer by the metre, so spellings of one point (500000, 500000.0, 5e5) share an answer.
+      const x = Math.round(Number(c.req.query('x')));
+      const y = Math.round(Number(c.req.query('y')));
+      if (!Number.isFinite(x) || !Number.isFinite(y)) throw new RequestError('Invalid point');
+      const info = await cache(`${x},${y}`, () => upstream(() => at(x, y, c.req.raw.signal)));
+      if (!info) return c.text('Busy, try again shortly', 503);
+      c.header('Cache-Control', 'public, max-age=86400');
+      return c.json(info);
     });
-  }
-
-  if (gugik.topo) {
-    /** The sheets of the old topographic maps at a point, with the year each is current for. */
-    app.use('/api/topo', rateLimit(...(limits?.topo ?? [10, 30])));
-    app.get('/api/topo', async (c) => {
-      try {
-        const x = c.req.query('x');
-        const y = c.req.query('y');
-        const info = await topoCache(`${x},${y}`, () => upstream(() => topoAt(x, y, c.req.raw.signal)));
-        if (!info) return c.text('Busy, try again shortly', 503);
-        c.header('Cache-Control', 'public, max-age=86400');
-        return c.json(info);
-      } catch (e) {
-        if (e instanceof RequestError) return c.text(e.message, 400);
-        return upstreamFailure(c, 'topo', e);
-      }
-    });
-  }
+  };
+  // Date and pixel size of the aerial photo at a point.
+  if (gugik.ortho) pointRoute('/api/orto', orthoAt, limits?.ortho ?? [10, 30]);
+  // The sheets of the old topographic maps at a point, with the year each is current for.
+  if (gugik.topo) pointRoute('/api/topo', topoAt, limits?.topo ?? [10, 30]);
 }

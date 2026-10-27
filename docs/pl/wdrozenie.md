@@ -72,8 +72,7 @@ docker compose up -d
 npm ci
 npm run build
 NODE_ENV=production HOST=127.0.0.1 TRUSTED_PROXY=1 \
-  CONFIG_DIR=/etc/minigeoportal DATA_DIR=/var/lib/minigeoportal \
-  APP_ORIGIN=https://mapa.example.org npm start
+  CONFIG_DIR=/etc/minigeoportal DATA_DIR=/var/lib/minigeoportal npm start
 ```
 
 Serwer udostępnia aplikację i API na porcie `PORT` (8787). `HOST=127.0.0.1` jest konieczne razem z `TRUSTED_PROXY=1`: inaczej ktoś łączący się bezpośrednio podałby fałszywy adres klienta i ominął limity zapytań. Przed serwerem postaw reverse proxy z HTTPS, np. Caddy:
@@ -108,10 +107,10 @@ Dwie rzeczy są w `public/` i trafiają do builda: miniatury map podkładowych (
 ## Działanie serwera
 
 - **Limity zapytań** na adres klienta (IPv6 liczone po /64): informacja o miejscu 40 naraz i 60 na minutę, słowniki działek 30 i 60, skorowidz ortofotomapy 10 i 30, Nominatim 10 i 30, zgłoszenia 3 naraz i potem jedno na 10 minut. Do usług źródłowych serwer otwiera najwyżej 24 połączenia naraz, ponad to odpowiada 503. Limity liczy każda instancja osobno; Caddy kieruje jednego odwiedzającego zawsze do tej samej repliki. Za proxy ustaw `TRUSTED_PROXY=1`, inaczej wszyscy dzielą limit adresu proxy.
-- **Content Security Policy**: skrypty, style i czcionki tylko z serwisu, obrazy z dowolnego adresu https (kafle i obrazy usług), połączenia tylko do serwisu (i usług wyszukiwarki GUGiK, gdy moduł jest włączony). `frame-ancestors 'none'`: strony nie da się osadzić w ramce na innej stronie.
+- **Content Security Policy**: skrypty, style i czcionki tylko z serwisu, obrazy z dowolnego adresu https (kafle i obrazy usług), połączenia tylko do serwisu (i usług wyszukiwarki GUGiK, gdy moduł jest włączony). `frame-ancestors 'none'`: strony nie da się osadzić w ramce na innej stronie. Serwer wysyła też `Strict-Transport-Security` na pół roku dla samego hosta aplikacji (bez subdomen), więc proxy nie musi go dodawać.
 - **Konfiguracja w kontenerze** jest w `/app/config`, tylko do odczytu; może zawierać `skins/`, `i18n/`, `content/`, `seed/` i `brand/`. Dane są w `/data` i są tylko pamięcią podręczną: wolumen można wyczyścić, serwer odbuduje je sam.
 - **Punkty kontrolne**: `GET /api/health` (`{ ok, capabilitiesGeneratedAt }`), `GET /api/config` (konfiguracja przekazywana aplikacji), `GET /api/report` (`{ enabled }`: czy formularz zgłoszeń działa), `GET /api/capabilities`, `GET /api/catalog` (moduł gugik).
-- **Logi**: na standardowym wyjściu; błędy usług źródłowych, błędy krytyczne (zob. niżej) i powody wyłączenia formularza zgłoszeń i maili o błędach (brak serwera poczty, `admin` w `app.yaml` albo nadawcy); brak `APP_ORIGIN` daje tylko ostrzeżenie, że zgłoszenia nie będą zawierać linku do widoku mapy. Na SIGTERM serwer kończy trwające zapytania, najdłużej 10 sekund.
+- **Logi**: na standardowym wyjściu; błędy usług źródłowych, błędy krytyczne (zob. niżej) i powody wyłączenia formularza zgłoszeń i maili o błędach (brak serwera poczty, `admin` w `app.yaml` albo nadawcy). Na SIGTERM serwer kończy trwające zapytania, najdłużej 10 sekund.
 
 ## Błędy krytyczne
 
@@ -132,7 +131,7 @@ Ustawia się je w środowisku albo w pliku `.env` w katalogu aplikacji (wzór z 
 | `PORT`                                  | `8787`                                      | Port serwera.                                                                                                                                                                     |
 | `HOST`                                  | `0.0.0.0` w produkcji, `127.0.0.1` poza nią | Adres nasłuchu. Za proxy na tej samej maszynie: `127.0.0.1`.                                                                                                                      |
 | `NODE_ENV`                              |                                             | `production`: serwer udostępnia też zbudowaną aplikację z `dist/`. Obraz Dockera ustawia ją sam.                                                                                  |
-| `APP_ORIGIN`                            |                                             | Publiczny adres aplikacji, np. `https://mapa.example.org`. Zgłoszenia mogą zawierać link tylko do niego; bez niego są bez linku.                                                  |
+| `APP_ORIGIN`                            | `https://` + `domain` z `app.yaml`          | Publiczny adres aplikacji, gdy jest inny niż domena z `app.yaml` (np. środowisko testowe). Zgłoszenia mogą zawierać link tylko do niego.                                          |
 | `TRUSTED_PROXY`                         |                                             | `1` za reverse proxy dopisującym adres klienta do `X-Forwarded-For`; limity zapytań liczą się wtedy dla każdego klienta.                                                          |
 | `SHARED_DATA`                           |                                             | `1`, gdy kilka instancji dzieli `DATA_DIR`: dane zapisuje tylko `npm run update`, instancje wczytują je ponownie w ciągu minuty. Bez niego serwer sam odświeża dane raz dziennie. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | `587`, STARTTLS                             | Serwer poczty dla maili do administratora (`admin` w `app.yaml`): zgłoszeń błędów i błędów krytycznych; port 465 oznacza TLS od początku, `SMTP_SECURE` tylko to zmienia.         |

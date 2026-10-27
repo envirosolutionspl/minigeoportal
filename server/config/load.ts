@@ -4,8 +4,9 @@ import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { LineCounter, parseDocument, isMap, isSeq, type Document, type Node as YamlNode } from 'yaml';
 import type { ZodType } from 'zod';
-import { appSchema, layersSchema, mapSchema, type AppConfig } from './schema.ts';
+import { appSchema, layersSchema, mapSchema, text, type AppConfig } from './schema.ts';
 import { loadMessages } from './messages.ts';
+import { WEB_PORTS, isPrivateLiteral } from '../http.ts';
 import * as modules from '../modules/index.ts';
 
 /**
@@ -89,6 +90,62 @@ function readFile<T>(dir: string, file: string, schema: ZodType<T>, problems: st
   return { value: result.data, doc, lines };
 }
 
+/**
+ * Why the server would refuse a service address when asked (http.ts publicWebUrl): a port that
+ * is no web port, or a private address written out. A name is resolved only at the request.
+ */
+function unreachable(address: string): string | undefined {
+  const { port, hostname } = new URL(address);
+  if (!WEB_PORTS.has(port))
+    return `port ${port} is not a web port (${[...WEB_PORTS].filter(Boolean).join(', ')}), so the server would not ask it`;
+  if (isPrivateLiteral(hostname)) return 'a private address, which the server never asks';
+  return undefined;
+}
+
+/** What the walk over a schema needs of its parts: objects, arrays, wrappers (optional, default) and unions. */
+interface SchemaDef {
+  type: string;
+  shape?: Record<string, ZodType>;
+  element?: ZodType;
+  innerType?: ZodType;
+  options?: ZodType[];
+}
+
+/**
+ * A text given per language must have the default language: the app falls back to it from the
+ * others, and would otherwise show whichever language comes first. The schema says where a text
+ * may stand (schema.ts `text`), so no other object with short keys is taken for one.
+ */
+function checkTexts(
+  file: string,
+  p: Parsed<unknown>,
+  fallback: string,
+  problems: string[],
+  schema: ZodType,
+  value: unknown,
+  path: (string | number)[] = [],
+): void {
+  if (value === undefined) return;
+  if (schema === text) {
+    if (value && typeof value === 'object' && !(fallback in value)) {
+      problems.push(`${locate(file, p.doc, p.lines, path)} ${path.join('.')}: no text in the default language (${fallback})`);
+    }
+    return;
+  }
+  const def = schema.def as SchemaDef;
+  if (def.shape && value && typeof value === 'object') {
+    for (const [key, child] of Object.entries(def.shape)) {
+      checkTexts(file, p, fallback, problems, child, (value as Record<string, unknown>)[key], [...path, key]);
+    }
+  } else if (def.element && Array.isArray(value)) {
+    value.forEach((item, i) => checkTexts(file, p, fallback, problems, def.element!, item, [...path, i]));
+  } else if (def.innerType) {
+    checkTexts(file, p, fallback, problems, def.innerType, value, path);
+  } else {
+    for (const option of def.options ?? []) checkTexts(file, p, fallback, problems, option, value, path);
+  }
+}
+
 /** Ids used in one place that must exist in another, and rules spanning several files. */
 function crossCheck(
   app: Parsed<AppConfig['app']>,
@@ -134,6 +191,8 @@ function crossCheck(
     m.tileServices.forEach((s, i) => {
       if (!s.url.startsWith('https:'))
         problems.push(`${at(map, 'map.yaml', ['tileServices', i, 'url'])} tile service "${s.id}" needs an https address`);
+      const why = unreachable(s.url);
+      if (why) problems.push(`${at(map, 'map.yaml', ['tileServices', i, 'url'])} tile service "${s.id}": ${why}`);
       if (s.kind !== 'wmts') return;
       if (s.firstLevel + s.levels > m.zoom.scales.length)
         problems.push(`${at(map, 'map.yaml', ['tileServices', i])} tile service "${s.id}" goes past the last zoom level`);
@@ -149,6 +208,8 @@ function crossCheck(
       if (!topics.has(o.topic)) problems.push(`${at(layers, 'layers.yaml', ['overlays', i, 'topic'])} unknown topic "${o.topic}"`);
       if (!o.url.startsWith('https:'))
         problems.push(`${at(layers, 'layers.yaml', ['overlays', i, 'url'])} layer "${o.id}" needs an https address`);
+      const why = unreachable(o.url);
+      if (why) problems.push(`${at(layers, 'layers.yaml', ['overlays', i, 'url'])} layer "${o.id}": ${why}`);
     });
     (l.drawOrder ?? []).forEach((idInOrder, i) => {
       if (!overlays.has(idInOrder)) problems.push(`${at(layers, 'layers.yaml', ['drawOrder', i])} unknown overlay "${idInOrder}"`);
@@ -178,6 +239,9 @@ function crossCheck(
       problems.push(`${at(app, 'app.yaml', ['report', 'locale'])} report.locale must be one of locales.available`);
     }
     const parsed = { 'app.yaml': app, 'map.yaml': map, 'layers.yaml': layers };
+    const schemas = { 'app.yaml': appSchema, 'map.yaml': mapSchema, 'layers.yaml': layersSchema };
+    for (const [file, p] of Object.entries(parsed))
+      checkTexts(file, p, a.locales.default, problems, schemas[file as keyof typeof schemas], p.value);
     for (const p of modules.validate(a, map.value, layers.value)) problems.push(`${at(parsed[p.file], p.file, p.path)} ${p.message}`);
   }
 }

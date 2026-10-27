@@ -1,4 +1,4 @@
-import { fetchFixed, readLimited } from '../../http.ts';
+import { fetchText } from '../../http.ts';
 import { errorMessage } from '../../config.ts';
 
 /**
@@ -158,22 +158,21 @@ export const partNames = (initJs: string) => [...new Set(initJs.match(/config_pa
 export const parsePrefixes = (source: string) =>
   Object.fromEntries([...stripComments(source).matchAll(/(\w+):\s*'(https:\/\/[^']+)'/g)].map(([, k, v]) => [k, v]));
 
-async function fetchText(url: string): Promise<string> {
-  const res = await fetchFixed(url, { signal: AbortSignal.timeout(TIMEOUT_MS) }).catch((e: unknown) => {
-    throw new Error(`${url.slice(CONFIG_BASE.length)}: ${errorMessage(e)}`);
+/** One file of the configuration; an error names the file, as several are read at once. */
+const fetchPart = (name: string) =>
+  fetchText(`${CONFIG_BASE}${name}`, { timeoutMs: TIMEOUT_MS, maxBytes: MAX_BYTES }).catch((e: unknown) => {
+    throw new Error(`${name}: ${errorMessage(e)}`);
   });
-  return new TextDecoder().decode(await readLimited(res, MAX_BYTES));
-}
 
 /** Downloads and parses the whole configuration: main file, prefixes and every module part. */
 export async function fetchGeoportalConfig(): Promise<GeoportalConfig> {
   const [main, init, prefixesJs] = await Promise.all([
-    fetchText(`${CONFIG_BASE}application.properties.js`),
-    fetchText(`${CONFIG_BASE}init.js`),
-    fetchText(`${CONFIG_BASE}prefixes.js`).catch(() => ''),
+    fetchPart('application.properties.js'),
+    fetchPart('init.js'),
+    fetchPart('prefixes.js').catch(() => ''),
   ]);
   const prefixes = parsePrefixes(prefixesJs);
-  const parts = await Promise.all(partNames(init).map((p) => fetchText(`${CONFIG_BASE}${p}`)));
+  const parts = await Promise.all(partNames(init).map(fetchPart));
   const services = new Map<string, ConfigService>();
   // Parts may redefine a service; the main file is read last so it wins, as in the application.
   for (const src of [...parts, main]) for (const s of parseServices(src, prefixes)) services.set(s.id, s);

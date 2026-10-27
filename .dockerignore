@@ -15,3 +15,9 @@
 !i18n
 !scripts
 server/data
+# Tests and their fixtures are not run in the image.
+**/*.test.ts
+**/*.test.tsx
+**/__snapshots__
+src/test
+server/testSite.ts

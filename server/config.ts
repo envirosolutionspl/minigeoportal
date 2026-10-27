@@ -12,7 +12,7 @@ export const config = {
   port: Number(process.env.PORT ?? 8787),
   /** Behind a reverse proxy the server should listen on 127.0.0.1 only; see .env.example. */
   host: process.env.HOST ?? (production ? '0.0.0.0' : '127.0.0.1'),
-  /** Public address of the app; bug reports may link only to it. */
+  /** Public address of the app when it is not https://<app.yaml domain>; bug reports may link only to it. */
   origin: process.env.APP_ORIGIN,
   /** The deployment's configuration files (app.yaml, map.yaml, layers.yaml). */
   configDir: process.env.CONFIG_DIR ?? 'config',

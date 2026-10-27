@@ -82,10 +82,18 @@ const isPrivateAddress = (address: string) => {
   return family === 0 || PRIVATE.check(address, family === 6 ? 'ipv6' : 'ipv4');
 };
 
+/** A host written as an address (with or without IPv6 brackets) that is private: known without resolving. */
+export function isPrivateLiteral(hostname: string): boolean {
+  const literal = hostname.replace(/^\[|\]$/g, '');
+  return isIP(literal) !== 0 && isPrivateAddress(literal);
+}
+
 /** Recent answers of isPublicHost: a click asks the same few hosts again and again. */
 const HOST_TTL_MS = 60000;
 const MAX_HOSTS = 1000;
 const hosts = new Map<string, { ok: boolean; at: number }>();
+/** A resolver that does not answer must not hold a request longer than the service itself may. */
+const LOOKUP_TIMEOUT_MS = 5000;
 
 /**
  * True when every address the host resolves to is public. Resolving here closes the gap
@@ -93,16 +101,21 @@ const hosts = new Map<string, { ok: boolean; at: number }>();
  * between this check and the request (DNS rebinding) is the one case left open.
  */
 export async function isPublicHost(hostname: string): Promise<boolean> {
-  const literal = hostname.replace(/^\[|\]$/g, '');
-  if (isIP(literal)) return !isPrivateAddress(literal);
+  if (isIP(hostname.replace(/^\[|\]$/g, ''))) return !isPrivateLiteral(hostname);
   const known = hosts.get(hostname);
   if (known && Date.now() - known.at < HOST_TTL_MS) return known.ok;
   let ok = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const expired = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error('Lookup timed out')), LOOKUP_TIMEOUT_MS);
+  });
   try {
-    const addresses = await lookup(hostname, { all: true });
+    const addresses = await Promise.race([lookup(hostname, { all: true }), expired]);
     ok = addresses.length > 0 && addresses.every((a) => !isPrivateAddress(a.address));
   } catch {
     ok = false;
+  } finally {
+    clearTimeout(timer);
   }
   if (hosts.size >= MAX_HOSTS) hosts.clear();
   hosts.set(hostname, { ok, at: Date.now() });
@@ -110,7 +123,7 @@ export async function isPublicHost(hostname: string): Promise<boolean> {
 }
 
 /** Ports of web servers; anything else (databases, admin consoles) is never contacted. */
-const WEB_PORTS = new Set(['', '80', '443', '8080', '8443']);
+export const WEB_PORTS = new Set(['', '80', '443', '8080', '8443']);
 
 /**
  * The address resolved against `base` if it is a public web server: http(s), a web port and a
@@ -139,7 +152,10 @@ export async function fetchPublic(address: string, init: RequestInit = {}, maxRe
     const location = res.headers.get('location');
     if (res.status < 300 || res.status >= 400 || !location) return res;
     await res.body?.cancel();
-    url = new URL(location, target).toString();
+    const next = new URL(location, target);
+    // A service reached over TLS must not send the request on in the clear; the other way round is fine.
+    if (target.protocol === 'https:' && next.protocol === 'http:') throw new Error('Redirect chain rejected');
+    url = next.toString();
   }
   throw new Error('Too many redirects');
 }
@@ -156,6 +172,19 @@ export async function fetchFixed(url: string, init: RequestInit = {}): Promise<R
     throw new Error(`HTTP ${res.status}`);
   }
   return res;
+}
+
+/**
+ * The body of a fixed address as text: given up after `timeoutMs`, cut at `maxBytes`, and ended
+ * early by the caller's `signal` too (a visitor who left the page).
+ */
+export async function fetchText(
+  url: string,
+  { timeoutMs, maxBytes, signal, headers }: { timeoutMs: number; maxBytes: number; signal?: AbortSignal; headers?: HeadersInit },
+): Promise<string> {
+  const deadline = AbortSignal.timeout(timeoutMs);
+  const res = await fetchFixed(url, { headers, signal: AbortSignal.any(signal ? [deadline, signal] : [deadline]) });
+  return new TextDecoder().decode(await readLimited(res, maxBytes));
 }
 
 /** Socket address of the request; empty outside the Node server (e.g. in tests without a socket). */

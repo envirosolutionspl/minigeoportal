@@ -4,11 +4,10 @@ exports[`default configuration > stays what the app was built with (any change s
 {
   "app": {
     "author": {
-      "logo": "/brand/logo.svg?v=2199a361e767",
+      "logo": "/brand/logo.svg?v=HASH",
       "name": "EnviroSolutions",
       "url": "https://envirosolutions.pl",
     },
-    "contact": "office@envirosolutions.pl",
     "description": "MiniGeoportal: szybkie sprawdzanie działki, planu miejscowego, cen transakcyjnych i ortofotomapy na danych GUGiK.",
     "domain": "minigeoportal.pl",
     "id": "minigeoportal",

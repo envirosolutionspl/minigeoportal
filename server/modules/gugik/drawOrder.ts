@@ -1,4 +1,4 @@
-import { fetchFixed, readLimited } from '../../http.ts';
+import { fetchText } from '../../http.ts';
 import { CONFIG_BASE, stripComments } from './geoportalConfig.ts';
 import type { Overlay } from '../../../shared/config.ts';
 
@@ -50,10 +50,7 @@ export function overlayOrder(source: string, overlays: Overlay[]): string[] | un
   return ranked.sort((a, b) => a.rank - b.rank).map((r) => r.id);
 }
 
-async function fetchSource(url: string): Promise<string> {
-  const res = await fetchFixed(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-  return new TextDecoder().decode(await readLimited(res, MAX_BYTES));
-}
+const fetchSource = (url: string) => fetchText(url, { timeoutMs: TIMEOUT_MS, maxBytes: MAX_BYTES });
 
 export async function fetchDrawOrder(overlays: Overlay[]): Promise<string[] | undefined> {
   const [map, main] = await Promise.all([fetchSource(GEOPORTAL_CONFIG), fetchSource(GEOPORTAL_MAIN)]);

@@ -3,7 +3,7 @@ import { createApp } from './app.ts';
 import { RequestError } from './http.ts';
 import { formatReport, mailerFromEnv, parseReport, type Mailer } from './report.ts';
 import type { CapabilitiesCache } from '../src/services/meta.ts';
-import { defaults, site } from './testSite.ts';
+import { client, defaults, site } from './testSite.ts';
 
 const ORIGIN = `https://${defaults.app.domain}`;
 const valid = { category: 'mapa', message: 'Warstwa działek się nie wczytuje.', email: 'jan@example.com', view: `${ORIGIN}/?x=1&y=2&z=3` };
@@ -66,7 +66,7 @@ describe('mailerFromEnv', () => {
 
 describe('POST /api/report', () => {
   const CACHE: CapabilitiesCache = { generatedAt: 'x', services: {} };
-  const remote = { incoming: { socket: { remoteAddress: '203.0.113.9', remoteFamily: 'IPv4', remotePort: 1 } } };
+  const remote = client('203.0.113.9');
   const post = (app: ReturnType<typeof createApp>, body: unknown, headers: Record<string, string> = {}) =>
     app.request(
       '/api/report',
@@ -109,7 +109,7 @@ describe('POST /api/report', () => {
     expect(send).toHaveBeenCalledTimes(3);
   });
 
-  it('links to the map view only in the app’s own address; without APP_ORIGIN only from the machine itself', async () => {
+  it('links to the map view only in the app’s own address: APP_ORIGIN, else the domain of app.yaml, in development the page itself', async () => {
     const send = vi.fn<Mailer['send']>(async () => {});
     const limits: { dict: [number, number]; featureInfo: [number, number]; report: [number, number] } = {
       dict: [1, 1],
@@ -117,16 +117,20 @@ describe('POST /api/report', () => {
       report: [20, 60],
     };
     const bare = createApp({ site, cache: () => CACHE, mailer: { send }, limits });
-    // From the internet the page's Origin proves nothing: the link is dropped.
-    await post(bare, valid, { origin: ORIGIN });
+    // Without APP_ORIGIN the configured domain is the app's address; from the internet the page's Origin proves nothing.
+    await post(bare, valid, { origin: 'https://other.example' });
+    expect(send.mock.lastCall![0].view).toBe(valid.view);
+    await post(bare, { ...valid, view: 'https://other.example/?x=1' }, { origin: 'https://other.example' });
     expect(send.mock.lastCall![0].view).toBeUndefined();
     // In development, from the same machine, the page's own Origin stands in for APP_ORIGIN.
+    const local = client('127.0.0.1');
+    const dev = { ...valid, view: 'http://localhost:5173/?x=1' };
     await bare.request(
       '/api/report',
-      { method: 'POST', body: JSON.stringify(valid), headers: { 'content-type': 'application/json', origin: ORIGIN } },
-      { incoming: { socket: { remoteAddress: '127.0.0.1', remoteFamily: 'IPv4', remotePort: 1 } } },
+      { method: 'POST', body: JSON.stringify(dev), headers: { 'content-type': 'application/json', origin: 'http://localhost:5173' } },
+      local,
     );
-    expect(send.mock.lastCall![0].view).toBe(valid.view);
+    expect(send.mock.lastCall![0].view).toBe(dev.view);
   });
 
   it('answers 400 for invalid input, 503 when off, 502 when mail fails, 413 for big bodies', async () => {

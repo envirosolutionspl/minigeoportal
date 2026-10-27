@@ -1,11 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { serve } from '@hono/node-server';
-import { serveStatic } from '@hono/node-server/serve-static';
-import { compress } from 'hono/compress';
-import { etag } from 'hono/etag';
 import type { Context } from 'hono';
 import { alertOnCrash, alertsTo, critical } from './alerts.ts';
-import { createApp } from './app.ts';
+import { createApp, serveBuilt } from './app.ts';
 import { CACHE_FILE, readCache, refreshCache, startingCache } from './cache.ts';
 import { mailerFromEnv } from './report.ts';
 import * as modules from './modules/index.ts';
@@ -56,7 +53,6 @@ if (!config.sharedData) {
   );
 }
 
-if (production && !config.origin) console.warn('APP_ORIGIN not set: bug reports cannot link to the map view.');
 const app = createApp({
   site,
   cache: () => capabilities,
@@ -66,11 +62,10 @@ const app = createApp({
 });
 
 if (production) {
-  // The page carries the configuration in the visitor's language. It is always checked
-  // (ETag), so a new release or configuration reaches everyone at once.
+  // The page carries the configuration in the visitor's language.
   const template = await readFile('./dist/index.html', 'utf8');
   const pages = new Map(site.config.app.locales.available.map((l) => [l, renderPage(template, site.client(l), site.config.skin)]));
-  const page = (c: Context) => {
+  serveBuilt(app, (c: Context) => {
     const to = routePage(site, c);
     if ('redirect' in to) {
       // Which language the bare address leads to depends on the browser and the language switch.
@@ -82,19 +77,7 @@ if (production) {
     // The bare address shows the root language to some visitors and sends the others away.
     if (site.multilingual && c.req.path === '/') c.header('Vary', 'Accept-Language, Cookie');
     return c.html(pages.get(to.locale)!);
-  };
-  app.get('/', compress(), etag(), page);
-  app.get('/index.html', compress(), etag(), page);
-  // Hashed assets never change, so they are cached for a year; .br/.gz files come from the build.
-  app.use('/assets/*', async (c, next) => {
-    await next();
-    // A file that is not there (an old release's asset) must not be remembered for a year.
-    if (c.res.ok) c.header('Cache-Control', 'public, max-age=31536000, immutable');
   });
-  app.use('/*', serveStatic({ root: './dist', precompressed: true }));
-  // A file that is not there (an old asset, a guessed icon) is a 404, not the page.
-  app.get('*', (c, next) => (/\.\w+$/.test(c.req.path) ? c.notFound() : next()));
-  app.get('*', compress(), etag(), page);
 }
 
 const server = serve({ fetch: app.fetch, port: config.port, hostname: config.host }, (info) => {

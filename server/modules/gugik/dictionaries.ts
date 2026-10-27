@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { RequestError, fetchFixed, readLimited } from '../../http.ts';
+import { RequestError, fetchText } from '../../http.ts';
 import { dataPath } from '../../config.ts';
 import { writeAtomic } from '../../files.ts';
 import { normalize } from '../../../src/services/text.ts';
@@ -94,8 +94,7 @@ async function cached(key: string, load: () => Promise<DictEntry[]>): Promise<Di
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetchFixed(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-  return JSON.parse(new TextDecoder().decode(await readLimited(res, MAX_BYTES))) as T;
+  return JSON.parse(await fetchText(url, { timeoutMs: TIMEOUT_MS, maxBytes: MAX_BYTES })) as T;
 }
 
 const byName = (a: DictEntry, b: DictEntry) => a.name.localeCompare(b.name, 'pl');
@@ -213,11 +212,7 @@ export async function precincts(commune: string): Promise<DictEntry[]> {
   await ensureKnown(communes(commune.slice(0, 4)), commune, 'municipality');
   return cached(`obr-${commune}`, async () => {
     const q = new URLSearchParams({ request: 'GetRegionById', id: commune, result: 'teryt,region' });
-    const res = await fetchFixed(`${ULDK}?${q}`, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-    const [status, ...rows] = new TextDecoder()
-      .decode(await readLimited(res, MAX_BYTES))
-      .trim()
-      .split('\n');
+    const [status, ...rows] = (await fetchText(`${ULDK}?${q}`, { timeoutMs: TIMEOUT_MS, maxBytes: MAX_BYTES })).trim().split('\n');
     if (status.startsWith('-1')) return [];
     if (!status.startsWith('0')) throw new Error('ULDK error status');
     return rows
@@ -273,11 +268,27 @@ const inCityCounty = (communeCode: string) => Number(communeCode.slice(2, 4)) >=
 /** Longest unit name anyone types; the route cuts the query here before searching. */
 export const MAX_QUERY = 60;
 
+/** Normalized names of a cached list, made once per copy of it (a refresh replaces the list whole, so its copy is made anew). */
+const normalizedNames = new WeakMap<DictEntry[], string[]>();
+const namesOf = (list: DictEntry[]) => {
+  let names = normalizedNames.get(list);
+  if (!names) {
+    names = list.map((e) => normalize(e.name));
+    normalizedNames.set(list, names);
+  }
+  return names;
+};
+
+/** Entries whose name starts with `q`, and whether the name is `q` exactly. */
+const matching = (list: DictEntry[], q: string): [DictEntry, boolean][] => {
+  const names = namesOf(list);
+  return list.flatMap((e, i) => (names[i].startsWith(q) ? [[e, names[i] === q]] : []));
+};
+
 /**
  * Voivodeships, counties and municipalities whose name starts with the query, from the
  * cached PRG lists of the whole country (a few upstream requests, then served from cache).
  */
-
 export async function findUnits(query: string): Promise<UnitHit[]> {
   let q = normalize(query);
   let only: UnitLevel | undefined;
@@ -292,22 +303,30 @@ export async function findUnits(query: string): Promise<UnitHit[]> {
   const [woj, pow, gm] = await Promise.all([voivodeships(), allCounties(), allCommunes()]);
   const wojName = new Map(woj.map((e) => [e.id, e.name]));
   const powName = new Map(pow.map((e) => [e.id, e.name]));
-  const matches = (e: DictEntry) => normalize(e.name).startsWith(q);
-  const hits: UnitHit[] = [
-    ...woj.filter(matches).map((e) => ({ level: 'woj' as const, teryt: e.id, name: e.name })),
-    ...pow.filter(matches).map((e) => ({ level: 'pow' as const, teryt: e.id, name: e.name, voivodeship: wojName.get(e.id.slice(0, 2)) })),
-    ...gm
-      .filter((e) => matches(e) && !inCityCounty(e.id))
-      .map((e) => ({
-        level: 'gm' as const,
-        teryt: e.id,
-        name: e.name,
-        county: powName.get(e.id.slice(0, 4)),
-        voivodeship: wojName.get(e.id.slice(0, 2)),
+  const hits: { hit: UnitHit; exact: boolean }[] = [
+    ...matching(woj, q).map(([e, exact]) => ({ exact, hit: { level: 'woj' as const, teryt: e.id, name: e.name } })),
+    ...matching(pow, q).map(([e, exact]) => ({
+      exact,
+      hit: { level: 'pow' as const, teryt: e.id, name: e.name, voivodeship: wojName.get(e.id.slice(0, 2)) },
+    })),
+    ...matching(gm, q)
+      .filter(([e]) => !inCityCounty(e.id))
+      .map(([e, exact]) => ({
+        exact,
+        hit: {
+          level: 'gm' as const,
+          teryt: e.id,
+          name: e.name,
+          county: powName.get(e.id.slice(0, 4)),
+          voivodeship: wojName.get(e.id.slice(0, 2)),
+        },
       })),
-  ].filter((h) => !only || h.level === only);
+  ].filter(({ hit }) => !only || hit.level === only);
 
   // Exact names first, then by level (voivodeship, county, municipality), then by name.
-  const rank = (h: UnitHit) => (normalize(h.name) === q ? 0 : 3) + LEVEL_ORDER.indexOf(h.level);
-  return hits.sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'pl')).slice(0, MAX_UNIT_HITS);
+  const rank = ({ hit, exact }: { hit: UnitHit; exact: boolean }) => (exact ? 0 : 3) + LEVEL_ORDER.indexOf(hit.level);
+  return hits
+    .sort((a, b) => rank(a) - rank(b) || a.hit.name.localeCompare(b.hit.name, 'pl'))
+    .slice(0, MAX_UNIT_HITS)
+    .map(({ hit }) => hit);
 }

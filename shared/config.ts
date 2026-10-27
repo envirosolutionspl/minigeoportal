@@ -114,7 +114,6 @@ export interface ClientConfig {
     title: string;
     description: string;
     domain: string;
-    contact: string;
     /** `logo`: address of the author's logo; without it the name is shown. */
     author: { name: string; url: string; logo?: string };
     /** Address of the app's sign; without it the built-in one in the skin's colours. */

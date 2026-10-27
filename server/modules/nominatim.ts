@@ -1,4 +1,4 @@
-import { fetchFixed, readLimited } from '../http.ts';
+import { fetchText } from '../http.ts';
 import type { PlaceHit } from '../../shared/search.ts';
 
 /**
@@ -82,11 +82,12 @@ export function nominatimSearch({ url, userAgent, countryCodes, viewbox, interva
     const params = new URLSearchParams({ q, format: 'jsonv2', limit: String(MAX_HITS), 'accept-language': language });
     if (countryCodes?.length) params.set('countrycodes', countryCodes.join(','));
     if (viewbox) params.set('viewbox', viewbox.join(','));
-    const res = await fetchFixed(`${url.replace(/\/+$/, '')}/search?${params}`, {
+    const body = await fetchText(`${url.replace(/\/+$/, '')}/search?${params}`, {
+      timeoutMs: TIMEOUT_MS,
+      maxBytes: MAX_BYTES,
       headers: { 'User-Agent': userAgent },
-      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
-    const hits = (JSON.parse(new TextDecoder().decode(await readLimited(res, MAX_BYTES))) as NominatimRow[]).map(toHit);
+    const hits = (JSON.parse(body) as NominatimRow[]).map(toHit);
     cache.set(key, hits);
     if (cache.size > CACHE_SIZE) cache.delete(cache.keys().next().value!);
     return hits;

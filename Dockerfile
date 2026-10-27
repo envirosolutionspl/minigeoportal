@@ -30,5 +30,6 @@ RUN mkdir /data && chown node:node /data
 USER node
 VOLUME /data
 EXPOSE 8787
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s CMD wget -qO- http://127.0.0.1:8787/api/health >/dev/null || exit 1
+# Shell form, so the check follows PORT when a container changes it.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s CMD wget -qO- "http://127.0.0.1:${PORT}/api/health" >/dev/null || exit 1
 CMD ["node", "server/index.ts"]

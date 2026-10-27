@@ -7,7 +7,9 @@ import {
   clientAddress,
   concurrencyGate,
   fetchPublic,
+  fetchText,
   isLoopback,
+  isPrivateLiteral,
   isPublicHost,
   publicWebUrl,
   rateLimit,
@@ -41,6 +43,45 @@ describe('readLimited', () => {
   it('rejects a declared length above the limit before reading', async () => {
     const res = new Response('x', { headers: { 'content-length': '5000000' } });
     await expect(readLimited(res, 1000)).rejects.toThrow(/too large/);
+  });
+});
+
+describe('fetchText', () => {
+  /** A server that answers only when the request is given up. */
+  const hanging = () =>
+    vi.fn(
+      (_url: string, init: RequestInit) =>
+        new Promise<Response>((_, reject) => init.signal!.addEventListener('abort', () => reject(init.signal!.reason as Error))),
+    );
+
+  it('reads at most the limit, with the headers given', async () => {
+    const fetch = vi.fn(async () => new Response('x'.repeat(100)));
+    vi.stubGlobal('fetch', fetch);
+    expect(await fetchText('https://a.example/', { timeoutMs: 1000, maxBytes: 10, headers: { 'User-Agent': 'app/1' } })).toBe(
+      'x'.repeat(10),
+    );
+    expect(new Headers((fetch.mock.calls[0] as unknown as [string, RequestInit])[1].headers).get('user-agent')).toBe('app/1');
+  });
+
+  it('gives up at the deadline', async () => {
+    vi.stubGlobal('fetch', hanging());
+    await expect(fetchText('https://a.example/', { timeoutMs: 20, maxBytes: 10 })).rejects.toThrow(/timeout/i);
+  });
+
+  it('ends when the caller gives up before the deadline', async () => {
+    vi.stubGlobal('fetch', hanging());
+    const visitor = new AbortController();
+    const text = fetchText('https://a.example/', { timeoutMs: 10000, maxBytes: 10, signal: visitor.signal });
+    visitor.abort(new Error('left'));
+    await expect(text).rejects.toThrow('left');
+  });
+
+  it('drops a failed answer', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('details', { status: 500 })),
+    );
+    await expect(fetchText('https://a.example/', { timeoutMs: 1000, maxBytes: 10 })).rejects.toThrow('HTTP 500');
   });
 });
 
@@ -79,6 +120,24 @@ describe('isPublicHost', () => {
   it('blocks a name that does not resolve', async () => {
     vi.mocked(lookup).mockRejectedValue(new Error('ENOTFOUND'));
     expect(await isPublicHost('nope.invalid')).toBe(false);
+  });
+
+  it('blocks a name the resolver does not answer for within 5 seconds, and remembers it like a failure', async () => {
+    vi.mocked(lookup).mockReturnValue(new Promise(() => {}) as never);
+    vi.useFakeTimers();
+    const slow = isPublicHost('slow.example');
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(await slow).toBe(false);
+    vi.useRealTimers();
+    expect(await isPublicHost('slow.example')).toBe(false);
+    expect(lookup).toHaveBeenCalledTimes(1);
+  });
+
+  it('knows a private address written out without resolving it', () => {
+    expect(isPrivateLiteral('[::1]')).toBe(true);
+    expect(isPrivateLiteral('10.0.0.1')).toBe(true);
+    expect(isPrivateLiteral('8.8.8.8')).toBe(false);
+    expect(isPrivateLiteral('intranet.example')).toBe(false);
   });
 });
 
@@ -191,5 +250,22 @@ describe('publicWebUrl and fetchPublic', () => {
     );
     await expect(fetchPublic('https://a.example/caps')).rejects.toThrow('Redirect chain rejected');
     expect(calls).toEqual(['https://a.example/caps']);
+  });
+
+  it('refuses a redirect from https to http, but follows one the other way', async () => {
+    resolveTo(['93.184.216.34']);
+    const calls: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        calls.push(url);
+        if (url === 'https://a.example/caps') return new Response(null, { status: 302, headers: { location: 'http://a.example/caps' } });
+        if (url === 'http://b.example/caps') return new Response(null, { status: 301, headers: { location: 'https://b.example/caps' } });
+        return new Response('x');
+      }),
+    );
+    await expect(fetchPublic('https://a.example/caps')).rejects.toThrow('Redirect chain rejected');
+    expect(await (await fetchPublic('http://b.example/caps')).text()).toBe('x');
+    expect(calls).toEqual(['https://a.example/caps', 'http://b.example/caps', 'https://b.example/caps']);
   });
 });

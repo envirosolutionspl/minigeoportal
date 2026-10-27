@@ -18,8 +18,10 @@ describe('readUrl', () => {
   it('reads the date of the time view, when it looks like one', () => {
     setSearch('?x=1&y=2&t=2007-01-01');
     expect(readUrl().time).toBe('2007-01-01');
-    setSearch('?t=2007&c=1&tl=mapy-dawne');
-    expect(readUrl()).toMatchObject({ time: '2007', compare: true, timeLayer: 'mapy-dawne' });
+    setSearch('?t=2007&c=1&tl=mapy-dawne&a=1');
+    expect(readUrl()).toMatchObject({ time: '2007', compare: true, timeLayer: 'mapy-dawne', timeAdded: true });
+    setSearch('?a=1');
+    expect(readUrl().timeAdded).toBeUndefined();
     setSearch('?t=2007&tl=../x');
     expect(readUrl().timeLayer).toBeUndefined();
     setSearch('?t=yesterday&c=1');
@@ -65,10 +67,10 @@ describe('writeUrl', () => {
     writeUrl({ ...view, time: '2007-01-01' });
     vi.advanceTimersByTime(300);
     expect(window.location.search).toBe('?x=1&y=2&z=3.0&b=orto&l=&t=2007-01-01');
-    const state = { ...view, time: '1965', compare: true, timeLayer: 'mapy-dawne' };
+    const state = { ...view, time: '1965', compare: true, timeLayer: 'mapy-dawne', timeAdded: true };
     writeUrl(state);
     vi.advanceTimersByTime(300);
-    expect(window.location.search).toBe('?x=1&y=2&z=3.0&b=orto&l=&t=1965&c=1&tl=mapy-dawne');
+    expect(window.location.search).toBe('?x=1&y=2&z=3.0&b=orto&l=&t=1965&c=1&tl=mapy-dawne&a=1');
     expect(readUrl()).toEqual(state);
     setSearch('');
     vi.useRealTimers();

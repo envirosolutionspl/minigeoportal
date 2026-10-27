@@ -34,6 +34,7 @@ topics:
 drawOrder:
   - mapy-dawne
   - orto-archiwalna
+  - nowe-budynki
   - suikzp
   - kimpzp
   - pog
@@ -382,3 +383,57 @@ overlays:
         - value: '1992'
           layer: Raster_50_1992,Raster_10_1992
           label: { pl: 'Mapy w układzie 1992', en: 'Maps in the 1992 system' }
+  - id: nowe-budynki
+    kind: wms
+    url: https://mapy.geoportal.gov.pl/wss/service/PZGIK/BDOT10k/WMS/NoweBudynki
+    title: { pl: 'Nowe budynki w BDOT10k', en: 'New buildings in BDOT10k' }
+    description:
+      {
+        pl: 'Budynki dodane do Bazy Danych Obiektów Topograficznych (BDOT10k) w kolejnych latach od 2018 r., każdy rok w innym kolorze. Baza dostaje budynek zwykle rok lub dwa po budowie.',
+        en: 'Buildings added to the topographic database (BDOT10k) year by year since 2018, each year in its own colour. A building usually enters the database a year or two after it is built.',
+      }
+    topic: dzialki
+    catalogId: msBudynkiBDOT10k
+    keywords:
+      pl: [budynki, nowe, zabudowa, bdot10k, budowa, zmiany, przyrost]
+      en: [buildings, new, development, bdot10k, construction, changes]
+    sublayers:
+      - name: aktualnosc
+        title: { pl: 'Aktualność danych BDOT10k', en: 'Currency of the BDOT10k data' }
+      - name: budynki_2018
+        title: { pl: 'Dodane w 2018 r.', en: 'Added in 2018' }
+        default: true
+      - name: budynki_2019
+        title: { pl: 'Dodane w 2019 r.', en: 'Added in 2019' }
+        default: true
+      - name: budynki_2020
+        title: { pl: 'Dodane w 2020 r.', en: 'Added in 2020' }
+        default: true
+      - name: budynki_2021
+        title: { pl: 'Dodane w 2021 r.', en: 'Added in 2021' }
+        default: true
+      - name: budynki_2022
+        title: { pl: 'Dodane w 2022 r.', en: 'Added in 2022' }
+        default: true
+      - name: budynki_2023
+        title: { pl: 'Dodane w 2023 r.', en: 'Added in 2023' }
+        default: true
+      - name: budynki_2024
+        title: { pl: 'Dodane w 2024 r.', en: 'Added in 2024' }
+        default: true
+      - name: budynki_2025
+        title: { pl: 'Dodane w 2025 r.', en: 'Added in 2025' }
+        default: true
+    # One edition per year the buildings were added in: the time view draws the years after its
+    # date over the archival photos (map.yaml: timeTravel.layers[].added).
+    time:
+      type: series
+      editions:
+        - { value: '2018', layer: budynki_2018 }
+        - { value: '2019', layer: budynki_2019 }
+        - { value: '2020', layer: budynki_2020 }
+        - { value: '2021', layer: budynki_2021 }
+        - { value: '2022', layer: budynki_2022 }
+        - { value: '2023', layer: budynki_2023 }
+        - { value: '2024', layer: budynki_2024 }
+        - { value: '2025', layer: budynki_2025 }

@@ -50,6 +50,7 @@ describe('default configuration', () => {
     expect(config.layers.drawOrder).toEqual([
       'mapy-dawne',
       'orto-archiwalna',
+      'nowe-budynki',
       'suikzp',
       'kimpzp',
       'pog',
@@ -139,15 +140,19 @@ describe('loadConfig', () => {
           '    - { id: mapy-dawne, label: { pl: Mapy dawne, en: Old maps }, base: mapa }',
           '    - { id: kieg, label: Kieg, base: mapka }',
         )
-        .replace('  base: orto\n  layers:', '  base: zdjecia\n  layers:'),
+        .replace('  base: orto\n  layers:', '  base: zdjecia\n  layers:')
+        .replace('added: nowe-budynki }', 'added: kieg }'),
     );
     expect(problems(dir).join('\n')).toMatch(/map\.yaml:\d+:\d+ timeTravel\.layers\.1\.id: "kieg" is not an overlay with a time block/);
+    expect(problems(dir).join('\n')).toMatch(
+      /map\.yaml:\d+:\d+ timeTravel\.layers\.0\.added: "kieg" is not an overlay with a series of years/,
+    );
     expect(problems(dir).join('\n')).toMatch(/map\.yaml:\d+:\d+ timeTravel\.base: unknown base map "zdjecia"/);
     expect(problems(dir).join('\n')).toMatch(/map\.yaml:\d+:\d+ timeTravel\.layers\.1\.base: unknown base map "mapka"/);
     const config = clientConfig(loadConfig('config'), 'pl');
     expect(config.map.timeTravel).toEqual({
       layers: [
-        { id: 'orto-archiwalna', label: 'Zdjęcia' },
+        { id: 'orto-archiwalna', label: 'Zdjęcia', added: 'nowe-budynki' },
         { id: 'mapy-dawne', label: 'Mapy dawne', base: 'mapa' },
       ],
       base: 'orto',

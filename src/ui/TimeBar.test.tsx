@@ -44,6 +44,7 @@ beforeEach(() => {
     timeSublayers: null,
     timeStatus: 'idle',
     compare: false,
+    timeAdded: false,
     scale: 10000,
     center: [636500, 486500],
   });
@@ -239,6 +240,34 @@ describe('TimeBar', () => {
     expect(screen.getByRole('status').textContent).toContain('Przeciągnij kurtynę');
     fireEvent.click(compare);
     expect(useMapStore.getState().compare).toBe(false);
+  });
+
+  it('offers the buildings added after the date shown, where there are later years, and only with the photos', async () => {
+    stubFetch([
+      [
+        '/api/orto',
+        {
+          archived: 3,
+          history: [
+            { date: '2011-04-21', pixel: 0.25 },
+            { date: '2025-04-27', pixel: 0.05 },
+          ],
+        },
+      ],
+      ['/api/topo', 'down', { status: 503 }],
+    ]);
+    render(<TimeBar />);
+    await settle();
+    // The newest photo is of 2025, and no buildings are known after it.
+    expect(screen.queryByRole('checkbox')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Wcześniejsza data' }));
+    const added = screen.getByRole('checkbox', { name: 'Nowe budynki w BDOT10k: 2018–2025' }) as HTMLInputElement;
+    expect(added.checked).toBe(false);
+    fireEvent.click(added);
+    expect(useMapStore.getState().timeAdded).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Mapy dawne' }));
+    await settle();
+    expect(screen.queryByRole('checkbox')).toBeNull();
   });
 
   it('switches to the old maps: the years of the sheets at the place, each drawing its own sheets', async () => {

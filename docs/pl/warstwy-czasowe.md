@@ -48,7 +48,7 @@ Każda edycja ma `value` i, jeśli różni się od warstwy, własny `layer` (jed
 timeTravel:
   base: orto # podkład wymuszany, póki podróż trwa (opcjonalnie)
   layers:
-    - { id: orto-archiwalna, label: Zdjęcia } # wymiar jednej usługi, nad zdjęciami
+    - { id: orto-archiwalna, label: Zdjęcia, added: nowe-budynki } # wymiar jednej usługi, nad zdjęciami
     - { id: mapy-dawne, label: Mapy dawne, base: mapa } # seria edycji, nad dzisiejszą mapą
 ```
 
@@ -58,6 +58,8 @@ Narzędzie „Podróż w czasie” (na komputerze przycisk obok pomiaru, na tele
 
 Przycisk „Porównaj z aktualnymi danymi” w pasku dzieli mapę kurtyną: po lewej warstwa na wybraną datę, po prawej podkład (dziś). Uchwyt na linii przeciąga się myszą lub palcem, klik na wysokości uchwytu stawia linię w tym miejscu, strzałki w lewo i w prawo przesuwają ją z klawiatury.
 
+Warstwa z `added` dostaje w pasku przełącznik tego, co przybyło po wybranej dacie: `added` wskazuje warstwę z serią lat (edycja na rok, np. `budynki_2019`), a pasek rysuje nad warstwą podróży edycje z lat późniejszych niż rok wybranej daty, na całej mapie, także po prawej stronie kurtyny. Przy zdjęciach to budynki dodane do BDOT10k po dacie zdjęcia: na dawnym zdjęciu widać, gdzie staną, na dzisiejszym, co nowego powstało. Przełącznik znika, gdy nie ma późniejszych lat. BDOT10k dostaje budynek zwykle rok lub dwa po budowie, więc część obrysów może już być na zdjęciu.
+
 Przy zmianie warstwy data zostaje, a suwak staje na najpóźniejszej wartości nowej warstwy nie późniejszej od niej (zdjęcie z 2007 na mapach dawnych pokazuje ostatni arkusz sprzed 2007).
 
-Link do widoku niesie datę (`t=2007-01-01`, z porównaniem `c=1`, z inną warstwą niż pierwsza `tl=mapy-dawne`) i otwiera mapę od razu w podróży; Escape ją kończy i przywraca podkład sprzed niej.
+Link do widoku niesie datę (`t=2007-01-01`, z porównaniem `c=1`, z inną warstwą niż pierwsza `tl=mapy-dawne`, z nowymi budynkami `a=1`) i otwiera mapę od razu w podróży; Escape ją kończy i przywraca podkład sprzed niej.

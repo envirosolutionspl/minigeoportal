@@ -71,6 +71,8 @@ interface MapStore {
   compare: boolean;
   /** Where the curtain is, as a fraction of the map's width from its left edge. */
   curtain: number;
+  /** The time view draws what was added after its date (map.yaml: timeTravel.layers[].added). */
+  timeAdded: boolean;
   /** Changes when the image of the chosen date is asked for again after an error. */
   timeRetries: number;
   /** The base map to go back to when the time view, which forces its own, closes. */
@@ -99,6 +101,7 @@ interface MapStore {
   setTimeStatus(status: TimeStatus): void;
   retryTime(): void;
   setCompare(compare: boolean): void;
+  setTimeAdded(timeAdded: boolean): void;
   setCurtain(fraction: number): void;
   setTimeLayer(id: string | null): void;
   setTimeSublayers(names: string | null): void;
@@ -149,6 +152,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
   timeSublayers: null,
   compare: timeAtStart && initial.compare === true,
   curtain: 0.5,
+  timeAdded: timeAtStart && initial.timeAdded === true,
   // The view of a link closes onto the base map the link named.
   ...(timeAtStart && forcedBase(LINKED_TIME_LAYER) ? { baseBeforeTime: LINKED_BASE } : {}),
   timeStatus: 'idle',
@@ -201,6 +205,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
   setTimeStatus: (timeStatus) => set({ timeStatus }),
   retryTime: () => set((s) => ({ timeRetries: s.timeRetries + 1 })),
   setCompare: (compare) => set({ compare }),
+  setTimeAdded: (timeAdded) => set({ timeAdded }),
   setCurtain: (fraction) => set({ curtain: Math.min(Math.max(fraction, 0), 1) }),
   // Another layer of the open view brings its own base map; the one before the view stays remembered.
   setTimeLayer: (timeLayer) =>
@@ -220,7 +225,12 @@ export const urlState = (s: MapStore) => ({
   overlays: s.overlays,
   sublayers: s.sublayers,
   ...(s.tool === 'time' && s.time
-    ? { time: s.time, ...(s.compare ? { compare: true } : {}), ...(s.timeLayer ? { timeLayer: s.timeLayer } : {}) }
+    ? {
+        time: s.time,
+        ...(s.compare ? { compare: true } : {}),
+        ...(s.timeLayer ? { timeLayer: s.timeLayer } : {}),
+        ...(s.timeAdded ? { timeAdded: true } : {}),
+      }
     : {}),
 });
 
@@ -234,6 +244,7 @@ useMapStore.subscribe((s, prev) => {
     s.tool !== prev.tool ||
     s.time !== prev.time ||
     s.compare !== prev.compare ||
+    s.timeAdded !== prev.timeAdded ||
     s.timeLayer !== prev.timeLayer
   ) {
     writeUrl(urlState(s));

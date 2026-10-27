@@ -162,6 +162,10 @@ function crossCheck(
           problems.push(
             `${at(map, 'map.yaml', ['timeTravel', 'layers', i, 'id'])} timeTravel.layers.${i}.id: "${entry.id}" is not an overlay with a time block`,
           );
+        if (entry.added && !l.overlays.some((o) => o.id === entry.added && o.time?.type === 'series'))
+          problems.push(
+            `${at(map, 'map.yaml', ['timeTravel', 'layers', i, 'added'])} timeTravel.layers.${i}.added: "${entry.added}" is not an overlay with a series of years`,
+          );
       });
     }
   }

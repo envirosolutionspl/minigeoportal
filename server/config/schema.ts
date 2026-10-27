@@ -155,7 +155,10 @@ export const mapSchema = z.strictObject({
   }),
   /** The time view: overlays with a `time` block, named for the bar's switch, drawn over a base map forced while the view is open. */
   timeTravel: z
-    .strictObject({ layers: z.array(z.strictObject({ id, label: text, base: id.optional() })).min(1), base: id.optional() })
+    .strictObject({
+      layers: z.array(z.strictObject({ id, label: text, base: id.optional(), added: id.optional() })).min(1),
+      base: id.optional(),
+    })
     .optional(),
   attribution: text,
   tileServices: z

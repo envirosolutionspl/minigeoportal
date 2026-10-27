@@ -4,7 +4,7 @@ import View from 'ol/View';
 import ImageLayer from 'ol/layer/Image';
 import ImageWMS from 'ol/source/ImageWMS';
 import { PROJECTION, scaleToResolution } from './projection';
-import { attachTimeTravel, sublayersFor, timeLayerDrawsAt, timeLayers } from './timeTravel';
+import { addedAfter, attachTimeTravel, sublayersFor, timeLayerDrawsAt, timeLayers } from './timeTravel';
 import { overlayById } from '@/config/runtime';
 import { registerMeta } from '@/services/meta';
 import { useMapStore } from '@/state/store';
@@ -23,6 +23,7 @@ const wmsLayer = (url: string) =>
     )!;
 const timeLayer = () => wmsLayer('StandardResolutionTime');
 const oldMaps = () => wmsLayer('TOPO_SERIA');
+const newBuildings = () => wmsLayer('NoweBudynki');
 
 beforeEach(() => {
   vi.stubGlobal(
@@ -57,7 +58,16 @@ beforeEach(() => {
       Raster_10_1992: { title: '', queryable: false, maxScale: 23623 },
     },
   });
-  useMapStore.setState({ tool: 'none', time: null, timeLayer: null, timeStatus: 'idle', focus: null });
+  registerMeta('nowe-budynki', {
+    kind: 'wms',
+    fetchedAt: '',
+    title: '',
+    infoFormats: [],
+    layers: Object.fromEntries(
+      [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025].map((y) => [`budynki_${y}`, { title: '', queryable: true, maxScale: 200999 }]),
+    ),
+  });
+  useMapStore.setState({ tool: 'none', time: null, timeLayer: null, timeStatus: 'idle', focus: null, timeAdded: false });
   map = new Map({
     target: document.createElement('div'),
     view: new View({ projection: PROJECTION, center: [600000, 500000], resolution: scaleToResolution(10000) }),
@@ -125,6 +135,44 @@ describe('attachTimeTravel', () => {
     expect(oldMaps().getMaxResolution()).toBeCloseTo(scaleToResolution(47246), 6);
     useMapStore.getState().setTimeSublayers(null);
     expect(oldMaps().getSource()!.getParams().LAYERS).toBe('Raster_50_1965,Raster_25_1965,Raster_10_1965');
+  });
+
+  it('knows what was added in the years after the date the photos show, and nothing for the old maps', () => {
+    expect(addedAfter(null, '2019-05-01')).toMatchObject({
+      years: ['2020', '2021', '2022', '2023', '2024', '2025'],
+      sublayers: ['budynki_2020', 'budynki_2021', 'budynki_2022', 'budynki_2023', 'budynki_2024', 'budynki_2025'],
+    });
+    expect(addedAfter('orto-archiwalna', '2001-05-13')?.years[0]).toBe('2018');
+    expect(addedAfter(null, '2025-04-27')?.years).toEqual([]);
+    expect(addedAfter('mapy-dawne', '1965')).toBeUndefined();
+  });
+
+  it('draws the buildings added after the date over the photos, on request, and not over the old maps', () => {
+    useMapStore.getState().setTool('time');
+    useMapStore.getState().setTime('2021-06-01');
+    const layer = newBuildings();
+    expect(layer.getVisible()).toBe(false);
+    useMapStore.getState().setTimeAdded(true);
+    expect(layer.getVisible()).toBe(true);
+    expect(layer.getZIndex()).toBe(6);
+    expect(layer.getSource()!.getParams()).toMatchObject({
+      LAYERS: 'budynki_2022,budynki_2023,budynki_2024,budynki_2025',
+      FORMAT: 'image/png',
+      TRANSPARENT: true,
+    });
+    expect(layer.getMaxResolution()).toBeCloseTo(scaleToResolution(200999), 6);
+    useMapStore.getState().setTime('2024-03-01');
+    expect(layer.getSource()!.getParams().LAYERS).toBe('budynki_2025');
+    // Nothing later than the newest year: nothing drawn.
+    useMapStore.getState().setTime('2025-11-01');
+    expect(layer.getVisible()).toBe(false);
+    useMapStore.getState().setTime('2021-06-01');
+    useMapStore.getState().setTimeLayer('mapy-dawne');
+    expect(layer.getVisible()).toBe(false);
+    useMapStore.getState().setTimeLayer('orto-archiwalna');
+    expect(layer.getVisible()).toBe(true);
+    useMapStore.getState().setTool('none');
+    expect(layer.getVisible()).toBe(false);
   });
 
   it('zooms in when the view opens too far out for the layer', () => {

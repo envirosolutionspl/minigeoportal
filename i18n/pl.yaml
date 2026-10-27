@@ -159,6 +159,7 @@ time:
   compare: Porównaj z aktualnymi danymi
   now: Dziś
   curtain: 'Kurtyna: po lewej wybrana data, po prawej dziś'
+  added: '{title}: {years}'
   curtainHint: Przeciągnij kurtynę albo kliknij na jej wysokości, gdzie ma stanąć. Strzałki w lewo i w prawo przesuwają ją z klawiatury.
 
 print:

@@ -107,7 +107,7 @@ describe('buildCache', () => {
 
   it('stores the geoportal drawing order and keeps the last good one when it cannot be read', async () => {
     const config = `gpmaps: [{ id: 'modulGK', layers: [
-      { layerId: 'msTOPO_SERIA_10_1992' }, { layerId: 'msORTO_TIME_WMS' }, { layerId: 'msSUiKZP' }, { layerId: 'msMPZP' }, { layerId: 'msPlanyOgolneGmin' }, { layerId: 'msKIBDOT' }, { layerId: 'msKIEG' },
+      { layerId: 'msTOPO_SERIA_10_1992' }, { layerId: 'msORTO_TIME_WMS' }, { layerId: 'msBudynkiBDOT10k' }, { layerId: 'msSUiKZP' }, { layerId: 'msMPZP' }, { layerId: 'msPlanyOgolneGmin' }, { layerId: 'msKIBDOT' }, { layerId: 'msKIEG' },
       { layerId: 'msKIUT' }, { layerId: 'msRejestrCenNieruchomosci' }, { layerId: 'msAdresyUlice' }, { layerId: 'msPRG' },
     ] }]`;
     stub((url) =>
@@ -119,6 +119,7 @@ describe('buildCache', () => {
     expect(cache.drawOrder).toEqual([
       'mapy-dawne',
       'orto-archiwalna',
+      'nowe-budynki',
       'suikzp',
       'kimpzp',
       'pog',

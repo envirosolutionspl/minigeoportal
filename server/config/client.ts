@@ -76,7 +76,12 @@ export function clientConfig({ app, map, layers, content, brand, messages }: App
       ...(map.timeTravel
         ? {
             timeTravel: {
-              layers: map.timeTravel.layers.map((l) => ({ id: l.id, label: t(l.label), ...(l.base ? { base: l.base } : {}) })),
+              layers: map.timeTravel.layers.map((l) => ({
+                id: l.id,
+                label: t(l.label),
+                ...(l.base ? { base: l.base } : {}),
+                ...(l.added ? { added: l.added } : {}),
+              })),
               base: map.timeTravel.base,
             },
           }

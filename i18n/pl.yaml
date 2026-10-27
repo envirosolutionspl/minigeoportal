@@ -164,6 +164,7 @@ time:
   checking: Sprawdzam, z których lat są tu dane…
   none: Brak danych w tym miejscu.
   error: Serwer nie odpowiedział.
+  blank: Serwer zwrócił pusty obraz. Może nie mieć tu danych albo chwilowo nie działa.
   retry: Spróbuj ponownie
   zoomHint: Przybliż mapę, aby zobaczyć warstwę {title}.
   pick: Puść, aby pokazać stan na {date}.

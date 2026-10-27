@@ -3,11 +3,17 @@ import Map from 'ol/Map';
 import View from 'ol/View';
 import ImageLayer from 'ol/layer/Image';
 import ImageWMS from 'ol/source/ImageWMS';
+import { ImageSourceEvent } from 'ol/source/Image';
+import type ImageWrapper from 'ol/Image';
 import { PROJECTION, scaleToResolution } from './projection';
 import { attachTimeTravel, sublayersFor, timeCaption, timeLayerDrawsAt, timeLayers } from './timeTravel';
 import { overlayById } from '@/config/runtime';
 import { registerMeta } from '@/services/meta';
 import { useMapStore } from '@/state/store';
+
+/** What the blank check (blank.ts, which needs a real canvas) says of the next image. */
+const blank = vi.hoisted(() => ({ next: false }));
+vi.mock('./blank', () => ({ isBlank: () => blank.next }));
 
 let map: Map;
 let detach: () => void;
@@ -166,6 +172,19 @@ describe('attachTimeTravel', () => {
     source.dispatchEvent('imageloadend');
     expect(useMapStore.getState().timeStatus).toBe('idle');
     expect(layer.getOpacity()).toBe(1);
+  });
+
+  it('asks with CORS and tells a blank image from a picture', () => {
+    const source = timeLayer().getSource()!;
+    expect((source as unknown as { crossOrigin_: string }).crossOrigin_).toBe('anonymous');
+    useMapStore.getState().setTool('time');
+    const image = { getImage: () => document.createElement('img') } as unknown as ImageWrapper;
+    blank.next = true;
+    source.dispatchEvent(new ImageSourceEvent('imageloadend', image));
+    expect(useMapStore.getState().timeStatus).toBe('blank');
+    blank.next = false;
+    source.dispatchEvent(new ImageSourceEvent('imageloadend', image));
+    expect(useMapStore.getState().timeStatus).toBe('idle');
   });
 
   it('goes with the map', () => {

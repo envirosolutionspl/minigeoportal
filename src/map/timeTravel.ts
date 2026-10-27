@@ -1,10 +1,12 @@
 import type Map from 'ol/Map';
 import ImageWMS from 'ol/source/ImageWMS';
+import type { ImageSourceEvent } from 'ol/source/Image';
 import { config, defaultSublayers, overlayById, type Overlay } from '@/config/runtime';
 import { createOverlayLayer, resolutionRange, showSublayers, type OverlayLayer } from '@/services/layers';
 import { timeValues, valueAt, type TimeValues } from '@/services/time';
 import { timeShown, useMapStore } from '@/state/store';
 import { attachCurtain } from './curtain';
+import { isBlank } from './blank';
 import { resolutionToScale, scaleToResolution } from './projection';
 import { dateText } from './format';
 import { t } from '@/i18n';
@@ -60,13 +62,17 @@ export function attachTimeTravel(map: Map): () => void {
 
   const shown = layers.map(({ def, spec }) => {
     // The image is the size of the view, not larger: the services are slow, and a pan asks anyway.
-    const layer = createOverlayLayer(def, { ratio: 1 });
+    // Asked with CORS, so the page can tell a blank image (blank.ts); the services must allow it.
+    const layer = createOverlayLayer(def, { ratio: 1, crossOrigin: 'anonymous' });
     layer.setZIndex(Z_INDEX);
     map.addLayer(layer);
     const source = layer.getSource();
     if (source instanceof ImageWMS) {
       source.on('imageloadstart', () => setTimeStatus('loading'));
-      source.on('imageloadend', () => setTimeStatus('idle'));
+      source.on('imageloadend', (e: ImageSourceEvent) => {
+        const image = e.image?.getImage();
+        setTimeStatus(image && isBlank(image) ? 'blank' : 'idle');
+      });
       source.on('imageloaderror', () => setTimeStatus('error'));
     }
     return { def, spec, layer, source };

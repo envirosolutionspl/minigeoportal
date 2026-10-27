@@ -99,7 +99,7 @@ export type OverlayLayer = ImageLayer<ImageWMS | ImageArcGISRest> | TileLayer<WM
  * `Origin: null`, which some of them reject (e.g. Warsaw answers 403), while others send no
  * CORS headers at all. The app never reads overlay pixels, so CORS is not needed here.
  */
-export function createOverlayLayer(def: Overlay, image: { ratio?: number } = {}): OverlayLayer {
+export function createOverlayLayer(def: Overlay, image: { ratio?: number; crossOrigin?: string } = {}): OverlayLayer {
   const options = { visible: false, opacity: def.opacity ?? 1, zIndex: 10 + drawIndex(def.id) };
   const tiles = tileSource(def);
   if (tiles) {
@@ -111,6 +111,7 @@ export function createOverlayLayer(def: Overlay, image: { ratio?: number } = {})
     url: def.url,
     projection: PROJECTION,
     ratio: image.ratio ?? 1.25,
+    crossOrigin: image.crossOrigin,
     attributions: def.attribution ?? config.map.attribution,
   };
   // A layer that changes over time is drawn at its current value (TIME=2020 and the like).

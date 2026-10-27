@@ -146,7 +146,7 @@ describe('TimeBar', () => {
     expect(useMapStore.getState().focus?.scale).toBe(20000);
   });
 
-  it('says what is loading, and offers to try again after an error', async () => {
+  it('says what is loading, and offers to try again after an error or a blank image', async () => {
     index();
     render(<TimeBar />);
     await settle();
@@ -154,6 +154,10 @@ describe('TimeBar', () => {
     expect(screen.getByRole('status').textContent).toContain('Wczytuję stan na 27.04.2025');
     act(() => useMapStore.setState({ timeStatus: 'error' }));
     expect(screen.getByRole('status').textContent).toContain('Serwer nie odpowiedział');
+    act(() => useMapStore.setState({ timeStatus: 'blank' }));
+    expect(screen.getByRole('status').textContent).toContain(
+      'Serwer zwrócił pusty obraz. Może nie mieć tu danych albo chwilowo nie działa.',
+    );
     const retries = useMapStore.getState().timeRetries;
     fireEvent.click(screen.getByRole('button', { name: 'Spróbuj ponownie' }));
     expect(useMapStore.getState().timeRetries).toBe(retries + 1);

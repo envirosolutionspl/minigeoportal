@@ -40,7 +40,7 @@ export function TimeBar() {
 /** The date as its year, for the ends of the slider and beside it. */
 const year = (value: string) => value.slice(0, 4);
 
-const action = 'inline-flex items-center gap-1 rounded-lg px-1.5 py-0.5 font-medium text-[var(--accent)] hover:bg-[var(--hover)]';
+const action = 'inline-flex shrink-0 items-center gap-1 rounded-lg px-1.5 py-0.5 font-medium text-[var(--accent)] hover:bg-[var(--hover)]';
 const step =
   'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl hover:bg-[var(--hover)] disabled:opacity-40 disabled:hover:bg-transparent';
 
@@ -180,10 +180,10 @@ function Bar({ id, title, spec }: { id: string; title: string; spec: TimeValues 
     );
   } else if (!current) {
     line = t('time.none');
-  } else if (status === 'error') {
+  } else if (status === 'error' || status === 'blank') {
     line = (
       <>
-        {t('time.error')}{' '}
+        {t(status === 'error' ? 'time.error' : 'time.blank')}{' '}
         <button type="button" onClick={retry} className={action}>
           <RotateCw className="h-3.5 w-3.5" aria-hidden="true" /> {t('time.retry')}
         </button>

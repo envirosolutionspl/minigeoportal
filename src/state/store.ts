@@ -16,8 +16,8 @@ export type Tool = 'none' | 'measure-line' | 'measure-area' | 'profile' | 'print
 /** The tools that take the map's clicks; the others leave them to the place panel and the map menu. */
 export const TAKES_CLICKS: ReadonlySet<Tool> = new Set<Tool>(['measure-line', 'measure-area', 'profile', 'print']);
 
-/** Whether the time view's image of the chosen date has arrived. */
-export type TimeStatus = 'idle' | 'loading' | 'error';
+/** Whether the time view's image of the chosen date has arrived, and whether it shows anything. */
+export type TimeStatus = 'idle' | 'loading' | 'error' | 'blank';
 
 /** Something the map should show: zoom to it and outline it. */
 export interface FocusTarget {

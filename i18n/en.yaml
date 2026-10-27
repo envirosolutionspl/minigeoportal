@@ -165,6 +165,7 @@ time:
   checking: Checking which years have data here…
   none: No data at this place.
   error: The server did not answer.
+  blank: The server sent a blank image. It may have no data here, or it is down for a while.
   retry: Try again
   zoomHint: Zoom in to see the layer {title}.
   pick: Let go to show the state as of {date}.

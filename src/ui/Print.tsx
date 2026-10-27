@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef } from 'react';
-import { LoaderCircle, Printer, X } from 'lucide-react';
+import { LoaderCircle, Printer } from 'lucide-react';
 import { config, selectedSublayers, type Overlay } from '@/config/runtime';
 import { overlayDef } from '@/services/catalog';
 import { layerMeta, visibleAtScale } from '@/services/meta';
@@ -8,6 +8,7 @@ import { formatCoordinate, scaleText } from '@/map/format';
 import { timeCaption } from '@/map/timeTravel';
 import { PRINT_SCALES, SHEET_VARS, printLayout, serverScale, type PrintOptions } from '@/map/print';
 import { APP_DOMAIN, APP_NAME } from './Brand';
+import { CloseButton } from './CloseButton';
 import { locale, t } from '@/i18n';
 
 /**
@@ -19,23 +20,13 @@ export function PrintPanel() {
   const settings = useMapStore((m) => m.printSettings);
   const printing = useMapStore((m) => m.printRequest !== null);
   const { setPrintSettings, requestPrint, setTool } = useMapStore.getState();
-  const started = useRef(false);
   const title = useRef<HTMLInputElement>(null);
   const id = useId();
 
-  // The focus goes to the form when it opens.
+  // The focus goes to the form when it opens. The panel closes with the print (store: printDone).
   useEffect(() => {
     if (open) title.current?.focus();
   }, [open]);
-
-  // Closes once the browser's print dialog has been closed.
-  useEffect(() => {
-    if (printing) started.current = true;
-    else if (started.current) {
-      started.current = false;
-      setTool('none');
-    }
-  }, [printing, setTool]);
 
   if (!open) return null;
 
@@ -45,12 +36,9 @@ export function PrintPanel() {
     requestPrint({ ...settings, title: settings.title.trim() });
   };
 
-  const field =
-    'w-full rounded-xl bg-[var(--field)] px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]';
-  const choice = (checked: boolean) =>
-    `flex min-h-9 flex-1 cursor-pointer items-center justify-center rounded-xl px-3 text-sm ring-1 ring-[var(--hover)] has-focus-visible:ring-2 has-focus-visible:ring-[var(--accent)] ${
-      checked ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'hover:bg-[var(--hover)]'
-    }`;
+  /** A choice of paper or orientation; the one chosen (its radio button checked) is lit. */
+  const choice =
+    'flex min-h-9 flex-1 cursor-pointer items-center justify-center rounded-xl px-3 text-sm ring-1 ring-[var(--hover)] hover:bg-[var(--hover)] has-checked:bg-[var(--accent)] has-checked:text-[var(--on-accent)] has-focus-visible:ring-2 has-focus-visible:ring-[var(--accent)]';
 
   return (
     <section
@@ -64,25 +52,18 @@ export function PrintPanel() {
           <h2 id={`${id}-title`} className="flex-1 text-base font-semibold">
             {t('print.title')}
           </h2>
-          <button
-            type="button"
-            onClick={() => setTool('none')}
-            aria-label={t('common.close')}
-            className="rounded-full p-2 hover:bg-[var(--hover)]"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <CloseButton onClick={() => setTool('none')} />
         </header>
         <p className="text-xs text-[var(--muted)]">{t('print.frameHint')}</p>
         <label className="block">
           <span className="mb-1 block font-medium">{t('print.titleField')}</span>
-          <input ref={title} value={settings.title} onChange={(e) => set({ title: e.target.value })} maxLength={120} className={field} />
+          <input ref={title} value={settings.title} onChange={(e) => set({ title: e.target.value })} maxLength={120} className="field" />
         </label>
         <fieldset>
           <legend className="mb-1 font-medium">{t('print.paper')}</legend>
           <div className="flex gap-2">
             {(['A4', 'A3'] as const).map((p) => (
-              <label key={p} className={choice(settings.paper === p)}>
+              <label key={p} className={choice}>
                 <input
                   type="radio"
                   name="paper"
@@ -105,7 +86,7 @@ export function PrintPanel() {
                 ['portrait', t('print.portrait')],
               ] as const
             ).map(([o, label]) => (
-              <label key={o} className={choice(settings.orientation === o)}>
+              <label key={o} className={choice}>
                 <input
                   type="radio"
                   name="orientation"
@@ -121,7 +102,7 @@ export function PrintPanel() {
         </fieldset>
         <label className="block">
           <span className="mb-1 block font-medium">{t('print.scale')}</span>
-          <select value={settings.scale} onChange={(e) => set({ scale: Number(e.target.value) })} className={field}>
+          <select value={settings.scale} onChange={(e) => set({ scale: Number(e.target.value) })} className="field">
             {PRINT_SCALES.map((s) => (
               <option key={s} value={s}>
                 {scaleText(s)}

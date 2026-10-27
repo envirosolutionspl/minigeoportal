@@ -1,6 +1,7 @@
 import type Map from 'ol/Map';
 import { unByKey } from 'ol/Observable';
-import { containsExtent, type Extent } from 'ol/extent';
+import { containsExtent, getCenter, getForViewAndSize, type Extent } from 'ol/extent';
+import type { Coordinate } from 'ol/coordinate';
 import { getPointResolution } from 'ol/proj';
 import { PROJECTION, resolutionToScale } from './projection';
 import { duration } from './motion';
@@ -79,12 +80,9 @@ export function printLayout(
 }
 
 /** Ground area of the map frame around a centre: what ends up on paper. */
-export function printExtent([x, y]: number[], options: Pick<PrintOptions, 'paper' | 'orientation' | 'scale'>): Extent {
-  const { mapMm } = printLayout(options);
-  const units = groundMetres([x, y]);
-  const halfW = ((mapMm[0] / 1000) * options.scale * 0.5) / units;
-  const halfH = ((mapMm[1] / 1000) * options.scale * 0.5) / units;
-  return [x - halfW, y - halfH, x + halfW, y + halfH];
+export function printExtent(center: number[], options: Pick<PrintOptions, 'paper' | 'orientation' | 'scale'>): Extent {
+  const { mapPx, resolution } = printLayout(options, center);
+  return getForViewAndSize(center, resolution, 0, mapPx);
 }
 
 /**
@@ -118,7 +116,7 @@ function panelMargins(): [number, number, number, number] {
 }
 
 /** Map area left free by the print panel, and its middle: the centre of the printed sheet. */
-function freeArea(map: Map): { extent: Extent; center: [number, number] } | undefined {
+function freeArea(map: Map): { extent: Extent; center: Coordinate } | undefined {
   const view = map.getView();
   const c = view.getCenter();
   const r = view.getResolution();
@@ -126,7 +124,7 @@ function freeArea(map: Map): { extent: Extent; center: [number, number] } | unde
   const [w, h] = map.getSize() ?? [0, 0];
   const [top, right, bottom, left] = w > 0 ? panelMargins() : [0, 0, 0, 0];
   const extent: Extent = [c[0] + (left - w / 2) * r, c[1] - (h / 2 - bottom) * r, c[0] + (w / 2 - right) * r, c[1] + (h / 2 - top) * r];
-  return { extent, center: [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2] };
+  return { extent, center: getCenter(extent) };
 }
 
 /**

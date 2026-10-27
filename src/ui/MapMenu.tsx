@@ -6,6 +6,7 @@ import { useMapMenu } from '@/state/mapMenu';
 import { t } from '@/i18n';
 import { useNotice } from './Notice';
 import { NewTab } from './NewTab';
+import { useDismiss } from './useDismiss';
 
 /** Distance kept from the edges of the screen. */
 const EDGE = 8;
@@ -43,16 +44,16 @@ export function MapMenu() {
     if (place) box.current?.querySelector<HTMLElement>('[role=menuitem]')?.focus({ preventScroll: true });
   }, [place]);
 
-  // A press outside the menu and the map closes it; on the map a click or a move does (contextMenu.ts).
-  useEffect(() => {
-    if (!at) return;
-    const onPointer = (e: PointerEvent) => {
-      const target = e.target as Node;
-      if (!box.current?.contains(target) && !document.getElementById('map')?.contains(target)) close();
-    };
-    document.addEventListener('pointerdown', onPointer);
-    return () => document.removeEventListener('pointerdown', onPointer);
-  }, [at, close]);
+  // A press outside the menu and the map closes it; on the map a click or a move does (contextMenu.ts),
+  // and Escape is taken by the menu itself (onKeyDown), which has the focus.
+  useDismiss(
+    at !== null,
+    box,
+    (e) => {
+      if (!document.getElementById('map')?.contains(e.target as Node)) close();
+    },
+    { escape: false },
+  );
 
   const leave = (focusMap = at?.byKeyboard) => {
     close();

@@ -20,6 +20,16 @@ describe('MeasureBar', () => {
     expect(useMapStore.getState().tool).toBe('measure-area');
   });
 
+  it('tells how to measure with clicks, and with the keys only where there is one', () => {
+    useMapStore.setState({ tool: 'measure-line' });
+    render(<MeasureBar />);
+    const hint = screen.getByText(/Klikaj kolejne punkty/);
+    expect(hint.textContent).toBe(
+      'Klikaj kolejne punkty na mapie, dwuklik kończy pomiar. Z klawiatury Enter dodaje punkt w środku mapy, drugi Enter w tym miejscu kończy. Esc anuluje rysowany kształt.',
+    );
+    expect(screen.getByText(/Z klawiatury Enter/).className).toContain('phone:hidden');
+  });
+
   it('clears drawings and closes', () => {
     useMapStore.setState({ tool: 'measure-line', measureResult: 'x' });
     render(<MeasureBar />);

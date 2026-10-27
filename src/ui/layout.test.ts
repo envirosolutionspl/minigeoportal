@@ -126,6 +126,18 @@ describe('phone screens', () => {
     expect(css).toMatch(/\.more-sheet\[open\]\s*\{\s*animation: sheet-up/);
   });
 
+  it('keeps the messages off the zoom buttons and above the base map thumbnail on a phone', () => {
+    const notice = source('src/ui/Notice.tsx');
+    expect(notice).toMatch(/\bbottom-20\b[^"`]*\bphone:bottom-\[calc\(7\.5rem\+var\(--safe-bottom\)\)\]/);
+    // The zoom buttons take 0.75rem + 2.75rem of the right edge (index.css .ol-zoom); the message ends before them.
+    expect(notice).toMatch(/\bphone:right-\[4\.5rem\] [^"`]*\bphone:left-4 phone:mx-0 phone:w-auto\b/);
+  });
+
+  it('closes the full-screen panels of a phone with a button the size of a fingertip', () => {
+    expect(source('src/ui/CloseButton.tsx')).toMatch(/\bh-9 w-9\b[^"`]*\bphone:h-11 phone:w-11\b/);
+    expect(source('src/ui/InfoPanel.tsx')).toContain('<CloseButton onClick={close} />');
+  });
+
   it('draws the open search above the tool buttons', () => {
     expect(source('src/ui/TopBar.tsx')).toMatch(/search-box[^"]*\bz-10\b/);
   });

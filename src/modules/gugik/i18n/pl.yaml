@@ -37,8 +37,8 @@ parcel:
     other: Znaleziono {count} działki o tym numerze. Wybierz jedną.
   choose: Wybierz
   listFailed: Nie wczytano listy
-  retry: Ponów
-  retryList: 'Ponów: {label}'
+  retry: Spróbuj ponownie
+  retryList: 'Spróbuj ponownie: {label}'
 
 layers:
   catalogLoading: Wczytuję listę warstw geoportal.gov.pl…

@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react';
 import { Camera, Download, ExternalLink, FileText, History } from 'lucide-react';
 import { config } from '@/config/runtime';
 import { dateText, heightText } from '@/map/format';
 import { zoomForScale } from '@/map/projection';
 import { useInfoStore } from '@/state/info';
 import { useMapStore } from '@/state/store';
+import { useAbortable } from '@/ui/useAbortable';
 import { locale, t } from '@/i18n';
 import { parcelReportUrl } from './parcelReport';
-import { orthoAt, pixelText, type OrthoEdition, type OrthoInfo } from './ortho';
+import { orthoAt, pixelText, type OrthoEdition } from './ortho';
 import { heightsAt } from './elevation';
 
 /** The layer of the time view that shows the archive of these photos (app.yaml: ortho.history), if it is one. */
@@ -42,16 +42,9 @@ export function ParcelReportLink({ coordinate }: { coordinate: [number, number] 
 
 /** The height of the terrain at the clicked point; nothing until it is known, or where the model has none. */
 export function Elevation({ coordinate }: { coordinate: [number, number] }) {
-  const [height, setHeight] = useState<number | null>(null);
-  useEffect(() => {
-    const controller = new AbortController();
-    setHeight(null);
-    heightsAt([coordinate], controller.signal)
-      .then(([h]) => setHeight(h))
-      .catch(() => {});
-    return () => controller.abort();
-  }, [coordinate]);
-  return height === null ? null : <p className="text-xs text-[var(--muted)]">{t('info.height', { height: heightText(height) })}</p>;
+  const height = useAbortable((signal) => heightsAt([coordinate], signal).then(([h]) => h), [coordinate]);
+  if (height.status !== 'ready' || height.value === null) return null;
+  return <p className="text-xs text-[var(--muted)]">{t('info.height', { height: heightText(height.value) })}</p>;
 }
 
 /** The date of the photo matters only when the photos are on screen: a base map drawn by their tile service. */
@@ -64,15 +57,13 @@ export function OrthoPhoto({ coordinate }: { coordinate: [number, number] }) {
   return showsPhotos ? <PhotoDate coordinate={coordinate} /> : null;
 }
 
-type OrthoState = { status: 'loading' } | { status: 'done'; info: OrthoInfo } | { status: 'error' };
-
 /**
  * When the aerial photo here was taken and how sharp it is, with its sheet to download; with
  * older photos of the place, the way into the time view. In the time view: the photo shown as
  * of the chosen date.
  */
 function PhotoDate({ coordinate }: { coordinate: [number, number] }) {
-  const [state, setState] = useState<OrthoState>({ status: 'loading' });
+  const info = useAbortable((signal) => orthoAt(coordinate, signal), [coordinate]);
   // The photo as of the chosen date, while the view shows the photos (the first layer, or this one by id).
   const asOf = useMapStore((m) =>
     TIME_VIEW && m.tool === 'time' && (m.timeLayer ?? config.map.timeTravel?.layers[0]?.id) === HISTORY ? m.time : null,
@@ -85,18 +76,9 @@ function PhotoDate({ coordinate }: { coordinate: [number, number] }) {
     m.focusOn({ center: coordinate, zoom: Math.max(m.zoom, zoomForScale(OPENING_SCALE)) });
   };
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setState({ status: 'loading' });
-    orthoAt(coordinate, controller.signal)
-      .then((info) => setState({ status: 'done', info }))
-      .catch(() => !controller.signal.aborted && setState({ status: 'error' }));
-    return () => controller.abort();
-  }, [coordinate]);
-
-  const latest = state.status === 'done' ? state.info.latest : undefined;
-  if (state.status === 'error' || (state.status === 'done' && !latest)) return null;
-  const history = state.status === 'done' ? (state.info.history ?? []) : [];
+  const latest = info.status === 'ready' ? info.value.latest : undefined;
+  if (info.status === 'error' || (info.status === 'ready' && !latest)) return null;
+  const history = info.status === 'ready' ? (info.value.history ?? []) : [];
   const shown = asOf ? photoAsOf(history, asOf) : undefined;
 
   return (

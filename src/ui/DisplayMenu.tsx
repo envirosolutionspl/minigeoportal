@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { create } from 'zustand';
 import { Accessibility } from 'lucide-react';
 import { useAccessibility } from './AccessibilityDialog';
 import { config } from '@/config/runtime';
 import { t } from '@/i18n';
+import { IconButton } from './TopBar';
+import { useDismiss } from './useDismiss';
 
 /**
  * Display aids common on Polish public websites: larger text in two steps and a high-contrast
@@ -85,38 +87,13 @@ function switchLanguage(code: string) {
 export function DisplayMenu({ className = '' }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const close = (e: Event) => {
-      if (e instanceof KeyboardEvent ? e.key === 'Escape' : !root.current?.contains(e.target as Node)) {
-        e.stopPropagation();
-        setOpen(false);
-      }
-    };
-    document.addEventListener('keydown', close, true);
-    document.addEventListener('pointerdown', close);
-    return () => {
-      document.removeEventListener('keydown', close, true);
-      document.removeEventListener('pointerdown', close);
-    };
-  }, [open]);
+  useDismiss(open, root, () => setOpen(false));
 
   return (
     <div ref={root} className={`relative ${className}`}>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        aria-label={t('display.button')}
-        title={t('display.button')}
-        aria-expanded={open}
-        aria-controls="display-menu"
-        className={`flex h-11 w-11 items-center justify-center rounded-2xl shadow-lg ring-1 ring-black/5 transition ${
-          open ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'bg-[var(--surface)] hover:bg-[var(--hover)]'
-        }`}
-      >
+      <IconButton label={t('display.button')} expanded={open} controls="display-menu" onClick={() => setOpen(!open)}>
         <Accessibility className="h-5 w-5" />
-      </button>
+      </IconButton>
       {open && (
         <div
           id="display-menu"
@@ -134,10 +111,9 @@ export function DisplayMenu({ className = '' }: { className?: string }) {
 /** Text size, contrast, language and the accessibility statement; `onLeave` runs before the statement opens. */
 export function DisplayOptions({ onLeave }: { onLeave: () => void }) {
   const { textSize, contrast, set } = useDisplay();
-  const option = (pressed: boolean) =>
-    `flex min-h-10 min-w-10 items-center justify-center rounded-xl px-2 font-semibold ring-1 ring-[var(--hover)] ${
-      pressed ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'hover:bg-[var(--hover)]'
-    }`;
+  /** A choice; the one pressed is lit (aria-pressed). */
+  const option =
+    'flex min-h-10 min-w-10 items-center justify-center rounded-xl px-2 font-semibold ring-1 ring-[var(--hover)] hover:bg-[var(--hover)] aria-pressed:bg-[var(--accent)] aria-pressed:text-[var(--on-accent)]';
 
   return (
     <div className="space-y-3">
@@ -152,19 +128,14 @@ export function DisplayOptions({ onLeave }: { onLeave: () => void }) {
               aria-label={name}
               title={name}
               onClick={() => set({ textSize: size })}
-              className={option(textSize === size)}
+              className={option}
             >
               {label}
             </button>
           ))}
         </div>
       </div>
-      <button
-        type="button"
-        aria-pressed={contrast}
-        onClick={() => set({ contrast: !contrast })}
-        className={`${option(contrast)} w-full gap-2`}
-      >
+      <button type="button" aria-pressed={contrast} onClick={() => set({ contrast: !contrast })} className={`${option} w-full gap-2`}>
         <span
           aria-hidden="true"
           className="flex h-5 w-5 items-center justify-center rounded-full bg-black text-xs text-[#ffff00] ring-1 ring-[#ffff00]"
@@ -184,7 +155,7 @@ export function DisplayOptions({ onLeave }: { onLeave: () => void }) {
                 lang={code}
                 aria-pressed={config.locale === code}
                 onClick={() => config.locale !== code && switchLanguage(code)}
-                className={option(config.locale === code)}
+                className={option}
               >
                 {languageName(code)}
               </button>

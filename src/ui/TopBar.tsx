@@ -22,7 +22,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { fromLonLat } from 'ol/proj';
-import { searchProvider, type HitKind, type SearchHit } from '@/search';
+import { useSearchProvider, type HitKind, type SearchHit } from '@/search';
 import { config } from '@/config/runtime';
 import { t } from '@/i18n';
 import { urlState, useMapStore } from '@/state/store';
@@ -35,7 +35,7 @@ import { heightsAt, searchTool } from '@/modules';
 import { PROJECTION, zoomForScale } from '@/map/projection';
 import { DisplayMenu } from './DisplayMenu';
 import { useNotice } from './Notice';
-import { MoreSheet } from './MoreSheet';
+import { MoreSheet, type MoreItem } from './MoreSheet';
 import { NewTab } from './NewTab';
 
 /** Scale per hit kind, unless the hit names its own; points zoom to it, outlines at most to it. */
@@ -57,17 +57,25 @@ const ICON: Record<HitKind, LucideIcon> = {
   parcel: SquareDashed,
   point: Crosshair,
 };
-const provider = searchProvider;
 /** A refusal faster than this came without a prompt: the browser no longer asks this site. */
 const NO_PROMPT_MS = 600;
+/** A pause in typing this long starts the search. */
+const DEBOUNCE_MS = 300;
+
+/** A tool of the map: a button in the column on a computer, a line of the "More" sheet on a phone, or one of them only. */
+type MapTool = MoreItem & { only?: 'desktop' | 'sheet' };
 
 export function TopBar() {
+  // Coordinates only until the configured provider has loaded, which does not hold up the first map.
+  const provider = useSearchProvider();
   const [query, setQuery] = useState('');
   const [hits, setHits] = useState<SearchHit[]>([]);
   /** Services that did not answer the last search: said under its results. */
   const [unavailable, setUnavailable] = useState('');
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  /** The last search found nothing: the list says so. */
+  const [empty, setEmpty] = useState(false);
   /** Highlighted hit for arrow keys; -1 means none. */
   const [active, setActive] = useState(-1);
   /** What screen readers hear once a search finishes. */
@@ -75,9 +83,9 @@ export function TopBar() {
   /** The search tool of a module (the parcel search) is open in place of the results. */
   const [toolOpen, setToolOpen] = useState(false);
   const abort = useRef<AbortController | null>(null);
+  /** The search waiting for the pause in typing. */
+  const timer = useRef<number | undefined>(undefined);
   const picked = useRef(0);
-  /** Set when choosing a hit writes its name into the box, which is not a new search. */
-  const chosen = useRef(false);
   const focusOn = useMapStore((m) => m.focusOn);
   const clearFocus = useMapStore((m) => m.clearFocus);
   const goHome = useMapStore((m) => m.goHome);
@@ -91,22 +99,25 @@ export function TopBar() {
   /** The time view, where map.yaml sets one up. */
   const timeTravel = config.map.timeTravel !== undefined;
   /** Message after copying the link; read out by screen readers. */
-  const { say, notice } = useNotice();
+  const { say, clear: hush, notice } = useNotice();
   const openWelcome = useWelcome((w) => w.setOpen);
   /** The sheet with the tools phones keep off the map. */
   const [more, setMore] = useState(false);
 
   const run = async (q: string, controller: AbortController) => {
     setBusy(true);
+    setEmpty(false);
+    // The list opens as the search starts, so "Searching…" is seen, not only heard.
+    setOpen(true);
     try {
       const found = await provider.search(q, controller.signal);
       if (controller.signal.aborted) return;
       setHits(found);
+      setEmpty(found.length === 0);
       const missing = found.unavailable?.length ? t('search.unavailable', { services: found.unavailable.join(', ') }) : '';
       setUnavailable(missing);
       setActive(-1);
       setAnnounce(`${found.length ? t('search.results', { count: found.length }) : t('search.none')} ${missing}`.trim());
-      setOpen(true);
     } catch (e) {
       if (!(e instanceof DOMException && e.name === 'AbortError')) setHits([]);
     } finally {
@@ -115,42 +126,47 @@ export function TopBar() {
     }
   };
 
+  /** Drops the search under way and the one waiting for the pause in typing. */
+  const cancel = () => {
+    window.clearTimeout(timer.current);
+    abort.current?.abort();
+  };
+  useEffect(() => cancel, []);
+
   /** Search after Enter, for a provider that does not search while typing. */
   const searchNow = () => {
-    abort.current?.abort();
+    cancel();
     const controller = new AbortController();
     abort.current = controller;
     void run(query.trim(), controller);
   };
 
-  useEffect(() => {
-    abort.current?.abort();
-    if (chosen.current) {
-      chosen.current = false;
-      return;
-    }
-    const q = query.trim();
+  /** A new text in the box: the older search goes, one for this text starts after a pause in typing. */
+  const change = (text: string) => {
+    setQuery(text);
+    cancel();
+    const q = text.trim();
     // A provider that searches after Enter shows no results of an older text.
     if (q.length < 3 || !provider.instant) {
       setHits([]);
+      setEmpty(false);
       setUnavailable('');
       setAnnounce('');
       return;
     }
     const controller = new AbortController();
     abort.current = controller;
-    const timer = window.setTimeout(() => void run(q, controller), 300);
-    return () => window.clearTimeout(timer);
-  }, [query]);
+    timer.current = window.setTimeout(() => void run(q, controller), DEBOUNCE_MS);
+  };
 
-  // Also with no results when a service did not answer: the list says so.
-  const listOpen = !toolOpen && open && (hits.length > 0 || busy || Boolean(unavailable));
+  // Also with no results, and when a service did not answer: the list says so.
+  const listOpen = !toolOpen && open && (hits.length > 0 || busy || empty || Boolean(unavailable));
 
   const pick = async (hit: SearchHit) => {
     const mine = ++picked.current;
     const text = hit.detail && (hit.kind === 'address' || hit.kind === 'street') ? `${hit.label}, ${hit.detail}` : hit.label;
-    // Only a changed text runs the search effect, which then skips this one change.
-    chosen.current = text !== query;
+    // The chosen name goes into the box as text only: it is not a new search, and none still running may reopen the list.
+    cancel();
     setQuery(text);
     setOpen(false);
     setToolOpen(false);
@@ -162,7 +178,7 @@ export function TopBar() {
   };
 
   const clear = () => {
-    setQuery('');
+    change('');
     clearFocus();
   };
 
@@ -190,8 +206,11 @@ export function TopBar() {
     // No geolocation at all (an old browser, a page without https): said, not silently ignored.
     if (!navigator.geolocation) return say(t('tools.locateFailed'));
     const asked = performance.now();
+    // Finding the position can take seconds: said meanwhile, so the press is not taken for nothing.
+    say(t('tools.locating'));
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        hush();
         const c = fromLonLat([pos.coords.longitude, pos.coords.latitude], PROJECTION);
         focusOn({ center: [c[0], c[1]], zoom: zoomForScale(SCALE.point) });
       },
@@ -201,10 +220,25 @@ export function TopBar() {
       (error) => {
         if (error.code !== error.PERMISSION_DENIED) return say(t('tools.locateFailed'));
         if (performance.now() - asked < NO_PROMPT_MS) say(t('tools.locateBlocked'));
+        else hush();
       },
       { enableHighAccuracy: true, timeout: 8000 },
     );
   };
+
+  // Most used first: working on the map, then sharing. Phones keep these in the "More" sheet.
+  const tools: MapTool[] = [
+    { label: t('tools.measure'), icon: Ruler, active: measuring, onClick: toggleMeasure },
+    ...(heightsAt ? [{ label: t('tools.profile'), icon: Mountain, active: tool === 'profile', onClick: toggleProfile }] : []),
+    ...(timeTravel ? [{ label: t('time.tool'), icon: History, active: tool === 'time', onClick: toggleTime }] : []),
+    { label: t('tools.link'), icon: Link2, onClick: () => void copyLink() },
+    // No printing on a phone: the printed frame and the paper cannot be set well on its screen.
+    { label: t('tools.print'), icon: Printer, active: tool === 'print', onClick: togglePrint, only: 'desktop' },
+    // The whole area has its own map button on a computer (MapView.tsx), which phones leave out.
+    { label: config.map.view.homeLabel, icon: Fullscreen, onClick: goHome, only: 'sheet' },
+  ];
+  /** Help at the bottom, after the display aids, which the sheet folds in by itself. */
+  const about: MoreItem = { label: t('tools.about'), icon: Info, onClick: () => openWelcome(true) };
 
   return (
     // Above the base map switcher and the credits (z-30), so the open search, its results and the
@@ -240,7 +274,7 @@ export function TopBar() {
             aria-autocomplete="list"
             aria-activedescendant={listOpen && active >= 0 ? `search-hit-${active}` : undefined}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => change(e.target.value)}
             onFocus={() => hits.length > 0 && setOpen(true)}
             onKeyDown={(e) => {
               if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -265,8 +299,14 @@ export function TopBar() {
             // 16 px on phones keeps iOS from zooming into the field; from sm up it matches the search tool's button and the hits.
             className="h-8 w-full bg-transparent text-base outline-none placeholder:text-[var(--muted)] sm:text-sm"
           />
+          {/* Both buttons fill the 44 px bar nearly: easy to tap on a phone. */}
           {query && (
-            <button type="button" onClick={clear} aria-label={t('search.clear')} className="rounded-full p-1 hover:bg-[var(--hover)]">
+            <button
+              type="button"
+              onClick={clear}
+              aria-label={t('search.clear')}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full hover:bg-[var(--hover)]"
+            >
               <X className="h-4 w-4" />
             </button>
           )}
@@ -277,7 +317,7 @@ export function TopBar() {
               aria-expanded={toolOpen}
               title={searchTool.label}
               aria-label={searchTool.label}
-              className={`flex shrink-0 items-center gap-1.5 rounded-xl px-2 py-1 text-sm transition ${
+              className={`flex min-h-9 min-w-9 shrink-0 items-center justify-center gap-1.5 rounded-xl px-2 text-sm transition ${
                 toolOpen ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'text-[var(--accent)] hover:bg-[var(--hover)]'
               }`}
             >
@@ -325,6 +365,11 @@ export function TopBar() {
               {t('search.busy')}
             </li>
           )}
+          {empty && !busy && (
+            <li role="presentation" className="px-4 py-2 text-sm text-[var(--muted)]">
+              {t('search.none')}
+            </li>
+          )}
           {unavailable && !busy && (
             <li role="presentation" className="px-4 py-2 text-xs text-[var(--danger)]">
               {unavailable}
@@ -363,52 +408,30 @@ export function TopBar() {
             <Ellipsis className="h-5 w-5" />
           </IconButton>
         </div>
-        <IconButton className="phone:hidden" label={t('tools.measure')} active={measuring} onClick={toggleMeasure}>
-          <Ruler className="h-5 w-5" />
-        </IconButton>
-        {heightsAt && (
-          <IconButton className="phone:hidden" label={t('tools.profile')} active={tool === 'profile'} onClick={toggleProfile}>
-            <Mountain className="h-5 w-5" />
-          </IconButton>
-        )}
-        {timeTravel && (
-          <IconButton className="phone:hidden" label={t('time.tool')} active={tool === 'time'} onClick={toggleTime}>
-            <History className="h-5 w-5" />
-          </IconButton>
-        )}
-        <IconButton className="phone:hidden" label={t('tools.link')} onClick={() => void copyLink()}>
-          <Link2 className="h-5 w-5" />
-        </IconButton>
-        <IconButton className="phone:hidden" label={t('tools.print')} active={tool === 'print'} onClick={togglePrint}>
-          <Printer className="h-5 w-5" />
-        </IconButton>
+        {tools
+          .filter((item) => item.only !== 'sheet')
+          .map(({ label, icon: Icon, active, onClick }) => (
+            <IconButton key={label} className="phone:hidden" label={label} active={active} onClick={onClick}>
+              <Icon className="h-5 w-5" />
+            </IconButton>
+          ))}
         <DisplayMenu className="phone:hidden" />
-        <IconButton className="phone:hidden" label={t('tools.about')} onClick={() => openWelcome(true)}>
-          <Info className="h-5 w-5" />
+        <IconButton className="phone:hidden" label={about.label} onClick={about.onClick}>
+          <about.icon className="h-5 w-5" />
         </IconButton>
       </div>
-      <MoreSheet
-        open={more}
-        onClose={() => setMore(false)}
-        items={[
-          ...(timeTravel ? [{ label: t('time.tool'), icon: History, active: tool === 'time', onClick: toggleTime }] : []),
-          { label: t('tools.measure'), icon: Ruler, active: measuring, onClick: toggleMeasure },
-          ...(heightsAt ? [{ label: t('tools.profile'), icon: Mountain, active: tool === 'profile', onClick: toggleProfile }] : []),
-          { label: t('tools.link'), icon: Link2, onClick: () => void copyLink() },
-          // No printing on a phone: the printed frame and the paper cannot be set well on its screen.
-          { label: config.map.view.homeLabel, icon: Fullscreen, onClick: goHome },
-          { label: t('tools.about'), icon: Info, onClick: () => openWelcome(true) },
-        ]}
-      />
+      <MoreSheet open={more} onClose={() => setMore(false)} items={[...tools.filter((item) => item.only !== 'desktop'), about]} />
       {notice}
     </header>
   );
 }
 
-function IconButton({
+/** A square button among the map tools; lit while its tool is on or its menu is open. */
+export function IconButton({
   label,
   active,
   expanded,
+  controls,
   className = '',
   onClick,
   children,
@@ -417,6 +440,8 @@ function IconButton({
   active?: boolean;
   /** For a button that opens a sheet or menu. */
   expanded?: boolean;
+  /** The id of what it opens. */
+  controls?: string;
   className?: string;
   onClick: () => void;
   children: React.ReactNode;
@@ -429,9 +454,8 @@ function IconButton({
       title={label}
       aria-pressed={active}
       aria-expanded={expanded}
-      className={`${className} flex h-11 w-11 items-center justify-center rounded-2xl shadow-lg ring-1 ring-black/5 transition ${
-        active ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'bg-[var(--surface)] hover:bg-[var(--hover)]'
-      }`}
+      aria-controls={controls}
+      className={`${className} flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--surface)] shadow-lg ring-1 ring-black/5 transition hover:bg-[var(--hover)] aria-expanded:bg-[var(--accent)] aria-expanded:text-[var(--on-accent)] aria-pressed:bg-[var(--accent)] aria-pressed:text-[var(--on-accent)]`}
     >
       {children}
     </button>

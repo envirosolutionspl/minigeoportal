@@ -198,6 +198,25 @@ describe('time view', () => {
     expect(state().tool).toBe('none');
   });
 
+  it('closes the print panel with the print: back to the time view when printed from it, else to no tool', () => {
+    useMapStore.setState({ base: 'mapa', tool: 'none', timeLayer: null, printFromTime: false, printRequest: null });
+    state().setTool('time');
+    state().setTool('print');
+    state().requestPrint({ paper: 'A4', orientation: 'landscape', scale: 1000, title: '' });
+    state().printDone();
+    expect(state()).toMatchObject({ tool: 'time', printRequest: null, printFromTime: false });
+    state().setTool('none');
+    state().setTool('print');
+    state().printDone();
+    expect(state().tool).toBe('none');
+    // A tool chosen while the sheet was being made stays.
+    state().setTool('print');
+    state().setTool('measure-line');
+    state().printDone();
+    expect(state().tool).toBe('measure-line');
+    state().setTool('none');
+  });
+
   it('puts the date, the layer and the comparison into links only while the view is open', () => {
     useMapStore.setState({ tool: 'none', time: '2007-01-01', compare: true, timeLayer: 'mapy-dawne' });
     expect(urlState(state()).time).toBeUndefined();

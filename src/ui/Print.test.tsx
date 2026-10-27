@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { PrintPanel, PrintSheet, printedLayers } from './Print';
 import { useMapStore } from '@/state/store';
@@ -18,6 +18,14 @@ beforeEach(async () => {
     center: [656849, 482462],
   });
   await withCapabilities();
+});
+
+// Some tests lend the shared KIEG layer a source and a legend of its own; taken back here, so a
+// failed assertion does not leave them to the next test.
+afterEach(() => {
+  const kieg = overlayById.get('kieg')!;
+  delete kieg.attribution;
+  delete kieg.sublayers.find((l) => l.name === 'dzialki')!.legend;
 });
 
 describe('PrintPanel', () => {
@@ -85,7 +93,6 @@ describe('PrintSheet', () => {
     const source = container.querySelector('.print-source')!;
     expect(source.textContent).toBe('Dane: GUGiK, geoportal.gov.pl · Powiat');
     expect(source.querySelector('a[href="https://powiat.example"]')).toBeTruthy();
-    delete kieg.attribution;
   });
 
   it('names no source when nothing is printed', () => {
@@ -103,7 +110,6 @@ describe('PrintSheet', () => {
     expect([...container.querySelectorAll('.print-legend img')].map((i) => i.getAttribute('src'))).toContain(
       'https://example.org/legend.png',
     );
-    delete dzialki.legend;
   });
 
   it('lists no layers that are not drawn at the print scale', () => {

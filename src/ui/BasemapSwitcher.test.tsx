@@ -27,6 +27,8 @@ describe('BasemapSwitcher', () => {
   it('opens the list with the touch button, marks the active map and closes with Escape', () => {
     render(<BasemapSwitcher />);
     const more = screen.getByRole('button', { name: 'Wszystkie podkłady' });
+    // For fingers only, so the size of a fingertip.
+    expect(more.className).toMatch(/\bh-11 w-11\b/);
     fireEvent.click(more);
     expect(more.getAttribute('aria-expanded')).toBe('true');
     expect(screen.getByRole('button', { name: 'Podkład: Mapa', pressed: true })).toBeTruthy();

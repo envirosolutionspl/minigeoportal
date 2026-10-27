@@ -9,6 +9,11 @@
   }
 }
 
+/* A field of a form beside or over the map (the print panel, the report form). */
+@utility field {
+  @apply w-full rounded-xl bg-[var(--field)] px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)];
+}
+
 :root {
   color: var(--text);
   color-scheme: light dark;
@@ -232,7 +237,8 @@ input[type='search']::-webkit-search-cancel-button {
   /* OpenLayers keeps the credits 1.3em short of the edge; the bar runs the full width. */
   max-width: none;
   justify-content: flex-end;
-  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  /* Opaque enough for its links to keep 4.5:1 on the map in dark mode, as the measurement labels. */
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
   font-size: 0.75rem;
   padding: 0.15rem 0.5rem calc(0.15rem + var(--safe-bottom));
   border-radius: 0;

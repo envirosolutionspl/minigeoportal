@@ -19,9 +19,13 @@ const rules = (selector: string) =>
     )
     .join('}');
 
+/** How much of the surface colour the bottom bar keeps over the map; the rest is the map. */
+const BAR_OPACITY =
+  Number(/background: color-mix\(in srgb, var\(--surface\) (\d+)%/.exec(rules('.ol-attribution:not(.ol-collapsed)'))?.[1]) / 100;
+
 describe('dark mode', () => {
   it('gives the bottom bar the surface colour, not the white background OpenLayers gives open credits', () => {
-    expect(rules('.ol-attribution:not(.ol-collapsed)')).toContain('background: color-mix(in srgb, var(--surface)');
+    expect(BAR_OPACITY).toBeGreaterThanOrEqual(0.92);
   });
 });
 
@@ -48,6 +52,12 @@ const contrast = (a: string, b: string) => {
   const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
   return (hi + 0.05) / (lo + 0.05);
 };
+/** `top` laid over `under` with the given opacity, as the browser mixes it. */
+const over = (top: string, under: string, opacity: number) =>
+  `#${[1, 3, 5]
+    .map((i) => Math.round(parseInt(top.slice(i, i + 2), 16) * opacity + parseInt(under.slice(i, i + 2), 16) * (1 - opacity)))
+    .map((c) => c.toString(16).padStart(2, '0'))
+    .join('')}`;
 
 /** Text colours and the backgrounds they appear on: each pair needs 4.5:1 (WCAG 2.1 AA, 1.4.3). */
 const PAIRS = [
@@ -73,6 +83,15 @@ describe.each(readdirSync('skins'))('skin %s', (name) => {
     for (const [fg, bg] of PAIRS) {
       expect(colours[fg], `--${fg}`).toBeDefined();
       expect(contrast(colours[fg], colours[bg]), `--${fg} on --${bg}`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  // The bar lets the map show through: its links must read over the darkest and the lightest map.
+  it.each(Object.entries(modes))('keeps the links of the bottom bar readable over the map in %s mode', (_, colours) => {
+    for (const map of ['#000000', '#ffffff']) {
+      expect(contrast(colours.accent, over(colours.surface, map, BAR_OPACITY)), `--accent on the bar over ${map}`).toBeGreaterThanOrEqual(
+        4.5,
+      );
     }
   });
 });

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { clamp } from 'ol/math';
 import { config, overlayById, selectedSublayers } from '@/config/runtime';
 import { CATALOG_ID, overlayDef } from '@/services/catalog';
 import { HOME_EXTENT } from '@/map/projection';
@@ -208,12 +209,16 @@ export const useMapStore = create<MapStore>((set, get) => ({
   setProfileLine: (profileLine) => set({ profileLine }),
   setPrintSettings: (settings) => set((s) => ({ printSettings: { ...s.printSettings, ...settings } })),
   requestPrint: (options) => set({ printRequest: { ...options } }),
-  printDone: () => set({ printRequest: null }),
+  // The print panel closes with the print, back to the time view when printed from it (setTool).
+  printDone: () => {
+    set({ printRequest: null });
+    if (get().tool === 'print') get().setTool('none');
+  },
   setTime: (time) => set({ time }),
   setTimeStatus: (timeStatus) => set({ timeStatus }),
   retryTime: () => set((s) => ({ timeRetries: s.timeRetries + 1 })),
   setCompare: (compare) => set({ compare }),
-  setCurtain: (fraction) => set({ curtain: Math.min(Math.max(fraction, 0), 1) }),
+  setCurtain: (fraction) => set({ curtain: clamp(fraction, 0, 1) }),
   // Another layer of the open view brings its own base map; the one before the view stays remembered.
   setTimeLayer: (timeLayer) =>
     set((s) => {

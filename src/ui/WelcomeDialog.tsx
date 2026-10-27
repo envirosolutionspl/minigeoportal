@@ -7,7 +7,7 @@ import { Content, type ContentAction } from './Content';
 import { config } from '@/config/runtime';
 import { useMapStore } from '@/state/store';
 import { t } from '@/i18n';
-import { useModalDialog } from './useModalDialog';
+import { Modal } from './Modal';
 import { NewTab } from './NewTab';
 
 const STORAGE_KEY = `${config.app.storagePrefix}welcome.v1`;
@@ -45,7 +45,6 @@ export function WelcomeDialog() {
     rememberDismissal();
     setOpen(false);
   };
-  const { ref, onBackdropClick } = useModalDialog(open, close);
 
   const act = (action: ContentAction) => {
     close();
@@ -56,17 +55,10 @@ export function WelcomeDialog() {
   };
 
   return (
-    <>
-      {/* The backdrop is the dialog itself; Escape closes it natively (see useModalDialog). */}
-      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */}
-      <dialog
-        ref={ref}
-        onClose={close}
-        onClick={onBackdropClick}
-        aria-labelledby={titleId}
-        className="m-auto w-[min(42rem,calc(100%-2rem))] rounded-3xl outline-none bg-[var(--surface)] p-0 text-[var(--text)] shadow-2xl backdrop:bg-[#253326]/50 backdrop:backdrop-blur-[2px]"
-      >
-        <div className="max-h-[calc(100dvh-2rem)] overflow-y-auto p-5 sm:p-6">
+    <Modal open={open} onClose={close} labelledBy={titleId} className="w-[min(42rem,calc(100%-2rem))]" blur>
+      {/* Only the text scrolls on a small screen: the way to the map stays in sight under it. */}
+      <div className="flex max-h-[calc(100dvh-2rem)] flex-col">
+        <div className="overflow-y-auto p-5 pb-0 sm:p-6 sm:pb-0">
           <header className="flex items-center gap-3">
             <BrandMark className="h-10 w-10 shrink-0" />
             <div>
@@ -82,14 +74,15 @@ export function WelcomeDialog() {
               <Content html={config.content.welcome} onAction={act} />
             </div>
           )}
+        </div>
 
+        <div className="shrink-0 px-5 pb-5 sm:px-6 sm:pb-6">
           <footer className="mt-3 flex justify-end">
             <button
               type="button"
               onClick={close}
-              // In a modal, autofocus names the element to start on: the main action, not the first link.
-              // eslint-disable-next-line jsx-a11y/no-autofocus
-              autoFocus
+              // The window starts on its main action, not on the first link (see useModalDialog).
+              data-autofocus=""
               className="rounded-2xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-[var(--on-accent)] transition hover:brightness-110"
             >
               {t('welcome.start')}
@@ -124,7 +117,7 @@ export function WelcomeDialog() {
             )}
           </div>
         </div>
-      </dialog>
-    </>
+      </div>
+    </Modal>
   );
 }

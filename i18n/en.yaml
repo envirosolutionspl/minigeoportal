@@ -35,6 +35,7 @@ tools:
   locate: My location
   locateBlocked: Location is blocked for this site. Allow it by hand in the browser's settings (the icon beside the site's address).
   locateFailed: Your position could not be found. Try again in a moment.
+  locating: Finding your location…
   measure: Measure distance and area
   profile: Terrain profile
   link: Copy a link to this map view
@@ -94,8 +95,8 @@ layers:
   visibleFrom: Visible from scale {scale}
   visibleTo: Visible up to scale {scale}
   hiddenNow: '{hint}. Not visible now.'
-  zoomIn: zoom in
-  zoomOut: zoom out
+  zoomIn: Zoom in
+  zoomOut: Zoom out
   zoomInTo: Zoom in to the layer {title}. {hint}
   zoomOutTo: Zoom out to the layer {title}. {hint}
   status:
@@ -131,7 +132,7 @@ info:
   zoomOut: Zoom out
   reportPlace: 'Place: {place}'
   report: Something wrong? Report a problem
-  error: The data could not be loaded. The server of the service does not answer or refused the request.
+  error: The data could not be loaded. The server of the service does not answer or refused the request. Try again in a moment.
   checkFallback: Check on {name}
   empty: No data at this place.
   open: Open
@@ -142,7 +143,8 @@ measure:
   area: Area
   clear: Clear
   end: End the measurement
-  hint: Click the next points on the map, a double click ends the measurement. With the keyboard, Enter adds the point in the middle of the map and a second Enter there ends it. Esc cancels the shape being drawn.
+  hint: Click the next points on the map, a double click ends the measurement.
+  keys: With the keyboard, Enter adds the point in the middle of the map and a second Enter there ends it. Esc cancels the shape being drawn.
   result: 'Result: {result}'
   perimeter: perimeter {length}
 
@@ -230,7 +232,7 @@ report:
     alert: '[{app}] Critical error: {what}'
     server: Server
     time: Time
-  failed: The report could not be sent.
+  failed: The report could not be sent. Try again in a moment.
   offline: No connection to the server. Try again.
   invalid: The report has invalid data. Check the description and the e-mail address.
   tooLong: The report is too long.

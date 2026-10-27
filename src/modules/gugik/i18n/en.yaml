@@ -35,8 +35,8 @@ parcel:
     other: '{count} parcels with this number found. Choose one.'
   choose: Choose
   listFailed: List not loaded
-  retry: Retry
-  retryList: 'Retry: {label}'
+  retry: Try again
+  retryList: 'Try again: {label}'
 
 layers:
   catalogLoading: Loading the list of geoportal.gov.pl layers…

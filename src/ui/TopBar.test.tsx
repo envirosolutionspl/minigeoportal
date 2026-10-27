@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { TopBar } from './TopBar';
 import { useMapStore } from '@/state/store';
@@ -14,6 +14,8 @@ const UUG = {
 };
 
 beforeEach(() => {
+  // The search waits 300 ms after the last keystroke, and messages go by themselves: no real waiting.
+  vi.useFakeTimers();
   clearUnitNames();
   useMapStore.setState({ focus: null, tool: 'none' });
   stubFetch([
@@ -22,11 +24,16 @@ beforeEach(() => {
   ]);
 });
 
+afterEach(() => vi.useRealTimers());
+
+/** Lets the given time pass, with the stubbed answers that come in it. */
+const wait = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms));
+
 const type = async (text: string) => {
   const box = screen.getByRole('combobox');
   fireEvent.change(box, { target: { value: text } });
-  // Debounce and the stubbed answers.
-  await act(() => new Promise((r) => setTimeout(r, 400)));
+  // The debounce, then the stubbed answers.
+  await wait(300);
   return box;
 };
 
@@ -55,10 +62,10 @@ describe('search box', () => {
 
     fireEvent.keyDown(box, { key: 'ArrowUp' });
     fireEvent.keyDown(box, { key: 'Enter' });
-    await act(() => new Promise((r) => setTimeout(r, 50)));
+    await wait(50);
     expect(useMapStore.getState().focus).toMatchObject({ center: [601729, 376839] });
     // Writing the chosen name into the box is not a new search: the list stays closed.
-    await act(() => new Promise((r) => setTimeout(r, 400)));
+    await wait(400);
     expect((box as HTMLInputElement).value).toBe('Komaszyce');
     expect(box.getAttribute('aria-expanded')).toBe('false');
   });
@@ -70,18 +77,30 @@ describe('search box', () => {
     expect(screen.getAllByRole('option')).toHaveLength(1);
     expect(calls).toEqual([]);
     fireEvent.keyDown(box, { key: 'Enter' });
-    await act(() => new Promise((r) => setTimeout(r, 50)));
+    await wait(50);
     expect(useMapStore.getState().focus?.center?.[0]).toBeCloseTo(637000, -2);
   });
 
-  it('closes the list with Escape and says when nothing was found', async () => {
+  it('closes the list with Escape, and shows and says when nothing was found', async () => {
     render(<TopBar />);
     const box = await type('Komaszyce');
     fireEvent.keyDown(box, { key: 'Escape' });
     expect(box.getAttribute('aria-expanded')).toBe('false');
     stubFetch([['services.gugik.gov.pl/uug', { type: 'city', results: {} }]]);
     await type('Xyzzyx');
-    expect(screen.getByText('Brak wyników.')).toBeTruthy();
+    expect(box.getAttribute('aria-expanded')).toBe('true');
+    expect(within(screen.getByRole('listbox')).getByText('Brak wyników.')).toBeTruthy();
+    expect(screen.getAllByRole('status').some((s) => s.textContent === 'Brak wyników.')).toBe(true);
+    // A shorter text takes the message away with the list.
+    await type('Xy');
+    expect(box.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('gives the clear and the parcel buttons most of the bar to tap on a phone', () => {
+    render(<TopBar />);
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'Kr' } });
+    expect(screen.getByRole('button', { name: 'Wyczyść' }).className).toMatch(/\bh-9 w-9\b/);
+    expect(screen.getByRole('button', { name: 'Działka: znajdź po numerze i obrębie' }).className).toMatch(/\bmin-h-9 min-w-9\b/);
   });
 });
 
@@ -141,29 +160,30 @@ describe('a slow search', () => {
   it('shows and says that it is searching until the answer comes', async () => {
     const { searchProvider } = await import('@/search');
     let answer: (hits: never[]) => void = () => {};
-    const spy = vi.spyOn(searchProvider, 'search').mockReturnValue(new Promise((r) => (answer = r)));
+    vi.spyOn(searchProvider, 'search').mockReturnValue(new Promise((r) => (answer = r)));
     const { container } = render(<TopBar />);
     const spinner = () => container.querySelector('.search-box .animate-spin');
     expect(spinner()).toBeNull();
     await type('Kraków');
     expect(spinner()).not.toBeNull();
     expect(screen.getAllByRole('status').some((s) => s.textContent === 'Szukam…')).toBe(true);
+    // Seen too, in the list that opens as the search starts.
+    expect(screen.getByRole('combobox').getAttribute('aria-expanded')).toBe('true');
+    expect(within(screen.getByRole('listbox')).getByText('Szukam…')).toBeTruthy();
     await act(async () => answer([]));
     expect(spinner()).toBeNull();
     expect(screen.getAllByRole('status').some((s) => s.textContent === 'Brak wyników.')).toBe(true);
-    spy.mockRestore();
   });
 });
 
 describe('a service that did not answer', () => {
   it('is named under the results, also when nothing was found', async () => {
     const { searchProvider } = await import('@/search');
-    const spy = vi.spyOn(searchProvider, 'search').mockResolvedValue(Object.assign([], { unavailable: ['wyszukiwarka adresów (UUG)'] }));
+    vi.spyOn(searchProvider, 'search').mockResolvedValue(Object.assign([], { unavailable: ['wyszukiwarka adresów (UUG)'] }));
     render(<TopBar />);
     await type('Kraków');
     expect(screen.getByRole('listbox').textContent).toContain('Nie odpowiada: wyszukiwarka adresów (UUG). Wyniki mogą być niepełne.');
     expect(screen.getAllByRole('status').some((s) => s.textContent?.includes('Wyniki mogą być niepełne'))).toBe(true);
-    spy.mockRestore();
   });
 });
 
@@ -189,6 +209,17 @@ describe('my location', () => {
     expect(focus.center![0]).toBeCloseTo(637382, 0);
     expect(focus.center![1]).toBeCloseTo(486757, 0);
     expect(notice()).not.toContain('lokalizac');
+  });
+
+  it('says that it is finding the position until the browser has it', () => {
+    let found: PositionCallback = () => {};
+    withGeolocation({ getCurrentPosition: (ok) => void (found = ok) });
+    render(<TopBar />);
+    press();
+    expect(notice()).toContain('Ustalam położenie…');
+    act(() => found({ coords: { latitude: 52.2297, longitude: 21.0122 } } as GeolocationPosition));
+    expect(notice()).not.toContain('Ustalam');
+    expect(useMapStore.getState().focus).not.toBeNull();
   });
 
   it('says to allow location by hand only when the browser refuses without asking', () => {
@@ -219,7 +250,6 @@ describe('my location', () => {
   });
 
   it('shows a message that goes by itself, stays while pointed at, and closes with its button', () => {
-    vi.useFakeTimers();
     withGeolocation(undefined);
     render(<TopBar />);
     press();
@@ -233,7 +263,6 @@ describe('my location', () => {
     press();
     fireEvent.click(screen.getByRole('button', { name: 'Zamknij' }));
     expect(notice()).not.toContain('położenia');
-    vi.useRealTimers();
   });
 });
 
@@ -248,10 +277,19 @@ describe('tools on phones', () => {
     expect(more.parentElement?.className).toContain('phone:block');
     fireEvent.click(more);
     expect(more.getAttribute('aria-expanded')).toBe('true');
-    // No printing from a phone: the sheet lists every other tool.
+    // No printing from a phone: the sheet lists every other tool, in the order of the computer's
+    // column, with the whole area (a map button on a computer) and the display aids folded in.
     const sheet = within(screen.getByRole('dialog'));
     expect(sheet.queryByRole('button', { name: 'Drukuj mapę' })).toBeNull();
-    expect(sheet.getByRole('button', { name: 'Pomiar odległości i powierzchni' })).toBeTruthy();
+    expect(sheet.getAllByRole('listitem').map((li) => li.textContent)).toEqual([
+      'Pomiar odległości i powierzchni',
+      'Profil terenu',
+      'Podróż w czasie',
+      'Kopiuj link do tego widoku mapy',
+      'Cała Polska',
+      'O serwisie',
+      'Ułatwienia',
+    ]);
     // The top bar lets taps through to the map; the sheet inside it must take them back.
     expect(container.querySelector('.pointer-events-none')?.contains(screen.getByRole('dialog'))).toBe(true);
     expect(screen.getByRole('dialog').className).toContain('pointer-events-auto');

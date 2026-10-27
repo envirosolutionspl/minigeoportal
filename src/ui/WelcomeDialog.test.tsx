@@ -45,6 +45,15 @@ describe('WelcomeDialog', () => {
     expect(Object.values({ ...localStorage })).toContain('hidden');
   });
 
+  it('starts on the way to the map, which stays in sight while the text scrolls on a small screen', () => {
+    render(<WelcomeDialog />);
+    act(() => useWelcome.getState().setOpen(true));
+    const start = screen.getByRole('button', { name: 'Przejdź do mapy' });
+    expect(document.activeElement).toBe(start);
+    expect(start.closest('.overflow-y-auto')).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Po co jest ten serwis' }).closest('.overflow-y-auto')).not.toBeNull();
+  });
+
   it('puts the author between the report form and the accessibility statement in its footer', () => {
     render(<WelcomeDialog />);
     act(() => useWelcome.getState().setOpen(true));

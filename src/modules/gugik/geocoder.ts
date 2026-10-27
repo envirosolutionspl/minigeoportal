@@ -1,6 +1,6 @@
 import { fromLonLat } from 'ol/proj';
 import { PROJECTION } from '@/map/projection';
-import { unitNames, type UnitNames, type UnitLevel } from './units';
+import { unitNames, type UnitHit, type UnitNames, type UnitLevel } from './units';
 import { normalize } from '@/services/text';
 import type { HitKind, SearchHit, SearchResults } from '@/search/provider';
 import { t } from '@/i18n';
@@ -221,14 +221,6 @@ async function nature(query: string, signal: AbortSignal): Promise<GugikHit[]> {
   });
 }
 
-interface UnitAnswer {
-  level: UnitLevel;
-  teryt: string;
-  name: string;
-  county?: string;
-  voivodeship?: string;
-}
-
 const COMMUNE_TYPE: Record<string, string> = { '1': 'gmina miejska', '2': 'gmina wiejska', '3': 'gmina miejsko-wiejska' };
 
 /** "województwo mazowieckie", "powiat otwocki", "miasto na prawach powiatu Kraków", "gmina Wiązowna". */
@@ -241,7 +233,7 @@ export function unitLabel(level: UnitLevel, teryt: string, name: string): string
 async function units(query: string, signal: AbortSignal): Promise<GugikHit[]> {
   const res = await fetch(`/api/dict/szukaj?q=${encodeURIComponent(query)}`, { signal });
   if (!res.ok) return [];
-  return ((await res.json()) as UnitAnswer[]).map((u) => ({
+  return ((await res.json()) as UnitHit[]).map((u) => ({
     kind: 'unit' as const,
     label: unitLabel(u.level, u.teryt, u.name),
     detail: [u.level === 'gm' ? COMMUNE_TYPE[u.teryt[6]] : '', u.county && `pow. ${u.county}`, u.voivodeship && `woj. ${u.voivodeship}`]

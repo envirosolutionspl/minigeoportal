@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { create } from 'zustand';
 import { LoaderCircle, SquareDashed, X } from 'lucide-react';
 import { dictionary, parcelInPrecinct, type DictEntry, type DictLevel } from './dictionaries';
 import type { SearchHit } from '@/search/provider';
 import { useMapStore } from '@/state/store';
 import { zoomForScale } from '@/map/projection';
+import { useAbortable } from '@/ui/useAbortable';
 import { t } from '@/i18n';
 import { PARCEL_SCALE } from './geocoder';
 
@@ -32,22 +33,13 @@ interface DictState {
 /** Dictionary for one level; empty until its parent is chosen. */
 function useDictionary(level: DictLevel, parent: string | undefined, enabled = true): DictState {
   const [attempt, setAttempt] = useState(0);
-  const [state, setState] = useState<Omit<DictState, 'retry'>>({ entries: [], loading: false, error: false });
-  useEffect(() => {
-    if (!enabled) {
-      setState({ entries: [], loading: false, error: false });
-      return;
-    }
-    let active = true;
-    setState((s) => ({ ...s, loading: true, error: false }));
-    dictionary(level, parent)
-      .then((entries) => active && setState({ entries, loading: false, error: false }))
-      .catch(() => active && setState({ entries: [], loading: false, error: true }));
-    return () => {
-      active = false;
-    };
-  }, [level, parent, enabled, attempt]);
-  return { ...state, retry: () => setAttempt((a) => a + 1) };
+  const list = useAbortable(() => (enabled ? dictionary(level, parent) : Promise.resolve([])), [level, parent, enabled, attempt]);
+  return {
+    entries: list.status === 'ready' ? list.value : [],
+    loading: list.status === 'loading',
+    error: list.status === 'error',
+    retry: () => setAttempt((a) => a + 1),
+  };
 }
 
 /**
@@ -100,7 +92,7 @@ export function ParcelSearch({ onClose }: { onClose(): void }) {
             onClose();
           }}
           aria-label={t('parcel.clearAndClose')}
-          className="rounded-full p-1.5 hover:bg-[var(--hover)]"
+          className="rounded-full p-2.5 hover:bg-[var(--hover)]"
         >
           <X className="h-4 w-4" />
         </button>
@@ -131,7 +123,7 @@ export function ParcelSearch({ onClose }: { onClose(): void }) {
       <header className="mb-3 flex items-center gap-2">
         <SquareDashed className="h-5 w-5 text-[var(--accent)]" />
         <h2 className="flex-1 text-sm font-semibold">{t('parcel.title')}</h2>
-        <button type="button" onClick={onClose} aria-label={t('common.close')} className="rounded-full p-1.5 hover:bg-[var(--hover)]">
+        <button type="button" onClick={onClose} aria-label={t('common.close')} className="rounded-full p-2.5 hover:bg-[var(--hover)]">
           <X className="h-4 w-4" />
         </button>
       </header>

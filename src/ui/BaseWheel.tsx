@@ -3,6 +3,7 @@ import { Ban } from 'lucide-react';
 import type { BaseMap } from '@/config/runtime';
 import { duration } from '@/map/motion';
 import { t } from '@/i18n';
+import { useDismiss } from './useDismiss';
 
 /** Height of a row and the rows in sight: the middle one is the chosen map. */
 export const ROW = 48;
@@ -89,22 +90,15 @@ export function BaseWheel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      e.stopPropagation();
-      onClose();
-    };
-    const onPointer = (e: PointerEvent) => !root.current?.contains(e.target as Node) && onClose();
-    document.addEventListener('keydown', onKey, true);
-    document.addEventListener('pointerdown', onPointer);
-    return () => {
-      document.removeEventListener('keydown', onKey, true);
-      document.removeEventListener('pointerdown', onPointer);
+  useDismiss(true, root, onClose);
+  // A turn still settling or a paint still due goes with the wheel.
+  useEffect(
+    () => () => {
       window.clearTimeout(settle.current);
       if (frame.current !== undefined) window.cancelAnimationFrame(frame.current);
-    };
-  }, [onClose]);
+    },
+    [],
+  );
 
   return (
     <div ref={root} className="contents">

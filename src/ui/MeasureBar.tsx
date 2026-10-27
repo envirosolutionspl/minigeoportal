@@ -27,9 +27,7 @@ export function MeasureBar() {
             type="button"
             aria-pressed={tool === mode}
             onClick={() => setTool(mode)}
-            className={`flex min-h-9 items-center gap-1.5 rounded-xl px-3 text-sm transition ${
-              tool === mode ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'hover:bg-[var(--hover)]'
-            }`}
+            className="flex min-h-9 items-center gap-1.5 rounded-xl px-3 text-sm transition hover:bg-[var(--hover)] aria-pressed:bg-[var(--accent)] aria-pressed:text-[var(--on-accent)]"
           >
             <Icon className="h-4 w-4" aria-hidden="true" />
             {label}
@@ -48,7 +46,10 @@ export function MeasureBar() {
           <X className="h-4 w-4" />
         </button>
       </div>
-      <p className="px-2 pt-1 text-xs text-[var(--muted)]">{t('measure.hint')}</p>
+      {/* The keys mean nothing to a finger: a phone gets the clicks only. */}
+      <p className="px-2 pt-1 text-xs text-[var(--muted)]">
+        {t('measure.hint')} <span className="phone:hidden">{t('measure.keys')}</span>
+      </p>
       <p role="status" className="px-2 pt-1 text-sm font-medium empty:hidden">
         {result && t('measure.result', { result })}
       </p>

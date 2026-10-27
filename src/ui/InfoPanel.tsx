@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { Bug, ExternalLink, Layers, LoaderCircle, MapPin, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { Bug, ExternalLink, Layers, LoaderCircle, MapPin, ZoomIn, ZoomOut } from 'lucide-react';
 import { formatCoordinate, scaleText } from '@/map/format';
 import { config, selectedSublayers } from '@/config/runtime';
 import { infoFooter, infoHeader, type InfoPart } from '@/modules';
@@ -9,6 +9,7 @@ import { useInfoStore, type InfoResult } from '@/state/info';
 import { useMapStore } from '@/state/store';
 import { useReport } from './ReportDialog';
 import { NewTab } from './NewTab';
+import { CloseButton } from './CloseButton';
 import { t } from '@/i18n';
 
 /** Results of a map click: one section per queried overlay. */
@@ -33,9 +34,7 @@ export function InfoPanel() {
           <p className="text-xs text-[var(--muted)]">{formatCoordinate(query.coordinate)}</p>
           <Parts parts={infoHeader} coordinate={query.coordinate} />
         </div>
-        <button type="button" onClick={close} aria-label={t('common.close')} className="rounded-full p-2 hover:bg-[var(--hover)]">
-          <X className="h-5 w-5" />
-        </button>
+        <CloseButton onClick={close} />
       </header>
 
       <p role="status" className="sr-only">

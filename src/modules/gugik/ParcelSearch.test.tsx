@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ParcelSearch } from './ParcelSearch';
 import { useMapStore } from '@/state/store';
 import { stubFetch } from '@/test/helpers';
@@ -20,6 +20,9 @@ beforeEach(() => {
     ['id=Wi%C4%85zowna+Gminna+999', '-1 brak wyników'],
   ]);
 });
+
+// A failing test with fake timers must not leave them to the next one.
+afterEach(() => vi.useRealTimers());
 
 async function chooseAll() {
   const select = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
@@ -67,9 +70,18 @@ describe('ParcelSearch', () => {
   });
 
   it('offers a retry when a list fails to load', async () => {
+    vi.useFakeTimers();
     stubFetch([['/api/dict/wojewodztwa', 'down', { status: 503 }]]);
     render(<ParcelSearch onClose={() => {}} />);
-    // The last chosen units survive closing the panel, so every enabled list fails and offers a retry.
-    await waitFor(() => expect(screen.getAllByText('Ponów').length).toBeGreaterThan(0), { timeout: 3000 });
+    // A list asks once more 800 ms after a failure (dictionaries.ts). The last chosen units survive
+    // closing the panel, so every enabled list fails and offers a retry.
+    await act(() => vi.advanceTimersByTimeAsync(800));
+    expect(screen.getAllByText('Spróbuj ponownie').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Spróbuj ponownie: Województwo' })).toBeTruthy();
+  });
+
+  it('closes with a button big enough for a finger', () => {
+    render(<ParcelSearch onClose={() => {}} />);
+    expect(screen.getByRole('button', { name: 'Zamknij' }).className).toContain('p-2.5');
   });
 });

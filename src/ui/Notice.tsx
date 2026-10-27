@@ -60,7 +60,9 @@ export function useNotice() {
       onPointerLeave={(e) => e.pointerType === 'mouse' && resume()}
       onFocus={pause}
       onBlur={resume}
-      className={`pointer-events-auto fixed inset-x-0 bottom-20 z-50 mx-auto flex w-fit max-w-[min(28rem,calc(100%-2rem))] items-start gap-2 rounded-xl bg-[var(--text)] py-2 pr-1 pl-4 text-sm break-words text-[var(--surface)] shadow-lg ${
+      // On a phone it sits above the base map thumbnail and leaves the column of the zoom buttons
+      // free, however many lines it has (a link read out when the clipboard is refused is three).
+      className={`pointer-events-auto fixed inset-x-0 bottom-20 z-50 mx-auto flex w-fit max-w-[min(28rem,calc(100%-2rem))] items-start gap-2 rounded-xl bg-[var(--text)] py-2 pr-1 pl-4 text-sm break-words text-[var(--surface)] shadow-lg phone:right-[4.5rem] phone:bottom-[calc(7.5rem+var(--safe-bottom))] phone:left-4 phone:mx-0 phone:w-auto phone:max-w-none ${
         text ? '' : 'sr-only'
       }`}
     >
@@ -79,5 +81,6 @@ export function useNotice() {
     </div>
   );
 
-  return { say, notice };
+  /** `clear`: for a message about something under way, once it is over. */
+  return { say, clear: close, notice };
 }

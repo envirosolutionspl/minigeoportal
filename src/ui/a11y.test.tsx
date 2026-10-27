@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import axe from 'axe-core';
 import { TopBar } from './TopBar';
@@ -25,10 +25,17 @@ async function violations(container: Element) {
   return result.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`);
 }
 
-beforeEach(async () => {
+// The capabilities stay loaded across the tests: nothing here clears them.
+beforeAll(() => withCapabilities());
+
+beforeEach(() => {
   stubFetch([['/api/report', { enabled: true }]]);
-  await withCapabilities();
   useMapStore.setState({ overlays: ['kieg'], sublayers: {}, panel: 'catalog', scale: 47247, tool: 'none' });
+});
+
+afterEach(() => {
+  useMapStore.setState({ tool: 'none' });
+  vi.useRealTimers();
 });
 
 describe('accessibility (axe, WCAG 2.1 AA)', () => {
@@ -52,10 +59,13 @@ describe('accessibility (axe, WCAG 2.1 AA)', () => {
       </main>,
     );
     const thumb = getByRole('button', { name: /^Przełącz podkład na/ });
+    // A finger held on the thumbnail opens the wheel after 450 ms; axe then needs the real timers.
+    vi.useFakeTimers();
     act(() => {
       thumb.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0 }));
     });
-    await act(() => new Promise((r) => setTimeout(r, 500)));
+    await act(() => vi.advanceTimersByTimeAsync(450));
+    vi.useRealTimers();
     expect(getByRole('listbox', { name: 'Podkłady' })).toBeTruthy();
     expect(await violations(container)).toEqual([]);
   });
@@ -119,7 +129,6 @@ describe('accessibility (axe, WCAG 2.1 AA)', () => {
       </main>,
     );
     expect(await violations(container)).toEqual([]);
-    useMapStore.setState({ tool: 'none' });
   });
 
   it('dialogs', async () => {

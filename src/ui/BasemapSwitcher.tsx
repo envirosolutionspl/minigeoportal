@@ -4,6 +4,7 @@ import { config, type BaseMap } from '@/config/runtime';
 import { t } from '@/i18n';
 import { useMapStore } from '@/state/store';
 import { BaseWheel } from './BaseWheel';
+import { useDismiss } from './useDismiss';
 
 const { view, baseMaps } = config.map;
 /** The base map one click switches to (map.yaml: view.toggleBase, the photos), and back from. */
@@ -66,11 +67,10 @@ function useHold(onHold: () => void) {
 export function BasemapSwitcher() {
   const base = useMapStore((m) => m.base);
   const setBase = useMapStore((m) => m.setBase);
-  // The map to go back to from the photos: the last one that was not the photos.
+  // The map to go back to from the photos: the last one that was not the photos, kept up during
+  // the render that brings a new one (as React advises for a value that follows another's past).
   const [lastMap, setLastMap] = useState(base === TOGGLE ? view.base : base);
-  useEffect(() => {
-    if (base !== TOGGLE) setLastMap(base);
-  }, [base]);
+  if (base !== TOGGLE && base !== lastMap) setLastMap(base);
   const target = baseMaps.find((b) => b.id === (base === TOGGLE ? lastMap : TOGGLE)) ?? baseMaps[0];
 
   /** Opened with the touch button. */
@@ -88,23 +88,14 @@ export function BasemapSwitcher() {
   });
   const closeWheel = useCallback(() => setWheel(false), []);
 
-  useEffect(() => {
-    if (!shown) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      e.stopPropagation();
-      setOpen(false);
+  // Escape also hides the list shown by the keyboard focus, which goes back to the thumbnail.
+  useDismiss(shown, root, (e) => {
+    setOpen(false);
+    if (e instanceof KeyboardEvent) {
       setDismissed(true);
       toggle.current?.focus();
-    };
-    const onPointer = (e: PointerEvent) => !root.current?.contains(e.target as Node) && setOpen(false);
-    document.addEventListener('keydown', onKey, true);
-    document.addEventListener('pointerdown', onPointer);
-    return () => {
-      document.removeEventListener('keydown', onKey, true);
-      document.removeEventListener('pointerdown', onPointer);
-    };
-  }, [shown]);
+    }
+  });
 
   const choose = (id: string) => {
     setBase(id);
@@ -137,7 +128,8 @@ export function BasemapSwitcher() {
         aria-expanded={shown}
         aria-controls="basemap-list"
         aria-label={t('basemaps.all')}
-        className="-ml-1 flex h-9 w-9 items-center justify-center self-center rounded-full bg-[var(--surface)] text-[var(--accent)] shadow-lg ring-1 ring-black/5 [@media(hover:hover)]:hidden"
+        // For fingers only, so as big as a fingertip (44 px).
+        className="-ml-1 flex h-11 w-11 items-center justify-center self-center rounded-full bg-[var(--surface)] text-[var(--accent)] shadow-lg ring-1 ring-black/5 [@media(hover:hover)]:hidden"
       >
         <ChevronUp className={`h-5 w-5 transition ${shown ? 'rotate-90' : '-rotate-90'}`} aria-hidden="true" />
       </button>

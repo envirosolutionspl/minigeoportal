@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { InfoPanel } from './InfoPanel';
 import { useInfoStore } from '@/state/info';
@@ -11,6 +11,9 @@ beforeEach(() => {
   useInfoStore.setState({ query: null });
   useMapStore.setState({ panel: 'none' });
 });
+
+// A test that opens the time view must not leave it to the next one, even when it fails.
+afterEach(() => useMapStore.setState({ tool: 'none' }));
 
 describe('InfoPanel', () => {
   it('says when the aerial photo was taken and links its sheet, on the photo base map only', async () => {
@@ -96,7 +99,6 @@ describe('InfoPanel', () => {
     expect(await screen.findByText('13.05.2001')).toBeTruthy();
     expect(screen.getByText(/Stan na 01.01.2015/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Zobacz zmiany' })).toBeNull();
-    useMapStore.setState({ tool: 'none' });
   });
 
   it('renders nothing without a query', () => {
@@ -108,7 +110,7 @@ describe('InfoPanel', () => {
     useInfoStore.getState().start(point, ['kieg']);
     render(<InfoPanel />);
     expect(screen.getByText(/^PL-1992 X 482\s462, Y 656\s849 · 52,18\d+° N, 21,29\d+° E$/)).toBeTruthy();
-    expect(screen.getByText('Wczytywanie…')).toBeTruthy();
+    expect(screen.getByText('Wczytuję…')).toBeTruthy();
   });
 
   it('links to the geoportal parcel report for the clicked point, X = northing', async () => {
@@ -140,7 +142,7 @@ describe('InfoPanel', () => {
     expect(screen.getByText('22/1')).toBeTruthy();
     expect((screen.getByRole('link', { name: /Pobierz/ }) as HTMLAnchorElement).href).toBe('https://x/r');
     expect(screen.getByText('Brak danych w tym miejscu.')).toBeTruthy();
-    expect(screen.getByText(/Nie udało się pobrać danych/)).toBeTruthy();
+    expect(screen.getByText(/Nie udało się pobrać danych.*Spróbuj ponownie za chwilę/)).toBeTruthy();
   });
 
   it('ignores answers for an earlier click', () => {

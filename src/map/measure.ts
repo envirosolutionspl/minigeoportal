@@ -40,16 +40,28 @@ function label(): { overlay: Overlay; element: HTMLElement } {
   return { overlay: new Overlay({ element, offset: [0, -12], positioning: 'bottom-center', stopEvent: false }), element };
 }
 
+/** Drawn shapes with their labels: the measurements, or the line of the terrain profile. */
+interface Drawings {
+  source: VectorSource<Feature>;
+  layer: VectorLayer<VectorSource<Feature>>;
+  labels: Overlay[];
+}
+
 /**
  * Length and area measurement with OpenLayers' draw interaction: click points, double click
  * (or click the first point of an area) to finish, Escape to cancel the shape being drawn.
- * Finished measurements stay on the map until cleared.
+ * Finished measurements stay on the map until cleared. The terrain profile tool draws its line
+ * the same way, apart from the measurements: one line at a time, gone when the tool closes.
  */
 export function attachMeasure(map: Map): () => void {
-  const source = new VectorSource<Feature>();
-  const layer = new VectorLayer({ source, style: STYLE, zIndex: 95 });
-  map.addLayer(layer);
-  const labels: Overlay[] = [];
+  const drawings = (): Drawings => {
+    const source = new VectorSource<Feature>();
+    const layer = new VectorLayer({ source, style: STYLE, zIndex: 95 });
+    map.addLayer(layer);
+    return { source, layer, labels: [] };
+  };
+  const measurements = drawings();
+  const profile = drawings();
   let draw: Draw | null = null;
 
   const stop = () => {
@@ -57,12 +69,20 @@ export function attachMeasure(map: Map): () => void {
     draw = null;
   };
 
-  const start = (type: 'LineString' | 'Polygon') => {
+  const clear = ({ source, labels }: Drawings) => {
+    source.clear();
+    for (const o of labels.splice(0)) map.removeOverlay(o);
+  };
+
+  const start = (type: 'LineString' | 'Polygon', target: Drawings) => {
     stop();
+    const { source, labels } = target;
     draw = new Draw({ source, type, style: STYLE });
     let current: ReturnType<typeof label> | null = null;
     let listener: EventsKey | null = null;
     draw.on('drawstart', (e) => {
+      // The profile follows one line: a new one replaces it.
+      if (target === profile) clear(profile);
       current = label();
       map.addOverlay(current.overlay);
       labels.push(current.overlay);
@@ -78,11 +98,13 @@ export function attachMeasure(map: Map): () => void {
     });
     draw.on('drawend', (e) => {
       if (listener) unByKey(listener);
-      const text = measure(e.feature.getGeometry()!);
+      const geometry = e.feature.getGeometry()!;
       if (current) current.element.classList.add('measure-label-done');
-      if (text) useMapStore.getState().setMeasureResult(text);
-      const geometry = e.feature.getGeometry();
-      if (geometry instanceof LineString) useMapStore.getState().setMeasureLine(geometry.getCoordinates() as [number, number][]);
+      if (target === profile) useMapStore.getState().setProfileLine((geometry as LineString).getCoordinates() as [number, number][]);
+      else {
+        const text = measure(geometry);
+        if (text) useMapStore.getState().setMeasureResult(text);
+      }
       current = null;
     });
     draw.on('drawabort', () => {
@@ -91,11 +113,6 @@ export function attachMeasure(map: Map): () => void {
       current = null;
     });
     map.addInteraction(draw);
-  };
-
-  const clear = () => {
-    source.clear();
-    for (const o of labels.splice(0)) map.removeOverlay(o);
   };
 
   /** Where the last Enter put a point: a second Enter at the same place finishes the shape. */
@@ -125,18 +142,25 @@ export function attachMeasure(map: Map): () => void {
 
   const unsubscribe = useMapStore.subscribe((s, prev) => {
     if (s.tool !== prev.tool) {
-      if (s.tool === 'measure-line') start('LineString');
-      else if (s.tool === 'measure-area') start('Polygon');
+      if (prev.tool === 'profile') {
+        clear(profile);
+        s.setProfileLine(null);
+      }
+      if (s.tool === 'measure-line') start('LineString', measurements);
+      else if (s.tool === 'measure-area') start('Polygon', measurements);
+      else if (s.tool === 'profile') start('LineString', profile);
       else stop();
     }
-    if (s.measureClears !== prev.measureClears) clear();
+    if (s.measureClears !== prev.measureClears) clear(measurements);
   });
 
   return () => {
     unsubscribe();
     window.removeEventListener('keydown', onKey);
     stop();
-    clear();
-    map.removeLayer(layer);
+    for (const d of [measurements, profile]) {
+      clear(d);
+      map.removeLayer(d.layer);
+    }
   };
 }

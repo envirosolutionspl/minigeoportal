@@ -37,6 +37,7 @@ tools:
   locateBlocked: Lokalizacja jest zablokowana dla tej strony. Zezwól na nią ręcznie w ustawieniach przeglądarki (ikona obok adresu strony).
   locateFailed: Nie udało się ustalić położenia. Spróbuj ponownie za chwilę.
   measure: Pomiar odległości i powierzchni
+  profile: Profil terenu
   link: Kopiuj link do tego widoku mapy
   linkCopied: Skopiowano link do tego widoku mapy.
   print: Drukuj mapę
@@ -139,12 +140,16 @@ measure:
   hint: Klikaj kolejne punkty na mapie, dwuklik kończy pomiar. Z klawiatury Enter dodaje punkt w środku mapy, drugi Enter w tym miejscu kończy. Esc anuluje rysowany kształt.
   result: 'Wynik: {result}'
   perimeter: obwód {length}
-  profile: Profil terenu
-  profileLoading: Pobieram wysokości terenu…
-  profileError: Nie udało się pobrać wysokości terenu.
-  profileNone: Brak wysokości terenu wzdłuż tej linii.
-  profilePartial: Na części linii model terenu nie ma wysokości (np. za granicą).
-  profileSummary: 'Wysokość od {min} do {max} n.p.m. W górę {ascent}, w dół {descent}. Największe nachylenie {slope}.'
+
+profile:
+  title: Profil terenu
+  hint: Klikaj kolejne punkty linii na mapie, dwuklik ją kończy. Nowa linia zastępuje poprzednią. Z klawiatury Enter dodaje punkt w środku mapy, drugi Enter w tym miejscu kończy. Esc anuluje rysowaną linię.
+  end: Zamknij profil terenu
+  loading: Pobieram wysokości terenu…
+  error: Nie udało się pobrać wysokości terenu.
+  none: Brak wysokości terenu wzdłuż tej linii.
+  partial: Na części linii model terenu nie ma wysokości (np. za granicą).
+  summary: 'Wysokość od {min} do {max} n.p.m. W górę {ascent}, w dół {descent}. Największe nachylenie {slope}.'
 
 time:
   tool: Podróż w czasie

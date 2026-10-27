@@ -6,6 +6,7 @@ import { BasemapSwitcher } from './ui/BasemapSwitcher';
 import { InfoPanel } from './ui/InfoPanel';
 import { MapMenu } from './ui/MapMenu';
 import { MeasureBar } from './ui/MeasureBar';
+import { ProfilePanel } from './ui/ProfilePanel';
 import { TimeBar } from './ui/TimeBar';
 import { WelcomeDialog } from './ui/WelcomeDialog';
 import { ReportDialog } from './ui/ReportDialog';
@@ -57,6 +58,7 @@ export default function App() {
       <InfoPanel />
       <MapMenu />
       <MeasureBar />
+      <ProfilePanel />
       <TimeBar />
       <PrintPanel />
       <AuthorCredit />

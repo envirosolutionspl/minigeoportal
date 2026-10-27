@@ -1,0 +1,65 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { ProfilePanel } from './ProfilePanel';
+import { useMapStore } from '@/state/store';
+import { stubFetch } from '@/test/helpers';
+
+beforeEach(() => useMapStore.setState({ tool: 'none', profileLine: null }));
+
+describe('ProfilePanel', () => {
+  it('is hidden while the tool is off', () => {
+    const { container } = render(<ProfilePanel />);
+    expect(container.innerHTML).toBe('');
+  });
+
+  it('draws the profile of the terrain along the drawn line, and follows the next one', async () => {
+    const { calls } = stubFetch([
+      ['GetHByPointList', Array.from({ length: 101 }, (_, i) => `0 0 ${(100 + (i <= 50 ? i : 100 - i) * 0.2).toFixed(1)}`).join(',')],
+    ]);
+    useMapStore.setState({ tool: 'profile' });
+    render(<ProfilePanel />);
+    expect(screen.getByRole('heading', { name: 'Profil terenu' })).toBeTruthy();
+    // No line yet: only the hint.
+    expect(screen.queryByText('Pobieram wysokości terenu…')).toBeNull();
+    act(() =>
+      useMapStore.getState().setProfileLine([
+        [600000, 500000],
+        [601000, 500000],
+      ]),
+    );
+    expect(screen.getByText('Pobieram wysokości terenu…')).toBeTruthy();
+    expect(
+      await screen.findByText('Wysokość od 100,0 m do 110,0 m n.p.m. W górę 10,0 m, w dół 10,0 m. Największe nachylenie 2%.'),
+    ).toBeTruthy();
+    expect(calls).toHaveLength(1);
+    act(() =>
+      useMapStore.getState().setProfileLine([
+        [600000, 500000],
+        [600000, 500500],
+      ]),
+    );
+    expect(screen.getByText('Pobieram wysokości terenu…')).toBeTruthy();
+    await screen.findByText(/Największe nachylenie/);
+    expect(calls).toHaveLength(2);
+  });
+
+  it('says when the heights cannot be had', async () => {
+    stubFetch([['GetHByPointList', 'down', { status: 503 }]]);
+    useMapStore.setState({
+      tool: 'profile',
+      profileLine: [
+        [600000, 500000],
+        [600100, 500000],
+      ],
+    });
+    render(<ProfilePanel />);
+    expect(await screen.findByText('Nie udało się pobrać wysokości terenu.')).toBeTruthy();
+  });
+
+  it('closes', () => {
+    useMapStore.setState({ tool: 'profile' });
+    render(<ProfilePanel />);
+    fireEvent.click(screen.getByRole('button', { name: 'Zamknij profil terenu' }));
+    expect(useMapStore.getState().tool).toBe('none');
+  });
+});

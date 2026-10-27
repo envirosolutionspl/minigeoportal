@@ -11,10 +11,10 @@ type Panel = 'none' | 'catalog';
  * A map tool. Measuring and printing take over clicks: while one is active, clicks do not ask
  * for information. The time view (map.yaml: timeTravel) leaves clicks to the place panel.
  */
-export type Tool = 'none' | 'measure-line' | 'measure-area' | 'print' | 'time';
+export type Tool = 'none' | 'measure-line' | 'measure-area' | 'profile' | 'print' | 'time';
 
 /** The tools that take the map's clicks; the others leave them to the place panel and the map menu. */
-export const TAKES_CLICKS: ReadonlySet<Tool> = new Set<Tool>(['measure-line', 'measure-area', 'print']);
+export const TAKES_CLICKS: ReadonlySet<Tool> = new Set<Tool>(['measure-line', 'measure-area', 'profile', 'print']);
 
 /** Whether the time view's image of the chosen date has arrived. */
 export type TimeStatus = 'idle' | 'loading' | 'error';
@@ -54,8 +54,8 @@ interface MapStore {
   measureClears: number;
   /** Text of the last finished measurement, announced to screen readers. */
   measureResult: string;
-  /** The last line measured, in map coordinates, for its profile of the terrain; null after clearing. */
-  measureLine: [number, number][] | null;
+  /** The line drawn with the terrain profile tool, in map coordinates; null until one is drawn. */
+  profileLine: [number, number][] | null;
   /** Print in progress; the map takes it up and clears it when the print dialog closes. */
   printRequest: PrintOptions | null;
   /** Sheet chosen in the print panel; the map outlines the area it covers. */
@@ -96,7 +96,7 @@ interface MapStore {
   setTool(tool: Tool): void;
   clearMeasurements(): void;
   setMeasureResult(text: string): void;
-  setMeasureLine(line: [number, number][] | null): void;
+  setProfileLine(line: [number, number][] | null): void;
   setPrintSettings(settings: Partial<PrintOptions>): void;
   requestPrint(options: PrintOptions): void;
   printDone(): void;
@@ -146,7 +146,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
   tool: timeAtStart ? 'time' : 'none',
   measureClears: 0,
   measureResult: '',
-  measureLine: null,
+  profileLine: null,
   printRequest: null,
   printFromTime: false,
   printSettings: { paper: 'A4', orientation: 'landscape', scale: 10000, title: '' },
@@ -203,9 +203,9 @@ export const useMapStore = create<MapStore>((set, get) => ({
         return { tool, base: s.baseBeforeTime, baseBeforeTime: undefined, timeStatus: 'idle', printFromTime: false };
       return { tool, printFromTime: false, ...(leaving ? { timeStatus: 'idle' as const } : {}) };
     }),
-  clearMeasurements: () => set((s) => ({ measureClears: s.measureClears + 1, measureResult: '', measureLine: null })),
+  clearMeasurements: () => set((s) => ({ measureClears: s.measureClears + 1, measureResult: '' })),
   setMeasureResult: (measureResult) => set({ measureResult }),
-  setMeasureLine: (measureLine) => set({ measureLine }),
+  setProfileLine: (profileLine) => set({ profileLine }),
   setPrintSettings: (settings) => set((s) => ({ printSettings: { ...s.printSettings, ...settings } })),
   requestPrint: (options) => set({ printRequest: { ...options } }),
   printDone: () => set({ printRequest: null }),

@@ -127,6 +127,7 @@ describe('map tools', () => {
       'Moja lokalizacja',
       'Więcej',
       'Pomiar odległości i powierzchni',
+      'Profil terenu',
       'Podróż w czasie',
       'Kopiuj link do tego widoku mapy',
       'Drukuj mapę',

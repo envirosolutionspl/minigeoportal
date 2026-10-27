@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { act, render } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import axe from 'axe-core';
 import { TopBar } from './TopBar';
 import { LayerCatalog } from './LayerCatalog';
 import { InfoPanel } from './InfoPanel';
 import { MeasureBar } from './MeasureBar';
+import { ProfilePanel } from './ProfilePanel';
 import { TimeBar } from './TimeBar';
 import { WelcomeDialog, useWelcome } from './WelcomeDialog';
 import { ReportDialog, useReport } from './ReportDialog';
@@ -88,6 +89,24 @@ describe('accessibility (axe, WCAG 2.1 AA)', () => {
         <MeasureBar />
       </main>,
     );
+    expect(await violations(container)).toEqual([]);
+  });
+
+  it('terrain profile', async () => {
+    stubFetch([['GetHByPointList', '0 0 100,0 0 120']]);
+    useMapStore.setState({
+      tool: 'profile',
+      profileLine: [
+        [600000, 500000],
+        [600001, 500000],
+      ],
+    });
+    const { container } = render(
+      <main>
+        <ProfilePanel />
+      </main>,
+    );
+    await screen.findByText(/Największe nachylenie/);
     expect(await violations(container)).toEqual([]);
   });
 

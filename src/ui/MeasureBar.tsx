@@ -1,26 +1,18 @@
-import { useState } from 'react';
-import { Mountain, Pentagon, Ruler, Trash2, X } from 'lucide-react';
-import { heightsAt } from '@/modules';
+import { Pentagon, Ruler, Trash2, X } from 'lucide-react';
 import { useMapStore, type Tool } from '@/state/store';
 import { t } from '@/i18n';
-import { TerrainProfile } from './TerrainProfile';
 
 const MODES: { tool: Tool; label: string; Icon: typeof Ruler }[] = [
   { tool: 'measure-line', label: t('measure.distance'), Icon: Ruler },
   { tool: 'measure-area', label: t('measure.area'), Icon: Pentagon },
 ];
 
-/**
- * Controls of the measurement tool, shown while it is active. Where a module knows the heights of
- * the terrain, the last measured line has its profile: once shown, it follows each new line.
- */
+/** Controls of the measurement tool, shown while it is active. */
 export function MeasureBar() {
   const tool = useMapStore((m) => m.tool);
   const result = useMapStore((m) => m.measureResult);
   const setTool = useMapStore((m) => m.setTool);
   const clear = useMapStore((m) => m.clearMeasurements);
-  const line = useMapStore((m) => m.measureLine);
-  const [profile, setProfile] = useState(false);
   if (tool !== 'measure-line' && tool !== 'measure-area') return null;
 
   return (
@@ -43,19 +35,6 @@ export function MeasureBar() {
             {label}
           </button>
         ))}
-        {heightsAt && tool === 'measure-line' && line && (
-          <button
-            type="button"
-            aria-pressed={profile}
-            onClick={() => setProfile(!profile)}
-            className={`flex min-h-9 items-center gap-1.5 rounded-xl px-3 text-sm transition ${
-              profile ? 'bg-[var(--accent)] text-[var(--on-accent)]' : 'hover:bg-[var(--hover)]'
-            }`}
-          >
-            <Mountain className="h-4 w-4" aria-hidden="true" />
-            {t('measure.profile')}
-          </button>
-        )}
         <button type="button" onClick={clear} className="flex min-h-9 items-center gap-1.5 rounded-xl px-3 text-sm hover:bg-[var(--hover)]">
           <Trash2 className="h-4 w-4" aria-hidden="true" />
           {t('measure.clear')}
@@ -73,7 +52,6 @@ export function MeasureBar() {
       <p role="status" className="px-2 pt-1 text-sm font-medium empty:hidden">
         {result && t('measure.result', { result })}
       </p>
-      {profile && heightsAt && tool === 'measure-line' && line && <TerrainProfile line={line} heightsAt={heightsAt} />}
     </section>
   );
 }

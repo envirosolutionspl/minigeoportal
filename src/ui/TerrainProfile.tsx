@@ -12,7 +12,7 @@ const H = 90;
 type State = { status: 'loading' } | { status: 'done'; profile: Profile | undefined } | { status: 'error' };
 
 /**
- * The profile of the terrain along a measured line: a chart of the height over the distance and
+ * The profile of the terrain along a drawn line: a chart of the height over the distance and
  * a summary in words (the range of heights, the climb and descent, the steepest slope), which is
  * what screen readers get. A new line asks again; a line left before its answer is not waited for.
  */
@@ -35,13 +35,13 @@ export function TerrainProfile({ line, heightsAt }: { line: [number, number][]; 
   if (state.status === 'loading') {
     return (
       <p className="flex items-center gap-1.5 px-2 pt-2 text-xs text-[var(--muted)]">
-        <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> {t('measure.profileLoading')}
+        <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> {t('profile.loading')}
       </p>
     );
   }
-  if (state.status === 'error') return <p className="px-2 pt-2 text-xs text-[var(--muted)]">{t('measure.profileError')}</p>;
+  if (state.status === 'error') return <p className="px-2 pt-2 text-xs text-[var(--muted)]">{t('profile.error')}</p>;
   const { profile } = state;
-  if (!profile) return <p className="px-2 pt-2 text-xs text-[var(--muted)]">{t('measure.profileNone')}</p>;
+  if (!profile) return <p className="px-2 pt-2 text-xs text-[var(--muted)]">{t('profile.none')}</p>;
 
   // A flat line still gets a metre of room above and below.
   const span = Math.max(profile.max - profile.min, 2);
@@ -72,14 +72,14 @@ export function TerrainProfile({ line, heightsAt }: { line: [number, number][]; 
         </div>
       </div>
       <figcaption className="pt-1 text-xs">
-        {t('measure.profileSummary', {
+        {t('profile.summary', {
           min: heightText(profile.min),
           max: heightText(profile.max),
           ascent: heightText(profile.ascent),
           descent: heightText(profile.descent),
           slope: percentText(profile.slope),
         })}
-        {profile.missing > 0 && ` ${t('measure.profilePartial')}`}
+        {profile.missing > 0 && ` ${t('profile.partial')}`}
       </figcaption>
     </figure>
   );

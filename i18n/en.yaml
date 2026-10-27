@@ -36,6 +36,7 @@ tools:
   locateBlocked: Location is blocked for this site. Allow it by hand in the browser's settings (the icon beside the site's address).
   locateFailed: Your position could not be found. Try again in a moment.
   measure: Measure distance and area
+  profile: Terrain profile
   link: Copy a link to this map view
   linkCopied: Link to this map view copied.
   print: Print the map
@@ -140,12 +141,16 @@ measure:
   hint: Click the next points on the map, a double click ends the measurement. With the keyboard, Enter adds the point in the middle of the map and a second Enter there ends it. Esc cancels the shape being drawn.
   result: 'Result: {result}'
   perimeter: perimeter {length}
-  profile: Terrain profile
-  profileLoading: Loading the heights of the terrain…
-  profileError: The heights of the terrain could not be loaded.
-  profileNone: No heights of the terrain along this line.
-  profilePartial: The terrain model has no heights for part of the line (e.g. abroad).
-  profileSummary: 'Height from {min} to {max} above sea level. Up {ascent}, down {descent}. Steepest slope {slope}.'
+
+profile:
+  title: Terrain profile
+  hint: Click the points of a line on the map, a double click ends it. A new line replaces the last one. With the keyboard, Enter adds the point in the middle of the map and a second Enter there ends it. Esc cancels the line being drawn.
+  end: Close the terrain profile
+  loading: Loading the heights of the terrain…
+  error: The heights of the terrain could not be loaded.
+  none: No heights of the terrain along this line.
+  partial: The terrain model has no heights for part of the line (e.g. abroad).
+  summary: 'Height from {min} to {max} above sea level. Up {ascent}, down {descent}. Steepest slope {slope}.'
 
 time:
   tool: Time travel

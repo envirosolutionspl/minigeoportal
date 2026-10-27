@@ -31,7 +31,7 @@ modules:
     ortho: { service: orto, history: orto-archiwalna } # data zdjęcia w klikniętym miejscu i archiwum zdjęć
     topo: { history: mapy-dawne } # lata arkuszy map topograficznych w podróży w czasie
     parcelReport: true # link do raportu o działce w geoportal.gov.pl
-    elevation: true # wysokość terenu w panelu miejsca i profil zmierzonej linii
+    elevation: true # wysokość terenu w panelu miejsca i narzędzie „Profil terenu”
 ```
 
 Działa tylko w PL-1992: konfiguracja jest odrzucana, gdy moduł jest włączony przy innym `projection.code`.
@@ -41,7 +41,7 @@ Działa tylko w PL-1992: konfiguracja jest odrzucana, gdy moduł jest włączony
 - **ortho**: data zdjęcia pod ortofotomapą i link do pobrania arkusza. `service` to usługa kafli z `map.yaml`, która pokazuje zdjęcia: data pojawia się, gdy na ekranie jest rysowany przez nią podkład (domyślnie `orto`; `false` wyłącza tę część). `history` to warstwa z `layers.yaml` pokazująca archiwum tych zdjęć (blok `time`): gdy `map.yaml` wskazuje ją w `timeTravel`, podróż w czasie oferuje tylko daty, z których skorowidz zna zdjęcia w środku mapy, a panel miejsca liczy zdjęcia z archiwum i prowadzi do podróży.
 - **topo**: `history` to warstwa z `layers.yaml` (seria edycji) ze skanami dawnych map topograficznych. Gdy `map.yaml` wskazuje ją w `timeTravel`, podróż w czasie pyta skorowidz map topograficznych o arkusze w środku mapy i oferuje ich lata (pole „aktualność kartograficzna”: rok, na który aktualna jest treść mapy, a nie data skanu ani nazwa układu), a każdy rok rysuje własne arkusze. Bez tej części suwak ma edycje serii z `layers.yaml` (układy współrzędnych, które nie są datami). `false` wyłącza tę część.
 - **parcelReport**: link w panelu informacji o miejscu do raportu o działce w geoportal.gov.pl.
-- **elevation**: wysokość terenu z numerycznego modelu terenu GUGiK (NMT, siatka 1 m, usługa `services.gugik.gov.pl/nmt`), o którą przeglądarka pyta bezpośrednio. Panel miejsca podaje wysokość klikniętego punktu pod współrzędnymi, a pasek pomiaru po zmierzeniu odległości ma przycisk „Profil terenu”: wykres wysokości wzdłuż ostatniej zmierzonej linii (do 101 punktów, nie gęściej niż co metr) i podsumowanie (zakres wysokości, suma podejść i zejść, największe nachylenie między sąsiednimi punktami). Tam, gdzie model nie ma danych (za granicą, na morzu), wiersza nie ma, a profil pomija takie punkty.
+- **elevation**: wysokość terenu z numerycznego modelu terenu GUGiK (NMT, siatka 1 m, usługa `services.gugik.gov.pl/nmt`), o którą przeglądarka pyta bezpośrednio. Panel miejsca podaje wysokość klikniętego punktu pod współrzędnymi, a narzędzie „Profil terenu” (na komputerze przycisk pod pomiarem, na telefonie pozycja w „Więcej”) rysuje linię na mapie tak jak pomiar odległości i pokazuje wykres wysokości wzdłuż niej (do 101 punktów, nie gęściej niż co metr) i podsumowanie (zakres wysokości, suma podejść i zejść, największe nachylenie między sąsiednimi punktami). Nowa linia zastępuje poprzednią, a zamknięcie narzędzia usuwa ją z mapy. Tam, gdzie model nie ma danych (za granicą, na morzu), wiersza nie ma, a profil pomija takie punkty.
 
 Wyszukiwarka GUGiK (`search.provider: gugik`) i wyszukiwarka działek (`search.parcel`) też wymagają modułu. Bez niego serwer nie ma jego tras, a strona nie łączy się bezpośrednio z żadnym serwerem GUGiK.
 

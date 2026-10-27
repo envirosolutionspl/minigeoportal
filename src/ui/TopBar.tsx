@@ -30,7 +30,7 @@ import { openPrint } from '@/map/print';
 import { linkFor } from '@/state/url';
 import { APP_NAME, BrandMark, Wordmark } from './Brand';
 import { useWelcome } from './WelcomeDialog';
-import { searchTool } from '@/modules';
+import { heightsAt, searchTool } from '@/modules';
 import { PROJECTION, zoomForScale } from '@/map/projection';
 import { DisplayMenu } from './DisplayMenu';
 import { useNotice } from './Notice';
@@ -86,6 +86,7 @@ export function TopBar() {
   const setTool = useMapStore((m) => m.setTool);
   const measuring = tool === 'measure-line' || tool === 'measure-area';
   const toggleTime = () => setTool(tool === 'time' ? 'none' : 'time');
+  const toggleProfile = () => setTool(tool === 'profile' ? 'none' : 'profile');
   /** The time view, where map.yaml sets one up. */
   const timeTravel = config.map.timeTravel !== undefined;
   /** Message after copying the link; read out by screen readers. */
@@ -359,6 +360,11 @@ export function TopBar() {
         <IconButton className="phone:hidden" label={t('tools.measure')} active={measuring} onClick={toggleMeasure}>
           <Ruler className="h-5 w-5" />
         </IconButton>
+        {heightsAt && (
+          <IconButton className="phone:hidden" label={t('tools.profile')} active={tool === 'profile'} onClick={toggleProfile}>
+            <Mountain className="h-5 w-5" />
+          </IconButton>
+        )}
         {timeTravel && (
           <IconButton className="phone:hidden" label={t('time.tool')} active={tool === 'time'} onClick={toggleTime}>
             <History className="h-5 w-5" />
@@ -381,6 +387,7 @@ export function TopBar() {
         items={[
           ...(timeTravel ? [{ label: t('time.tool'), icon: History, active: tool === 'time', onClick: toggleTime }] : []),
           { label: t('tools.measure'), icon: Ruler, active: measuring, onClick: toggleMeasure },
+          ...(heightsAt ? [{ label: t('tools.profile'), icon: Mountain, active: tool === 'profile', onClick: toggleProfile }] : []),
           { label: t('tools.link'), icon: Link2, onClick: () => void copyLink() },
           // No printing on a phone: the printed frame and the paper cannot be set well on its screen.
           { label: config.map.view.homeLabel, icon: Fullscreen, onClick: goHome },

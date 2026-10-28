@@ -75,7 +75,7 @@ describe('parseFeatureInfo', () => {
     ]);
   });
 
-  it('treats empty bodies, unpublished layers and pages without tables as "no data"', () => {
+  it('treats empty bodies, unpublished layers and pages without labelled values as "no data"', () => {
     expect(parseFeatureInfo('', 'text/html')).toEqual([]);
     expect(
       parseFeatureInfo(
@@ -99,6 +99,118 @@ describe('parseFeatureInfo', () => {
       'text/html',
     );
     expect(record.fields[0].value).toBe('bold text');
+  });
+});
+
+/** Navigation warnings (BHMW), as returned 2026-10-28: GUGiK's page template of lists in folded sections. */
+const BHMW_HTML = `<html><head><style>li { padding: 7px 0 }</style></head><body><h1>Dane o ostrzeżeniach nawigacyjnych</h1><hr>
+<h2>Dane dla wybranej lokalizacji</h2><div class="accordion"><button class="accordion-header"><p><span>Ostrzeżenie nawigacyjne</span><br><span>276/2026</span></p><span class="arrow-unicode">▼</span></button>
+<div class="accordion-content"><h3>Informacje ogólne</h3><ul>
+<li><span class="list-item-value">Numer ostrzeżenia nawigacyjnego</span> 276/2026 </li>
+<li><span class="list-item-value">Rodzaj ostrzeżenia nawigacyjnego</span> NAVTEX </li>
+<li><span class="list-item-value">Uwagi</span> STREFA Nr: 6 ZAMKNIĘTA </li>
+<li><span class="list-item-value">Pobierz plik z treścią ostrzeżenia</span> <a href="https://www.bhmw.gov.pl/documents/7430/ON_PL276_2026.pdf" target="_blank">PDF</a></li>
+</ul></div></div><hr><h2>Pozostałe informacje</h2><ul><li><span class="list-item-value">O usłudze</span> Usługa WMS udostępnia informacje o aktualnych ostrzeżeniach.</li></ul></body></html>`;
+
+/** Electoral districts, as returned 2026-10-28: one-column tables of "label - value" and "label: value" lines. */
+const DISTRICTS_HTML = `<body><table class="styled-table"><thead><tr><th>SEJM - Informacje dodatkowe o okregu wyborczym</th></tr></thead><tbody>
+<tr><td>Numer okregu - 16</td></tr><tr><td>Siedziba Okręgowej Komisji Wyborczej: PŁOCK</td></tr><tr><td>Liczba posłów wybieranych w okręgu wyborczym wynosi : 10</td></tr></tbody></table></body>`;
+
+/** Geographic names to download (PRNG), as returned 2026-10-28: a one-column table of links. */
+const DOWNLOADS_HTML = `<table class="styled-table"><thead><tr><th>Nazwy geograficzne RP</th></tr></thead><tbody>
+<tr><td><a ><a href="https://opendata.geoportal.gov.pl/prng/PRNG_MIEJSCOWOSCI_SHP.zip">Miejscowości SHP</a></td></tr>
+<tr><td ><a href="https://opendata.geoportal.gov.pl/prng/PRNG_MIEJSCOWOSCI_GML.zip">Miejscowości GML</a></td></tr></tbody></table>`;
+
+/** Sections of the map sheets in PUWG 1992, as returned 2026-10-28: bold labels, one sheet per page. */
+const SHEETS_HTML = `<html><head><meta charset="utf-8" /></head><body><b>Godło sekcji:</b> N-34-139-A-a-3<br/> <b>Skala:</b> 1:10000<br/><br/></body></html><html><body><b>Godło sekcji:</b> N-34-139-A-a-3-3<br/> <b>Skala:</b> 1:5000<br/><br/></body></html>`;
+
+/** Monitoring of the county services, as returned 2026-10-28: a bold label to a paragraph, a status written by a script. */
+const MONITORING_HTML = `<body><div class="card"><h3>powiat nowodworski</h3><p><strong>TERYT:</strong> 1414</p>
+<p><strong>Status usługi:</strong> <script>document.write(getStatusBadge(1));</script></p>
+<p><strong>Odpowiedź</strong> 200 - OK, keyword is found</p><p><strong>Ostatnie sprawdzenie:</strong> 2026-10-28 12:48:30</p></div></body>`;
+
+describe('parseFeatureInfo: pages other than tables', () => {
+  it('reads lists of labelled values, titled by their folded section, and leaves out the part about the service', () => {
+    expect(parseFeatureInfo(BHMW_HTML, 'text/html')).toEqual([
+      {
+        title: 'Ostrzeżenie nawigacyjne 276/2026 – Informacje ogólne',
+        fields: [
+          { label: 'Numer ostrzeżenia nawigacyjnego', value: '276/2026' },
+          { label: 'Rodzaj ostrzeżenia nawigacyjnego', value: 'NAVTEX' },
+          { label: 'Uwagi', value: 'STREFA Nr: 6 ZAMKNIĘTA' },
+          { label: 'Pobierz plik z treścią ostrzeżenia', value: 'PDF', href: 'https://www.bhmw.gov.pl/documents/7430/ON_PL276_2026.pdf' },
+        ],
+      },
+    ]);
+    // A page with only the part about the service found nothing at the place.
+    expect(parseFeatureInfo(BHMW_HTML.replace(/<h2>Dane dla[\s\S]*<\/div><\/div>/, ''), 'text/html')).toEqual([]);
+  });
+
+  it('splits the lines of a one-column table into labels and values under its heading', () => {
+    expect(parseFeatureInfo(DISTRICTS_HTML, 'text/html')).toEqual([
+      {
+        title: 'SEJM - Informacje dodatkowe o okregu wyborczym',
+        fields: [
+          { label: 'Numer okregu', value: '16' },
+          { label: 'Siedziba Okręgowej Komisji Wyborczej', value: 'PŁOCK' },
+          { label: 'Liczba posłów wybieranych w okręgu wyborczym wynosi', value: '10' },
+        ],
+      },
+    ]);
+  });
+
+  it('keeps a one-column table of files as links, and a lone ArcGIS attribute under its name', () => {
+    expect(parseFeatureInfo(DOWNLOADS_HTML, 'text/html')).toEqual([
+      {
+        title: 'Nazwy geograficzne RP',
+        fields: [
+          { label: 'Miejscowości SHP', value: 'Otwórz', href: 'https://opendata.geoportal.gov.pl/prng/PRNG_MIEJSCOWOSCI_SHP.zip' },
+          { label: 'Miejscowości GML', value: 'Otwórz', href: 'https://opendata.geoportal.gov.pl/prng/PRNG_MIEJSCOWOSCI_GML.zip' },
+        ],
+      },
+    ]);
+    const ndvi = `<h5>FeatureInfoCollection - layer name: 'Sentinel2020_NDVI'</h5><table border="1"><tbody><tr><th>Stretch.Pixel Value</th></tr><tr><td>0.397531</td></tr></tbody></table>`;
+    expect(parseFeatureInfo(ndvi, 'text/html')).toEqual([
+      { title: 'Sentinel2020_NDVI', fields: [{ label: 'Stretch.Pixel Value', value: '0.397531' }] },
+    ]);
+  });
+
+  it('reads bold labels, one record per repeated set, gathered from paragraphs under their heading', () => {
+    expect(parseFeatureInfo(SHEETS_HTML, 'text/html')).toEqual([
+      {
+        title: undefined,
+        fields: [
+          { label: 'Godło sekcji', value: 'N-34-139-A-a-3' },
+          { label: 'Skala', value: '1:10000' },
+        ],
+      },
+      {
+        title: undefined,
+        fields: [
+          { label: 'Godło sekcji', value: 'N-34-139-A-a-3-3' },
+          { label: 'Skala', value: '1:5000' },
+        ],
+      },
+    ]);
+    // The status a script would write is not there: that line is left out.
+    expect(parseFeatureInfo(MONITORING_HTML, 'text/html')).toEqual([
+      {
+        title: 'powiat nowodworski',
+        fields: [
+          { label: 'TERYT', value: '1414' },
+          { label: 'Odpowiedź', value: '200 - OK, keyword is found' },
+          { label: 'Ostatnie sprawdzenie', value: '2026-10-28 12:48:30' },
+        ],
+      },
+    ]);
+  });
+
+  it('reads pairs of field name and value elements (ArcGIS indexes)', () => {
+    const index = `<div class="gwt-HTML item-content"><span class="item-fieldname">nazwa powiatu</span><span class="item-fieldvalue">płoński</span><span class="item-fieldname">rok ostatniej aktualizacji</span><span class="item-fieldvalue">2023</span></div>`;
+    expect(parseFeatureInfo(index, 'text/html')[0].fields).toEqual([
+      { label: 'nazwa powiatu', value: 'płoński' },
+      { label: 'rok ostatniej aktualizacji', value: '2023' },
+    ]);
   });
 });
 

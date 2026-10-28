@@ -9,8 +9,8 @@ import type { OverlayLayer } from './layers';
 
 /**
  * Point queries through the backend proxy (WMS and WMTS GetFeatureInfo, ArcGIS identify), and
- * a parser that turns the many response formats of GUGiK and local servers (HTML tables,
- * Intergraph XML, MapServer XML, GML, ArcGIS JSON) into plain label/value pairs. Upstream
+ * a parser that turns the many response formats of GUGiK and local servers (HTML tables, lists
+ * and bold labels, Intergraph XML, MapServer XML, GML, ArcGIS JSON) into plain label/value pairs. Upstream
  * markup is never inserted into the page.
  */
 
@@ -224,12 +224,60 @@ function headingBefore(el: Element): string | undefined {
   return undefined;
 }
 
+/** A label and its value on one line: "Numer okregu - 39", "Siedziba komisji: PŁOCK". */
+const LINE = /^(.{1,80}?)\s*(?::|\s-\s)\s*(.+)$/s;
+/** Sections of GUGiK's page templates about the service itself, not the place clicked. */
+const SERVICE_SECTION = /^pozostałe informacje$/i;
+/** Where a value written after a bold label ends. */
+const VALUE_END = /^(BR|B|STRONG|HR|DIV|P|TABLE|UL|OL|H[1-6])$/;
+
+/**
+ * One row of a one-column table: a download link keeps its name, a "label: value" line is split,
+ * anything else is a value under the table's heading.
+ */
+function lineField(cell: Element, heading: string): InfoField | null {
+  const text = clean(cell.textContent);
+  const href = cell.querySelector('a[href]')?.getAttribute('href') ?? '';
+  if (/^https?:/i.test(href) && clean(cell.querySelector('a[href]')?.textContent) === text) {
+    return text ? { label: text, value: t('info.open'), href } : null;
+  }
+  const line = LINE.exec(text);
+  return line ? field(line[1], line[2]) : field(heading, cell);
+}
+
+/** Title of a list: its heading, after the name of the folded section it is in (GUGiK's accordions). */
+function listTitle(list: Element): string | undefined {
+  const header = list.closest('.accordion-content')?.previousElementSibling;
+  // Its pieces are lines (separate spans and breaks): joined with spaces, without the fold arrow.
+  const pieces: string[] = [];
+  if (header)
+    for (const walker = list.ownerDocument.createTreeWalker(header, NodeFilter.SHOW_TEXT); walker.nextNode();)
+      pieces.push(walker.currentNode.textContent ?? '');
+  const section = clean(pieces.join(' ').replace(/[▼▲]/g, ''));
+  return [section, clean(headingBefore(list))].filter(Boolean).join(' – ') || undefined;
+}
+
 function parseHtml(doc: Document): InfoRecord[] {
   const records: InfoRecord[] = [];
   for (const table of doc.querySelectorAll('table')) {
     const rows = [...table.querySelectorAll('tr')];
     const header = rows[0] ? [...rows[0].querySelectorAll('th')] : [];
     const title = headingBefore(table);
+    const cells = rows.map((row) => [...row.querySelectorAll('th, td')]);
+    if (cells.every((c) => c.length <= 1)) {
+      // One-column table: a heading over lines (district facts, files to download), or ArcGIS's
+      // one attribute (a pixel value) under its name.
+      const head = header.length === 1 && cells[0].length === 1 ? clean(header[0].textContent) : '';
+      const lines = (head ? cells.slice(1) : cells).flat();
+      if (head && lines.length === 1) push(records, title, [field(head, lines[0])]);
+      else
+        push(
+          records,
+          head || title,
+          lines.map((cell) => lineField(cell, head || clean(title))),
+        );
+      continue;
+    }
     if (header.length > 1 && rows.length > 1) {
       // Column table: one record per data row.
       for (const row of rows.slice(1)) {
@@ -252,6 +300,48 @@ function parseHtml(doc: Document): InfoRecord[] {
       );
     }
   }
+  // Lists of "<span>label</span> value" (GUGiK's own page templates: BHMW, NFZ, air quality).
+  for (const list of doc.querySelectorAll('ul, ol')) {
+    if (SERVICE_SECTION.test(clean(headingBefore(list)))) continue;
+    const fields = [...list.children].map((item) => {
+      const label = item.firstElementChild;
+      if (item.tagName !== 'LI' || !label?.matches('span, b, strong') || !clean(item.textContent).startsWith(clean(label.textContent))) {
+        return null;
+      }
+      const value = item.cloneNode(true) as Element;
+      value.firstElementChild!.remove();
+      return field(label.textContent ?? '', value);
+    });
+    push(records, listTitle(list), fields);
+  }
+  // Pairs of field name and value elements (ArcGIS indexes: "item-fieldname", "item-fieldvalue").
+  const pairs = new Map<Element, (InfoField | null)[]>();
+  for (const name of doc.querySelectorAll('[class*="fieldname"]')) {
+    const value = name.nextElementSibling;
+    if (!name.parentElement || !value?.className.includes('fieldvalue')) continue;
+    pairs.set(name.parentElement, [...(pairs.get(name.parentElement) ?? []), field(name.textContent ?? '', value)]);
+  }
+  for (const [parent, fields] of pairs) push(records, headingBefore(parent), fields);
+  // "<b>Label:</b> value<br>" lines (MapServer templates), also one to a paragraph, gathered by
+  // the box they are in under its heading; a label met again starts a new record.
+  const lines = new Map<Element, { title?: string; fields: InfoField[] }[]>();
+  for (const bold of doc.querySelectorAll('b, strong')) {
+    const line = bold.parentElement?.tagName === 'P' ? bold.parentElement : bold;
+    const box = line.parentElement;
+    if (!box || bold.closest('table, li, button, h1, h2, h3, h4, h5, h6, [class*="fieldname"]')) continue;
+    const value = doc.createElement('span');
+    for (let n = bold.nextSibling; n && !(n.nodeType === Node.ELEMENT_NODE && VALUE_END.test((n as Element).tagName)); n = n.nextSibling) {
+      value.append(n.cloneNode(true));
+    }
+    const f = field(clean(bold.textContent).replace(/:$/, ''), value);
+    if (!f) continue;
+    const groups = lines.get(box) ?? [];
+    lines.set(box, groups);
+    const last = groups[groups.length - 1];
+    if (last && !last.fields.some((g) => g.label === f.label)) last.fields.push(f);
+    else groups.push({ title: headingBefore(line), fields: [f] });
+  }
+  for (const groups of lines.values()) for (const { title, fields } of groups) push(records, title, fields);
   return records;
 }
 
@@ -329,6 +419,6 @@ function parseAny(body: string, contentType: string): InfoRecord[] {
     const doc = new DOMParser().parseFromString(body, 'application/xml');
     if (!doc.querySelector('parsererror')) return parseXml(doc);
   }
-  // HTML without tables is a server's own page (help text, empty templates), not feature data.
+  // HTML with no labelled values is a server's own page (help text, empty templates), not feature data.
   return parseHtml(parseHtmlFragment(body));
 }

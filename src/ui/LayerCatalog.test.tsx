@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { LayerCatalog } from './LayerCatalog';
 import { useMapStore } from '@/state/store';
@@ -100,12 +100,17 @@ describe('LayerCatalog', () => {
     expect(listed).toEqual(['Archeologia', 'Rejestr zabytków nieruchomych']);
   });
 
-  it('puts focus on its heading when it opens, not on the search field', () => {
+  it('puts focus on its heading when it opens, not on the search field, without scrolling the app', () => {
     useMapStore.setState({ panel: 'none' });
     render(<LayerCatalog />);
     expect(document.activeElement).toBe(document.body);
+    const focus = vi.spyOn(HTMLElement.prototype, 'focus');
     act(() => useMapStore.getState().setPanel('catalog'));
     expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Warstwy' }));
+    // The panel still slides in from below the screen: scrolling to its heading would shift the
+    // whole app and leave the list at half the screen on a phone.
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+    focus.mockRestore();
   });
 
   it('gives the close button, the chevrons and the topic chips room for a finger on a phone', () => {

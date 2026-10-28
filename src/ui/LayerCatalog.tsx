@@ -85,11 +85,13 @@ export function LayerCatalog() {
 
   // The geoportal list (gugik module) loads when the panel is first opened; our own layers work without it.
   // Focus goes to the heading, so keyboards and screen readers are in the panel: not to the search
-  // field, which would raise the phone's keyboard over the list.
+  // field, which would raise the phone's keyboard over the list. Without scrolling: the panel is
+  // still sliding in from below the screen, and the browser would scroll the app's box (hidden
+  // overflow scrolls too) to bring the heading in, leaving the list at half the screen.
   useEffect(() => {
     if (panel !== 'catalog') return;
     if (config.modules.gugik?.catalog) void useCatalog.getState().load();
-    heading.current?.focus();
+    heading.current?.focus({ preventScroll: true });
   }, [panel]);
 
   /** Search text of every geoportal layer, normalized once instead of on each keystroke. */

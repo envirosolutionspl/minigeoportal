@@ -32,6 +32,7 @@ _A simple, fast web map for public map services. Documentation in English: [docs
 | Wyszukiwarka adresów                    | <img src="docs/img/komputer-wyszukiwarka-adresow.webp" width="520"> | <img src="docs/img/telefon-wyszukiwarka-adresow.webp" width="180"> |
 | Wyszukiwarka działek                    | <img src="docs/img/komputer-wyszukiwarka-dzialek.webp" width="520"> | <img src="docs/img/telefon-wyszukiwarka-dzialek.webp" width="180"> |
 | Znaleziona działka                      | <img src="docs/img/komputer-znaleziona-dzialka.webp" width="520">   | <img src="docs/img/telefon-znaleziona-dzialka.webp" width="180">   |
+| Selekcja działek i ich powierzchnia     | <img src="docs/img/komputer-selekcja-dzialek.webp" width="520">     | <img src="docs/img/telefon-selekcja-dzialek.webp" width="180">     |
 | Informacje o miejscu, raport o działce  | <img src="docs/img/komputer-raport-o-dzialce.webp" width="520">     | <img src="docs/img/telefon-raport-o-dzialce.webp" width="180">     |
 | Menu kontekstowe                        | <img src="docs/img/komputer-menu-kontekstowe.webp" width="520">     | <img src="docs/img/telefon-menu-kontekstowe.webp" width="180">     |
 | Lista warstw                            | <img src="docs/img/komputer-warstwy.webp" width="520">              | <img src="docs/img/telefon-warstwy.webp" width="180">              |

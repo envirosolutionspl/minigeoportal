@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { MapView } from './map/MapView';
 import { TopBar } from './ui/TopBar';
 import { LayerCatalog } from './ui/LayerCatalog';
@@ -18,10 +18,13 @@ import { useInfoStore } from './state/info';
 import { APP_NAME, AuthorCredit } from './ui/Brand';
 import { t } from '@/i18n';
 import { useMapStore } from './state/store';
+import { usePinnedPage } from './ui/usePinnedPage';
 
 export default function App() {
   const panel = useMapStore((m) => m.panel);
   const tool = useMapStore((m) => m.tool);
+  const page = useRef<HTMLDivElement>(null);
+  usePinnedPage(page);
 
   // Escape ends the print tool and the parcel selection, else (while not measuring: measure.ts has its own Escape) closes
   // the place panel, then the layer list, then the time view; open dialogs close themselves.
@@ -43,6 +46,7 @@ export default function App() {
   // Phones held sideways: the app keeps clear of the notch (viewport-fit=cover lets the page under it).
   return (
     <div
+      ref={page}
       data-panel={panel}
       data-tool={tool}
       className="relative mr-[env(safe-area-inset-right)] ml-[env(safe-area-inset-left)] h-dvh overflow-hidden"

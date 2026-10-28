@@ -366,6 +366,15 @@ html[data-printing] #print-sheet {
 .skip-links a:focus {
   top: 0.75rem;
 }
+/* iOS Safari zooms into a field whose text is under 16 px and stays zoomed once it is left,
+   cutting off the controls at the edges of the screen: on touch screens fields get 16 px. */
+@media (pointer: coarse) {
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']),
+  select,
+  textarea {
+    font-size: max(16px, 1rem);
+  }
+}
 /* In the base layer, so fields that draw their own focus ring (outline-none) can opt out. */
 @layer base {
   :focus-visible {

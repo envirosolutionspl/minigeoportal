@@ -65,11 +65,12 @@ tools:
 
 parcels:
   title: Parcel selection
-  hint: Click a parcel on the map to add it to the selection, click a selected one to remove it. With the keyboard, Enter does so in the middle of the map. Parcels can also be added from the search. At most {max} parcels; the view's link carries the selection.
+  hint: 'Click a parcel on the map and it joins the list below; click it again to remove it. You can also add a parcel from the search: find it and choose "Add to the selection". At most {max} parcels. The map''s link keeps the selection.'
+  keys: With the keyboard, Enter adds or removes the parcel in the middle of the map.
   end: Close the parcel selection
   empty: The selection is empty. Click a parcel on the map or find it with the search.
   total: 'Parcels: {count} of {max} · {area} in all'
-  areaSource: Area from the parcel's geometry in ULDK (on the GRS80 ellipsoid), not the land register's area.
+  areaSource: The area is approximate (computed from the parcel's shape) and is not the area in the land register.
   row: 'parcel {number}, precinct {region} · {area}'
   loading: Loading from ULDK…
   looking: Looking for the parcel here…

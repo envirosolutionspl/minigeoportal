@@ -135,6 +135,15 @@ describe('copy link', () => {
   });
 });
 
+describe('the name and mark of the app', () => {
+  it('lead to the start page, without the view, layers or parcels of the link', () => {
+    window.history.replaceState(null, '', '/?x=1&y=2&z=3&l=kieg&dz=141201_1.0001.1');
+    render(<TopBar />);
+    expect(screen.getByRole('link', { name: 'MiniGeoportal: strona główna' }).getAttribute('href')).toBe('/');
+    window.history.replaceState(null, '', '/');
+  });
+});
+
 describe('map tools', () => {
   it('lists the tools from layers at the top to help at the bottom', () => {
     const { container } = render(<TopBar />);

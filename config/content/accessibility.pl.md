@@ -13,13 +13,14 @@ Serwis jest częściowo zgodny z WCAG 2.1 AA z powodu niezgodności i wyłącze�
 - Tab przechodzi między elementami, pierwszy z nich przenosi od razu do mapy lub wyszukiwarki.
 - Na mapie: strzałki przesuwają, plus i minus zmieniają skalę, Enter pokazuje informacje o środku mapy. Gdy warstwa odpowiada dopiero w większej skali, panel mówi od jakiej i przybliża mapę jednym przyciskiem.
 - Pomiar i profil terenu: Enter dodaje punkt w środku mapy, drugi Enter w tym samym miejscu kończy linię, Esc anuluje rysowany kształt.
+- Selekcja działek: Enter dodaje działkę w środku mapy albo usuwa ją, gdy już jest w selekcji; Esc zamyka narzędzie. Działkę dodaje też przycisk „Dodaj do selekcji” po jej wyszukaniu, a usuwa przycisk przy niej na liście.
 - Menu miejsca (kopiowanie współrzędnych, prowadzenie w Google Maps): klawisz menu albo Shift+F10 na mapie otwiera je dla środka mapy, strzałki wybierają pozycję, Esc zamyka. Myszą otwiera je prawy przycisk, na ekranie dotykowym dłuższe przytrzymanie palca.
 - W wyszukiwarce: strzałki wybierają wynik, Enter pokazuje go na mapie, Esc zamyka listę.
 - Esc zamyka okna, panel informacji i listę warstw.
 
 ### Ułatwienia
 
-Przycisk ułatwień w kolumnie narzędzi (na telefonie w menu „Więcej”) powiększa tekst (A, A+, A++) i włącza wysoki kontrast (żółty na czarnym); wybór jest zapamiętywany. Serwis działa przy powiększeniu przeglądarki do 200% i na wąskich ekranach, ma tryb ciemny zgodny z ustawieniem systemu i wyłącza animacje, gdy system prosi o ograniczenie ruchu. Komunikaty o wynikach wyszukiwania, wczytywaniu danych, pomiarach i profilu terenu są odczytywane przez czytniki ekranu.
+Przycisk ułatwień w kolumnie narzędzi (na telefonie w menu „Więcej”) powiększa tekst (A, A+, A++) i włącza wysoki kontrast (żółty na czarnym); wybór jest zapamiętywany. Serwis działa przy powiększeniu przeglądarki do 200% i na wąskich ekranach, ma tryb ciemny zgodny z ustawieniem systemu i wyłącza animacje, gdy system prosi o ograniczenie ruchu. Komunikaty o wynikach wyszukiwania, wczytywaniu danych, pomiarach, profilu terenu i selekcji działek są odczytywane przez czytniki ekranu.
 
 ### Przygotowanie deklaracji
 

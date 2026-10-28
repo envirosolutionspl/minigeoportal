@@ -46,7 +46,7 @@ tools:
   more: Więcej
 
 search:
-  home: '{app}: pokaż cały obszar mapy'
+  home: '{app}: strona główna'
   clear: Wyczyść
   list: Wyniki wyszukiwania
   busy: Szukam…

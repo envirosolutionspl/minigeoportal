@@ -101,6 +101,11 @@ input[type='search']::-webkit-search-cancel-button {
     bottom: calc(11rem + var(--safe-bottom));
   }
 }
+/* Picking parcels for the selection: the cursor over the map is a cross, as a sign that a click adds. */
+[data-tool='parcels'] #map {
+  cursor: crosshair;
+}
+
 /* Middle of the bottom bar (mapStatus.ts): the map scale, always, and the cursor position beside
    it, with a mouse only. Centred, clear of the credits on both sides. */
 .map-status {

@@ -45,7 +45,7 @@ tools:
   more: More
 
 search:
-  home: '{app}: show the whole map area'
+  home: '{app}: start page'
   clear: Clear
   list: Search results
   busy: Searching…

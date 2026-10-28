@@ -47,7 +47,7 @@ describe('ParcelsPanel', () => {
       expect.stringContaining('dz. 2, obręb Mińsk Mazowiecki · 2500 m²'),
       expect.stringContaining('Nie ma jej w ULDK'),
     ]);
-    expect(screen.getByText(/nie pole ewidencyjne/)).toBeTruthy();
+    expect(screen.getByText(/nie odpowiada powierzchni ewidencyjnej/)).toBeTruthy();
   });
 
   it('removes one parcel, clears them all and closes', () => {

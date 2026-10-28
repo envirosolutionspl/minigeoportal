@@ -13,13 +13,14 @@ The service is partially compliant with WCAG 2.1 AA because of the non-complianc
 - Tab moves between elements; the first ones lead straight to the map or the search.
 - On the map: arrow keys move it, plus and minus change the scale, Enter shows information about the middle of the map. When a layer answers only at a larger scale, the panel says from which one and zooms the map with one button.
 - Measuring and the terrain profile: Enter adds a point in the middle of the map, a second Enter at the same place ends the line, Esc cancels the shape being drawn.
+- The parcel selection: Enter adds the parcel in the middle of the map, or removes it when it is in the selection already; Esc closes the tool. The "Add to the selection" button adds a parcel once it is found, and the button beside it in the list removes it.
 - The menu of a place (copying coordinates, directions in Google Maps): the menu key or Shift+F10 on the map opens it for the middle of the map, arrow keys choose, Esc closes. With a mouse the right button opens it, on a touch screen a longer press of the finger.
 - In the search: arrow keys choose a result, Enter shows it on the map, Esc closes the list.
 - Esc closes windows, the place panel and the layer list.
 
 ### Display aids
 
-The display button in the column of tools (in the “More” menu on a phone) makes the text larger (A, A+, A++) and switches on high contrast (yellow on black); the choice is remembered. The service works with the browser zoomed to 200% and on narrow screens, has a dark mode that follows the system setting and turns off animations when the system asks for reduced motion. Messages about search results, loading data, measurements and the terrain profile are read by screen readers.
+The display button in the column of tools (in the “More” menu on a phone) makes the text larger (A, A+, A++) and switches on high contrast (yellow on black); the choice is remembered. The service works with the browser zoomed to 200% and on narrow screens, has a dark mode that follows the system setting and turns off animations when the system asks for reduced motion. Messages about search results, loading data, measurements, the terrain profile and the parcel selection are read by screen readers.
 
 ### Preparation of this statement
 

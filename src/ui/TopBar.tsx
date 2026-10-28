@@ -255,10 +255,10 @@ export function TopBar() {
     <header className="pointer-events-none absolute inset-x-0 top-0 z-[35] flex items-start gap-2 p-3 sm:p-4">
       <div role="search" className="search-box pointer-events-auto relative z-10 w-full max-w-lg">
         <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface)] py-1.5 pr-3 pl-1.5 shadow-lg ring-1 ring-black/5 has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-[var(--accent)]">
-          <button
-            type="button"
-            onClick={goHome}
-            title={config.map.view.homeLabel}
+          {/* The start page: the page without the view in its link, so layers, parcels and dates go too. */}
+          <a
+            href={window.location.pathname}
+            title={t('search.home', { app: APP_NAME })}
             aria-label={t('search.home', { app: APP_NAME })}
             className="flex shrink-0 items-center gap-2 rounded-xl py-0.5 pr-2 pl-0.5 hover:bg-[var(--hover)]"
           >
@@ -266,7 +266,7 @@ export function TopBar() {
             <span className="hidden md:inline">
               <Wordmark />
             </span>
-          </button>
+          </a>
           <span className="h-6 w-px shrink-0 bg-[var(--hover)]" aria-hidden="true" />
           {/* While a service is asked, the magnifier turns: a slow answer is not taken for none. */}
           {busy ? (

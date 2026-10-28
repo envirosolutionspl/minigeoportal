@@ -69,11 +69,12 @@ tools:
 
 parcels:
   title: Selekcja działek
-  hint: Kliknij działkę na mapie, aby dodać ją do selekcji, a kliknij zaznaczoną, aby ją usunąć. Z klawiatury robi to Enter w środku mapy. Działki dodasz też z wyszukiwarki. Najwyżej {max} działek; link do widoku niesie selekcję.
+  hint: 'Kliknij działkę na mapie, a trafi na listę poniżej; kliknij ją ponownie, aby ją usunąć. Działkę dodasz też z wyszukiwarki: znajdź ją i wybierz „Dodaj do selekcji”. Najwyżej {max} działek. Link do mapy zapamiętuje selekcję.'
+  keys: Z klawiatury Enter dodaje albo usuwa działkę w środku mapy.
   end: Zamknij selekcję działek
   empty: Selekcja jest pusta. Kliknij działkę na mapie albo znajdź ją w wyszukiwarce.
   total: 'Działek: {count} z {max} · łącznie {area}'
-  areaSource: Powierzchnia z geometrii działki w ULDK (na elipsoidzie GRS80), nie pole ewidencyjne.
+  areaSource: Powierzchnia jest przybliżona (liczona z kształtu działki) i nie odpowiada powierzchni ewidencyjnej.
   row: 'dz. {number}, obręb {region} · {area}'
   loading: Wczytuję z ULDK…
   looking: Szukam działki w tym miejscu…

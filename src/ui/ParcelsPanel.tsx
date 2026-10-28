@@ -70,7 +70,9 @@ export function ParcelsPanel() {
           <X className="h-4 w-4" />
         </button>
       </header>
-      <p className="px-2 text-xs text-[var(--muted)]">{t('parcels.hint', { max: MAX_PARCELS })}</p>
+      <p className="px-2 text-xs text-[var(--muted)]">
+        {t('parcels.hint', { max: MAX_PARCELS })} <span className="phone:hidden">{t('parcels.keys')}</span>
+      </p>
       <p role="status" className="px-2 pt-1 text-xs empty:hidden">
         {message}
       </p>

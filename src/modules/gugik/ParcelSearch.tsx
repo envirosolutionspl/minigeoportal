@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { create } from 'zustand';
 import { LoaderCircle, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { dictionary, parcelInPrecinct, type DictEntry, type DictLevel } from './dictionaries';
@@ -48,6 +48,11 @@ function useDictionary(level: DictLevel, parent: string | undefined, enabled = t
  * Parcel search for people who know only the parcel number: voivodeship, county,
  * municipality (or city district) and precinct come from lists, as on geoportal.gov.pl.
  */
+/** A parcel number in the land register: a whole number, or two with a slash ("22", "22/1"). */
+const PARCEL_NUMBER = /^\d+(\/\d+)?$/;
+/** What a parcel number is not made of, dropped as it is typed. */
+const NOT_IN_NUMBER = /[^\d/]/g;
+
 export function ParcelSearch({ onClose }: { onClose(): void }) {
   const { choice, set } = useChoice();
   const focusOn = useMapStore((m) => m.focusOn);
@@ -60,9 +65,10 @@ export function ParcelSearch({ onClose }: { onClose(): void }) {
   const obr = useDictionary('obreby', choice.gmi, !!choice.gmi);
   const [hits, setHits] = useState<SearchHit[]>([]);
   const [status, setStatus] = useState<'idle' | 'busy' | 'none' | 'error'>('idle');
+  const id = useId();
 
   const precinct = obr.entries.find((e) => e.id === choice.obr);
-  const ready = !!precinct && choice.number.trim().length > 0;
+  const ready = !!precinct && PARCEL_NUMBER.test(choice.number);
 
   const show = (hit: SearchHit) => {
     focusOn({ wkt: hit.wkt, zoom: zoomForScale(PARCEL_SCALE), persist: true, parcel: hit.id });
@@ -175,14 +181,19 @@ export function ParcelSearch({ onClose }: { onClose(): void }) {
         <Select label={t('parcel.precinct')} value={choice.obr} state={obr} disabled={!choice.gmi} onChange={(v) => set({ obr: v })} />
         <label className="col-span-2 flex flex-col gap-1 text-xs text-[var(--muted)]">
           {t('parcel.number')}
+          {/* Only what a parcel number in the land register is made of: digits, and a slash between two numbers. */}
           <input
             value={choice.number}
-            onChange={(e) => set({ number: e.target.value })}
+            onChange={(e) => set({ number: e.target.value.replace(NOT_IN_NUMBER, '') })}
             placeholder={t('parcel.numberPlaceholder')}
+            aria-describedby={`${id}-number-hint`}
             inputMode="text"
             autoComplete="off"
             className="rounded-xl bg-[var(--field)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--accent)]"
           />
+          <span id={`${id}-number-hint`} className="sr-only">
+            {t('parcel.numberHint')}
+          </span>
         </label>
         <button
           type="submit"

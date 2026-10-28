@@ -48,6 +48,22 @@ describe('ParcelSearch', () => {
     expect(button.disabled).toBe(false);
   });
 
+  it('takes only digits and a slash for the number, and searches only a whole parcel number', async () => {
+    render(<ParcelSearch onClose={() => {}} />);
+    await chooseAll();
+    const field = screen.getByPlaceholderText('np. 22/1') as HTMLInputElement;
+    const button = screen.getByRole('button', { name: 'Szukaj działki' }) as HTMLButtonElement;
+    fireEvent.change(field, { target: { value: 'Yih' } });
+    expect(field.value).toBe('');
+    fireEvent.change(field, { target: { value: '2a2 / 1-' } });
+    expect(field.value).toBe('22/1');
+    expect(button.disabled).toBe(false);
+    fireEvent.change(field, { target: { value: '22/' } });
+    expect(button.disabled).toBe(true);
+    expect(field.getAttribute('aria-describedby')).toBeTruthy();
+    expect(document.getElementById(field.getAttribute('aria-describedby')!)?.textContent).toMatch(/cyfry/);
+  });
+
   it('shows the found parcel on the map, persistently, and folds into a summary', async () => {
     const onClose = vi.fn();
     render(<ParcelSearch onClose={onClose} />);

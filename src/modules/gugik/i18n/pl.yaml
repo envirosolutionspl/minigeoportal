@@ -27,6 +27,7 @@ parcel:
   precinct: Obręb
   number: Numer działki
   numberPlaceholder: np. 22/1
+  numberHint: Numer działki to cyfry, a w numerze z dwóch części ukośnik, np. 22/1. Innych znaków pole nie przyjmuje.
   search: Szukaj działki
   notFound: Nie znaleziono działki {number} w obrębie {precinct}. Sprawdź numer, także zapis z ukośnikiem.
   error: Usługa działek GUGiK nie odpowiada. Spróbuj ponownie za chwilę.

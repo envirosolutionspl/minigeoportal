@@ -27,6 +27,7 @@ parcel:
   precinct: Precinct
   number: Parcel number
   numberPlaceholder: e.g. 22/1
+  numberHint: A parcel number is digits, with a slash in a number of two parts, e.g. 22/1. The field takes no other characters.
   search: Find the parcel
   notFound: Parcel {number} was not found in precinct {precinct}. Check the number, including how it is written with a slash.
   error: The GUGiK parcel service does not answer. Try again in a moment.

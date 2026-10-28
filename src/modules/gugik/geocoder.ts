@@ -286,7 +286,8 @@ async function uldkRows(params: Record<string, string>, signal: AbortSignal): Pr
 export async function findParcels(query: string, signal: AbortSignal): Promise<GugikHit[]> {
   const rows = await uldkRows({ request: 'GetParcelByIdOrNr', id: query, result: 'id,commune,region,parcel,geom_wkt' }, signal);
   return rows.flatMap(([id, commune, region, parcel, wkt]) => {
-    if (!wkt) return [];
+    // A number ULDK cannot read ("Yih") brings back the precinct itself, without a parcel number.
+    if (!wkt || !parcel) return [];
     return [
       {
         kind: 'parcel' as const,

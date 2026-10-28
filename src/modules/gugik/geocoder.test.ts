@@ -197,6 +197,11 @@ describe('findParcels and stripSrid', () => {
     ]);
     expect(stripSrid('SRID=4326;POINT(0 0)')).toBe('POINT(0 0)');
   });
+
+  it('takes no precinct for a parcel: a number ULDK cannot read brings back the precinct, without a number', async () => {
+    stubFetch([['uldk.gugik.gov.pl', '1\n060204_2.0003|Biszcza|Bukowina||SRID=2180;MULTIPOLYGON(((0 0,1 0,1 1,0 0)))\n']]);
+    expect(await findParcels('060204_2.0003.Yih', signal())).toEqual([]);
+  });
 });
 
 const FTS_GORZOW = {

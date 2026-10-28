@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, useRef } from 'react';
 import { Download, Fullscreen, LoaderCircle, SquareDashedMousePointer, Trash2, X } from 'lucide-react';
 import { parcelLookup } from '@/modules';
 import { useParcelStore, type ParcelEntry } from '@/state/parcels';
@@ -38,6 +38,7 @@ export function ParcelsPanel() {
   const message = useParcelStore((s) => s.message);
   const { setTool, removeParcel, clearParcels, focusOn } = useMapStore.getState();
   const id = useId();
+  const panel = useRef<HTMLElement>(null);
   if (!open || !parcelLookup) return null;
 
   const found = ids.flatMap((p) => {
@@ -45,13 +46,24 @@ export function ParcelsPanel() {
     return entry?.status === 'ready' ? [{ parcel: entry.parcel, geometry: entry.geometry, area: entry.area } satisfies ExportedParcel] : [];
   });
   const total = found.reduce((sum, p) => sum + p.area, 0);
+  /**
+   * The parcels in the part of the map this panel leaves free: right of it on a computer, above it
+   * on a phone, under the search bar and left of the tools.
+   */
   const showAll = () => {
     const extent = parcelsExtent();
-    if (extent) focusOn({ extent: extent as [number, number, number, number], zoom: 0 });
+    const box = panel.current?.getBoundingClientRect();
+    if (!extent || !box) return;
+    const sheet = box.top > window.innerHeight / 3;
+    const padding: [number, number, number, number] = sheet
+      ? [88, 72, window.innerHeight - box.top + 16, 16]
+      : [88, 80, 48, box.right + 24];
+    focusOn({ extent: extent as [number, number, number, number], zoom: 0, padding });
   };
 
   return (
     <section
+      ref={panel}
       aria-labelledby={`${id}-title`}
       className="pointer-events-auto absolute inset-x-0 bottom-0 z-30 max-h-[60dvh] overflow-y-auto rounded-t-3xl bg-[var(--surface)] p-2 pb-[calc(0.5rem+var(--safe-bottom))] shadow-2xl ring-1 ring-black/5
         sm:inset-x-auto sm:top-[4.75rem] sm:bottom-auto sm:left-4 sm:max-h-[calc(100dvh-7rem)] sm:w-lg sm:rounded-2xl sm:pb-2 sm:shadow-lg"

@@ -61,7 +61,7 @@ export function attachFocus(map: Map): () => void {
   const show = (target: FocusTarget) => {
     // Showing an area or a scale keeps the current outline, e.g. a found parcel.
     if (target.extent) {
-      view.fit(target.extent, { padding: [24, 24, 24, 24], duration: duration(700) });
+      view.fit(target.extent, { padding: target.padding ?? [24, 24, 24, 24], duration: duration(700) });
       return;
     }
     if (target.scale) {

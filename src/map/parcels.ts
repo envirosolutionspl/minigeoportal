@@ -21,7 +21,7 @@ const styleFor = (n: number) => [
     fill: new Fill({ color: translucent(SELECTION, 0.15) }),
     text: new Text({
       text: String(n),
-      font: 'bold 14px system-ui, sans-serif',
+      font: 'bold 16px system-ui, sans-serif',
       fill: new Fill({ color: '#ffffff' }),
       stroke: new Stroke({ color: SELECTION, width: 4 }),
       overflow: true,

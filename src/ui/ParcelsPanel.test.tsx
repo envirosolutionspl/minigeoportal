@@ -67,6 +67,8 @@ describe('ParcelsPanel', () => {
     expect((files.getByRole('button', { name: 'Pobierz selekcję jako CSV' }) as HTMLButtonElement).disabled).toBe(false);
     fireEvent.click(screen.getByRole('button', { name: 'Pokaż wszystkie' }));
     expect(useMapStore.getState().focus?.extent).toEqual([675000, 482000, 675100, 482100]);
+    // Clear of the panel: on a computer the parcels go right of it (here it has no size).
+    expect(useMapStore.getState().focus?.padding).toEqual([88, 80, 48, 24]);
     act(() => useParcelStore.setState({ entries: { '141201_1.0001.3': { status: 'missing' } } }));
     expect((files.getByRole('button', { name: 'Pobierz selekcję jako CSV' }) as HTMLButtonElement).disabled).toBe(true);
   });

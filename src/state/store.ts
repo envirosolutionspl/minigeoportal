@@ -31,6 +31,8 @@ export interface FocusTarget {
   center?: [number, number];
   /** Area to show without outlining anything (the whole country). */
   extent?: [number, number, number, number];
+  /** Pixels the area keeps from the map's edges (top, right, bottom, left), clear of panels over the map. */
+  padding?: [number, number, number, number];
   /** Scale denominator to zoom to at the current centre, without outlining anything. */
   scale?: number;
   /** Zoom for points; the closest zoom when fitting a geometry. */

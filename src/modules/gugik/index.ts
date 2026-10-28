@@ -37,6 +37,14 @@ export const infoHeader = [
   ...(info && gugik?.parcelReport ? [lazy(() => info().then((m) => ({ default: m.ParcelReportLink })))] : []),
 ];
 
+/** Parcels by id and at a point from ULDK, for the parcel selection, with the parcel search (search.parcel). */
+export const parcels = config.search.parcel
+  ? {
+      byId: (id: string, signal: AbortSignal) => import('./geocoder').then((m) => m.parcelById(id, signal)),
+      at: (point: [number, number], signal: AbortSignal) => import('./geocoder').then((m) => m.parcelAt(point, signal)),
+    }
+  : undefined;
+
 /** Heights of the terrain at points of the map, from the elevation model (elevation). */
 export const heightsAt = gugik?.elevation
   ? (points: [number, number][], signal: AbortSignal) => import('./elevation').then((m) => m.heightsAt(points, signal))

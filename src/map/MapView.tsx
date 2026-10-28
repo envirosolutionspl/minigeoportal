@@ -12,6 +12,7 @@ import { hasInitialView, overlayOpacity, timeShown, useMapStore } from '@/state/
 import { attachFeatureInfo } from './featureInfoClick';
 import { attachFocus } from './focus';
 import { attachMeasure } from './measure';
+import { attachParcels } from './parcels';
 import { attachPrint } from './print';
 import { attachContextMenu } from './contextMenu';
 import { attachTimeTravel } from './timeTravel';
@@ -148,6 +149,7 @@ export function MapView() {
     const detachFeatureInfo = attachFeatureInfo(map, () => [...overlays.values()]);
     const detachFocus = attachFocus(map);
     const detachMeasure = attachMeasure(map);
+    const detachParcels = attachParcels(map);
     const detachPrint = attachPrint(map);
     const detachContextMenu = attachContextMenu(map);
     const detachTimeTravel = attachTimeTravel(map);
@@ -158,6 +160,7 @@ export function MapView() {
       detachContextMenu();
       detachPrint();
       detachMeasure();
+      detachParcels();
       detachFocus();
       detachFeatureInfo();
       unsubscribeState();

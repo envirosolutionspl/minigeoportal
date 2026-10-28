@@ -18,6 +18,7 @@ import {
   Ruler,
   Search,
   SquareDashed,
+  SquareDashedMousePointer,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -31,7 +32,8 @@ import { openPrint } from '@/map/print';
 import { linkFor } from '@/state/url';
 import { APP_NAME, BrandMark, Wordmark } from './Brand';
 import { useWelcome } from './WelcomeDialog';
-import { heightsAt, searchTool } from '@/modules';
+import { heightsAt, parcelLookup, searchTool } from '@/modules';
+import { addParcel } from '@/state/parcels';
 import { PROJECTION, zoomForScale } from '@/map/projection';
 import { DisplayMenu } from './DisplayMenu';
 import { useNotice } from './Notice';
@@ -96,6 +98,10 @@ export function TopBar() {
   const measuring = tool === 'measure-line' || tool === 'measure-area';
   const toggleTime = () => setTool(tool === 'time' ? 'none' : 'time');
   const toggleProfile = () => setTool(tool === 'profile' ? 'none' : 'profile');
+  const toggleParcels = () => setTool(tool === 'parcels' ? 'none' : 'parcels');
+  /** A parcel the search found, which the selection can take. */
+  const foundParcel = useMapStore((m) => (parcelLookup ? m.focus?.parcel : undefined));
+  const inSelection = useMapStore((m) => foundParcel !== undefined && m.parcels.includes(foundParcel));
   /** The time view, where map.yaml sets one up. */
   const timeTravel = config.map.timeTravel !== undefined;
   /** Message after copying the link; read out by screen readers. */
@@ -174,7 +180,7 @@ export function TopBar() {
     // A later pick wins, even when its outline arrives first.
     if (mine !== picked.current) return;
     const zoom = zoomForScale(hit.scale ?? SCALE[hit.kind]);
-    focusOn(hit.extent && !wkt ? { extent: hit.extent, zoom } : { wkt, center: hit.center, zoom, persist });
+    focusOn(hit.extent && !wkt ? { extent: hit.extent, zoom } : { wkt, center: hit.center, zoom, persist, parcel: hit.id });
   };
 
   const clear = () => {
@@ -230,6 +236,9 @@ export function TopBar() {
   const tools: MapTool[] = [
     { label: t('tools.measure'), icon: Ruler, active: measuring, onClick: toggleMeasure },
     ...(heightsAt ? [{ label: t('tools.profile'), icon: Mountain, active: tool === 'profile', onClick: toggleProfile }] : []),
+    ...(parcelLookup
+      ? [{ label: t('tools.parcels'), icon: SquareDashedMousePointer, active: tool === 'parcels', onClick: toggleParcels }]
+      : []),
     ...(timeTravel ? [{ label: t('time.tool'), icon: History, active: tool === 'time', onClick: toggleTime }] : []),
     { label: t('tools.link'), icon: Link2, onClick: () => void copyLink() },
     // No printing on a phone: the printed frame and the paper cannot be set well on its screen.
@@ -384,6 +393,20 @@ export function TopBar() {
             </li>
           )}
         </ul>
+        {/* After a parcel is found: it can join the selection, or the selection shows it is there. */}
+        {foundParcel && tool === 'none' && !listOpen && !toolOpen && (
+          <button
+            type="button"
+            onClick={() => {
+              if (!inSelection) addParcel(foundParcel);
+              setTool('parcels');
+            }}
+            className="mt-2 inline-flex min-h-9 items-center gap-1.5 rounded-2xl bg-[var(--surface)] px-3 text-sm font-medium text-[var(--accent)] shadow-lg ring-1 ring-black/5 hover:bg-[var(--hover)]"
+          >
+            <SquareDashedMousePointer className="h-4 w-4" aria-hidden="true" />
+            {inSelection ? t('parcels.open') : t('parcels.add')}
+          </button>
+        )}
         <p role="status" className="sr-only">
           {toolOpen ? '' : busy ? t('search.busy') : announce}
         </p>

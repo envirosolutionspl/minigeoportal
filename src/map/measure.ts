@@ -5,7 +5,8 @@ import VectorSource from 'ol/source/Vector';
 import Overlay from 'ol/Overlay';
 import type Feature from 'ol/Feature';
 import { LineString, Polygon, type Geometry } from 'ol/geom';
-import { getArea, getLength } from 'ol/sphere';
+import { getLength } from 'ol/sphere';
+import { areaOf } from './area';
 import { unByKey } from 'ol/Observable';
 import type { EventsKey } from 'ol/events';
 import { Circle, Fill, Stroke, Style } from 'ol/style';
@@ -23,10 +24,13 @@ const STYLE = new Style({
   image: new Circle({ radius: 5, fill: new Fill({ color: '#ffffff' }), stroke: new Stroke({ color: ACCENT, width: 2 }) }),
 });
 
-/** Measurement on the sphere (OpenLayers' sphere), so results do not depend on the scale distortion of the map's projection. */
+/**
+ * Measurement on the sphere (OpenLayers' sphere), so results do not depend on the scale distortion of
+ * the map's projection; areas on the sphere that fits the ellipsoid there (area.ts), as parcels have them.
+ */
 export function measure(geometry: Geometry): string | undefined {
   if (geometry instanceof Polygon) {
-    const area = getArea(geometry, { projection: PROJECTION });
+    const area = areaOf(geometry);
     const perimeter = getLength(new LineString(geometry.getLinearRing(0)!.getCoordinates()), { projection: PROJECTION });
     return `${formatArea(area)}, ${t('measure.perimeter', { length: formatLength(perimeter) })}`;
   }

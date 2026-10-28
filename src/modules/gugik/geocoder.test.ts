@@ -136,6 +136,7 @@ describe('search', () => {
         detail: 'obręb Wiązowna Gminna, gm. Wiązowna · 141708_2.0021.22/1',
         wkt: 'POLYGON((0 0,1 0,1 1,0 0))',
         scale: 500,
+        id: '141708_2.0021.22/1',
       },
     ]);
   });
@@ -192,7 +193,7 @@ describe('findParcels and stripSrid', () => {
   it('drops rows without geometry and strips the SRID prefix', async () => {
     stubFetch([['uldk.gugik.gov.pl', '2\nid1|g|r|1|\nid2|g|r|2|SRID=2180;POINT(1 1)\n']]);
     expect(await findParcels('r 1', signal())).toEqual([
-      { kind: 'parcel', label: 'Działka 2', detail: 'obręb r, gm. g · id2', wkt: 'POINT(1 1)', scale: 500 },
+      { kind: 'parcel', label: 'Działka 2', detail: 'obręb r, gm. g · id2', wkt: 'POINT(1 1)', scale: 500, id: 'id2' },
     ]);
     expect(stripSrid('SRID=4326;POINT(0 0)')).toBe('POINT(0 0)');
   });

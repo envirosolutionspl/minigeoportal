@@ -147,6 +147,7 @@ describe('map tools', () => {
       'Więcej',
       'Pomiar odległości i powierzchni',
       'Profil terenu',
+      'Selekcja działek',
       'Podróż w czasie',
       'Kopiuj link do tego widoku mapy',
       'Drukuj mapę',
@@ -284,6 +285,7 @@ describe('tools on phones', () => {
     expect(sheet.getAllByRole('listitem').map((li) => li.textContent)).toEqual([
       'Pomiar odległości i powierzchni',
       'Profil terenu',
+      'Selekcja działek',
       'Podróż w czasie',
       'Kopiuj link do tego widoku mapy',
       'Cała Polska',

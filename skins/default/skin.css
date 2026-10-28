@@ -22,6 +22,8 @@
   --highlight-ui: #c2410c;
   /* Measured lines and areas on the map, the same in light and dark mode. */
   --map-measure: #466946;
+  /* Parcels of the selection on the map, the same in light and dark mode. */
+  --map-selection: #7c3aed;
   --danger-soft: #fde8e0;
   --accent: #466946;
   --on-accent: #ffffff;

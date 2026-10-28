@@ -4,6 +4,9 @@ import { config, overlayById, selectedSublayers } from '@/config/runtime';
 import { CATALOG_ID, overlayDef } from '@/services/catalog';
 import { HOME_EXTENT } from '@/map/projection';
 import { readUrl, writeUrl } from './url';
+import { MAX_PARCELS } from './limits';
+
+export { MAX_PARCELS };
 import type { PrintOptions } from '@/map/print';
 
 type Panel = 'none' | 'catalog';
@@ -12,10 +15,10 @@ type Panel = 'none' | 'catalog';
  * A map tool. Measuring and printing take over clicks: while one is active, clicks do not ask
  * for information. The time view (map.yaml: timeTravel) leaves clicks to the place panel.
  */
-export type Tool = 'none' | 'measure-line' | 'measure-area' | 'profile' | 'print' | 'time';
+export type Tool = 'none' | 'measure-line' | 'measure-area' | 'profile' | 'parcels' | 'print' | 'time';
 
 /** The tools that take the map's clicks; the others leave them to the place panel and the map menu. */
-export const TAKES_CLICKS: ReadonlySet<Tool> = new Set<Tool>(['measure-line', 'measure-area', 'profile', 'print']);
+export const TAKES_CLICKS: ReadonlySet<Tool> = new Set<Tool>(['measure-line', 'measure-area', 'profile', 'parcels', 'print']);
 
 /** Whether the time view's image of the chosen date has arrived, and whether it shows anything. */
 export type TimeStatus = 'idle' | 'loading' | 'error' | 'blank';
@@ -34,6 +37,8 @@ export interface FocusTarget {
   zoom: number;
   /** Parcels and buildings stay outlined until cleared; other objects fade out. */
   persist?: boolean;
+  /** The full id of a parcel found by the search, which the parcel selection can take. */
+  parcel?: string;
   /** Changes on every request so identical targets still trigger. */
   seq: number;
 }
@@ -53,6 +58,8 @@ interface MapStore {
   tool: Tool;
   /** Changes when measurements are cleared. */
   measureClears: number;
+  /** The parcel selection: full ids (TERYT) in the order they were added, at most MAX_PARCELS. */
+  parcels: string[];
   /** Text of the last finished measurement, announced to screen readers. */
   measureResult: string;
   /** The line drawn with the terrain profile tool, in map coordinates; null until one is drawn. */
@@ -96,6 +103,10 @@ interface MapStore {
   zoomToScale(scale: number): void;
   setTool(tool: Tool): void;
   clearMeasurements(): void;
+  /** Adds a parcel to the selection; false when it is full. */
+  addParcel(id: string): boolean;
+  removeParcel(id: string): void;
+  clearParcels(): void;
   setMeasureResult(text: string): void;
   setProfileLine(line: [number, number][] | null): void;
   setPrintSettings(settings: Partial<PrintOptions>): void;
@@ -146,6 +157,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
   focus: null,
   tool: timeAtStart ? 'time' : 'none',
   measureClears: 0,
+  parcels: initial.parcels ?? [],
   measureResult: '',
   profileLine: null,
   printRequest: null,
@@ -205,6 +217,15 @@ export const useMapStore = create<MapStore>((set, get) => ({
       return { tool, printFromTime: false, ...(leaving ? { timeStatus: 'idle' as const } : {}) };
     }),
   clearMeasurements: () => set((s) => ({ measureClears: s.measureClears + 1, measureResult: '' })),
+  addParcel: (id) => {
+    const { parcels } = get();
+    if (parcels.includes(id)) return true;
+    if (parcels.length >= MAX_PARCELS) return false;
+    set({ parcels: [...parcels, id] });
+    return true;
+  },
+  removeParcel: (id) => set((s) => ({ parcels: s.parcels.filter((p) => p !== id) })),
+  clearParcels: () => set({ parcels: [] }),
   setMeasureResult: (measureResult) => set({ measureResult }),
   setProfileLine: (profileLine) => set({ profileLine }),
   setPrintSettings: (settings) => set((s) => ({ printSettings: { ...s.printSettings, ...settings } })),
@@ -242,6 +263,7 @@ export const urlState = (s: MapStore) => ({
   ...(timeShown(s) && s.time
     ? { time: s.time, ...(s.compare ? { compare: true } : {}), ...(s.timeLayer ? { timeLayer: s.timeLayer } : {}) }
     : {}),
+  ...(s.parcels.length > 0 ? { parcels: s.parcels } : {}),
 });
 
 useMapStore.subscribe((s, prev) => {
@@ -254,7 +276,8 @@ useMapStore.subscribe((s, prev) => {
     s.tool !== prev.tool ||
     s.time !== prev.time ||
     s.compare !== prev.compare ||
-    s.timeLayer !== prev.timeLayer
+    s.timeLayer !== prev.timeLayer ||
+    s.parcels !== prev.parcels
   ) {
     writeUrl(urlState(s));
   }

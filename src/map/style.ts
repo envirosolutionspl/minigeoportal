@@ -12,6 +12,8 @@ const skinColor = (name: string, fallback: string) =>
 export const HIGHLIGHT = skinColor('--highlight', '#ff8142');
 /** Measured lines and areas. */
 export const MEASURE = skinColor('--map-measure', '#466946');
+/** Parcels of the selection. */
+export const SELECTION = skinColor('--map-selection', '#7c3aed');
 
 /** The colour with the given opacity, for fills. */
 export const translucent = (color: string, alpha: number): Color => {

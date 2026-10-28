@@ -59,3 +59,31 @@ info:
 
 topo:
   sheet: 'sheet 1:{scale} in the {system} system'
+
+tools:
+  parcels: Parcel selection
+
+parcels:
+  title: Parcel selection
+  hint: Click a parcel on the map to add it to the selection, click a selected one to remove it. With the keyboard, Enter does so in the middle of the map. Parcels can also be added from the search. At most {max} parcels; the view's link carries the selection.
+  end: Close the parcel selection
+  empty: The selection is empty. Click a parcel on the map or find it with the search.
+  total: 'Parcels: {count} of {max} · {area} in all'
+  areaSource: Area from the parcel's geometry in ULDK (on the GRS80 ellipsoid), not the land register's area.
+  row: 'parcel {number}, precinct {region} · {area}'
+  loading: Loading from ULDK…
+  looking: Looking for the parcel here…
+  missing: Not in ULDK (divided, for instance).
+  error: ULDK did not answer. Try again in a moment.
+  none: There is no parcel here.
+  added: 'Parcel {id} added.'
+  removed: 'Parcel {id} removed.'
+  already: 'Parcel {id} is already in the selection.'
+  full: 'The selection has {max} parcels already: remove one to add another.'
+  remove: 'Remove parcel {id} from the selection'
+  showAll: Show all
+  export: Download the selection
+  exportAs: 'Download the selection as {format}'
+  clear: Clear
+  add: Add to the selection
+  open: Show the selection

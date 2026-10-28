@@ -3,6 +3,7 @@ import { PROJECTION } from '@/map/projection';
 import { unitNames, type UnitHit, type UnitNames, type UnitLevel } from './units';
 import { normalize } from '@/services/text';
 import type { HitKind, SearchHit, SearchResults } from '@/search/provider';
+import type { Parcel } from '@/modules';
 import { t } from '@/i18n';
 
 /**
@@ -291,11 +292,31 @@ export async function findParcels(query: string, signal: AbortSignal): Promise<G
         kind: 'parcel' as const,
         label: t('search.parcelHit', { number: parcel }),
         detail: `obręb ${region}, gm. ${commune} · ${id}`,
+        id,
         wkt: stripSrid(wkt),
         scale: PARCEL_SCALE,
       },
     ];
   });
+}
+
+/** What a parcel of the selection needs from ULDK: its units, number and outline. */
+const PARCEL_FIELDS = 'id,voivodeship,county,commune,region,parcel,geom_wkt';
+
+function parcelOf([id, voivodeship, county, commune, region, number, wkt]: string[] = []): Parcel | null {
+  return id && wkt ? { id, voivodeship, county, commune, region, number, wkt: stripSrid(wkt) } : null;
+}
+
+/** A parcel by its full id (TERYT), for the parcel selection. */
+export async function parcelById(id: string, signal: AbortSignal): Promise<Parcel | null> {
+  const [row] = await uldkRows({ request: 'GetParcelById', id, result: PARCEL_FIELDS }, signal);
+  return parcelOf(row);
+}
+
+/** The parcel at a point of the map, for the parcel selection. */
+export async function parcelAt([x, y]: [number, number], signal: AbortSignal): Promise<Parcel | null> {
+  const [row] = await uldkRows({ request: 'GetParcelByXY', xy: `${x},${y},2180`, result: PARCEL_FIELDS }, signal);
+  return parcelOf(row);
 }
 
 /**

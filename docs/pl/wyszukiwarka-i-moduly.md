@@ -26,7 +26,7 @@ Przy każdym dostawcy pole rozumie współrzędne:
 - szerokość i długość geograficzną: `52.2318, 21.0067` albo `52,2318 21,0067`;
 - punkt w układzie mapy, zapisany tak, jak zapisują go jego użytkownicy (w PL-1992 najpierw X, czyli northing: `486980 637000`).
 
-`parcel: true` dodaje wyszukiwarkę działek według województwa, powiatu, gminy, obrębu i numeru (moduł gugik).
+`parcel: true` dodaje wyszukiwarkę działek według województwa, powiatu, gminy, obrębu i numeru (moduł gugik) oraz **selekcję działek**: narzędzie „Selekcja działek” (na komputerze przycisk w kolumnie narzędzi, na telefonie pozycja w „Więcej”). Działkę dodaje się kliknięciem na mapie albo przyciskiem „Dodaj do selekcji” po jej wyszukaniu, a kliknięcie zaznaczonej usuwa ją. Z klawiatury robi to Enter w środku mapy. Panel wymienia działki w kolejności dodania, z numerami takimi jak na mapie, identyfikatorem, obrębem i powierzchnią, oraz ich sumę. Powierzchnia jest liczona z geometrii działki w ULDK na elipsoidzie GRS80, a nie brana z ewidencji, i panel to mówi. Każda działka jest w selekcji raz, a selekcja ma najwyżej 10 działek, bo każda to zapytanie do ULDK. Link do widoku niesie ją w parametrze `dz` (identyfikatory po przecinku, np. `dz=141201_1.0001.1867/2,141201_1.0001.1868`); działka, której ULDK nie zna, zostaje na liście z taką informacją. Selekcję można pobrać jako GeoJSON (WGS 84), KML albo CSV (średniki, przecinek dziesiętny, obrys jako WKT w układzie mapy).
 
 ## Moduł gugik
 

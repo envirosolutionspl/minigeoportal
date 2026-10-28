@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { create } from 'zustand';
-import { LoaderCircle, SquareDashed, X } from 'lucide-react';
+import { LoaderCircle, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { dictionary, parcelInPrecinct, type DictEntry, type DictLevel } from './dictionaries';
 import type { SearchHit } from '@/search/provider';
 import { useMapStore } from '@/state/store';
+import { addParcel } from '@/state/parcels';
+import { parcelLookup } from '@/modules';
 import { zoomForScale } from '@/map/projection';
 import { useAbortable } from '@/ui/useAbortable';
 import { t } from '@/i18n';
@@ -63,7 +65,7 @@ export function ParcelSearch({ onClose }: { onClose(): void }) {
   const ready = !!precinct && choice.number.trim().length > 0;
 
   const show = (hit: SearchHit) => {
-    focusOn({ wkt: hit.wkt, zoom: zoomForScale(PARCEL_SCALE), persist: true });
+    focusOn({ wkt: hit.wkt, zoom: zoomForScale(PARCEL_SCALE), persist: true, parcel: hit.id });
     setShown(hit);
   };
 
@@ -78,6 +80,21 @@ export function ParcelSearch({ onClose }: { onClose(): void }) {
           <p className="text-sm font-semibold">{shown.label}</p>
           <p className="truncate text-xs text-[var(--muted)]">{shown.detail}</p>
         </div>
+        {parcelLookup && shown.id && (
+          <button
+            type="button"
+            onClick={() => {
+              addParcel(shown.id!);
+              useMapStore.getState().setTool('parcels');
+              onClose();
+            }}
+            aria-label={t('parcels.add')}
+            title={t('parcels.add')}
+            className="rounded-full p-2.5 text-[var(--accent)] hover:bg-[var(--hover)]"
+          >
+            <SquareDashedMousePointer className="h-4 w-4" aria-hidden="true" />
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setShown(null)}

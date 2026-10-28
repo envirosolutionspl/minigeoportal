@@ -22,6 +22,7 @@ Start from a copy of `skins/default/skin.css` and change the values. The example
   --highlight: #ff8142; /* found objects and the clicked place on the map */
   --highlight-ui: #c2410c; /* the same colour on panels (icons of the place and the parcel, the print frame); without it --highlight */
   --map-measure: #466946; /* measured lines and areas */
+  --map-selection: #7c3aed; /* parcels of the selection */
   --accent: #0b5d8f; /* buttons, links, switched-on items */
   --on-accent: #ffffff; /* text on the accent */
   --accent-soft: #e3eef5; /* background of switched-on layers */

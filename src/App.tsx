@@ -8,6 +8,7 @@ import { MapMenu } from './ui/MapMenu';
 import { MeasureBar } from './ui/MeasureBar';
 import { ProfilePanel } from './ui/ProfilePanel';
 import { SlowNotice } from './ui/SlowNotice';
+import { ParcelsPanel } from './ui/ParcelsPanel';
 import { TimeBar } from './ui/TimeBar';
 import { WelcomeDialog } from './ui/WelcomeDialog';
 import { ReportDialog } from './ui/ReportDialog';
@@ -22,13 +23,13 @@ export default function App() {
   const panel = useMapStore((m) => m.panel);
   const tool = useMapStore((m) => m.tool);
 
-  // Escape ends the print tool, else (while not measuring: measure.ts has its own Escape) closes
+  // Escape ends the print tool and the parcel selection, else (while not measuring: measure.ts has its own Escape) closes
   // the place panel, then the layer list, then the time view; open dialogs close themselves.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.defaultPrevented || document.querySelector('dialog[open]')) return;
       const { tool, setTool } = useMapStore.getState();
-      if (tool === 'print') return setTool('none');
+      if (tool === 'print' || tool === 'parcels') return setTool('none');
       if (tool !== 'none' && tool !== 'time') return;
       const info = useInfoStore.getState();
       if (info.query) info.close();
@@ -60,6 +61,7 @@ export default function App() {
       <MapMenu />
       <MeasureBar />
       <ProfilePanel />
+      <ParcelsPanel />
       <SlowNotice />
       <TimeBar />
       <PrintPanel />

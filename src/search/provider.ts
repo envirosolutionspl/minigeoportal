@@ -19,6 +19,8 @@ export interface SearchHit {
   extent?: Extent;
   /** Scale denominator to show the hit at, when its kind's usual one does not fit (a parcel is small). */
   scale?: number;
+  /** A parcel's full id (TERYT), which the parcel selection takes. */
+  id?: string;
 }
 
 /**

@@ -103,3 +103,27 @@ describe('writeUrl', () => {
     vi.useRealTimers();
   });
 });
+
+describe('the parcel selection in the link', () => {
+  it('reads the parcels once each, leaves out what is not a parcel id and keeps at most ten', () => {
+    setSearch('?dz=141201_1.0001.1867/2,141201_1.0001.1868,141201_1.0001.1867/2,../etc,146501_8.0102.AR_12.45/3');
+    expect(readUrl().parcels).toEqual(['141201_1.0001.1867/2', '141201_1.0001.1868', '146501_8.0102.AR_12.45/3']);
+    const many = Array.from({ length: 12 }, (_, i) => `141201_1.0001.${i + 1}`);
+    setSearch(`?dz=${many.join(',')}`);
+    expect(readUrl().parcels).toEqual(many.slice(0, 10));
+  });
+
+  it('writes the parcels with their slashes and commas as they are', () => {
+    const link = linkFor({
+      center: [1, 2],
+      zoom: 3,
+      base: 'orto',
+      overlays: [],
+      sublayers: {},
+      parcels: ['141201_1.0001.1867/2', '141201_1.0001.1868'],
+    });
+    expect(link.endsWith('&dz=141201_1.0001.1867/2,141201_1.0001.1868')).toBe(true);
+    setSearch(link.slice(link.indexOf('?')));
+    expect(readUrl().parcels).toEqual(['141201_1.0001.1867/2', '141201_1.0001.1868']);
+  });
+});

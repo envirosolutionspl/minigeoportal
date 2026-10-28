@@ -26,7 +26,7 @@ With every provider the box understands coordinates:
 - latitude and longitude: `52.2318, 21.0067` or `52,2318 21,0067`;
 - a point in the map's system, written the way its users write it (in PL-1992 X, the northing, first: `486980 637000`).
 
-`parcel: true` adds the parcel search by voivodeship, county, municipality, precinct and number (gugik module).
+`parcel: true` adds the parcel search by voivodeship, county, municipality, precinct and number (gugik module) and the **parcel selection**: the "Parcel selection" tool (a button in the column of tools on a computer, an entry of "More" on a phone). A parcel joins it by a click on the map or with "Add to the selection" once found, and a click on a selected one removes it; with the keyboard, Enter does so in the middle of the map. The panel lists the parcels in the order they were added, numbered as on the map, with their id, precinct and area, and their total. The area is computed from the parcel's geometry in ULDK on the GRS80 ellipsoid, not taken from the land register, and the panel says so. Each parcel is in the selection once, and it holds at most 10 parcels, each one a request to ULDK. The view's link carries it in the `dz` parameter (ids separated by commas, e.g. `dz=141201_1.0001.1867/2,141201_1.0001.1868`); a parcel ULDK does not know stays in the list, saying so. The selection downloads as GeoJSON (WGS 84), KML or CSV (semicolons, decimal commas, the outline as WKT in the map's system).
 
 ## The gugik module
 

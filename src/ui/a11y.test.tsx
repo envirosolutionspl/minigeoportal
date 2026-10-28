@@ -6,6 +6,7 @@ import { LayerCatalog } from './LayerCatalog';
 import { InfoPanel } from './InfoPanel';
 import { MeasureBar } from './MeasureBar';
 import { ProfilePanel } from './ProfilePanel';
+import { ParcelsPanel } from './ParcelsPanel';
 import { TimeBar } from './TimeBar';
 import { WelcomeDialog, useWelcome } from './WelcomeDialog';
 import { ReportDialog, useReport } from './ReportDialog';
@@ -14,6 +15,7 @@ import { AccessibilityDialog, useAccessibility } from './AccessibilityDialog';
 import { BasemapSwitcher } from './BasemapSwitcher';
 import { useInfoStore } from '@/state/info';
 import { useMapStore } from '@/state/store';
+import { useParcelStore } from '@/state/parcels';
 import { stubFetch, withCapabilities } from '@/test/helpers';
 
 /** WCAG 2.1 A and AA rules; contrast needs real rendering, so the colours of each skin are checked in contrast.test.ts. */
@@ -118,6 +120,25 @@ describe('accessibility (axe, WCAG 2.1 AA)', () => {
     );
     await screen.findByText(/Nachylenie największe/);
     expect(await violations(container)).toEqual([]);
+  });
+
+  it('parcel selection', async () => {
+    stubFetch([
+      [
+        'GetParcelById',
+        '0\n141201_1.0001.1|mazowieckie|powiat miński|Mińsk|Mińsk|1|SRID=2180;POLYGON((675000 482000,675100 482000,675100 482100,675000 482000))',
+      ],
+    ]);
+    useParcelStore.setState({ entries: {}, message: '' });
+    useMapStore.setState({ tool: 'parcels', parcels: ['141201_1.0001.1', '141201_1.0001.2'] });
+    const { container } = render(
+      <main>
+        <ParcelsPanel />
+      </main>,
+    );
+    await screen.findByText(/obręb Mińsk/);
+    expect(await violations(container)).toEqual([]);
+    useMapStore.setState({ tool: 'none', parcels: [] });
   });
 
   it('time bar', async () => {

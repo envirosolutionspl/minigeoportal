@@ -63,3 +63,31 @@ info:
 
 topo:
   sheet: 'arkusz 1:{scale} w układzie {system}'
+
+tools:
+  parcels: Selekcja działek
+
+parcels:
+  title: Selekcja działek
+  hint: Kliknij działkę na mapie, aby dodać ją do selekcji, a kliknij zaznaczoną, aby ją usunąć. Z klawiatury robi to Enter w środku mapy. Działki dodasz też z wyszukiwarki. Najwyżej {max} działek; link do widoku niesie selekcję.
+  end: Zamknij selekcję działek
+  empty: Selekcja jest pusta. Kliknij działkę na mapie albo znajdź ją w wyszukiwarce.
+  total: 'Działek: {count} z {max} · łącznie {area}'
+  areaSource: Powierzchnia z geometrii działki w ULDK (na elipsoidzie GRS80), nie pole ewidencyjne.
+  row: 'dz. {number}, obręb {region} · {area}'
+  loading: Wczytuję z ULDK…
+  looking: Szukam działki w tym miejscu…
+  missing: Nie ma jej w ULDK (np. po podziale).
+  error: ULDK nie odpowiedziało. Spróbuj ponownie za chwilę.
+  none: W tym miejscu nie ma działki.
+  added: 'Dodano działkę {id}.'
+  removed: 'Usunięto działkę {id}.'
+  already: 'Działka {id} jest już w selekcji.'
+  full: 'Selekcja ma już {max} działek: usuń którąś, aby dodać kolejną.'
+  remove: 'Usuń działkę {id} z selekcji'
+  showAll: Pokaż wszystkie
+  export: Pobierz selekcję
+  exportAs: 'Pobierz selekcję jako {format}'
+  clear: Wyczyść
+  add: Dodaj do selekcji
+  open: Pokaż selekcję

@@ -55,6 +55,26 @@ export type HeightsAt = (points: [number, number][], signal: AbortSignal) => Pro
 /** Heights of the terrain from a module that knows them (the elevation model of the gugik module): the place panel, the profile of a measured line. */
 export const heightsAt: HeightsAt | undefined = gugik.heightsAt;
 
+/** A parcel as the parcel selection keeps it: its full id (TERYT), units, number and outline (WKT in the map's system). */
+export interface Parcel {
+  id: string;
+  voivodeship: string;
+  county: string;
+  commune: string;
+  region: string;
+  number: string;
+  wkt: string;
+}
+
+/** Where a module finds parcels (ULDK of the gugik module): by id, from a link or the search, and at a clicked point. */
+export interface ParcelLookup {
+  byId(id: string, signal: AbortSignal): Promise<Parcel | null>;
+  at(point: [number, number], signal: AbortSignal): Promise<Parcel | null>;
+}
+
+/** The parcel selection exists where a module can find parcels. */
+export const parcelLookup: ParcelLookup | undefined = gugik.parcels;
+
 /** Under the coordinates in the header of the place panel. */
 export const infoHeader: InfoPart[] = [...gugik.infoHeader];
 

@@ -1,11 +1,12 @@
 import { PROJECTION } from '@/map/projection';
+import { MAX_PARCELS } from './limits';
 
 /**
  * Map state lives in the URL query so every view is a shareable link:
  * ?x=637000&y=486000&z=12&b=orto&l=kieg,kiut.przewod_wodociagowy.przewod_gazowy&t=2007-01-01&c=1&tl=mapy-dawne
  * An overlay without sublayers uses its defaults. `t` is the date of the time view, which the
  * link then opens; `c=1` compares it with the present behind a curtain; `tl` names the view's
- * layer when it is not the first.
+ * layer when it is not the first; `dz` lists the parcels of the selection by their full ids.
  */
 
 interface UrlState {
@@ -21,10 +22,15 @@ interface UrlState {
   compare?: boolean;
   /** The time view's layer, when not the first. */
   timeLayer?: string;
+  /** Full ids (TERYT) of the parcels of the selection. */
+  parcels?: string[];
 }
 
 /** An overlay id as links carry it. */
 const ID = /^[a-z0-9][a-z0-9_.-]*$/i;
+
+/** A parcel's full id: municipality, precinct and number ("141201_1.0001.1867/2"). */
+const PARCEL = /^\d{6}_\d\.[^,\s]+$/;
 
 /** A date of the time view as links carry it: 2007, 2007-01 or 2007-01-01. */
 const DATE = /^\d{4}(-\d{2}){0,2}$/;
@@ -59,6 +65,8 @@ export function readUrl(): Partial<UrlState> {
     const layer = q.get('tl');
     if (layer && ID.test(layer)) state.timeLayer = layer;
   }
+  const parcels = q.get('dz');
+  if (parcels) state.parcels = [...new Set(parcels.split(',').filter((id) => PARCEL.test(id)))].slice(0, MAX_PARCELS);
   return state;
 }
 
@@ -77,7 +85,9 @@ function queryFor(state: UrlState): string {
   if (state.time) q.set('t', state.time);
   if (state.time && state.compare) q.set('c', '1');
   if (state.time && state.timeLayer) q.set('tl', state.timeLayer);
-  return `?${q.toString().replace(/%2C/g, ',')}`;
+  if (state.parcels?.length) q.set('dz', state.parcels.join(','));
+  // Commas and the slash of parcel numbers are allowed in a query and read better as they are.
+  return `?${q.toString().replace(/%2C/g, ',').replace(/%2F/g, '/')}`;
 }
 
 /** Full link to a view, for sharing: the same page with the view in the query. */

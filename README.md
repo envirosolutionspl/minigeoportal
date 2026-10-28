@@ -19,6 +19,7 @@ _A simple, fast web map for public map services. Documentation in English: [docs
 - **Ponad 400 warstw** geoportal.gov.pl w jednej liście, z wyszukiwarką, tematami i przezroczystością. Gdy warstwy nie da się pokazać albo długo się wczytuje, lista mówi dlaczego.
 - **Menu kontekstowe** (prawy przycisk myszy albo przytrzymanie palca): współrzędne w PL-1992 i WGS 84 oraz dojazd w Google Maps.
 - **Profil terenu**: narysuj linię, a zobaczysz wykres wysokości wzdłuż niej, z najwyższym punktem i nachyleniem (dane NMT GUGiK).
+- **Selekcja działek**: kliknij działki na mapie albo dodaj je z wyszukiwarki, a zobaczysz ich listę i łączną powierzchnię. Selekcję wyślesz linkiem albo pobierzesz jako GeoJSON, KML lub CSV.
 - **Pomiar** odległości i powierzchni, **wydruk** w skali na A4 lub A3 (także do PDF) i **link** do bieżącego widoku.
 - **Podróż w czasie**: archiwalne zdjęcia lotnicze od 1995 r. i dawne mapy topograficzne. Suwak pokazuje tylko lata, z których są dane w oglądanym miejscu. Kurtyna porównuje wybrany rok z dniem dzisiejszym. Widok z datą można wysłać linkiem albo wydrukować.
 - **Telefon**: panele na cały ekran, przytrzymanie palca zamiast prawego przycisku, „Moja lokalizacja”.

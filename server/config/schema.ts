@@ -16,6 +16,8 @@ const httpsUrl = z.url({ protocol: /^https$/, error: 'an https address' });
 const picture = z.union([z.string().regex(/^\/(?!\/)/), httpsUrl], { error: 'a path such as /thumbs/map.jpg or an https address' });
 /** A text of the configuration: one string, or one per language (load.ts checks the default language is among them). */
 export const text = z.union([z.string().min(1), z.record(locale, z.string().min(1))]);
+/** A part of a page address: lowercase letters, digits and hyphens. */
+const slug = z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'lowercase letters, digits and hyphens, e.g. czy-dzialka-jest-budowlana');
 const point = z.tuple([z.number(), z.number()]);
 const extent = z
   .tuple([z.number(), z.number(), z.number(), z.number()])
@@ -85,6 +87,18 @@ export const appSchema = z.strictObject({
         .optional(),
     })
     .default({}),
+  /**
+   * Help pages for people who come from a web search: content/guides/<page>.<language>.md, each
+   * at its own address (the language's address, `path`, the page: /pomoc/<page>, /en/help/<page>)
+   * in the languages that have its file, with a list of them at the address of `path`; the
+   * server renders them as plain pages, which /sitemap.xml lists.
+   */
+  guides: z
+    .strictObject({
+      path: z.union([slug, z.record(locale, slug)]),
+      pages: z.array(slug).min(1),
+    })
+    .optional(),
   links: z.strictObject({ fallbackMap: url.optional(), fallbackName: text.optional() }).default({}),
   report: z.strictObject({
     categories: z.array(z.strictObject({ id, label: text })).min(1),
@@ -126,6 +140,8 @@ export const appSchema = z.strictObject({
           parcelReport: z.boolean().default(true),
           /** Heights of the terrain from the elevation model of GUGiK: in the place panel and the terrain profile tool. */
           elevation: z.boolean().default(true),
+          /** The address nearest to the clicked point (the GUGiK geocoder), in the place panel. */
+          address: z.boolean().default(true),
         })
         .optional(),
     })
@@ -252,6 +268,8 @@ export interface AppConfig {
   layers: LayersFile;
   /** Markdown of each text in each language that has it (the default language always does). */
   content: Partial<Record<keyof AppFile['content'], Record<string, string>>>;
+  /** Markdown of each help page (app.yaml guides) in each language that has it. */
+  guides: Record<string, Record<string, string>>;
   /** The stylesheet of the skin. */
   skin: string;
   /** Images of the brand (app.yaml author.logo, icon), read once and served from memory. */

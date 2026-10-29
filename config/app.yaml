@@ -32,6 +32,17 @@ content:
   welcome: content/welcome
   accessibility: content/accessibility
 
+# Help pages for people who come from a web search: content/guides/<page>.<language>.md, each at
+# its own address (/pomoc/<page>), in the languages that have the file; /pomoc lists them and
+# /sitemap.xml points search engines to them.
+guides:
+  path: { pl: pomoc, en: help }
+  pages:
+    - czy-dzialka-jest-budowlana
+    - teren-zalewowy
+    - granice-i-wymiary-dzialki
+    - numer-ksiegi-wieczystej
+
 # Every language has its own address (/en/), Polish (root) the bare one. The bare address shows
 # Polish to browsers that want it and sends the others to their language, or to the default one
 # when the app does not have it.
@@ -43,7 +54,7 @@ locales:
 links:
   # Where to send people when a layer cannot be shown here, and what to call it in links
   # (without a name: the host of the address).
-  fallbackMap: https://mapy.geoportal.gov.pl/imap/Imgp_2.html
+  fallbackMap: https://mapy.geoportal.gov.pl/imapnext/imap/index.html?moduleId=modulGK
   fallbackName: geoportal.gov.pl
 
 report:
@@ -84,3 +95,5 @@ modules:
     parcelReport: true
     # Heights of the terrain (the elevation model): in the place panel and the "Terrain profile" tool.
     elevation: true
+    # The address nearest to the clicked point (within 100 m), in the place panel.
+    address: true

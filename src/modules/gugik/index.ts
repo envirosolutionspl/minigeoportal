@@ -28,11 +28,16 @@ export const parcelTool = config.search.parcel
 // first requests they would crowd. A browser without requestIdleCallback (Safari) loads them at
 // the first click.
 let parts: Promise<typeof import('./InfoParts')> | undefined;
-const info = gugik && (gugik.parcelReport || gugik.ortho || gugik.elevation) ? () => (parts ??= import('./InfoParts')) : undefined;
+const info =
+  gugik && (gugik.parcelReport || gugik.ortho || gugik.elevation || gugik.address) ? () => (parts ??= import('./InfoParts')) : undefined;
 if (info && 'requestIdleCallback' in window) window.requestIdleCallback(() => void info());
 
-/** Under the coordinates of the place panel: the height of the terrain (elevation) and the parcel report link (parcelReport). */
+/**
+ * Under the coordinates of the place panel: the nearest address (address), the height of the terrain
+ * (elevation) and the parcel report link (parcelReport).
+ */
 export const infoHeader = [
+  ...(info && gugik?.address ? [lazy(() => info().then((m) => ({ default: m.Address })))] : []),
   ...(info && gugik?.elevation ? [lazy(() => info().then((m) => ({ default: m.Elevation })))] : []),
   ...(info && gugik?.parcelReport ? [lazy(() => info().then((m) => ({ default: m.ParcelReportLink })))] : []),
 ];

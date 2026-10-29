@@ -68,4 +68,13 @@ describe('the parcel selection', () => {
     expect(entries['141201_1.0001.9999'].status).toBe('missing');
     expect(useMapStore.getState().parcels).toHaveLength(2);
   });
+
+  it('forgets the outline of a parcel taken out of the selection', async () => {
+    stubFetch([['id=141201_1.0001.1867', uldk('141201_1.0001.1867', 675000, 482000)]]);
+    useMapStore.setState({ parcels: ['141201_1.0001.1867'] });
+    await settle();
+    expect(useParcelStore.getState().entries['141201_1.0001.1867']).toBeDefined();
+    useMapStore.setState({ parcels: [] });
+    expect(useParcelStore.getState().entries).toEqual({});
+  });
 });

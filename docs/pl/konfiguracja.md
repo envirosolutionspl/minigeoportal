@@ -51,7 +51,7 @@ Serwis, języki, wyszukiwarka i moduły.
   - `nominatim`: ustawienia Nominatim: `url` (domyślnie serwer publiczny), `countryCodes` (np. `[pl, de]`) i `viewbox` (`[minLon, minLat, maxLon, maxLat]`; wyniki z tego obszaru są pierwsze).
 - `modules`: opcjonalne części aplikacji. Na razie jeden moduł, `gugik` (zob. [Wyszukiwarka i moduły](wyszukiwarka-i-moduly.md)):
   - `enabled`: włącza moduł.
-  - `catalog`, `drawOrder`, `parcelReport`, `elevation`: części modułu, domyślnie włączone razem z nim.
+  - `catalog`, `drawOrder`, `parcelReport`, `elevation`, `address`: części modułu, domyślnie włączone razem z nim.
   - `ortho`: `{ service: <usługa kafli>, history: <warstwa archiwalna> }` albo `false`; domyślnie `{ service: orto }`.
   - `topo`: `{ history: <warstwa archiwalna> }`; działa tylko, gdy jest podane.
 

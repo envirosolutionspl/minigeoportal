@@ -176,11 +176,11 @@ export function TopBar() {
     setQuery(text);
     setOpen(false);
     setToolOpen(false);
-    const { wkt, persist } = provider.outline ? await provider.outline(hit) : { wkt: hit.wkt, persist: false };
+    const { wkt, persist, sides } = provider.outline ? await provider.outline(hit) : { wkt: hit.wkt, persist: false };
     // A later pick wins, even when its outline arrives first.
     if (mine !== picked.current) return;
     const zoom = zoomForScale(hit.scale ?? SCALE[hit.kind]);
-    focusOn(hit.extent && !wkt ? { extent: hit.extent, zoom } : { wkt, center: hit.center, zoom, persist, parcel: hit.id });
+    focusOn(hit.extent && !wkt ? { extent: hit.extent, zoom } : { wkt, center: hit.center, zoom, persist, sides, parcel: hit.id });
   };
 
   const clear = () => {

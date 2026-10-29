@@ -51,7 +51,7 @@ The service, languages, search and modules.
   - `nominatim`: Nominatim settings: `url` (the public server by default), `countryCodes` (e.g. `[pl, de]`) and `viewbox` (`[minLon, minLat, maxLon, maxLat]`; results inside it come first).
 - `modules`: optional parts of the app. There is one module so far, `gugik` (see [Search and modules](search-and-modules.md)):
   - `enabled`: switches the module on.
-  - `catalog`, `drawOrder`, `parcelReport`, `elevation`: parts of the module, on by default along with it.
+  - `catalog`, `drawOrder`, `parcelReport`, `elevation`, `address`: parts of the module, on by default along with it.
   - `ortho`: `{ service: <tile service>, history: <archival layer> }` or `false`; `{ service: orto }` by default.
   - `topo`: `{ history: <archival layer> }`; on only when given.
 

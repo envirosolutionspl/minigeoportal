@@ -147,7 +147,7 @@ The server opens at most 24 connections to the upstream services at a time and a
 
 **Security headers:**
 
-- Content Security Policy: scripts, styles and fonts only from the site; images from any https address (tiles and service images); connections only to the site, and with the gugik module also to the GUGiK search services and the elevation model (`services.gugik.gov.pl`).
+- Content Security Policy: scripts, styles and fonts only from the site; images from any https address (tiles and service images); connections only to the site, and with the gugik module also to the GUGiK search services, the elevation model and the address geocoder (`services.gugik.gov.pl`).
 - `frame-ancestors 'none'`: the page cannot be embedded in a frame on another site.
 - `Strict-Transport-Security` for half a year, for the app's host alone (no subdomains), so the proxy need not add it.
 

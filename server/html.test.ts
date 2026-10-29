@@ -79,6 +79,10 @@ describe('renderPage', () => {
     expect(page).toContain('<html lang="en">');
     expect(page).toContain('<title>A &amp; B</title>');
     expect(page).toContain('content="Opis &quot;x&quot;"');
+    // A text of the configuration is not a replacement pattern.
+    expect(renderPage(TEMPLATE, { ...defaults, app: { ...defaults.app, title: 'Cena $& $1 $`' } })).toContain(
+      '<title>Cena $&amp; $1 $`</title>',
+    );
     const boot = /<script type="application\/json" id="boot">(.*)<\/script>/.exec(page)![1];
     expect(JSON.parse(boot)).toEqual({ ...defaults, app: { ...defaults.app, title: 'A & B', description: 'Opis "x"' } });
   });
@@ -130,14 +134,19 @@ describe('size', () => {
 });
 
 describe('connections', () => {
-  it('opens the first map servers early and allows the GUGiK search hosts only with that search, the elevation model with its part', () => {
+  it('opens the first map servers early and allows the GUGiK search hosts only with that search, the elevation model and the geocoder with their parts', () => {
     const page = renderPage(TEMPLATE, defaults);
     expect(page).toContain('<link rel="preconnect" href="https://mapy.geoportal.gov.pl" crossorigin />');
     expect(page).toContain('<link rel="preconnect" href="https://integracja.gugik.gov.pl" />');
     expect(connectSources(defaults)).toEqual(["'self'", ...GUGIK_SEARCH_HOSTS]);
     const noSearch = { ...defaults, search: { provider: 'none' as const, parcel: false } };
     expect(connectSources(noSearch)).toEqual(["'self'", 'https://services.gugik.gov.pl']);
-    expect(connectSources({ ...noSearch, modules: { gugik: { ...defaults.modules.gugik!, elevation: false } } })).toEqual(["'self'"]);
+    const gugik = defaults.modules.gugik!;
+    expect(connectSources({ ...noSearch, modules: { gugik: { ...gugik, elevation: false } } })).toEqual([
+      "'self'",
+      'https://services.gugik.gov.pl',
+    ]);
+    expect(connectSources({ ...noSearch, modules: { gugik: { ...gugik, elevation: false, address: false } } })).toEqual(["'self'"]);
   });
 
   it('lists every host the GUGiK search reaches', () => {

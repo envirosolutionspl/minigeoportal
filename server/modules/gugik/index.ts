@@ -15,12 +15,12 @@ import { fetchDrawOrder } from './drawOrder.ts';
 import { orthoAt } from './ortho.ts';
 import { topoAt } from './topo.ts';
 import { pointCache } from './pointCache.ts';
+import { GUGIK_SEARCH_HOSTS, SERVICES_HOST } from './searchHosts.ts';
+import { CATALOG_TOPICS } from './topics.ts';
 
 /** Index answers kept an hour per point: the photos and sheets of a place change a few times a year. */
 const INDEX_TTL_MS = 3600 * 1000;
 const INDEX_POINTS = 2000;
-import { ELEVATION_HOST, GUGIK_SEARCH_HOSTS } from './searchHosts.ts';
-import { CATALOG_TOPICS } from './topics.ts';
 
 /**
  * The server side of the gugik module (geoportal.gov.pl and the GUGiK services), as the registry
@@ -77,7 +77,8 @@ export function validate(app: AppFile, map?: MapFile, layers?: LayersFile): Prob
 export const connectSources = (client: ClientConfig) => [
   ...new Set([
     ...(client.search.provider === 'gugik' || client.search.parcel ? GUGIK_SEARCH_HOSTS : []),
-    ...(client.modules.gugik?.elevation ? [ELEVATION_HOST] : []),
+    // The elevation model and the geocoder that finds the nearest address share one host.
+    ...(client.modules.gugik?.elevation || client.modules.gugik?.address ? [SERVICES_HOST] : []),
   ]),
 ];
 
@@ -237,8 +238,13 @@ export function routes(app: Hono, { client, data, upstream, limits }: RouteDeps)
     });
   }
 
-  /** An index asked at a map click, one request per click; answers are shared by point for a while. */
-  const pointRoute = <T>(path: string, at: (x: number, y: number, abort: AbortSignal) => Promise<T>, limit: [number, number]) => {
+  /**
+   * An index asked at a map click, one request per click; answers are shared by point for a
+   * while. The upstream request is shared too, so it does not follow the request of the first
+   * client who asked (the time view aborts its request at every move of the map): the fetch's
+   * own timeout bounds it.
+   */
+  const pointRoute = <T>(path: string, at: (x: number, y: number) => Promise<T>, limit: [number, number]) => {
     const cache = pointCache<T>(INDEX_TTL_MS, INDEX_POINTS);
     app.use(path, rateLimit(...limit));
     app.get(path, async (c) => {
@@ -246,7 +252,7 @@ export function routes(app: Hono, { client, data, upstream, limits }: RouteDeps)
       const x = Math.round(Number(c.req.query('x')));
       const y = Math.round(Number(c.req.query('y')));
       if (!Number.isFinite(x) || !Number.isFinite(y)) throw new RequestError('Invalid point');
-      const info = await cache(`${x},${y}`, () => upstream(() => at(x, y, c.req.raw.signal)));
+      const info = await cache(`${x},${y}`, () => upstream(() => at(x, y)));
       if (!info) return c.text('Busy, try again shortly', 503);
       c.header('Cache-Control', 'public, max-age=86400');
       return c.json(info);

@@ -40,7 +40,7 @@ export interface SearchProvider {
    * The outline of a chosen hit, when the result list does not carry it (a building at an
    * address, a town boundary); `persist` keeps it on the map until the search is cleared.
    */
-  outline?(hit: SearchHit): Promise<{ wkt?: string; persist: boolean }>;
+  outline?(hit: SearchHit): Promise<{ wkt?: string; persist: boolean; sides?: boolean }>;
   /** Credit for the search data, shown under the results. */
   credit?: { text: string; href: string };
 }

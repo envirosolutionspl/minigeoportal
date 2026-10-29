@@ -57,6 +57,8 @@ info:
     other: '{count} photos since {year}'
   seeChanges: See the changes
   height: 'Height of the terrain: {height} above sea level'
+  address: 'Address: {address}'
+  addressNear: 'Nearest address: {address} (about {distance} m)'
 
 topo:
   sheet: 'sheet 1:{scale} in the {system} system'

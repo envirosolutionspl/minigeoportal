@@ -33,6 +33,8 @@ Przy każdym dostawcy pole rozumie współrzędne:
 
 Panel wymienia działki w kolejności dodania, z numerami takimi jak na mapie, identyfikatorem, obrębem i powierzchnią, oraz ich sumę. Powierzchnia jest liczona z geometrii działki w ULDK na elipsoidzie GRS80, więc jest przybliżona i nie odpowiada powierzchni ewidencyjnej; panel to mówi. Każda działka jest w selekcji raz, a selekcja ma najwyżej 10 działek, bo każda to zapytanie do ULDK. Link do widoku niesie ją w parametrze `dz` (identyfikatory po przecinku, np. `dz=141201_1.0001.1867/2,141201_1.0001.1868`); działka, której ULDK nie zna, zostaje na liście z taką informacją. Selekcję można pobrać jako GeoJSON (WGS 84), KML albo CSV (średniki, przecinek dziesiętny, obrys jako WKT w układzie mapy).
 
+Znaleziona działka (albo budynek) i działki selekcji mają od skali 1:2500 długości boków na mapie, wzdłuż każdego boku; etykieta, która nie mieści się na krótkim boku, jest pomijana. Długości są liczone na elipsoidzie GRS80 z geometrii ULDK, z dokładnością do decymetra, więc są przybliżone tak jak powierzchnia. Obrys o ponad 200 wierzchołkach (gmina, las) nie dostaje etykiet. Podpowiedź po najechaniu myszą na działkę selekcji podaje też jej obwód.
+
 ## Moduł gugik
 
 Integracja z geoportal.gov.pl to moduł, który wdrożenie włącza w `app.yaml`:
@@ -47,6 +49,7 @@ modules:
     topo: { history: mapy-dawne } # lata arkuszy map topograficznych w podróży w czasie
     parcelReport: true # link do raportu o działce w geoportal.gov.pl
     elevation: true # wysokość terenu w panelu miejsca i narzędzie „Profil terenu”
+    address: true # najbliższy adres w panelu miejsca
 ```
 
 Moduł działa tylko w układzie PL-1992. Przy innym `projection.code` konfiguracja z włączonym modułem jest odrzucana.
@@ -94,6 +97,13 @@ Wysokości pochodzą z numerycznego modelu terenu GUGiK (NMT, siatka 1 m, usług
 
 - Tam, gdzie model nie ma danych (za granicą, na morzu), panel miejsca nie ma wiersza wysokości, a profil pomija takie punkty.
 
+### address: najbliższy adres
+
+Panel miejsca podaje adres najbliższy klikniętemu punktowi, z kodem pocztowym, z państwowego rejestru adresów (geokoder GUGiK, usługa `services.gugik.gov.pl/uug`). Przeglądarka pyta o niego bezpośrednio.
+
+- Punkt bliżej niż 10 m od adresu to „Adres: …”; dalej „Najbliższy adres: … (ok. 35 m)”, odległość zaokrąglona do 5 m.
+- Geokoder szuka w promieniu 100 m. Dalej (pole, las) panel nie ma wiersza adresu.
+
 ### Co jeszcze zależy od modułu
 
 Wyszukiwarka GUGiK (`search.provider: gugik`) i wyszukiwarka działek (`search.parcel`) też wymagają modułu. Bez niego serwer nie ma jego tras, a strona nie łączy się z żadnym serwerem GUGiK.
@@ -109,6 +119,7 @@ Moduł ma swoje napisy w `src/modules/gugik/i18n/pl.yaml` i `en.yaml`. Są dodaw
 - `layers.catalog*`: wczytywanie listy geoportal.gov.pl;
 - `info.parcelReport*`: link do raportu o działce;
 - `info.height`: wysokość terenu;
+- `info.address`, `info.addressNear`: najbliższy adres;
 - `info.photo*`, `info.pixel`, `info.downloadSheet`: data zdjęcia lotniczego.
 
 Wdrożenie zmienia je w swoim `i18n/<język>.yaml` jak każdy inny napis, a nowy język tłumaczy je tam (zob. [Treści i języki](tresci-i-jezyki.md#dodawanie-języka-krok-po-kroku)).

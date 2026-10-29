@@ -256,3 +256,8 @@ accessibility:
 
 welcome:
   start: Przejdź do mapy
+
+guides:
+  title: Poradniki
+  more: Inne poradniki
+  openMap: Sprawdź na mapie

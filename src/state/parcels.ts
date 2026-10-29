@@ -92,5 +92,8 @@ export function addParcel(id: string): void {
 // The parcels of a link at once, and each one added later.
 load(useMapStore.getState().parcels);
 useMapStore.subscribe((s, prev) => {
-  if (s.parcels !== prev.parcels) load(s.parcels);
+  if (s.parcels === prev.parcels) return;
+  // The outlines of parcels taken out of the selection are not kept: each is a MultiPolygon.
+  useParcelStore.setState((p) => ({ entries: Object.fromEntries(Object.entries(p.entries).filter(([id]) => s.parcels.includes(id))) }));
+  load(s.parcels);
 });

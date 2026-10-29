@@ -18,14 +18,14 @@ import { config, type Overlay, type SubLayer } from '@/config/runtime';
 import { layerMeta, serviceError, visibleAtScale } from '@/services/meta';
 import { normalize } from '@/services/text';
 import { statusOf, useStatusStore, type ServiceStatus } from '@/services/status';
-import { loadCatalogLayer, useCatalog } from '@/services/catalog';
+import { loadCatalogLayer, useCatalog, type LoadState } from '@/services/catalog';
 import type { CatalogIndexEntry, CatalogStatus } from '@/services/catalogTypes';
 import { overlayOpacity, useMapStore } from '@/state/store';
 import { dateText, scaleText } from '@/map/format';
 import { t } from '@/i18n';
 import { NewTab } from './NewTab';
 
-const STATUS_LABEL = (status: ServiceStatus) => t(`layers.status.${status}`);
+const statusLabel = (status: ServiceStatus) => t(`layers.status.${status}`);
 
 /**
  * Problems of a service by shape and name, not colour alone (WCAG 1.4.1): a crossed circle or a
@@ -40,7 +40,7 @@ const STATUS_ICON: Partial<Record<ServiceStatus, [LucideIcon, string]>> = {
 
 /** Why a layer cannot be shown, in plain language, by the result of the last check. */
 type WhyStatus = Exclude<CatalogStatus, 'ok'> | 'degraded' | 'slow';
-const WHY = (status: WhyStatus) => t(`layers.why.${status}`, { system: config.map.projection.name, code: config.map.projection.code });
+const why = (status: WhyStatus) => t(`layers.why.${status}`, { system: config.map.projection.name, code: config.map.projection.code });
 
 /** Shown at once for a long topic; the rest after "show more". */
 const PAGE = 60;
@@ -233,7 +233,7 @@ export function LayerCatalog() {
   );
 }
 
-function CatalogNotice({ state }: { state: string }) {
+function CatalogNotice({ state }: { state: LoadState }) {
   if (state === 'loading') {
     return (
       <p role="status" className="flex items-center gap-2 px-3 py-2 text-xs text-[var(--muted)]">
@@ -453,7 +453,7 @@ function Why({ status, detail, checked }: { status: WhyStatus; detail?: string; 
       </button>
       {open && (
         <div className="mt-1 rounded-lg bg-[var(--field)] px-3 py-2 text-xs leading-relaxed">
-          <p>{WHY(status)}</p>
+          <p>{why(status)}</p>
           {(detail || checked) && (
             <p className="mt-1 text-[var(--muted)]">
               {detail && <>{t('layers.serverAnswer', { detail })} </>}
@@ -479,8 +479,8 @@ function StatusDot({ status }: { status: ServiceStatus }) {
   if (!icon) return <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-[var(--accent)]" aria-hidden="true" />;
   const [Icon, colour] = icon;
   return (
-    <Icon className={`h-3.5 w-3.5 shrink-0 ${colour}`} role="img" aria-label={STATUS_LABEL(status)}>
-      <title>{STATUS_LABEL(status)}</title>
+    <Icon className={`h-3.5 w-3.5 shrink-0 ${colour}`} role="img" aria-label={statusLabel(status)}>
+      <title>{statusLabel(status)}</title>
     </Icon>
   );
 }

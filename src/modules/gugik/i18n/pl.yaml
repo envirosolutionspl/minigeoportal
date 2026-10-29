@@ -61,6 +61,8 @@ info:
     other: '{count} zdjęcia od {year}'
   seeChanges: Zobacz zmiany
   height: 'Wysokość terenu: {height} n.p.m.'
+  address: 'Adres: {address}'
+  addressNear: 'Najbliższy adres: {address} (ok. {distance} m)'
 
 topo:
   sheet: 'arkusz 1:{scale} w układzie {system}'

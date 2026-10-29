@@ -163,6 +163,20 @@ function crossCheck(
     return seen;
   };
 
+  if (app.value?.guides) {
+    // The list of help pages lives next to the languages' addresses and the app's own paths.
+    const { path } = app.value.guides;
+    const taken = new Set([...app.value.locales.available, 'api', 'assets', 'brand', 'thumbs']);
+    const paths = typeof path === 'string' ? { '': path } : path;
+    if (typeof path !== 'string' && !path[app.value.locales.default]) {
+      problems.push(`${at(app, 'app.yaml', ['guides', 'path'])} guides.path: no text in the default language`);
+    }
+    for (const [locale, value] of Object.entries(paths)) {
+      if (taken.has(value))
+        problems.push(`${at(app, 'app.yaml', ['guides', 'path', ...(locale ? [locale] : [])])} guides.path: "${value}" is taken`);
+    }
+  }
+
   if (map.value) {
     const m = map.value;
     const services = unique(m.tileServices, map, 'map.yaml', 'tileServices');
@@ -246,6 +260,19 @@ function crossCheck(
   }
 }
 
+/** A Markdown text (<path>.<language>.md) in every language that has a file. */
+function readTexts(root: string, path: string, locales: string[]): Record<string, string> {
+  const texts: Record<string, string> = {};
+  for (const locale of locales) {
+    try {
+      texts[locale] = readFileSync(join(root, `${path}.${locale}.md`), 'utf8');
+    } catch {
+      // A text may be in some languages only; the callers say which must be there.
+    }
+  }
+  return texts;
+}
+
 /** The Markdown texts in every language that has them; the default language must. */
 function readContent(root: string, app: Parsed<AppConfig['app']>, problems: string[]): AppConfig['content'] {
   const content: AppConfig['content'] = {};
@@ -253,19 +280,29 @@ function readContent(root: string, app: Parsed<AppConfig['app']>, problems: stri
   const { locales } = app.value;
   for (const [name, path] of Object.entries(app.value.content) as [keyof AppConfig['content'], string | undefined][]) {
     if (!path) continue;
-    const texts: Record<string, string> = {};
-    for (const locale of locales.available) {
-      try {
-        texts[locale] = readFileSync(join(root, `${path}.${locale}.md`), 'utf8');
-      } catch {
-        if (locale === locales.default) {
-          problems.push(`${locate('app.yaml', app.doc, app.lines, ['content', name])} content.${name}: ${path}.${locale}.md not found`);
-        }
-      }
+    content[name] = readTexts(root, path, locales.available);
+    if (!content[name][locales.default]) {
+      problems.push(
+        `${locate('app.yaml', app.doc, app.lines, ['content', name])} content.${name}: ${path}.${locales.default}.md not found`,
+      );
     }
-    content[name] = texts;
   }
   return content;
+}
+
+/** The help pages in every language that has them; each page in one language at least. */
+function readGuides(root: string, app: Parsed<AppConfig['app']>, problems: string[]): AppConfig['guides'] {
+  const guides: AppConfig['guides'] = {};
+  if (!app.value?.guides) return guides;
+  app.value.guides.pages.forEach((page, i) => {
+    guides[page] = readTexts(root, `content/guides/${page}`, app.value!.locales.available);
+    if (Object.keys(guides[page]).length === 0) {
+      problems.push(
+        `${locate('app.yaml', app.doc, app.lines, ['guides', 'pages', i])} guides.pages.${i}: content/guides/${page}.<language>.md not found`,
+      );
+    }
+  });
+  return guides;
 }
 
 /** Skins that come with the app; a deployment's own go to skins/ in its configuration directory. */
@@ -323,9 +360,10 @@ export function loadConfig(dir: string): AppConfig {
   const layers = readFile(root, 'layers.yaml', layersSchema, problems);
   crossCheck(app, map, layers, problems);
   const content = readContent(root, app, problems);
+  const guides = readGuides(root, app, problems);
   const skin = readSkin(root, app, problems);
   const brand = readBrand(root, app, problems);
   const messages = app.value ? loadMessages(root, app.value.locales, problems, modules.enabled(app.value)) : {};
   if (problems.length || !app.value || !map.value || !layers.value) throw new ConfigError(problems);
-  return { dir: root, app: app.value, map: map.value, layers: layers.value, content, skin, brand, messages };
+  return { dir: root, app: app.value, map: map.value, layers: layers.value, content, guides, skin, brand, messages };
 }

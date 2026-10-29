@@ -76,7 +76,7 @@ const languageName = (code: string) => {
  * of the app opens in it next time too.
  */
 function switchLanguage(code: string) {
-  document.cookie = `lang=${encodeURIComponent(code)}; path=/; max-age=31536000; samesite=lax`;
+  document.cookie = `lang=${encodeURIComponent(code)}; path=/; max-age=31536000; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`;
   const url = new URL(location.href);
   url.pathname = config.localePaths[code];
   url.searchParams.delete('lang');

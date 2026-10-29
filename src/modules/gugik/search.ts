@@ -23,8 +23,8 @@ export const gugikSearch: SearchProvider = {
     if (hit.kind === 'place') return { wkt: await placeOutline(hit, signal).catch(() => undefined), persist: false };
     if (hit.kind === 'address' && hit.center) {
       const building = await buildingAt(hit.center, signal).catch(() => undefined);
-      return { wkt: building, persist: Boolean(building) };
+      return { wkt: building, persist: Boolean(building), sides: Boolean(building) };
     }
-    return { wkt: hit.wkt, persist: hit.kind === 'parcel' || (hit.kind === 'nature' && Boolean(hit.wkt)) };
+    return { wkt: hit.wkt, persist: hit.kind === 'parcel' || (hit.kind === 'nature' && Boolean(hit.wkt)), sides: hit.kind === 'parcel' };
   },
 };

@@ -6,6 +6,7 @@ import Point from 'ol/geom/Point';
 import WKT from 'ol/format/WKT';
 import { Circle, Fill, Stroke, Style } from 'ol/style';
 import { scaleToResolution } from './projection';
+import { sideLabels } from './sides';
 import { duration } from './motion';
 import { useMapStore, type FocusTarget } from '@/state/store';
 
@@ -36,7 +37,12 @@ const wkt = new WKT();
  */
 export function attachFocus(map: Map): () => void {
   const source = new VectorSource<Feature>();
-  const layer = new VectorLayer({ source, style: STYLE, zIndex: 90 });
+  // Parcels and buildings show the lengths of their sides up close.
+  const layer = new VectorLayer({
+    source,
+    style: (feature, resolution) => (feature.get('sides') ? [...STYLE, ...sideLabels(feature as Feature, resolution)] : STYLE),
+    zIndex: 90,
+  });
   map.addLayer(layer);
   const view = map.getView();
   let timer: number | undefined;
@@ -73,7 +79,7 @@ export function attachFocus(map: Map): () => void {
     layer.setOpacity(1);
     const geometry = target.wkt ? wkt.readGeometry(target.wkt) : target.center ? new Point(target.center) : null;
     if (!geometry) return;
-    source.addFeature(new Feature(geometry));
+    source.addFeature(new Feature({ geometry, sides: target.sides }));
     if (geometry instanceof Point) {
       view.animate({ center: geometry.getCoordinates(), zoom: target.zoom, duration: duration(600) });
     } else {

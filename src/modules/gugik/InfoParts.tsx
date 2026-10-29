@@ -9,6 +9,7 @@ import { locale, t } from '@/i18n';
 import { parcelReportUrl } from './parcelReport';
 import { orthoAt, pixelText, type OrthoEdition } from './ortho';
 import { heightsAt } from './elevation';
+import { addressAt } from './address';
 
 /** The layer of the time view that shows the archive of these photos (app.yaml: ortho.history), if it is one. */
 const HISTORY = config.modules.gugik?.ortho ? config.modules.gugik.ortho.history : undefined;
@@ -37,6 +38,24 @@ export function ParcelReportLink({ coordinate }: { coordinate: [number, number] 
       <span className="sr-only">{t('info.parcelReportHint')}</span>
       <ExternalLink className="h-3 w-3" aria-hidden="true" />
     </a>
+  );
+}
+
+/** Distances to the nearest address under this are the address of the point itself. */
+const AT_ADDRESS = 10;
+
+/** The address nearest to the clicked point, with how far it is; nothing until it is known, or where none is within reach. */
+export function Address({ coordinate }: { coordinate: [number, number] }) {
+  const address = useAbortable((signal) => addressAt(coordinate, signal), [coordinate]);
+  if (address.status !== 'ready' || address.value === null) return null;
+  const { street, place, distance } = address.value;
+  const text = `${street}, ${place}`;
+  return (
+    <p className="text-sm">
+      {distance < AT_ADDRESS
+        ? t('info.address', { address: text })
+        : t('info.addressNear', { address: text, distance: Math.round(distance / 5) * 5 })}
+    </p>
   );
 }
 

@@ -49,7 +49,8 @@ describe('deployment files', () => {
     expect(nginx).toMatch(/upstream minigeoportal \{[^}]*keepalive 64;/s);
     expect(nginx).toContain('proxy_set_header Connection "";');
     expect(nginx).toContain('proxy_http_version 1.1;');
-    expect(nginx).toMatch(/proxy_next_upstream error timeout http_502 http_503;/);
+    // A 503 is the app saying busy, not a replica down: it must not move the visitor (nor count as a failure).
+    expect(nginx).toMatch(/proxy_next_upstream error timeout http_502;/);
     expect(nginx).toMatch(/hash \$binary_remote_addr consistent;/);
     // A compressed script of 68 KB is answered from memory, not from a temporary file.
     expect(nginx).toContain('proxy_buffers 16 32k;');

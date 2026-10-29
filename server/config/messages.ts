@@ -21,6 +21,10 @@ type Tree = { [key: string]: string | Tree };
 
 const isPlural = (value: Tree) => Object.keys(value).every((k) => PLURAL.has(k)) && 'other' in value;
 
+/** A message of one language as the server says it (mails, help pages), its {parameters} filled in; the key when there is none. */
+export const messageOf = (messages: Record<string, Message> | undefined, key: string, params: Record<string, string> = {}) =>
+  String(messages?.[key] ?? key).replace(/\{(\w+)\}/g, (all, name: string) => params[name] ?? all);
+
 /** Dotted keys of a nested message file; `problems` gets every value that is not a text. */
 export function flatten(tree: unknown, problems: string[], file: string, prefix = ''): Record<string, Message> {
   const out: Record<string, Message> = {};

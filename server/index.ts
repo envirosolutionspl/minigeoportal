@@ -83,6 +83,13 @@ if (production) {
 const server = serve({ fetch: app.fetch, port: config.port, hostname: config.host }, (info) => {
   console.log(`API on http://${info.address}:${info.port}`);
 });
+// The proxy keeps its connections to the app for a minute (nginx: keepalive); the app must keep
+// them longer than that, or a request sent on a connection it has just closed fails. The server
+// is an http.Server (serve() without createServer), which has these timeouts.
+if ('keepAliveTimeout' in server) {
+  server.keepAliveTimeout = 65_000;
+  server.headersTimeout = 66_000;
+}
 
 // A container stops with SIGTERM: requests in progress finish, new ones go to other instances.
 for (const signal of ['SIGTERM', 'SIGINT'] as const) {

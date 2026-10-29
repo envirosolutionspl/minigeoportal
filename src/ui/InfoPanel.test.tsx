@@ -121,6 +121,19 @@ describe('InfoPanel', () => {
     expect(link.target).toBe('_blank');
   });
 
+  it('names the nearest address, with its distance when it is not the point itself', async () => {
+    const address = (distance: string) =>
+      JSON.stringify({ results: { 1: { city: 'Warszawa', street: 'ulica Krucza', number: '33/39', code: '00-525', distance } } });
+    const { fetchMock } = stubFetch([['GetAddressReverse', address('32.9')]]);
+    useInfoStore.getState().start(point, []);
+    render(<InfoPanel />);
+    expect(await screen.findByText('Najbliższy adres: ul. Krucza 33/39, 00-525 Warszawa (ok. 35 m)')).toBeTruthy();
+
+    fetchMock.mockResolvedValueOnce(new Response(address('4.2')));
+    act(() => useInfoStore.getState().start([656850, 482463], []));
+    expect(await screen.findByText('Adres: ul. Krucza 33/39, 00-525 Warszawa')).toBeTruthy();
+  });
+
   it('renders records with links, empty answers and errors', () => {
     const store = useInfoStore.getState();
     store.start(point, ['kieg', 'kimpzp', 'rcn']);

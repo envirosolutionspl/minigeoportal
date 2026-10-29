@@ -12,6 +12,7 @@ import * as modules from './modules/index.ts';
 import { nominatimSearch } from './modules/nominatim.ts';
 import { errorMessage } from './config.ts';
 import { connectSources, type Site } from './html.ts';
+import { attachGuides } from './guides.ts';
 
 /**
  * API of the app: cached service metadata, a point-query proxy (GetFeatureInfo, ArcGIS
@@ -191,6 +192,7 @@ export function createApp({ site, cache, mailer, origin, moduleData = {}, limits
   );
 
   app.all('/api/*', (c) => c.text('Not found', 404));
+  attachGuides(app, site.config);
   return app;
 }
 

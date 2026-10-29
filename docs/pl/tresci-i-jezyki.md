@@ -15,7 +15,7 @@ Plik języka domyślnego musi istnieć. Język bez własnego pliku pokazuje plik
 - nagłówki, akapity, listy, wyróżnienia i cytaty działają jak zwykle; cytat jest rysowany jako wyróżniona ramka (ramka „Ważne” w domyślnym powitaniu);
 - HTML wpisany w Markdown jest pokazywany jako tekst, nigdy nie jest wykonywany;
 - obrazy nie są pokazywane;
-- linki mogą prowadzić do adresów www (otwierają się w nowej karcie) i e-mail (`mailto:`); inne linki stają się zwykłym tekstem. Specjalne linki otwierają części aplikacji, np. `[formularz zgłoszeń](app:report)`:
+- linki mogą prowadzić do adresów www (otwierają się w nowej karcie), e-mail (`mailto:`) i stron samego serwisu (`/pomoc`, `/?l=kieg,kimpzp`: mapa z włączonymi warstwami); inne linki stają się zwykłym tekstem. Specjalne linki otwierają części aplikacji, np. `[formularz zgłoszeń](app:report)`:
 
 | Link                | Otwiera                               |
 | ------------------- | ------------------------------------- |
@@ -23,6 +23,24 @@ Plik języka domyślnego musi istnieć. Język bez własnego pliku pokazuje plik
 | `app:accessibility` | deklarację dostępności                |
 | `app:welcome`       | okno powitalne                        |
 | `app:time`          | podróż w czasie (gdy wdrożenie ją ma) |
+
+### Poradniki
+
+Poradniki to osobne strony z odpowiedziami na pytania, które ludzie wpisują w wyszukiwarkę („jak sprawdzić, czy działka jest budowlana”). Serwer składa je z Markdown w zwykłe strony HTML, które wyszukiwarki czytają bez uruchamiania aplikacji:
+
+```yaml
+guides:
+  path: { pl: pomoc, en: help } # adres listy: /pomoc, /en/help
+  pages: # content/guides/<strona>.<język>.md, adres /pomoc/<strona>
+    - czy-dzialka-jest-budowlana
+    - teren-zalewowy
+```
+
+- Strona jest w tych językach, dla których ma plik; wystarczy jeden. Brak pliku w każdym języku to błąd konfiguracji.
+- Tytuł strony to jej pierwszy nagłówek `#`, opis dla wyszukiwarek to pierwszy akapit (do 160 znaków).
+- Pod tekstem jest przycisk „Sprawdź na mapie” i lista pozostałych poradników; adres `path` wymienia wszystkie.
+- Strony mają kolory skórki i działają bez JavaScriptu. Podgląd w trakcie pracy: `npm run dev:api` i adres serwera API (strony podaje serwer, nie Vite).
+- `/sitemap.xml` wymienia strony główne wszystkich języków, listy i poradniki, a `/robots.txt` wskazuje mapę witryny. Oba są także bez poradników.
 
 ## Napisy interfejsu
 

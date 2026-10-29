@@ -71,7 +71,7 @@ export function ParcelSearch({ onClose }: { onClose(): void }) {
   const ready = !!precinct && PARCEL_NUMBER.test(choice.number);
 
   const show = (hit: SearchHit) => {
-    focusOn({ wkt: hit.wkt, zoom: zoomForScale(PARCEL_SCALE), persist: true, parcel: hit.id });
+    focusOn({ wkt: hit.wkt, zoom: zoomForScale(PARCEL_SCALE), persist: true, sides: true, parcel: hit.id });
     setShown(hit);
   };
 

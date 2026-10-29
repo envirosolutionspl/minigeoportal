@@ -196,6 +196,8 @@ export interface ClientConfig {
       parcelReport: boolean;
       /** Heights of the terrain (the elevation model) in the place panel and the terrain profile tool. */
       elevation: boolean;
+      /** The address nearest to the clicked point (the GUGiK geocoder) in the place panel. */
+      address: boolean;
     };
   };
 }

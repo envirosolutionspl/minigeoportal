@@ -10,7 +10,8 @@ import { parcelLookup } from '@/modules';
 import { toggleParcelAt, useParcelStore } from '@/state/parcels';
 import { useMapStore } from '@/state/store';
 import { SELECTION, translucent } from './style';
-import { formatArea } from './format';
+import { formatArea, formatLength } from './format';
+import { perimeterOf, sideLabels } from './sides';
 import { t } from '@/i18n';
 
 /** A light halo under the outline keeps it visible on photos and on the map alike (WCAG 1.4.11). */
@@ -51,9 +52,11 @@ export function attachParcels(map: Map): () => void {
       const entry = entries[id];
       if (entry?.status !== 'ready') return;
       const feature = new Feature(entry.geometry);
-      feature.setStyle(styleFor(i + 1));
+      const style = styleFor(i + 1);
+      feature.setStyle((f, resolution) => [...style, ...sideLabels(f as Feature, resolution)]);
       const { number, region } = entry.parcel;
-      feature.set('tip', `${i + 1}. ${t('parcels.row', { number, region, area: formatArea(entry.area) })}`);
+      const perimeter = t('measure.perimeter', { length: formatLength(perimeterOf(entry.geometry)) });
+      feature.set('tip', `${i + 1}. ${t('parcels.row', { number, region, area: formatArea(entry.area) })}, ${perimeter}`);
       source.addFeature(feature);
     });
   };

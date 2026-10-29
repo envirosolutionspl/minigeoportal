@@ -92,7 +92,7 @@ function icons(template: string, icon?: string): string {
   const href = escapeHtml(icon);
   return template.replace(
     /<link rel="icon"[^>]*>\s*(?:<link rel="icon"[^>]*>\s*)*<link rel="apple-touch-icon"[^>]*>/,
-    `<link rel="icon" href="${href}" />\n    <link rel="apple-touch-icon" href="${href}" />`,
+    () => `<link rel="icon" href="${href}" />\n    <link rel="apple-touch-icon" href="${href}" />`,
   );
 }
 
@@ -104,14 +104,17 @@ export function renderPage(template: string, client: ClientConfig, skin = ''): s
   // The stylesheet comes from the configuration; it cannot end its own element early.
   // In CSS "<\/" reads as "</", so the stylesheet keeps its meaning.
   const style = skin ? `    <style id="skin">${skin.replace(/<\//g, '<\\/')}</style>\n` : '';
-  return icons(template, client.app.icon)
-    .replace(/<html lang="[^"]*">/, `<html lang="${escapeHtml(client.locale)}">`)
-    .replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(client.app.title)}</title>`)
-    .replace(/(<meta\s+name="description"\s+content=")[^"]*"/, `$1${escapeHtml(client.app.description)}"`)
-    .replace(
-      '</head>',
-      `${sharing(client)}${style}${preconnects(client)}    <script type="application/json" id="boot">${scriptJson(client)}</script>\n  </head>`,
-    );
+  return (
+    icons(template, client.app.icon)
+      // Texts of the configuration go in as they are: "$&" in a title is not a pattern.
+      .replace(/<html lang="[^"]*">/, () => `<html lang="${escapeHtml(client.locale)}">`)
+      .replace(/<title>[^<]*<\/title>/, () => `<title>${escapeHtml(client.app.title)}</title>`)
+      .replace(/(<meta\s+name="description"\s+content=")[^"]*"/, (_, start: string) => `${start}${escapeHtml(client.app.description)}"`)
+      .replace(
+        '</head>',
+        `${sharing(client)}${style}${preconnects(client)}    <script type="application/json" id="boot">${scriptJson(client)}</script>\n  </head>`,
+      )
+  );
 }
 
 /**

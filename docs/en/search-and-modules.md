@@ -33,6 +33,8 @@ With every provider the box understands coordinates:
 
 The panel lists the parcels in the order they were added, numbered as on the map, with their id, precinct and area, and their total. The area is computed from the parcel's geometry in ULDK on the GRS80 ellipsoid, so it is approximate and is not the area in the land register; the panel says so. Each parcel is in the selection once, and it holds at most 10 parcels, each one a request to ULDK. The view's link carries it in the `dz` parameter (ids separated by commas, e.g. `dz=141201_1.0001.1867/2,141201_1.0001.1868`); a parcel ULDK does not know stays in the list, saying so. The selection downloads as GeoJSON (WGS 84), KML or CSV (semicolons, decimal commas, the outline as WKT in the map's system).
 
+A found parcel (or building) and the parcels of the selection show the lengths of their sides on the map from 1:2500 in, along each side; a label that does not fit a short side is left out. Lengths are computed on the GRS80 ellipsoid from the ULDK geometry, to the decimetre, so they are approximate as the area is. An outline of more than 200 corners (a municipality, a forest) gets no labels. The tip shown when the mouse is over a parcel of the selection gives its perimeter too.
+
 ## The gugik module
 
 The integration with geoportal.gov.pl is a module that a deployment switches on in `app.yaml`:
@@ -47,6 +49,7 @@ modules:
     topo: { history: mapy-dawne } # the years of the topographic map sheets in the time view
     parcelReport: true # a link to the parcel report of geoportal.gov.pl
     elevation: true # the height of the terrain in the place panel and the "Terrain profile" tool
+    address: true # the nearest address in the place panel
 ```
 
 The module works in PL-1992 only. With another `projection.code`, a configuration that enables it is refused.
@@ -94,6 +97,13 @@ Heights come from the elevation model of GUGiK (NMT, a 1 m grid, the service `se
 
 - Where the model has no data (abroad, at sea), the place panel has no height line and the profile leaves such points out.
 
+### address: the nearest address
+
+The place panel gives the address nearest to the clicked point, with its postcode, from the national register of addresses (the GUGiK geocoder, the service `services.gugik.gov.pl/uug`). The browser asks it directly.
+
+- A point closer than 10 m to an address gives "Address: …"; further away "Nearest address: … (about 35 m)", the distance rounded to 5 m.
+- The geocoder looks within 100 m. Further out (a field, a forest) the panel has no address line.
+
 ### What else depends on the module
 
 The GUGiK search (`search.provider: gugik`) and the parcel search (`search.parcel`) need the module too. Without it, the server has none of its routes and the page connects to no GUGiK host.
@@ -109,6 +119,7 @@ The module brings its texts in `src/modules/gugik/i18n/pl.yaml` and `en.yaml`. T
 - `layers.catalog*`: loading the geoportal.gov.pl list;
 - `info.parcelReport*`: the parcel report link;
 - `info.height`: the height of the terrain;
+- `info.address`, `info.addressNear`: the nearest address;
 - `info.photo*`, `info.pixel`, `info.downloadSheet`: the date of the aerial photo.
 
 A deployment changes them in its `i18n/<lang>.yaml` like any other text, and a new language translates them there (see [Texts and languages](texts-and-languages.md#adding-a-language-step-by-step)).

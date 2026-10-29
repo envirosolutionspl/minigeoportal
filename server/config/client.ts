@@ -141,6 +141,7 @@ export function clientConfig({ app, map, layers, content, brand, messages }: App
             topo: app.modules.gugik.topo,
             parcelReport: app.modules.gugik.parcelReport,
             elevation: app.modules.gugik.elevation,
+            address: app.modules.gugik.address,
           },
         }
       : {},

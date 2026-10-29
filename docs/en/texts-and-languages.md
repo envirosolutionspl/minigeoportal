@@ -15,7 +15,7 @@ The file of the default language must exist. A language without its file shows t
 - headings, paragraphs, lists, emphasis and quotes work as usual; a quote is drawn as a highlighted box (the "Important" box of the default welcome text);
 - HTML written into the Markdown is shown as text, never run;
 - images are not shown;
-- links may lead to web addresses (they open in a new tab) and e-mail addresses (`mailto:`); other links become plain text. Special links open parts of the app, e.g. `[report form](app:report)`:
+- links may lead to web addresses (they open in a new tab), e-mail addresses (`mailto:`) and pages of the site itself (`/help`, `/?l=kieg,kimpzp`: the map with layers switched on); other links become plain text. Special links open parts of the app, e.g. `[report form](app:report)`:
 
 | Link                | Opens                                        |
 | ------------------- | -------------------------------------------- |
@@ -23,6 +23,24 @@ The file of the default language must exist. A language without its file shows t
 | `app:accessibility` | the accessibility statement                  |
 | `app:welcome`       | the welcome window                           |
 | `app:time`          | the time view (where the deployment has one) |
+
+### Guides
+
+Guides are separate pages answering questions people type into a search engine ("how to check if a plot can be built on"). The server turns their Markdown into plain HTML pages, which search engines read without running the app:
+
+```yaml
+guides:
+  path: { pl: pomoc, en: help } # the address of the list: /pomoc, /en/help
+  pages: # content/guides/<page>.<language>.md, at /pomoc/<page>
+    - czy-dzialka-jest-budowlana
+    - teren-zalewowy
+```
+
+- A page exists in the languages that have its file; one is enough. A page with no file in any language is a configuration error.
+- The page's title is its first `#` heading, its description for search engines the first paragraph (up to 160 characters).
+- Under the text are a "Check on the map" button and the list of the other guides; the address of `path` lists them all.
+- The pages take the skin's colours and work without JavaScript. To preview them while working: `npm run dev:api` and the API server's address (the server serves them, not Vite).
+- `/sitemap.xml` lists the home pages of every language, the lists and the guides, and `/robots.txt` points to the sitemap. Both exist without guides too.
 
 ## Interface texts
 

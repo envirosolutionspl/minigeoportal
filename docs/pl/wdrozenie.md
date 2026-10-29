@@ -147,7 +147,7 @@ Do usług źródłowych serwer otwiera najwyżej 24 połączenia naraz; ponad to
 
 **Nagłówki bezpieczeństwa:**
 
-- Content Security Policy: skrypty, style i czcionki tylko z serwisu; obrazy z dowolnego adresu https (kafle i obrazy usług); połączenia tylko do serwisu, a z modułem gugik także do usług wyszukiwarki GUGiK i modelu terenu (`services.gugik.gov.pl`).
+- Content Security Policy: skrypty, style i czcionki tylko z serwisu; obrazy z dowolnego adresu https (kafle i obrazy usług); połączenia tylko do serwisu, a z modułem gugik także do usług wyszukiwarki GUGiK, modelu terenu i geokodera adresów (`services.gugik.gov.pl`).
 - `frame-ancestors 'none'`: strony nie da się osadzić w ramce na innej stronie.
 - `Strict-Transport-Security` na pół roku, tylko dla hosta aplikacji (bez subdomen), więc proxy nie musi go dodawać.
 

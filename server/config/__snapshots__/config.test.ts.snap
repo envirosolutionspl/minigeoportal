@@ -105,7 +105,7 @@ exports[`default configuration > stays what the app was built with (any change s
   "links": {
     "fallbackMap": {
       "name": "geoportal.gov.pl",
-      "url": "https://mapy.geoportal.gov.pl/imap/Imgp_2.html",
+      "url": "https://mapy.geoportal.gov.pl/imapnext/imap/index.html?moduleId=modulGK",
     },
   },
   "locale": "pl",
@@ -321,6 +321,7 @@ exports[`default configuration > stays what the app was built with (any change s
   },
   "modules": {
     "gugik": {
+      "address": true,
       "catalog": true,
       "drawOrder": true,
       "elevation": true,

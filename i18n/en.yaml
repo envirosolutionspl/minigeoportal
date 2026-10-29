@@ -257,3 +257,8 @@ accessibility:
 
 welcome:
   start: Go to the map
+
+guides:
+  title: Guides
+  more: More guides
+  openMap: Check on the map

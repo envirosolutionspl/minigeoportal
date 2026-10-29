@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { ConfigError, loadConfig } from './load.ts';
 import { clientConfig, creditHtml, textIn } from './client.ts';
+import { messageOf } from './messages.ts';
 
 /** The default configuration, read once: most tests only look at it. */
 const DEFAULT = loadConfig('config');
@@ -98,6 +99,7 @@ describe('default configuration', () => {
       topo: { history: 'mapy-dawne' },
       parcelReport: true,
       elevation: true,
+      address: true,
     });
   });
 });
@@ -126,6 +128,16 @@ describe('loadConfig', () => {
     const dir = broken('layers.yaml', (s) => s.replace('  - id: kieg\n', '  - id: kieg\n    apiKey: abc\n'));
     expect(problems(dir).join('\n')).toMatch(/overlays\.0\.apiKey: secrets belong in environment variables/);
     expect(problems(dir).join('\n')).toMatch(/Unrecognized key: "apiKey"/);
+  });
+
+  it('keeps the help pages off the addresses of languages and the API, and in the default language', () => {
+    const dir = broken('app.yaml', (s) => s.replace('  path: { pl: pomoc, en: help }', '  path: { pl: api, en: pl }'));
+    expect(problems(dir).join('\n')).toMatch(/guides\.path: "api" is taken/);
+    expect(problems(dir).join('\n')).toMatch(/guides\.path: "pl" is taken/);
+    const noDefault = broken('app.yaml', (s) => s.replace('  path: { pl: pomoc, en: help }', '  path: { pl: pomoc }'));
+    expect(problems(noDefault).join('\n')).toMatch(/guides\.path: no text in the default language/);
+    const missing = broken('app.yaml', (s) => s.replace('    - teren-zalewowy\n', '    - teren-zalewowy\n    - nic\n'));
+    expect(problems(missing).join('\n')).toMatch(/guides\.pages\.2: content\/guides\/nic\.<language>\.md not found/);
   });
 
   it('checks ids used across the files', () => {
@@ -302,6 +314,13 @@ describe('texts and credits', () => {
     expect(textIn({ pl: 'Mapa' }, 'de', 'pl')).toBe('Mapa');
   });
 
+  it('says a message of the server with its parameters filled in, or the key when there is none', () => {
+    const messages = { 'a.b': 'Mapa {name}, {n}', plural: { one: '1', other: '{count}' } };
+    expect(messageOf(messages, 'a.b', { name: 'gminy' })).toBe('Mapa gminy, {n}');
+    expect(messageOf(messages, 'none')).toBe('none');
+    expect(messageOf(undefined, 'a.b')).toBe('a.b');
+  });
+
   it('turns Markdown links into safe links and escapes the rest', () => {
     expect(creditHtml('Dane: [OSM](https://www.openstreetmap.org/copyright) <b>')).toBe(
       'Dane: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OSM</a> &lt;b&gt;',
@@ -311,7 +330,10 @@ describe('texts and credits', () => {
 
   it('names the fallback map as configured, else after its host', () => {
     const named = clientConfig(DEFAULT, 'pl');
-    expect(named.links.fallbackMap).toEqual({ url: 'https://mapy.geoportal.gov.pl/imap/Imgp_2.html', name: 'geoportal.gov.pl' });
+    expect(named.links.fallbackMap).toEqual({
+      url: 'https://mapy.geoportal.gov.pl/imapnext/imap/index.html?moduleId=modulGK',
+      name: 'geoportal.gov.pl',
+    });
     const unnamed = broken('app.yaml', (s) =>
       s.replace(/^ {2}fallbackName: .*\n/m, '').replace('https://mapy.geoportal', 'https://www.geoportal'),
     );

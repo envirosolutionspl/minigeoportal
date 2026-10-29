@@ -5,9 +5,9 @@ import { CATALOG_ID, overlayDef } from '@/services/catalog';
 import { HOME_EXTENT } from '@/map/projection';
 import { readUrl, writeUrl } from './url';
 import { MAX_PARCELS } from './limits';
+import type { PrintOptions } from '@/map/print';
 
 export { MAX_PARCELS };
-import type { PrintOptions } from '@/map/print';
 
 type Panel = 'none' | 'catalog';
 
@@ -39,6 +39,8 @@ export interface FocusTarget {
   zoom: number;
   /** Parcels and buildings stay outlined until cleared; other objects fade out. */
   persist?: boolean;
+  /** A parcel or building: the lengths of its sides are drawn up close. */
+  sides?: boolean;
   /** The full id of a parcel found by the search, which the parcel selection can take. */
   parcel?: string;
   /** Changes on every request so identical targets still trigger. */

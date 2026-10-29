@@ -11,7 +11,7 @@ import type { CatalogEntry, CatalogIndex, CatalogIndexEntry, CatalogMeta } from 
  * legends) arrives when it is switched on. Until then the app runs on the configured overlays alone.
  */
 
-type LoadState = 'idle' | 'loading' | 'ready' | 'preparing' | 'error';
+export type LoadState = 'idle' | 'loading' | 'ready' | 'preparing' | 'error';
 
 /** Our own API answers in well under this; a connection that hangs must not leave the panel loading for good. */
 const TIMEOUT_MS = 10_000;

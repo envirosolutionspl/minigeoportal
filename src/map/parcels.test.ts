@@ -47,7 +47,7 @@ describe('parcels on the map', () => {
     const tip = map.getOverlays().item(0);
 
     move(map, 'mouse');
-    expect(tip.getElement()!.textContent?.replace(/\s/g, ' ')).toBe('1. dz. 12, obręb Mińsk · 1,0012 ha (10 012 m²)');
+    expect(tip.getElement()!.textContent?.replace(/\s/g, ' ')).toBe('1. dz. 12, obręb Mińsk · 1,0012 ha (10 012 m²), obwód 400,2 m');
     expect(tip.getPosition()).toBeDefined();
 
     move(map, 'touch');

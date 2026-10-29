@@ -1,5 +1,6 @@
 import { hostname } from 'node:os';
 import { errorMessage } from './config.ts';
+import { messageOf } from './config/messages.ts';
 import type { Mailer, ReportForm } from './report.ts';
 
 /**
@@ -22,8 +23,7 @@ export function alertsTo(mailer: Mailer | undefined, form: ReportForm): void {
     mail = undefined;
     return;
   }
-  const say = (key: string, params: Record<string, string> = {}) =>
-    String(form.messages[`report.mail.${key}`] ?? key).replace(/\{(\w+)\}/g, (all, name: string) => params[name] ?? all);
+  const say = (key: string, params: Record<string, string> = {}) => messageOf(form.messages, `report.mail.${key}`, params);
   mail = (what, detail) =>
     mailer.alert(
       say('alert', { app: form.app.name, what }),

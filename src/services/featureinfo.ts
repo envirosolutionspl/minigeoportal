@@ -177,6 +177,10 @@ const fieldName = (label: string) => {
   return name === key ? label : name;
 };
 
+/** A field whose value is a web address links to it. */
+const linked = (label: string, value: string): InfoField =>
+  /^https?:\/\/\S+$/i.test(value) ? { label, value, href: value } : { label, value };
+
 /**
  * One field from a table cell, or from a text value that may itself be markup (Intergraph
  * wraps links and QR codes in CDATA).
@@ -191,12 +195,10 @@ function field(label: string, raw: string | Element): InfoField | null {
     const text = clean(el.textContent);
     if (EMPTY.test(text)) return null;
     if (/^https?:/i.test(href)) return { label, value: text || t('info.open'), href };
-    if (!text) return null;
-    return /^https?:\/\/\S+$/i.test(text) ? { label, value: text, href: text } : { label, value: text };
+    return text ? linked(label, text) : null;
   }
   const value = clean(raw as string); // Not an element: that branch returned above.
-  if (!value || EMPTY.test(value)) return null;
-  return /^https?:\/\/\S+$/i.test(value) ? { label, value, href: value } : { label, value };
+  return value && !EMPTY.test(value) ? linked(label, value) : null;
 }
 
 /** ArcGIS titles look like "FeatureInfoCollection - layer name: 'Przeznaczenia MPZP'". */

@@ -4,6 +4,8 @@ MiniGeoportal pokazuje te same publiczne dane co krajowy [geoportal.gov.pl](http
 
 Zobaczysz granice i numer działki, przeznaczenie w planie miejscowym lub ogólnym, ceny transakcyjne w okolicy, uzbrojenie terenu, zdjęcia lotnicze i wysokość terenu, a [podróż w czasie](app:time) pokaże archiwalne zdjęcia od 1995 r. i dawne mapy topograficzne. Bez logowania i bez opłat, na komputerze i na telefonie.
 
+Krótkie [poradniki](/pomoc) podpowiedzą, jak sprawdzić, [czy działka jest budowlana](/pomoc/czy-dzialka-jest-budowlana), czy leży na terenie zalewowym i jakie ma wymiary.
+
 ## Skąd są dane
 
 Wszystkie dane pochodzą z publicznych usług Głównego Urzędu Geodezji i Kartografii ([geoportal.gov.pl](https://www.geoportal.gov.pl)) oraz serwerów starostw, gmin i innych instytucji, z którymi te usługi się łączą. Mapa pobiera je na bieżąco i niczego nie zmienia ani nie przechowuje. Aktualność danych zależy od urzędu, który je prowadzi.

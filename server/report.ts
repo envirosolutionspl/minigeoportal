@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { RequestError } from './http.ts';
+import { messageOf } from './config/messages.ts';
 import type { ClientConfig } from '../shared/config.ts';
 import { EMAIL_MAX, MESSAGE } from '../shared/report.ts';
 
@@ -76,8 +77,7 @@ export function parseReport(body: unknown, appOrigin: string, form: ReportForm):
 
 export function formatReport(report: Report, meta: { userAgent?: string }, form: ReportForm): { subject: string; text: string } {
   const category = form.report.categories.find((c) => c.id === report.category)?.label ?? report.category;
-  const say = (key: string, params: Record<string, string> = {}) =>
-    String(form.messages[`report.mail.${key}`] ?? key).replace(/\{(\w+)\}/g, (all, name: string) => params[name] ?? all);
+  const say = (key: string, params: Record<string, string> = {}) => messageOf(form.messages, `report.mail.${key}`, params);
   const lines = [
     `${say('category')}: ${category}`,
     `${say('contact')}: ${report.email ?? say('noContact')}`,

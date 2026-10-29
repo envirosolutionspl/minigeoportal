@@ -16,6 +16,13 @@ describe('renderMarkdown', () => {
     expect(renderMarkdown('[podróż w czasie](app:time)')).toContain('<a href="#time" data-action="time">podróż w czasie</a>');
   });
 
+  it('keeps links to pages of the site itself in the same tab, but not to another host written as //host', () => {
+    expect(renderMarkdown('[poradnik](/pomoc/granice-dzialki)')).toContain('<a href="/pomoc/granice-dzialki">poradnik</a>');
+    expect(renderMarkdown('[mapa](/?l=kieg,kimpzp)')).toContain('<a href="/?l=kieg,kimpzp">mapa</a>');
+    expect(renderMarkdown('[x](//evil.example/a)')).not.toContain('<a');
+    expect(renderMarkdown('[x](/\\evil.example/a)')).not.toContain('<a');
+  });
+
   it('shows raw HTML as text and drops links and images it does not trust', () => {
     const html = renderMarkdown(
       '<script>alert(1)</script>\n\n[x](javascript:alert(1)) [y](app:delete) ![obraz](https://a.b/c.png) <b>b</b>',

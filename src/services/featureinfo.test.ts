@@ -75,6 +75,26 @@ describe('parseFeatureInfo', () => {
     ]);
   });
 
+  it('reads an HTML page sent as XML as HTML, without its head and layer banner', () => {
+    // Detailed control network (Wałbrzych county), as returned 2026-10-29 with Content-Type text/xml.
+    const page = `<html lang="en">
+<head><title>GetFeatureInfo Osnowa_pozioma</title><style>table { border-collapse: collapse; }</style></head>
+<body><table><tr><th style="text-align: center;">Warstwa Osnowa_pozioma</th></tr></table>
+<table><tr><th>NR_PUNKTU</th><td>513931.1.10350</td></tr><tr><th>RODZAJ_OSNOWY</th><td>pozioma</td></tr><tr><th>MP</th><td></td></tr>
+<tr><th>OPIS_TOPOGRAFICZNY</th><td><a href="https://ewid.powiatwalbrzyski.pl/download" target="_blank">Pobierz opis</a></td></tr></table>
+</body></html>`;
+    expect(parseFeatureInfo(page, 'text/xml')).toEqual([
+      {
+        title: undefined,
+        fields: [
+          { label: 'NR_PUNKTU', value: '513931.1.10350' },
+          { label: 'RODZAJ_OSNOWY', value: 'pozioma' },
+          { label: 'OPIS_TOPOGRAFICZNY', value: 'Pobierz opis', href: 'https://ewid.powiatwalbrzyski.pl/download' },
+        ],
+      },
+    ]);
+  });
+
   it('treats empty bodies, unpublished layers and pages without labelled values as "no data"', () => {
     expect(parseFeatureInfo('', 'text/html')).toEqual([]);
     expect(

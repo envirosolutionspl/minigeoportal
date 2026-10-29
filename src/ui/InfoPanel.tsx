@@ -147,7 +147,7 @@ function RecordView({ record }: { record: InfoRecord }) {
       <dl className="grid grid-cols-[minmax(7rem,40%)_1fr] gap-x-3 gap-y-1 text-sm">
         {record.fields.map((f, i) => (
           <div key={i} className="contents">
-            <dt className="text-[var(--muted)]">{f.label}</dt>
+            <dt className="min-w-0 break-words text-[var(--muted)]">{f.label}</dt>
             <dd className="min-w-0 break-words">
               {f.href ? (
                 <a

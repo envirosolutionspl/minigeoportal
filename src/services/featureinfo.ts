@@ -417,7 +417,8 @@ function parseAny(body: string, contentType: string): InfoRecord[] {
   const xml = /xml|gml/i.test(contentType) || body.trimStart().startsWith('<?xml');
   if (xml) {
     const doc = new DOMParser().parseFromString(body, 'application/xml');
-    if (!doc.querySelector('parsererror')) return parseXml(doc);
+    // County servers behind an integration may send a well-formed HTML page labelled as XML.
+    if (!doc.querySelector('parsererror') && doc.documentElement.localName.toLowerCase() !== 'html') return parseXml(doc);
   }
   // HTML with no labelled values is a server's own page (help text, empty templates), not feature data.
   return parseHtml(parseHtmlFragment(body));

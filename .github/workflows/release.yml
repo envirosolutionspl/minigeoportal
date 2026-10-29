@@ -15,6 +15,10 @@ on:
 permissions:
   contents: write
 
+# Main and a tag pushed together start two runs; one at a time, the second finds the release made.
+concurrency:
+  group: release
+
 jobs:
   release:
     runs-on: ubuntu-latest

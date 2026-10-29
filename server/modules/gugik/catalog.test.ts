@@ -55,6 +55,26 @@ describe('topicOf', () => {
   });
 });
 
+describe('titleOf', () => {
+  it('names a layer called only by its scale after its group', () => {
+    expect(mod.titleOf('1:10 000', ['Dane do pobrania', 'Topografia', 'Wizualizacja kartograficzna BDOT10k'])).toBe(
+      'Wizualizacja kartograficzna BDOT10k 1:10 000',
+    );
+    expect(mod.titleOf('1:4 000 000', ['Skorowidze', 'Topografia', 'Mapy ogólnogeograficzne'])).toBe('Mapy ogólnogeograficzne 1:4 000 000');
+    expect(mod.titleOf('Mapa 1:10 000', ['Topografia'])).toBe('Mapa 1:10 000');
+    expect(mod.titleOf('1:10 000', [])).toBe('1:10 000');
+  });
+
+  it('turns technical spellings into words: a year after an underscore, underscores, stray spaces', () => {
+    expect(mod.titleOf('Skala 1:10 000_1965', ['Dane archiwalne', 'Topografia', 'Mapy topograficzne'])).toBe(
+      'Mapy topograficzne 1:10 000 (1965)',
+    );
+    expect(mod.titleOf('Skala 1:50 000', ['Skorowidze', 'Mapy hydrograficzne'])).toBe('Mapy hydrograficzne 1:50 000');
+    expect(mod.titleOf('Budowla_hydrotechniczna', ['Ochrona wybrzeża (SIPAM)'])).toBe('Budowla hydrotechniczna');
+    expect(mod.titleOf(' Stacje hydrologiczne – aktualne ', [])).toBe('Stacje hydrologiczne – aktualne');
+  });
+});
+
 describe('catalogEntries', () => {
   it('lists every layer some module shows once, main module first, with groups, order and our own entries', () => {
     const entries = mod.catalogEntries(config(), defaults.layers.overlays);

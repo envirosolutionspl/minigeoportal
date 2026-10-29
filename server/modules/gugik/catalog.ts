@@ -144,6 +144,27 @@ function withoutReplaced<T extends Pick<CatalogEntry, 'id' | 'title' | 'path' | 
   return entries.filter((e) => isNew(e) || !renewed.has(place(e)));
 }
 
+/** A name that is only a scale ("1:10 000", "Skala 1:10 000"): one map series among several. */
+const SCALE_ONLY = /^(?:skala\s+)?(1\s?:\s?[\d\s.]+)$/i;
+
+/**
+ * The layer's name as the geoportal gives it, made readable: an underscore is a space, a year
+ * stuck on with one goes in brackets ("Skala 1:10 000_1965"), and a name that is only a scale
+ * takes the name of its group ("Mapy topograficzne 1:10 000 (1965)").
+ */
+export function titleOf(label: string, path: string[]): string {
+  const year = /_(\d{4})$/.exec(label.trim())?.[1];
+  const name = label
+    .trim()
+    .replace(/_\d{4}$/, '')
+    .replace(/_/g, ' ')
+    .replace(/\s+/g, ' ');
+  const scale = SCALE_ONLY.exec(name)?.[1];
+  const group = path[path.length - 1];
+  const title = scale && group ? `${group} ${scale}` : name;
+  return year ? `${title} (${year})` : title;
+}
+
 function entryFor(
   s: ConfigService,
   path: string[],
@@ -151,7 +172,7 @@ function entryFor(
   order: number,
   curated?: string,
 ): Omit<CatalogEntry, 'status' | 'detail' | 'checked'> {
-  const title = s.label || s.id;
+  const title = titleOf(s.label || s.id, path);
   const kind = s.type === 'wms' ? 'wms' : s.type === 'wmts' ? 'wmts' : 'rest';
   return {
     id: s.id,

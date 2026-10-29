@@ -6,11 +6,11 @@
 id: minigeoportal # short id: prefix of browser storage, part of the server's User-Agent
 name: MiniGeoportal
 title:
-  pl: 'MiniGeoportal: działki, plany i ortofotomapa'
-  en: 'MiniGeoportal: parcels, plans and orthophoto map'
+  pl: MiniGeoportal – szybsza mapa działek z Geoportalu Krajowego
+  en: MiniGeoportal – a faster parcel map from the Polish Geoportal
 description:
-  pl: 'MiniGeoportal: szybkie sprawdzanie działki, planu miejscowego, cen transakcyjnych i ortofotomapy na danych GUGiK.'
-  en: 'MiniGeoportal: a quick look at a parcel, its local plan, transaction prices and the orthophoto map, on GUGiK data.'
+  pl: 'Lżejsza i szybsza przeglądarka danych Geoportalu Krajowego (GUGiK): działki po numerze, plany miejscowe (MPZP), ceny transakcyjne, ortofotomapa i mapy archiwalne.'
+  en: 'A lighter, faster viewer of the Polish Geoportal data (GUGiK): parcels by number, local plans (MPZP), transaction prices, the orthophoto map and archival maps.'
 domain: minigeoportal.pl
 contact: office@envirosolutions.pl
 # Bug reports and critical errors of the server go here by e-mail (the mail server: environment

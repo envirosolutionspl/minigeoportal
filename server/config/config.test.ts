@@ -275,7 +275,7 @@ describe('loadConfig', () => {
   });
 
   it('needs every text given per language in the default language', () => {
-    const dir = broken('app.yaml', (s) => s.replace("  en: 'MiniGeoportal: parcels, plans and orthophoto map'\n", ''));
+    const dir = broken('app.yaml', (s) => s.replace('  en: MiniGeoportal – a faster parcel map from the Polish Geoportal\n', ''));
     expect(problems(dir).join('\n')).toMatch(/app\.yaml:\d+:\d+ title: no text in the default language \(en\)/);
     const deep = broken('layers.yaml', (s) =>
       s.replace("title: { pl: 'Użytki gruntowe', en: 'Land use' }", "title: { pl: 'Użytki gruntowe' }"),

@@ -66,7 +66,9 @@ export function guidesOf(config: AppConfig): Guide[] {
 const STYLE = `
   body { margin: 0; background: var(--field); color: var(--text); font: 1rem/1.6 system-ui, sans-serif; }
   header, main, footer { max-width: 44rem; margin: 0 auto; padding: 1rem; }
-  header a { color: var(--accent); font-weight: 700; text-decoration: none; }
+  .brand { display: inline-flex; align-items: center; gap: 0.6rem; color: var(--text); text-decoration: none; font-size: 1.1rem; letter-spacing: -0.01em; }
+  .brand svg, .brand img { width: 2.25rem; height: 2.25rem; }
+  .brand b { color: var(--accent); }
   main { background: var(--surface); border-radius: 1rem; padding: 1.5rem; }
   h1 { font-size: 1.6rem; line-height: 1.25; margin-top: 0; }
   h2 { font-size: 1.2rem; margin-top: 2rem; }
@@ -74,14 +76,37 @@ const STYLE = `
   blockquote { margin: 1rem 0; padding: 0.75rem 1rem; background: var(--field); border-radius: 0.75rem; }
   blockquote > p { margin: 0; }
   .map { display: inline-block; margin: 1rem 0; padding: 0.6rem 1rem; border-radius: 0.75rem; background: var(--accent); color: var(--on-accent); font-weight: 600; text-decoration: none; }
-  footer { color: var(--muted); font-size: 0.875rem; }
+  footer { display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; color: var(--muted); font-size: 0.875rem; }
+  /* The author's logo keeps its colours on a white plate, as in the corner of the map. */
+  footer a { display: inline-flex; padding: 0.25rem 0.5rem; border-radius: 0.6rem; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / 0.15); }
+  footer img { height: 2.25rem; }
 `;
+
+/**
+ * The sign of the app as the map draws it (src/ui/Brand.tsx, BrandMark), in the skin's colours: the
+ * configuration's own icon, or the magnifying glass over parcel boundaries.
+ */
+function mark(config: AppConfig): string {
+  const { icon } = config.brand;
+  if (icon) return `<img src="${escapeHtml(`${icon.path}?v=${icon.version}`)}" alt="" />`;
+  return `<svg viewBox="0 0 104 104" aria-hidden="true"><rect width="104" height="104" rx="22" fill="var(--mark, var(--accent))" /><circle cx="46" cy="46" r="19" fill="#f2f4f5" /><path d="M28.6 41.3 62.9 39.8M41.3 28.6 42.9 63.7M29.1 52.2 63.4 50.7M50.7 28.6V63.4" fill="none" stroke="var(--mark-line, var(--muted))" stroke-width="2.5" /><path d="M42.6 40.9 50.7 40.5V50.9L42.8 51.3Z" fill="var(--highlight)" /><circle cx="46" cy="46" r="21" fill="none" stroke="#fff" stroke-width="6" /><path d="M62 62 79 79" stroke="#fff" stroke-width="10" stroke-linecap="round" /></svg>`;
+}
+
+/** The name as the map writes it: the last word, or in a one-word name its last capitalised part, in the accent colour. */
+function wordmark(name: string): string {
+  const last = name.includes(' ') ? name.slice(name.lastIndexOf(' ') + 1) : (/\p{Lu}\P{Lu}*$/u.exec(name)?.[0] ?? name);
+  return `<span>${escapeHtml(name.slice(0, name.length - last.length))}<b>${escapeHtml(last)}</b></span>`;
+}
 
 function document(config: AppConfig, locale: string, path: string, title: string, description: string, body: string): string {
   const e = escapeHtml;
   const name = textIn(config.app.name, locale, config.app.locales.default);
   const site = `https://${e(config.app.domain)}`;
-  const author = config.app.author ? ` · <a href="${e(config.app.author.url)}">${e(config.app.author.name)}</a>` : '';
+  const { author } = config.app;
+  const logo = config.brand.logo;
+  const credit = `${e(messageOf(config.messages[locale], 'brand.madeBy'))} <a href="${e(author.url)}">${
+    logo ? `<img src="${e(`${logo.path}?v=${logo.version}`)}" alt="${e(author.name)}" />` : e(author.name)
+  }</a>`;
   // The skin cannot end its own element early: in CSS "<\/" reads as "</".
   const skin = config.skin.replace(/<\//g, '<\\/');
   return `<!doctype html>
@@ -100,11 +125,11 @@ function document(config: AppConfig, locale: string, path: string, title: string
     <style>${skin}${STYLE}</style>
   </head>
   <body>
-    <header><a href="${e(pagePath(config.app.locales, locale))}">${e(name)}</a></header>
+    <header><a class="brand" href="${e(pagePath(config.app.locales, locale))}">${mark(config)}${wordmark(name)}</a></header>
     <main>
 ${body}
     </main>
-    <footer>${e(name)}${author}</footer>
+    <footer>${credit}</footer>
   </body>
 </html>
 `;

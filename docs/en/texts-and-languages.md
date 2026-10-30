@@ -39,7 +39,7 @@ guides:
 - A page exists in the languages that have its file; one is enough. A page with no file in any language is a configuration error.
 - The page's title is its first `#` heading, its description for search engines the first paragraph (up to 160 characters).
 - Under the text are a "Check on the map" button and the list of the other guides; the address of `path` lists them all.
-- The pages take the skin's colours and work without JavaScript. To preview them while working: `npm run dev:api` and the API server's address (the server serves them, not Vite).
+- The pages take the skin's colours, carry the app's sign and name in the header (a link to the map) and the author's logo (`author.logo`) in the footer, and work without JavaScript. To preview them while working: `npm run dev:api` and the API server's address (the server serves them, not Vite).
 - `/sitemap.xml` lists the home pages of every language, the lists and the guides, and `/robots.txt` points to the sitemap. Both exist without guides too.
 
 ## Interface texts

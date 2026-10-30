@@ -39,7 +39,7 @@ guides:
 - Strona jest w tych językach, dla których ma plik; wystarczy jeden. Brak pliku w każdym języku to błąd konfiguracji.
 - Tytuł strony to jej pierwszy nagłówek `#`, opis dla wyszukiwarek to pierwszy akapit (do 160 znaków).
 - Pod tekstem jest przycisk „Sprawdź na mapie” i lista pozostałych poradników; adres `path` wymienia wszystkie.
-- Strony mają kolory skórki i działają bez JavaScriptu. Podgląd w trakcie pracy: `npm run dev:api` i adres serwera API (strony podaje serwer, nie Vite).
+- Strony mają kolory skórki, w nagłówku znak i nazwę aplikacji (link do mapy), w stopce logo autora (`author.logo`) i działają bez JavaScriptu. Podgląd w trakcie pracy: `npm run dev:api` i adres serwera API (strony podaje serwer, nie Vite).
 - `/sitemap.xml` wymienia strony główne wszystkich języków, listy i poradniki, a `/robots.txt` wskazuje mapę witryny. Oba są także bez poradników.
 
 ## Napisy interfejsu

@@ -36,6 +36,17 @@ describe('guides', () => {
     expect(html).not.toContain('<script');
   });
 
+  it('carries the sign and name of the app, leading to the map, and the logo of the author on its plate', async () => {
+    const html = await (await app.request('/pomoc/teren-zalewowy')).text();
+    expect(html).toMatch(
+      /<a class="brand" href="\/"><svg viewBox="0 0 104 104" aria-hidden="true">.*<\/svg><span>Mini<b>Geoportal<\/b><\/span><\/a>/,
+    );
+    const logo = config.brand.logo!;
+    expect(html).toContain(
+      `<footer>Stworzone przez <a href="https://envirosolutions.pl"><img src="/brand/logo.svg?v=${logo.version}" alt="EnviroSolutions" /></a></footer>`,
+    );
+  });
+
   it('lists the pages of a language at its path, and has none where no file is', async () => {
     const html = await (await app.request('/pomoc')).text();
     expect(html).toContain('<h1>Poradniki</h1>');

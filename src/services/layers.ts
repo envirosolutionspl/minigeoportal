@@ -127,7 +127,8 @@ export function createOverlayLayer(def: Overlay, image: { ratio?: number; crossO
   const when = time?.param && time.current !== undefined ? { [time.param]: time.current } : {};
   const source =
     def.kind === 'rest'
-      ? new ImageArcGISRest({ ...common, params: { LAYERS: 'show:', FORMAT: 'png32', TRANSPARENT: true } })
+      ? // Like WMS without serverType: a sharp screen would multiply the server's pixels by its ratio squared.
+        new ImageArcGISRest({ ...common, hidpi: false, params: { LAYERS: 'show:', FORMAT: 'png32', TRANSPARENT: true } })
       : new ImageWMS({
           ...common,
           params: { LAYERS: '', FORMAT: def.format ?? 'image/png', TRANSPARENT: def.format !== 'image/jpeg', VERSION: '1.3.0', ...when },

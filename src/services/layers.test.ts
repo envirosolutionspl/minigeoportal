@@ -97,6 +97,21 @@ describe('createOverlayLayer', () => {
     expect(gleby.getSource()).toBeInstanceOf(ImageArcGISRest);
     expect((gleby.getSource() as ImageArcGISRest).getParams().LAYERS).toBe('show:2,0');
   });
+
+  it('asks an ArcGIS map for images in CSS pixels on a sharp screen, like WMS', () => {
+    const source = createOverlayLayer({
+      ...overlayById.get('kieg')!,
+      id: 'msSharp',
+      kind: 'rest',
+      url: 'https://gugik.example/MapServer',
+      sublayers: [],
+    }).getSource() as ImageArcGISRest;
+    let src = '';
+    source.setImageLoadFunction((_, url) => (src = url));
+    source.getImage([0, 0, 1000, 1000], 1, 2, PROJECTION)!.load();
+    const q = new URL(src).searchParams;
+    expect([q.get('size'), q.get('dpi')]).toEqual(['1250,1250', '90']);
+  });
 });
 
 describe('drawing order', () => {

@@ -127,3 +127,31 @@ describe('the parcel selection in the link', () => {
     expect(readUrl().parcels).toEqual(['141201_1.0001.1867/2', '141201_1.0001.1868']);
   });
 });
+
+describe('the opacity of layers in the link', () => {
+  it('writes the changed opacity per layer and reads it back', () => {
+    const state = {
+      center: [1, 2] as [number, number],
+      zoom: 3,
+      base: 'orto',
+      overlays: ['kimpzp', 'ms.Gleby'],
+      sublayers: {},
+      opacity: { kimpzp: 0.5, 'ms.Gleby': 0.3 },
+    };
+    const link = linkFor(state);
+    expect(link.endsWith('&o=kimpzp:0.5,ms.Gleby:0.3')).toBe(true);
+    setSearch(link.slice(link.indexOf('?')));
+    expect(readUrl()).toEqual(state);
+  });
+
+  it('leaves the parameter out when nothing changed, and old links without it read as before', () => {
+    expect(linkFor({ center: [1, 2], zoom: 3, base: 'orto', overlays: [], sublayers: {}, opacity: {} })).not.toContain('o=');
+    setSearch('?l=kieg');
+    expect(readUrl().opacity).toBeUndefined();
+  });
+
+  it('keeps only layer ids with an opacity the slider can give', () => {
+    setSearch('?o=kieg:0.4,kimpzp:0,a b:0.5,kiut:2,pog:x,studium');
+    expect(readUrl().opacity).toEqual({ kieg: 0.4 });
+  });
+});

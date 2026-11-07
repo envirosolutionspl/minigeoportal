@@ -244,4 +244,19 @@ describe('overlayOpacity', () => {
     expect(overlayOpacity('kimpzp', { kimpzp: 0.3 })).toBe(0.3);
     expect(overlayOpacity('kieg', {})).toBe(1);
   });
+
+  it('goes into links for the layers on the map where it differs from the default', () => {
+    useMapStore.setState({ overlays: ['kieg', 'kimpzp'], opacity: { kieg: 1, kimpzp: 0.5, kiut: 0.3 } });
+    expect(urlState(state()).opacity).toEqual({ kimpzp: 0.5 });
+    state().setOpacity('kimpzp', 0.8);
+    expect(urlState(state()).opacity).toEqual({});
+  });
+
+  it('comes back from a link at the start', async () => {
+    window.history.replaceState(null, '', '?l=kimpzp&o=kimpzp:0.5');
+    vi.resetModules();
+    (await import('@/config/runtime')).initConfig(config);
+    expect((await import('./store')).useMapStore.getState().opacity).toEqual({ kimpzp: 0.5 });
+    window.history.replaceState(null, '', '/');
+  });
 });

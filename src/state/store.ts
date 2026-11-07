@@ -156,7 +156,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
     (id) => overlayById.has(id) || (config.modules.gugik?.catalog === true && CATALOG_ID.test(id)),
   ),
   sublayers: initial.sublayers ?? {},
-  opacity: {},
+  opacity: initial.opacity ?? {},
   panel: 'none',
   focus: null,
   tool: timeAtStart ? 'time' : 'none',
@@ -257,13 +257,14 @@ export const useMapStore = create<MapStore>((set, get) => ({
 /** The time view's layer is on the map: in the view, or on a print opened from it. */
 export const timeShown = (s: Pick<MapStore, 'tool' | 'printFromTime'>) => s.tool === 'time' || (s.tool === 'print' && s.printFromTime);
 
-/** What a link to the map carries: the view, the layers and, while the time view is open, its date. */
+/** What a link to the map carries: the view, the layers, their changed opacity and, while the time view is open, its date. */
 export const urlState = (s: MapStore) => ({
   center: s.center,
   zoom: s.zoom,
   base: s.base,
   overlays: s.overlays,
   sublayers: s.sublayers,
+  opacity: Object.fromEntries(Object.entries(s.opacity).filter(([id, v]) => s.overlays.includes(id) && v !== overlayOpacity(id, {}))),
   ...(timeShown(s) && s.time
     ? { time: s.time, ...(s.compare ? { compare: true } : {}), ...(s.timeLayer ? { timeLayer: s.timeLayer } : {}) }
     : {}),
@@ -277,6 +278,7 @@ useMapStore.subscribe((s, prev) => {
     s.base !== prev.base ||
     s.overlays !== prev.overlays ||
     s.sublayers !== prev.sublayers ||
+    s.opacity !== prev.opacity ||
     s.tool !== prev.tool ||
     s.time !== prev.time ||
     s.compare !== prev.compare ||

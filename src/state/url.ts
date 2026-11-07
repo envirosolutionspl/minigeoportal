@@ -6,7 +6,8 @@ import { MAX_PARCELS } from './limits';
  * ?x=637000&y=486000&z=12&b=orto&l=kieg,kiut.przewod_wodociagowy.przewod_gazowy&t=2007-01-01&c=1&tl=mapy-dawne
  * An overlay without sublayers uses its defaults. `t` is the date of the time view, which the
  * link then opens; `c=1` compares it with the present behind a curtain; `tl` names the view's
- * layer when it is not the first; `dz` lists the parcels of the selection by their full ids.
+ * layer when it is not the first; `dz` lists the parcels of the selection by their full ids;
+ * `o=kimpzp:0.5` gives the opacity of a layer whose slider was moved.
  */
 
 interface UrlState {
@@ -16,6 +17,8 @@ interface UrlState {
   overlays: string[];
   /** Custom sublayer selection per overlay; absent means defaults. */
   sublayers: Record<string, string[]>;
+  /** Opacity per overlay, where it differs from the default. */
+  opacity?: Record<string, number>;
   /** Date shown in the time view; absent when the view is closed. */
   time?: string;
   /** The time view compares its date with the present. */
@@ -58,6 +61,14 @@ export function readUrl(): Partial<UrlState> {
       if (subs.length > 0) state.sublayers[id] = subs;
     }
   }
+  const o = q.get('o');
+  if (o) {
+    state.opacity = {};
+    for (const [id, v] of o.split(',').map((part) => part.split(':'))) {
+      // The range of the opacity slider.
+      if (ID.test(id) && Number(v) >= 0.1 && Number(v) <= 1) state.opacity[id] = Number(v);
+    }
+  }
   const time = q.get('t');
   if (time && DATE.test(time)) {
     state.time = time;
@@ -82,12 +93,14 @@ function queryFor(state: UrlState): string {
   q.set('b', state.base);
   const named = (s: string) => s.replace(/\./g, '%2E');
   q.set('l', state.overlays.map((id) => [id, ...(state.sublayers[id] ?? [])].map(named).join('.')).join(','));
+  const opacity = Object.entries(state.opacity ?? {});
+  if (opacity.length > 0) q.set('o', opacity.map(([id, v]) => `${id}:${v}`).join(','));
   if (state.time) q.set('t', state.time);
   if (state.time && state.compare) q.set('c', '1');
   if (state.time && state.timeLayer) q.set('tl', state.timeLayer);
   if (state.parcels?.length) q.set('dz', state.parcels.join(','));
-  // Commas and the slash of parcel numbers are allowed in a query and read better as they are.
-  return `?${q.toString().replace(/%2C/g, ',').replace(/%2F/g, '/')}`;
+  // Commas, colons and the slash of parcel numbers are allowed in a query and read better as they are.
+  return `?${q.toString().replace(/%2C/g, ',').replace(/%3A/g, ':').replace(/%2F/g, '/')}`;
 }
 
 /** Full link to a view, for sharing: the same page with the view in the query. */

@@ -14,7 +14,9 @@ import { mailerFromEnv } from './report.ts';
 
 const site = createSite(loadConfig(config.configDir));
 const { defaults } = site;
-alertsTo(mailerFromEnv(site.mail, site.config.app.admin), site.mail);
+// The hourly retries after a failed run (UPDATE_RETRY 1-23, compose.yaml) only log: each run is a new
+// process, so the once-a-day limit of the alerts would not hold, and the failed run has mailed already.
+alertsTo(Number(process.env.UPDATE_RETRY) ? undefined : mailerFromEnv(site.mail, site.config.app.admin), site.mail);
 alertOnCrash();
 
 const cache = await refreshCache(defaults).catch(async (e: unknown) => {

@@ -177,7 +177,7 @@ Błąd krytyczny trafia do logu jako wiersz zaczynający się od `CRITICAL`. Prz
 
 Warstwy katalogu geoportalu, które nie odpowiadają, nie są krytyczne: jest ich kilkaset i część zawsze nie działa.
 
-W Docker Compose usługa `updater` też czyta `.env`, więc jej odświeżanie wysyła maile przez ten sam serwer poczty.
+W Docker Compose usługa `updater` też czyta `.env`, więc jej odświeżanie wysyła maile przez ten sam serwer poczty. Gdy odświeżanie dalej się nie udaje, godzinne ponowienia tylko piszą do logu, a mail idzie przy co 24. próbie, więc i wtedy ten sam błąd przychodzi najwyżej raz na dobę.
 
 Bezpieczeństwo i budowa serwera: [Architektura](architektura.md).
 

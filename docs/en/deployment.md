@@ -177,7 +177,7 @@ A critical error goes to the log as a line starting with `CRITICAL`. With the ma
 
 Layers of the geoportal catalog that do not answer are not critical: there are hundreds of them and some are always down.
 
-In Docker Compose the `updater` service reads `.env` too, so its refresh mails with the same mail server.
+In Docker Compose the `updater` service reads `.env` too, so its refresh mails with the same mail server. While the refresh keeps failing, the hourly retries only write to the log and every 24th try mails, so the same error still comes at most once a day.
 
 Security and how the server is built: [Architecture](architecture.md).
 

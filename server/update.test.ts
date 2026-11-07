@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { critical, refreshCache, update } = vi.hoisted(() => ({
+const { alertsTo, critical, mailer, refreshCache, update } = vi.hoisted(() => ({
+  alertsTo: vi.fn(),
   critical: vi.fn(async () => {}),
+  mailer: {},
   refreshCache: vi.fn(),
   update: vi.fn(),
 }));
-vi.mock('./alerts.ts', () => ({ alertsTo: vi.fn(), alertOnCrash: vi.fn(), critical }));
+vi.mock('./alerts.ts', () => ({ alertsTo, alertOnCrash: vi.fn(), critical }));
+vi.mock('./report.ts', async (importOriginal) => ({ ...(await importOriginal<object>()), mailerFromEnv: () => mailer }));
 vi.mock('./cache.ts', () => ({ refreshCache }));
 vi.mock('./modules/index.ts', async (importOriginal) => ({ ...(await importOriginal<object>()), update }));
 
@@ -54,5 +57,22 @@ describe('update script', () => {
     const { done } = await run();
     expect(done).toBe('exit 1');
     expect(critical).toHaveBeenCalledWith('Data refresh failed', error);
+  });
+
+  it('mails on the daily run and the first try, but only logs on the hourly retries after a failed run', async () => {
+    for (const [retry, to] of [
+      [undefined, mailer],
+      ['0', mailer],
+      ['1', undefined],
+      ['23', undefined],
+    ] as const) {
+      vi.stubEnv('UPDATE_RETRY', retry);
+      refreshCache.mockResolvedValueOnce({ services: {} });
+      update.mockResolvedValueOnce(undefined);
+      alertsTo.mockClear();
+      await run();
+      expect(alertsTo, `UPDATE_RETRY=${retry}`).toHaveBeenCalledWith(to, expect.anything());
+    }
+    vi.unstubAllEnvs();
   });
 });

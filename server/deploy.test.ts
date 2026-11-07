@@ -33,11 +33,12 @@ describe('deployment files', () => {
     expect(dockerignore.indexOf('**/*.test.ts')).toBeGreaterThan(dockerignore.indexOf('!server'));
   });
 
-  it('refreshes the data every day, and an hour after a failed run rather than a day', () => {
+  it('refreshes the data every day, and an hour after a failed run rather than a day, mailing on every 24th failed run only', () => {
+    // $$ is a $ to the shell: Compose would put its own variables in place of $n.
     expect(compose.services.updater.command).toEqual([
       'sh',
       '-c',
-      'while true; do if node server/update.ts; then sleep 86400; else sleep 3600; fi; done',
+      'n=0; while true; do if UPDATE_RETRY=$$n node server/update.ts; then n=0; sleep 86400; else n=$$(((n + 1) % 24)); sleep 3600; fi; done',
     ]);
   });
 

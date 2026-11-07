@@ -42,7 +42,13 @@ services:
       - data:/data
       - ./config:/app/config:ro
     # Once at start, then every day, or after an hour when a run failed; the replicas pick the new data up within a minute.
-    command: ['sh', '-c', 'while true; do if node server/update.ts; then sleep 86400; else sleep 3600; fi; done']
+    # While the runs keep failing, only every 24th of them mails the errors (UPDATE_RETRY 0).
+    command:
+      [
+        'sh',
+        '-c',
+        'n=0; while true; do if UPDATE_RETRY=$$n node server/update.ts; then n=0; sleep 86400; else n=$$(((n + 1) % 24)); sleep 3600; fi; done',
+      ]
     healthcheck:
       disable: true
 

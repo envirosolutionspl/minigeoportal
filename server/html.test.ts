@@ -87,6 +87,14 @@ describe('renderPage', () => {
     expect(JSON.parse(boot)).toEqual({ ...defaults, app: { ...defaults.app, title: 'A & B', description: 'Opis "x"' } });
   });
 
+  it('takes no replacement pattern from a text that goes into the head', () => {
+    const client = { ...defaults, app: { ...defaults.app, title: "Cena $& $` $' $$" } };
+    const page = renderPage(TEMPLATE, client);
+    expect(page).toContain(`<meta property="og:title" content="Cena $&amp; $\` $' $$" />`);
+    const boot = /<script type="application\/json" id="boot">(.*)<\/script>/.exec(page)![1];
+    expect(JSON.parse(boot)).toEqual(client);
+  });
+
   it('names the canonical address and what a shared link shows', () => {
     const home = `https://${defaults.app.domain}`;
     const page = renderPage(TEMPLATE, { ...defaults, app: { ...defaults.app, title: 'A & "B"' } });

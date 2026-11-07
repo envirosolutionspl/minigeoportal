@@ -112,7 +112,8 @@ export function renderPage(template: string, client: ClientConfig, skin = ''): s
       .replace(/(<meta\s+name="description"\s+content=")[^"]*"/, (_, start: string) => `${start}${escapeHtml(client.app.description)}"`)
       .replace(
         '</head>',
-        `${sharing(client)}${style}${preconnects(client)}    <script type="application/json" id="boot">${scriptJson(client)}</script>\n  </head>`,
+        () =>
+          `${sharing(client)}${style}${preconnects(client)}    <script type="application/json" id="boot">${scriptJson(client)}</script>\n  </head>`,
       )
   );
 }

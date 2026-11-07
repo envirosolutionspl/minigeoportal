@@ -88,7 +88,7 @@ The API has no accounts and no user data.
 - complete translations;
 - a description of every configuration field in the documentation.
 
-Every change comes with its test in the same commit.
+The rule of the project: a change of the code comes with its test in the same commit.
 
 ## Data
 

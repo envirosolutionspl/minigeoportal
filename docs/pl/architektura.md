@@ -88,7 +88,7 @@ API nie ma kont ani danych użytkowników.
 - kompletność tłumaczeń;
 - opis każdego pola konfiguracji w dokumentacji.
 
-Każda zmiana ma test w tym samym commicie.
+Zasada projektu: zmiana kodu ma test w tym samym commicie.
 
 ## Dane
 

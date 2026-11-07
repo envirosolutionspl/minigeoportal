@@ -11,6 +11,9 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "isolatedModules": true,
+    // The server runs its TypeScript in Node without a build: only syntax Node can strip.
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
     "noEmit": true,
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,

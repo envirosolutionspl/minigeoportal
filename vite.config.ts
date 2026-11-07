@@ -64,6 +64,8 @@ export default defineConfig({
       output: {
         // Libraries change rarely and app code often; separate chunks keep the big ones cached.
         manualChunks(id) {
+          // Only the parcel export uses these; left to Rollup, they go with it into a chunk loaded on download.
+          if (/node_modules\/ol\/(format\/(KML|GeoJSON|XMLFeature|JSONFeature|XSD)|xml)\.js/.test(id)) return;
           if (/node_modules\/(ol|proj4|rbush|quickselect|pbf|earcut)\//.test(id)) return 'ol';
           if (id.includes('node_modules')) return 'vendor';
         },

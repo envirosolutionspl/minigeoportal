@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it } from 'vitest';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import WKT from 'ol/format/WKT';
 import { ParcelsPanel } from './ParcelsPanel';
 import { useParcelStore } from '@/state/parcels';
@@ -71,5 +71,23 @@ describe('ParcelsPanel', () => {
     expect(useMapStore.getState().focus?.padding).toEqual([88, 80, 48, 24]);
     act(() => useParcelStore.setState({ entries: { '141201_1.0001.3': { status: 'missing' } } }));
     expect((files.getByRole('button', { name: 'Pobierz selekcję jako CSV' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('saves the found parcels as a file once the export code has loaded', async () => {
+    // jsdom has no object URLs and does not follow links.
+    const createObjectURL = vi.fn((blob: Blob) => (void blob, 'blob:parcels'));
+    Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    render(<ParcelsPanel />);
+    fireEvent.click(screen.getByRole('button', { name: 'Pobierz selekcję jako CSV' }));
+    await waitFor(() => expect(click).toHaveBeenCalled());
+    const csv = await createObjectURL.mock.calls[0][0].text();
+    expect(
+      csv
+        .split('\r\n')
+        .slice(1, 3)
+        .map((row) => row.split(';')[0]),
+    ).toEqual(['141201_1.0001.1', '141201_1.0001.2']);
+    click.mockRestore();
   });
 });

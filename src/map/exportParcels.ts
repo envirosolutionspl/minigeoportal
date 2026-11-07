@@ -4,6 +4,7 @@ import KML from 'ol/format/KML';
 import WKT from 'ol/format/WKT';
 import type { Geometry } from 'ol/geom';
 import type { Parcel } from '@/modules';
+import { t } from '@/i18n';
 import { PROJECTION } from './projection';
 
 /** A parcel of the selection as it is exported: its data, outline and area from the geometry. */
@@ -16,7 +17,10 @@ export interface ExportedParcel {
 
 export type ExportFormat = 'geojson' | 'kml' | 'csv';
 
-/** Attributes as GIS programs show them: the parcel's units and number, the area in m² and ha. */
+/**
+ * Attributes as GIS programs show them: the parcel's units and number, the area in m² and ha, and
+ * that this area is not the one in the land register, so whoever gets the file knows it too.
+ */
 const properties = ({ parcel, area }: ExportedParcel) => ({
   identyfikator: parcel.id,
   numer: parcel.number,
@@ -26,6 +30,7 @@ const properties = ({ parcel, area }: ExportedParcel) => ({
   wojewodztwo: parcel.voivodeship,
   pole_m2: Math.round(area),
   pole_ha: Number((area / 10000).toFixed(4)),
+  pole_uwagi: t('parcels.areaSource'),
 });
 
 const features = (parcels: ExportedParcel[]) =>
@@ -40,7 +45,8 @@ const cell = (value: string | number) => {
 /**
  * The selected parcels as a file: GeoJSON in WGS 84 (as RFC 7946 asks), KML for Google Earth, CSV
  * for a spreadsheet, with semicolons and decimal commas as Polish Excel reads them and the outline
- * as WKT in the map's system.
+ * as WKT in the map's system. CSV has no bare parcel number: Excel turns 22/1 into 22 January, and
+ * the number ends the id anyway.
  */
 export function exportParcels(parcels: ExportedParcel[], format: ExportFormat): string {
   const options = { dataProjection: 'EPSG:4326', featureProjection: PROJECTION };
@@ -49,26 +55,26 @@ export function exportParcels(parcels: ExportedParcel[], format: ExportFormat): 
   const wkt = new WKT();
   const head = [
     'identyfikator',
-    'numer',
     'obreb',
     'gmina',
     'powiat',
     'wojewodztwo',
     'pole_m2',
     'pole_ha',
+    'pole_uwagi',
     `wkt_${PROJECTION.getCode().replace(':', '_')}`,
   ];
   const rows = parcels.map((p) => {
     const a = properties(p);
     return [
       a.identyfikator,
-      a.numer,
       a.obreb,
       a.gmina,
       a.powiat,
       a.wojewodztwo,
       a.pole_m2,
       a.pole_ha.toFixed(4).replace('.', ','),
+      a.pole_uwagi,
       wkt.writeGeometry(p.geometry, { decimals: 2 }),
     ];
   });

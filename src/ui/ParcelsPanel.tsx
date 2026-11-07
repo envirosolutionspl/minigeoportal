@@ -5,7 +5,7 @@ import { useParcelStore, type ParcelEntry } from '@/state/parcels';
 import { MAX_PARCELS, useMapStore } from '@/state/store';
 import { formatArea } from '@/map/format';
 import { parcelsExtent } from '@/map/parcels';
-import { downloadParcels, type ExportFormat, type ExportedParcel } from '@/map/exportParcels';
+import type { ExportFormat, ExportedParcel } from '@/map/exportParcels';
 import { t } from '@/i18n';
 
 const FORMATS: [ExportFormat, string][] = [
@@ -138,7 +138,8 @@ export function ParcelsPanel() {
                 <button
                   key={format}
                   type="button"
-                  onClick={() => downloadParcels(found, format)}
+                  // The file formats load on the first download, not with the map.
+                  onClick={() => void import('@/map/exportParcels').then((m) => m.downloadParcels(found, format))}
                   disabled={found.length === 0}
                   aria-label={t('parcels.exportAs', { format: name })}
                   className={action}

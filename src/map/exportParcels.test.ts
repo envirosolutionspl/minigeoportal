@@ -36,14 +36,14 @@ describe('exportParcels', () => {
   });
 
   it('writes CSV for a Polish spreadsheet: semicolons, decimal commas, UTF-8 mark, what the area is, the outline as WKT in the map system', () => {
-    const [head, row] = exportParcels([parcel], 'csv').replace('﻿', '').split('\r\n');
+    const [head, row] = exportParcels([parcel], 'csv').replace('\uFEFF', '').split('\r\n');
     expect(head).toBe('identyfikator;obreb;gmina;powiat;wojewodztwo;pole_m2;pole_ha;pole_uwagi;wkt_EPSG_2180');
     expect(
       row.startsWith('141201_1.0001.1867/2;Mińsk Mazowiecki;Mińsk Mazowiecki (miasto);powiat miński;mazowieckie;10012;1,0012;Powierzchnia'),
     ).toBe(true);
     expect(row.split(';')[7]).toMatch(note);
     expect(row).toContain(';POLYGON((675000 482000,');
-    expect(exportParcels([parcel], 'csv').startsWith('﻿')).toBe(true);
+    expect(exportParcels([parcel], 'csv').startsWith('\uFEFF')).toBe(true);
   });
 
   it('leaves out of CSV the bare parcel number, which Excel would turn into a date (22/1 as 22 January)', () => {

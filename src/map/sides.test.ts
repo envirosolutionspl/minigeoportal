@@ -22,13 +22,20 @@ describe('sides', () => {
     // The ends taken to degrees with proj4, the geodesic between them on GRS80 by Vincenty's inverse formula.
     // A degree of the meridian at 20° E, from 51.5° to 52.5° N: 111 267.347 m (OpenLayers' sphere: 111 195.1 m).
     expect(lengthOf([fromLonLat([20, 51.5], 'EPSG:2180'), fromLonLat([20, 52.5], 'EPSG:2180')])).toBeCloseTo(111267.347, 0);
-    // 50 km aslant: 50 026.091 m, within half a metre.
+    // 50 km aslant: 50 026.091 m, within five centimetres.
     expect(
       lengthOf([
         [600000, 500000],
         [640000, 530000],
       ]),
-    ).toBeCloseTo(50026.091, 0);
+    ).toBeCloseTo(50026.091, 1);
+    // 600 km west to east across the country, taken in pieces: 600 199.092 m, within half a metre (from the radii at the middle alone: +370 m).
+    expect(
+      lengthOf([
+        [200000, 500000],
+        [800000, 500000],
+      ]),
+    ).toBeCloseTo(600199.092, 0);
     // A kilometre east, then north, 200 km east of the central meridian: 1000.206 m and 1000.204 m (the sphere: 997.1 m east).
     expect(
       lengthOf([

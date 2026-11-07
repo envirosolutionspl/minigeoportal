@@ -11,7 +11,8 @@ const RAD = Math.PI / 180;
 
 /**
  * The length of a short line (a side of a parcel) on the ellipsoid GRS80, from the radii of
- * curvature at its middle: to the millimetre over a kilometre, in any projection of the map. The
+ * curvature at its middle: to the millimetre over a kilometre, in any projection of the map (the
+ * error grows with the square of the length, so lengthOf takes long lines in pieces). The
  * sphere OpenLayers measures on falls short in Poland by up to 0.33 %, 33 cm on a side of 100 m.
  */
 export function sideLength(a: Coordinate, b: Coordinate): number {
@@ -54,8 +55,18 @@ export function sides(geometry: Geometry): { side: LineString; length: number }[
   return all.flatMap((ring) => ring.slice(1).map((end, i) => ({ side: new LineString([ring[i], end]), length: sideLength(ring[i], end) })));
 }
 
-/** The length in metres of a line through the points, side by side on the ellipsoid. */
-export const lengthOf = (points: Coordinate[]) => points.slice(1).reduce((sum, end, i) => sum + sideLength(points[i], end), 0);
+/** Longer stretches are measured in pieces of this many map units at most: the radii at the middle hold for short lines only. */
+const PIECE = 10000;
+
+/** The length in metres of a line through the points, side by side on the ellipsoid, long sides in pieces. */
+export const lengthOf = (points: Coordinate[]) =>
+  points.slice(1).reduce((sum, [x2, y2], i) => {
+    const [x1, y1] = points[i];
+    const n = Math.max(1, Math.ceil(Math.hypot(x2 - x1, y2 - y1) / PIECE));
+    const at = (k: number) => [x1 + ((x2 - x1) * k) / n, y1 + ((y2 - y1) * k) / n];
+    for (let k = 0; k < n; k++) sum += sideLength(at(k), at(k + 1));
+    return sum;
+  }, 0);
 
 /** The perimeter of a polygon in metres: every ring, however many corners. */
 export const perimeterOf = (geometry: Geometry) => rings(geometry).reduce((sum, ring) => sum + lengthOf(ring), 0);

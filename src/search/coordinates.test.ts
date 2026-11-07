@@ -11,6 +11,14 @@ describe('parseCoordinates', () => {
     }
   });
 
+  it('reads longitude first when latitude first falls outside the map', () => {
+    for (const q of ['21.0067, 52.2318', '21,0067 52,2318']) {
+      const hit = parseCoordinates(q)!;
+      expect(hit.center![0]).toBeCloseTo(637000, -2);
+      expect(hit.center![1]).toBeCloseTo(486980, -2);
+    }
+  });
+
   it('reads PL-1992 as surveyors write it, X (northing) first', () => {
     expect(parseCoordinates('486980 637000')?.center).toEqual([637000, 486980]);
     expect(parseCoordinates('486980.5, 637000.25')?.label.replace(/\s/g, ' ')).toMatch(/^PL-1992 X 486 981, Y 637 000 · 52,2/);

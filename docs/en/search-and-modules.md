@@ -23,7 +23,7 @@ search:
 
 With every provider the box understands coordinates:
 
-- latitude and longitude: `52.2318, 21.0067` or `52,2318 21,0067`;
+- latitude and longitude: `52.2318, 21.0067` or `52,2318 21,0067`; longitude first (`21.0067, 52.2318`) also works when the other order would fall outside the map;
 - a point in the map's system, written the way its users write it (in PL-1992 X, the northing, first: `486980 637000`).
 
 `parcel: true` adds the parcel search by voivodeship, county, municipality, precinct and number (gugik module) and the **parcel selection**: the "Parcel selection" tool (a button in the column of tools on a computer, an entry of "More" on a phone). Parcels are added in two ways:

@@ -7,7 +7,7 @@ import type { SearchHit } from './provider';
 
 /**
  * Two numbers typed into the search box: latitude and longitude (52.2318, 21.0067 or
- * 52,2318 21,0067), or a point in the map's system written the way its users write it (in
+ * 52,2318 21,0067; longitude first when that order falls outside the map), or a point in the map's system written the way its users write it (in
  * PL-1992: X northing first, then Y easting). Anything else is left to the search provider.
  */
 
@@ -23,9 +23,10 @@ export function parseCoordinates(query: string): SearchHit | undefined {
   const match = DOTTED.exec(query.trim()) ?? COMMAS.exec(query.trim());
   if (!match) return undefined;
   const [a, b] = [match[1], match[2]].map((n) => Number(n.replace(',', '.')));
-  const asLatLon = Math.abs(a) <= 90 && Math.abs(b) <= 180 ? fromLonLat([b, a], PROJECTION) : undefined;
+  const geo = (lat: number, lon: number) => (Math.abs(lat) <= 90 && Math.abs(lon) <= 180 ? fromLonLat([lon, lat], PROJECTION) : undefined);
   const asMap = geographic ? undefined : axisOrientation === 'neu' ? [b, a] : [a, b];
-  const point = [asLatLon, asMap].find((p) => p && containsCoordinate(extent, p));
+  // Longitude first (as GIS copies it) only when latitude first lands outside the map's extent.
+  const point = [geo(a, b), asMap, geo(b, a)].find((p) => p && containsCoordinate(extent, p));
   if (!point) return undefined;
   const center: [number, number] = [point[0], point[1]];
   return { kind: 'point', label: formatCoordinate(center), center };

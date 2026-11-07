@@ -23,7 +23,7 @@ search:
 
 Przy każdym dostawcy pole rozumie współrzędne:
 
-- szerokość i długość geograficzną: `52.2318, 21.0067` albo `52,2318 21,0067`;
+- szerokość i długość geograficzną: `52.2318, 21.0067` albo `52,2318 21,0067`; odwrotna kolejność (`21.0067, 52.2318`) też zadziała, jeśli zwykła wypadłaby poza mapą;
 - punkt w układzie mapy, zapisany tak, jak zapisują go jego użytkownicy (w PL-1992 najpierw X, czyli northing: `486980 637000`).
 
 `parcel: true` dodaje wyszukiwarkę działek według województwa, powiatu, gminy, obrębu i numeru (moduł gugik) oraz **selekcję działek**: narzędzie „Selekcja działek” (na komputerze przycisk w kolumnie narzędzi, na telefonie pozycja w „Więcej”). Działki dodaje się na dwa sposoby:

@@ -169,7 +169,7 @@ A critical error is something the server cannot fix by itself:
 
 - a configured service (a base map or an overlay of the configuration) did not answer at a refresh of the data;
 - a refresh failed as a whole (the first one at start too);
-- the geoportal configuration has not been readable for over 3 days, so the layer catalog does not change (gugik module);
+- the layer catalog has not changed for over 3 days, because the geoportal configuration cannot be read or the server refused it when over half the layers were gone (gugik module). The log gives the cause in the line ending with `previous catalog kept`. If the geoportal really has fewer layers now, delete `<DATA_DIR>/gugik/catalog.json` and run `npm run update`;
 - the orthophoto or topographic map index answered, but the server found nothing in the answer for the middle of Warsaw, where there always was something. This usually means GUGiK changed the shape of its answers (gugik module);
 - an error nothing in the server caught. The process then stops, and Docker or the service manager starts it again.
 

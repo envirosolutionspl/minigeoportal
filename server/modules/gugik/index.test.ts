@@ -48,7 +48,7 @@ describe('update', () => {
   };
   afterEach(() => vi.restoreAllMocks());
 
-  it('raises an alarm when the configuration has not been read for over three days', async () => {
+  it('raises an alarm when the catalog has not been rebuilt for over three days', async () => {
     const old = new Date(Date.now() - 4 * 24 * 3600 * 1000).toISOString();
     await writeFile(file, catalog(old));
     vi.stubGlobal(
@@ -57,7 +57,7 @@ describe('update', () => {
     );
     const said = alerts();
     await gugik.update(defaults);
-    expect(said()).toEqual([`CRITICAL Geoportal configuration unreadable since ${old}`]);
+    expect(said()).toEqual([`CRITICAL Geoportal catalog not rebuilt since ${old}`]);
   });
 
   it('raises an alarm when the sheet indexes answer with nothing in the middle of Warsaw', async () => {

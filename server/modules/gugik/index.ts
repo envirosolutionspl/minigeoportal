@@ -115,7 +115,7 @@ export async function start(client: ClientConfig): Promise<Data> {
   return { catalog: () => catalog };
 }
 
-/** A catalog this old means the geoportal configuration has not been read for days. */
+/** A catalog this old means the geoportal configuration has been unreadable or refused for days. */
 const STALE_MS = 3 * 24 * 3600 * 1000;
 /** The middle of Warsaw (PL-1992), where the sheet indexes have always had photos and maps. */
 const CANARY = { x: 636500, y: 486500 };
@@ -131,8 +131,7 @@ export async function update(client: ClientConfig): Promise<void> {
   for (const e of catalog.entries) count[e.status] = (count[e.status] ?? 0) + 1;
   console.log(`catalog: ${catalog.entries.length} layers in ${Math.round((Date.now() - started) / 1000)} s:`, count);
   // Each run is a new process, so the age of the catalog is the only memory of earlier failures.
-  if (Date.now() - Date.parse(catalog.generatedAt) > STALE_MS)
-    await critical(`Geoportal configuration unreadable since ${catalog.generatedAt}`);
+  if (Date.now() - Date.parse(catalog.generatedAt) > STALE_MS) await critical(`Geoportal catalog not rebuilt since ${catalog.generatedAt}`);
 }
 
 /** The indexes answer HTML read with patterns: nothing found where there always was means their page changed. */

@@ -23,6 +23,14 @@ describe('pointCache', () => {
     expect(await cache('a', async () => 3)).toBe(3);
   });
 
+  it('keeps no answer the caller does not want kept', async () => {
+    const cache = pointCache<number[]>(1000, 10, (value) => value.length > 0);
+    const load = vi.fn(async () => []);
+    expect(await cache('a', load)).toEqual([]);
+    expect(await cache('a', load)).toEqual([]);
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
   it('asks upstream once for a point several visitors ask for at the same time', async () => {
     const cache = pointCache<number>(1000, 10);
     let answer!: (value: number) => void;

@@ -16,8 +16,9 @@ import { writeAtomic } from '../../files.ts';
  * configuration; each service is checked with GetCapabilities (WMS, WMTS) or its description
  * (ArcGIS REST), which also gives its metadata.
  * Layers added or removed in the geoportal appear or disappear here at the next refresh;
- * metadata follow the services. When the configuration cannot be read the previous catalog
- * stays, and a service that does not answer keeps its last known metadata.
+ * metadata follow the services. When the configuration cannot be read, or lists less than half
+ * the layers, the previous catalog stays; a service that misses one check stays on, and one that
+ * does not answer keeps its last known metadata.
  */
 
 interface CatalogService {
@@ -219,6 +220,8 @@ async function checkService(
     return { url, status: 'ok', checked, meta };
   } catch (err) {
     const { status, detail } = failureStatus(err);
+    // One missed daily check of a service that answered stays on, noted in its detail; the second turns it off.
+    if (previous?.status === 'ok' && !previous.detail) return { ...previous, detail };
     // A server that is down now keeps its last metadata, so it works again when it returns.
     return { url, status, detail, checked, ...(previous?.meta ? { meta: previous.meta } : {}) };
   }
@@ -240,9 +243,13 @@ async function mapLimited<T, R>(items: T[], limit: number, fn: (item: T) => Prom
 
 /** Builds the catalog anew; keeps the previous one if the geoportal configuration cannot be read. */
 export async function buildCatalog(overlays: Overlay[], previous?: Catalog, log: (line: string) => void = console.log): Promise<Catalog> {
-  let config: GeoportalConfig;
+  let entries: ReturnType<typeof catalogEntries>;
   try {
-    config = await fetchGeoportalConfig();
+    entries = catalogEntries(await fetchGeoportalConfig(), overlays);
+    // The geoportal does not lose half its layers overnight: the configuration was misread.
+    if (previous && entries.length < previous.entries.length / 2) {
+      throw new Error(`Unexpected configuration: ${entries.length} layers, ${previous.entries.length} before`);
+    }
   } catch (e) {
     if (previous) {
       log(`catalog: configuration not read (${errorMessage(e)}), previous catalog kept`);
@@ -250,7 +257,6 @@ export async function buildCatalog(overlays: Overlay[], previous?: Catalog, log:
     }
     throw e;
   }
-  const entries = catalogEntries(config, overlays);
   const unique = [...new Map(entries.map((e) => [serviceKey(e), e])).entries()];
   const checked = await mapLimited(unique, CONCURRENCY, async ([key, e]) => [key, await checkService(e, previous?.services[key])] as const);
   const services = Object.fromEntries(checked);

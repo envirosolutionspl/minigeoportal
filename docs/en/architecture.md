@@ -61,13 +61,13 @@ flowchart TB
 | Catalog of the geoportal layers                                                              | `<DATA_DIR>/gugik/catalog.json` | with the metadata                                                             | gugik (`catalog`)       |
 | Dictionaries of the parcel search (TERYT)                                                    | `<DATA_DIR>/gugik/dict/`        | after 30 days (an empty list after 6 hours), in the background when asked for | gugik (`search.parcel`) |
 | Layers of the orthophoto index                                                               | memory                          | after 24 hours                                                                | gugik (`ortho`)         |
-| Answers of the orthophoto and topographic map indexes for a point                            | memory                          | after an hour                                                                 | gugik (`ortho`, `topo`) |
+| Answers of the orthophoto and topographic map indexes for a point                            | memory                          | after an hour (an empty answer is not kept)                                   | gugik (`ortho`, `topo`) |
 
 "Once a day" means: a single server refreshes the data itself; with a shared data directory (`SHARED_DATA=1`) the `updater` service of Compose does it. Every server reads the new files within a minute. A service that does not answer keeps its previous metadata and is a critical error, mailed to the administrator (see [Deployment](deployment.md#critical-errors)).
 
 The core never changes the layer list. It is the list of `layers.yaml`, and the refresh only fills in the metadata of the layers named there: a layer the service adds does not appear, one it removes stays on the list.
 
-Only the catalog of the gugik module follows geoportal.gov.pl. Layers added there appear on the list, removed ones leave it, and those whose service does not answer are greyed out with the reason. With the module off, the daily refresh is only a few requests for the metadata of the configured services.
+Only the catalog of the gugik module follows geoportal.gov.pl. Layers added there appear on the list, removed ones leave it, and those whose service does not answer two days in a row are greyed out with the reason. When the geoportal configuration cannot be read, or suddenly has less than half the layers, the previous catalog stays. With the module off, the daily refresh is only a few requests for the metadata of the configured services.
 
 ## Security
 

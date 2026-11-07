@@ -169,6 +169,8 @@ Błąd krytyczny to coś, czego serwer nie naprawi sam:
 
 - skonfigurowana usługa (podkład albo warstwa z konfiguracji) nie odpowiedziała przy odświeżaniu danych;
 - odświeżanie nie powiodło się w całości (także pierwsze, przy starcie);
+- konfiguracji geoportalu nie da się odczytać od ponad 3 dni, więc katalog warstw się nie zmienia (moduł gugik);
+- skorowidz ortofotomapy albo map topograficznych odpowiedział, ale serwer nie znalazł w odpowiedzi nic dla środka Warszawy, gdzie zawsze coś było. Zwykle znaczy to, że GUGiK zmienił wygląd odpowiedzi (moduł gugik);
 - błąd, którego nic w serwerze nie przechwyciło. Proces wtedy się zatrzymuje, a Docker lub menedżer usług uruchamia go ponownie.
 
 Błąd krytyczny trafia do logu jako wiersz zaczynający się od `CRITICAL`. Przy ustawionym serwerze poczty idzie też e-mailem na adres `admin` z `app.yaml` (ten sam co zgłoszenia), w języku `report.locale`. Ten sam błąd idzie mailem najwyżej raz na dobę, a wszystkich najwyżej dziesięć na dobę.

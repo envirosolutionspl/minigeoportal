@@ -115,8 +115,14 @@ export async function start(client: ClientConfig): Promise<Data> {
   return { catalog: () => catalog };
 }
 
-/** Rebuilds the layer catalog (npm run update). */
+/** A catalog this old means the geoportal configuration has not been read for days. */
+const STALE_MS = 3 * 24 * 3600 * 1000;
+/** The middle of Warsaw (PL-1992), where the sheet indexes have always had photos and maps. */
+const CANARY = { x: 636500, y: 486500 };
+
+/** Rebuilds the layer catalog and checks the sheet indexes are still read (npm run update, once a day). */
 export async function update(client: ClientConfig): Promise<void> {
+  await checkIndexes(client);
   if (!client.modules.gugik?.catalog) return;
   const started = Date.now();
   const catalog = await buildCatalog(client.layers.overlays, await readCatalog());
@@ -124,6 +130,20 @@ export async function update(client: ClientConfig): Promise<void> {
   const count: Record<string, number> = {};
   for (const e of catalog.entries) count[e.status] = (count[e.status] ?? 0) + 1;
   console.log(`catalog: ${catalog.entries.length} layers in ${Math.round((Date.now() - started) / 1000)} s:`, count);
+  // Each run is a new process, so the age of the catalog is the only memory of earlier failures.
+  if (Date.now() - Date.parse(catalog.generatedAt) > STALE_MS)
+    await critical(`Geoportal configuration unreadable since ${catalog.generatedAt}`);
+}
+
+/** The indexes answer HTML read with patterns: nothing found where there always was means their page changed. */
+async function checkIndexes(client: ClientConfig): Promise<void> {
+  const { x, y } = CANARY;
+  // A failed request is the index being down, which the time view reports itself; not the parser's fault.
+  const found = (count: () => Promise<number>) => count().catch(() => -1);
+  const empty: string[] = [];
+  if (client.modules.gugik?.ortho && (await found(async () => (await orthoAt(x, y)).archived)) === 0) empty.push('orthophotos');
+  if (client.modules.gugik?.topo && (await found(async () => (await topoAt(x, y)).sheets.length)) === 0) empty.push('topographic maps');
+  if (empty.length) await critical(`Sheet index parser found nothing at ${x}, ${y}: ${empty.join(', ')}`);
 }
 
 /** The entries of a catalog by id, built once per catalog read (a catalog replaced by a refresh takes its index with it). */
@@ -244,8 +264,9 @@ export function routes(app: Hono, { client, data, upstream, limits }: RouteDeps)
    * client who asked (the time view aborts its request at every move of the map): the fetch's
    * own timeout bounds it.
    */
-  const pointRoute = <T>(path: string, at: (x: number, y: number) => Promise<T>, limit: [number, number]) => {
-    const cache = pointCache<T>(INDEX_TTL_MS, INDEX_POINTS);
+  const pointRoute = <T>(path: string, at: (x: number, y: number) => Promise<T>, limit: [number, number], found: (info: T) => boolean) => {
+    // An answer with nothing in it may be a page the parser no longer reads: asked again soon, not kept.
+    const cache = pointCache<T>(INDEX_TTL_MS, INDEX_POINTS, found);
     app.use(path, rateLimit(...limit));
     app.get(path, async (c) => {
       // The indexes answer by the metre, so spellings of one point (500000, 500000.0, 5e5) share an answer.
@@ -254,12 +275,12 @@ export function routes(app: Hono, { client, data, upstream, limits }: RouteDeps)
       if (!Number.isFinite(x) || !Number.isFinite(y)) throw new RequestError('Invalid point');
       const info = await cache(`${x},${y}`, () => upstream(() => at(x, y)));
       if (!info) return c.text('Busy, try again shortly', 503);
-      c.header('Cache-Control', 'public, max-age=86400');
+      c.header('Cache-Control', found(info) ? 'public, max-age=86400' : 'public, max-age=600');
       return c.json(info);
     });
   };
   // Date and pixel size of the aerial photo at a point.
-  if (gugik.ortho) pointRoute('/api/orto', orthoAt, limits?.ortho ?? [10, 30]);
+  if (gugik.ortho) pointRoute('/api/orto', orthoAt, limits?.ortho ?? [10, 30], (info) => info.archived > 0);
   // The sheets of the old topographic maps at a point, with the year each is current for.
-  if (gugik.topo) pointRoute('/api/topo', topoAt, limits?.topo ?? [10, 30]);
+  if (gugik.topo) pointRoute('/api/topo', topoAt, limits?.topo ?? [10, 30], (info) => info.sheets.length > 0);
 }

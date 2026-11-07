@@ -61,13 +61,13 @@ flowchart TB
 | Katalog warstw geoportalu                                                                  | `<DATA_DIR>/gugik/catalog.json` | razem z metadanymi                                              | gugik (`catalog`)       |
 | Słowniki wyszukiwarki działek (TERYT)                                                      | `<DATA_DIR>/gugik/dict/`        | po 30 dniach (pusta lista po 6 godzinach), w tle przy zapytaniu | gugik (`search.parcel`) |
 | Warstwy skorowidza ortofotomapy                                                            | pamięć                          | po 24 godzinach                                                 | gugik (`ortho`)         |
-| Odpowiedzi skorowidzów ortofotomapy i map topograficznych dla punktu                       | pamięć                          | po godzinie                                                     | gugik (`ortho`, `topo`) |
+| Odpowiedzi skorowidzów ortofotomapy i map topograficznych dla punktu                       | pamięć                          | po godzinie (pusta odpowiedź nie jest przechowywana)            | gugik (`ortho`, `topo`) |
 
 „Raz na dobę” znaczy: pojedynczy serwer odświeża dane sam, a przy wspólnym katalogu danych (`SHARED_DATA=1`) robi to usługa `updater` w Compose. Każdy serwer czyta nowe pliki w ciągu minuty. Usługa, która nie odpowiada, zachowuje poprzednie metadane i jest błędem krytycznym, wysyłanym mailem do administratora (zob. [Wdrożenie](wdrozenie.md#błędy-krytyczne)).
 
 Rdzeń nigdy nie zmienia listy warstw. To lista z `layers.yaml`, a odświeżanie tylko uzupełnia metadane wymienionych tam warstw: warstwa dodana w usłudze się nie pojawi, usunięta zostanie na liście.
 
-Za geoportal.gov.pl nadąża tylko katalog modułu gugik. Warstwy dodane w geoportalu pojawiają się na liście, usunięte z niej znikają, a te, których usługa nie odpowiada, są wyszarzone z wyjaśnieniem. Przy wyłączonym module codzienne odświeżanie to tylko kilka zapytań o metadane skonfigurowanych usług.
+Za geoportal.gov.pl nadąża tylko katalog modułu gugik. Warstwy dodane w geoportalu pojawiają się na liście, usunięte z niej znikają, a te, których usługa nie odpowiada dwa dni z rzędu, są wyszarzone z wyjaśnieniem. Gdy konfiguracji geoportalu nie da się odczytać albo nagle ma mniej niż połowę warstw, zostaje poprzedni katalog. Przy wyłączonym module codzienne odświeżanie to tylko kilka zapytań o metadane skonfigurowanych usług.
 
 ## Bezpieczeństwo
 

@@ -244,6 +244,15 @@ describe('routes', () => {
       });
     }
     expect(fetchMock).toHaveBeenCalledOnce();
+    // A page with no sheets may be one the parser no longer reads: neither kept nor cached for a day.
+    const empty = vi.fn(async () => new Response('<p>nothing</p>', { headers: { 'content-type': 'text/html' } }));
+    vi.stubGlobal('fetch', empty);
+    for (let i = 0; i < 2; i++) {
+      const res = await app.request('/api/topo?x=641000&y=489000', {}, visitor);
+      expect(res.headers.get('cache-control')).toBe('public, max-age=600');
+      expect(await res.json()).toEqual({ sheets: [] });
+    }
+    expect(empty).toHaveBeenCalledTimes(2);
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => new Response('boom', { status: 503 })),

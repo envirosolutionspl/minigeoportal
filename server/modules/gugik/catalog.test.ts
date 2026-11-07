@@ -217,7 +217,7 @@ describe('buildCatalog', () => {
     expect(first.services['https://nid.example/wms'].meta).toMatchObject({ layers: { zabytki: {} } });
     expect(calls.filter((u) => u.includes('GetCapabilities'))).toHaveLength(4);
 
-    // The heritage server goes silent: still listed, marked down, metadata kept for when it returns.
+    // The heritage server goes silent: one missed daily check keeps it on, with what it answered noted.
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) =>
@@ -225,8 +225,8 @@ describe('buildCatalog', () => {
       ),
     );
     const second = await mod.buildCatalog(defaults.layers.overlays, first, log);
-    expect(second.entries.find((e) => e.id === 'msZabytki')?.status).toBe('down');
-    expect(second.services['https://nid.example/wms'].meta).toMatchObject({ layers: { zabytki: {} } });
+    expect(second.entries.find((e) => e.id === 'msZabytki')).toMatchObject({ status: 'ok', detail: 'timeout' });
+    expect(second.services['https://nid.example/wms']).toMatchObject({ status: 'ok', meta: { layers: { zabytki: {} } } });
 
     // The geoportal drops a layer and adds one: the catalog follows.
     const changed = config();
@@ -243,10 +243,30 @@ describe('buildCatalog', () => {
     // Heritage is now only in the environment module, which lists Corine before it.
     expect(third.entries.map((e) => e.id)).toEqual(['msMPZP', 'msPOG', 'msCLC', 'msZabytki']);
     expect(log).toHaveBeenLastCalledWith('catalog: 4 layers (1 added, 2 removed)');
+    // Silent the second day too: marked down now, metadata kept for when it returns.
+    expect(third.entries.find((e) => e.id === 'msZabytki')?.status).toBe('down');
+    expect(third.services['https://nid.example/wms'].meta).toMatchObject({ layers: { zabytki: {} } });
 
     spy.mockRejectedValue(new Error('HTTP 404'));
     expect(await mod.buildCatalog(defaults.layers.overlays, third, log)).toBe(third);
     await expect(mod.buildCatalog(defaults.layers.overlays, undefined, log)).rejects.toThrow('HTTP 404');
+    spy.mockRestore();
+  });
+
+  it('keeps the previous catalog when the configuration suddenly lists less than half of its layers', async () => {
+    const geo = await import('./geoportalConfig.ts');
+    const spy = vi.spyOn(geo, 'fetchGeoportalConfig').mockResolvedValue(config());
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(CAPS('plany'))),
+    );
+    const log = vi.fn();
+    const previous = await mod.buildCatalog(defaults.layers.overlays, undefined, log);
+    const shrunk = config();
+    shrunk.modules = [{ id: 'modulOS', label: 'Ochrona środowiska', layers: ['msCLC', 'msZabytki'] }];
+    spy.mockResolvedValue(shrunk);
+    expect(await mod.buildCatalog(defaults.layers.overlays, previous, log)).toBe(previous);
+    expect(log).toHaveBeenLastCalledWith(expect.stringContaining('previous catalog kept'));
     spy.mockRestore();
   });
 

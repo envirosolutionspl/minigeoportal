@@ -98,11 +98,23 @@ describe('buildCache', () => {
     const cache = await buildCache(defaults, previous);
     expect(cache.services.kieg).toEqual(previous.services.kieg);
     // Kept quietly for the app, said out loud (a critical error, mailed) for whoever runs the site.
-    expect(error).toHaveBeenCalledWith(expect.stringMatching(/^CRITICAL kieg: HTTP 503 .*previous metadata kept/));
+    expect(error).toHaveBeenCalledWith(expect.stringMatching(/^CRITICAL Services not answering: kieg: HTTP 503 .*previous metadata kept/));
     expect(cache.services.kimpzp.kind).toBe('wms');
 
     const fresh = await buildCache(defaults);
     expect(fresh.services.kieg).toMatchObject({ kind: 'error', error: 'HTTP 503' });
+  });
+
+  it('reports all the services that do not answer as one critical error, so an outage upstream sends one mail', async () => {
+    stub(() => new Response('nope', { status: 503 }));
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const cache = await buildCache(defaults);
+    const failed = Object.keys(cache.services);
+    expect(failed.length).toBeGreaterThan(1);
+    const lines = error.mock.calls.map(([line]) => String(line)).filter((line) => line.startsWith('CRITICAL'));
+    expect(lines).toHaveLength(1);
+    for (const id of failed) expect(lines[0]).toContain(`${id}: HTTP 503`);
   });
 
   it('stores the geoportal drawing order and keeps the last good one when it cannot be read', async () => {

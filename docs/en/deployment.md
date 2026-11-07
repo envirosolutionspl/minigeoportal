@@ -48,7 +48,7 @@ What `compose.yaml` runs:
 | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `caddy`   | The way in from the internet. Gets a certificate for `DOMAIN` by itself, serves HTTP/2 and HTTP/3. Sends each visitor always to the same replica. Request bodies up to 64 KB.                                  |
 | `app`     | The app and the API (port 8787, reachable only on the Compose network). 2 replicas by default, with `SHARED_DATA=1` and `TRUSTED_PROXY=1`. The replicas never build the data; they read what `updater` writes. |
-| `updater` | The same image. Refreshes the data (the same as `npm run update`) at start and then every 24 hours.                                                                                                            |
+| `updater` | The same image. Refreshes the data (the same as `npm run update`) at start and then every 24 hours. After a failed refresh it tries again in an hour.                                                          |
 
 Good to know:
 
@@ -167,7 +167,7 @@ The server opens at most 24 connections to the upstream services at a time and a
 
 A critical error is something the server cannot fix by itself:
 
-- a configured service (a base map or an overlay of the configuration) did not answer at a refresh of the data;
+- a configured service (a base map or an overlay of the configuration) did not answer at a refresh of the data. All such services of one refresh go in one mail;
 - a refresh failed as a whole (the first one at start too);
 - the layer catalog has not changed for over 3 days, because the geoportal configuration cannot be read or the server refused it when over half the layers were gone (gugik module). The log gives the cause in the line ending with `previous catalog kept`. If the geoportal really has fewer layers now, delete `<DATA_DIR>/gugik/catalog.json` and run `npm run update`;
 - the orthophoto or topographic map index answered, but the server found nothing in the answer for the middle of Warsaw, where there always was something. This usually means GUGiK changed the shape of its answers (gugik module);

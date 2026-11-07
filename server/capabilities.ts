@@ -268,14 +268,16 @@ export async function buildCache(config: ClientConfig, previous?: CapabilitiesCa
     }),
   ]);
   const services: Record<string, ServiceMeta> = {};
+  const failed: string[] = [];
   for (const [id, meta] of entries) {
     const old = previous?.services[id];
     const kept = meta.kind === 'error' && old && old.kind !== 'error';
-    // A configured service that does not answer is a critical error (mailed to the administrator);
-    // it keeps its previous metadata, said out loud rather than hidden.
-    if (meta.kind === 'error') await critical(`${id}: ${meta.error}${kept ? ' (previous metadata kept)' : ''}`);
+    // A configured service that does not answer keeps its previous metadata, said out loud rather than hidden.
+    if (meta.kind === 'error') failed.push(`${id}: ${meta.error}${kept ? ' (previous metadata kept)' : ''}`);
     services[id] = kept ? old : meta;
   }
+  // One critical error (one mail) for them all: an outage upstream must not use up the day's alert mails.
+  if (failed.length) await critical('Services not answering', failed.join('\n'));
   const order = drawOrder ?? previous?.drawOrder;
   return { generatedAt: new Date().toISOString(), services, ...(order ? { drawOrder: order } : {}) };
 }

@@ -33,6 +33,14 @@ describe('deployment files', () => {
     expect(dockerignore.indexOf('**/*.test.ts')).toBeGreaterThan(dockerignore.indexOf('!server'));
   });
 
+  it('refreshes the data every day, and an hour after a failed run rather than a day', () => {
+    expect(compose.services.updater.command).toEqual([
+      'sh',
+      '-c',
+      'while true; do if node server/update.ts; then sleep 86400; else sleep 3600; fi; done',
+    ]);
+  });
+
   it('tells nobody the nginx version', () => {
     expect(nginx).toMatch(/server_name example\.org;[\s\S]*server_tokens off;/);
   });

@@ -48,7 +48,7 @@ Co uruchamia `compose.yaml`:
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `caddy`   | Wejście z internetu. Sam uzyskuje certyfikat dla `DOMAIN`, obsługuje HTTP/2 i HTTP/3. Kieruje każdego odwiedzającego zawsze do tej samej repliki. Treść zapytań do 64 KB.                       |
 | `app`     | Aplikacja i API (port 8787, dostępny tylko w sieci Compose). Domyślnie 2 repliki z `SHARED_DATA=1` i `TRUSTED_PROXY=1`. Repliki nie budują danych same, tylko czytają to, co zapisze `updater`. |
-| `updater` | Ten sam obraz. Odświeża dane (to samo co `npm run update`) przy starcie, a potem co 24 godziny.                                                                                                 |
+| `updater` | Ten sam obraz. Odświeża dane (to samo co `npm run update`) przy starcie, a potem co 24 godziny. Po nieudanym odświeżaniu próbuje znowu po godzinie.                                             |
 
 Dobrze wiedzieć:
 
@@ -167,7 +167,7 @@ Do usług źródłowych serwer otwiera najwyżej 24 połączenia naraz; ponad to
 
 Błąd krytyczny to coś, czego serwer nie naprawi sam:
 
-- skonfigurowana usługa (podkład albo warstwa z konfiguracji) nie odpowiedziała przy odświeżaniu danych;
+- skonfigurowana usługa (podkład albo warstwa z konfiguracji) nie odpowiedziała przy odświeżaniu danych. Wszystkie takie usługi z jednego odświeżania idą w jednym mailu;
 - odświeżanie nie powiodło się w całości (także pierwsze, przy starcie);
 - katalog warstw nie zmienił się od ponad 3 dni, bo konfiguracji geoportalu nie da się odczytać albo serwer ją odrzucił, gdy ubyła ponad połowa warstw (moduł gugik). Przyczynę podaje log, w wierszu kończącym się na `previous catalog kept`. Jeśli geoportal naprawdę ma teraz mniej warstw, usuń `<DATA_DIR>/gugik/catalog.json` i uruchom `npm run update`;
 - skorowidz ortofotomapy albo map topograficznych odpowiedział, ale serwer nie znalazł w odpowiedzi nic dla środka Warszawy, gdzie zawsze coś było. Zwykle znaczy to, że GUGiK zmienił wygląd odpowiedzi (moduł gugik);

@@ -10,6 +10,18 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # Majors that wait for the lint plugins: typescript-eslint takes TypeScript below 6.1,
+      # eslint-plugin-jsx-a11y ESLint up to 9. Drop a rule once its plugin supports the major.
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
+      - dependency-name: eslint
+        update-types: [version-update:semver-major]
+      - dependency-name: '@eslint/js'
+        update-types: [version-update:semver-major]
+      # The types follow the Node that runs the server (node:22 in the Dockerfile), not the newest.
+      - dependency-name: '@types/node'
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /

@@ -122,6 +122,12 @@ describe('renderPage', () => {
     expect(page).toContain(`<meta property="og:image" content="https://${defaults.app.domain}/brand/icon.png?v=1&amp;x" />`);
   });
 
+  it('keeps the note for browsers without JavaScript', () => {
+    expect(renderPage(readFileSync('index.html', 'utf8'), defaults)).toMatch(
+      /<noscript>\s*<p role="alert">\s*Mapa potrzebuje JavaScriptu[^<]*<\/p>\s*<\/noscript>/,
+    );
+  });
+
   it('puts the skin into the page, unable to close its element', () => {
     const page = renderPage(TEMPLATE, defaults, ':root { --accent: #123456; } /* </style><script> */');
     expect(page).toContain('<style id="skin">:root { --accent: #123456; }');

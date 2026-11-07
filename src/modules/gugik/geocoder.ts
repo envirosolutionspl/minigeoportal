@@ -276,7 +276,8 @@ const samePlace = (a: GugikHit, b: GugikHit) =>
 /** ULDK answers in text: first line is a count or "-1 brak wyników", then one "|"-separated row per hit. */
 async function uldkRows(params: Record<string, string>, signal: AbortSignal): Promise<string[][]> {
   const res = await fetch(`${ULDK}?${new URLSearchParams({ ...params, srid: '2180' })}`, { signal });
-  if (!res.ok) return [];
+  // A failing service is not "nothing found": the search names it, the selection marks the parcel.
+  if (!res.ok) throw new Error(`ULDK: HTTP ${res.status}`);
   const [status, ...rows] = (await res.text()).trim().split('\n');
   if (status.startsWith('-1')) return [];
   return rows.map((r) => r.split('|'));
@@ -339,7 +340,11 @@ type Source = 'parcels' | 'addresses' | 'names' | 'units';
 
 export async function search(query: string, signal: AbortSignal): Promise<SearchResults & GugikHit[]> {
   const q = query.trim();
-  if (PARCEL_ID.test(q)) return findParcels(q, signal);
+  if (PARCEL_ID.test(q))
+    return findParcels(q, signal).catch(() => {
+      signal.throwIfAborted();
+      return Object.assign([], { unavailable: [t('search.gugik.unavailable.parcels')] });
+    });
   // Names have no digits or commas; anything else is an address or a parcel.
   const byName = !/[\d,]/.test(q);
   const asked: [Source, ((s: AbortSignal) => Promise<GugikHit[]>) | false][] = [

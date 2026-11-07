@@ -52,6 +52,7 @@ search:
   none: No results.
   tooShort: Type at least 3 characters.
   unavailable: 'Not answering: {services}. The results may be incomplete.'
+  failed: The search is not answering. Try again in a moment.
   results:
     one: '{count} result. Arrow keys down and up choose, Enter shows it on the map.'
     other: '{count} results. Arrow keys down and up choose, Enter shows it on the map.'

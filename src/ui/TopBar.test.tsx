@@ -195,6 +195,19 @@ describe('a service that did not answer', () => {
     expect(screen.getByRole('listbox').textContent).toContain('Nie odpowiada: wyszukiwarka adresów (UUG). Wyniki mogą być niepełne.');
     expect(screen.getAllByRole('status').some((s) => s.textContent?.includes('Wyniki mogą być niepełne'))).toBe(true);
   });
+
+  it('says so when the search fails, but not when it is called off', async () => {
+    const { searchProvider } = await import('@/search');
+    const failing = vi.spyOn(searchProvider, 'search').mockRejectedValue(new DOMException('x', 'AbortError'));
+    render(<TopBar />);
+    await type('Kraków');
+    const failed = 'Wyszukiwarka nie odpowiada. Spróbuj ponownie za chwilę.';
+    expect(screen.queryAllByText(failed)).toHaveLength(0);
+    failing.mockRejectedValue(new Error('Search: HTTP 503'));
+    await type('Krakówek');
+    expect(screen.getByRole('listbox').textContent).toContain(failed);
+    expect(screen.getAllByRole('status').some((s) => s.textContent === failed)).toBe(true);
+  });
 });
 
 describe('my location', () => {

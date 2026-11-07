@@ -125,7 +125,12 @@ export function TopBar() {
       setActive(-1);
       setAnnounce(`${found.length ? t('search.results', { count: found.length }) : t('search.none')} ${missing}`.trim());
     } catch (e) {
-      if (!(e instanceof DOMException && e.name === 'AbortError')) setHits([]);
+      if (e instanceof DOMException && e.name === 'AbortError') return;
+      // The list says the search failed, as it names a service that did not answer.
+      setHits([]);
+      setUnavailable(t('search.failed'));
+      setActive(-1);
+      setAnnounce(t('search.failed'));
     } finally {
       // A newer search owns the spinner now; otherwise this one turns it off.
       if (abort.current === controller) setBusy(false);

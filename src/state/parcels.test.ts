@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { addParcel, toggleParcelAt, useParcelStore } from './parcels';
 import { useMapStore } from './store';
 import { stubFetch } from '@/test/helpers';
@@ -35,9 +35,31 @@ describe('the parcel selection', () => {
     stubFetch([['GetParcelByXY', '-1 brak wyników']]);
     await toggleParcelAt([1, 2]);
     expect(useParcelStore.getState().message).toBe('W tym miejscu nie ma działki.');
-    stubFetch([]);
+    stubFetch([['GetParcelByXY', 'Service Unavailable', { status: 503 }]]);
     await toggleParcelAt([1, 2]);
+    expect(useParcelStore.getState().message).toBe('ULDK nie odpowiedziało. Spróbuj ponownie za chwilę.');
     expect(useMapStore.getState().parcels).toEqual([]);
+  });
+
+  it('gives up on ULDK when it hangs, so no parcel stays loading', async () => {
+    // AbortSignal.timeout runs on its own clock, which fake timers cannot move: here it runs out at once.
+    const timeout = vi.spyOn(AbortSignal, 'timeout').mockImplementation(() => AbortSignal.abort(new DOMException('x', 'TimeoutError')));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        (_: string, init?: RequestInit) =>
+          new Promise<Response>((_, reject) => {
+            if (init?.signal?.aborted) reject(init.signal.reason);
+            init?.signal?.addEventListener('abort', () => reject(init.signal!.reason));
+          }),
+      ),
+    );
+    useMapStore.setState({ parcels: ['141201_1.0001.1867'] });
+    await settle();
+    expect(useParcelStore.getState().entries['141201_1.0001.1867'].status).toBe('error');
+    await toggleParcelAt([1, 2]);
+    expect(useParcelStore.getState().message).toBe('ULDK nie odpowiedziało. Spróbuj ponownie za chwilę.');
+    expect(timeout).toHaveBeenCalledWith(20_000);
   });
 
   it('keeps each parcel once and at most ten, saying why it adds no more', async () => {

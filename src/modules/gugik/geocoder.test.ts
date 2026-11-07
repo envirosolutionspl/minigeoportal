@@ -187,6 +187,20 @@ describe('search', () => {
     ]);
     expect(await search('Nigdzie 1', signal())).toEqual([]);
   });
+
+  it('names ULDK when it answers with an error, not "nothing found"', async () => {
+    stubFetch([
+      ['uldk.gugik.gov.pl', 'Service Unavailable', { status: 503 }],
+      ['services.gugik.gov.pl/uug', UUG_STREET],
+      ['/api/dict/jednostki', UNITS],
+    ]);
+    const byNumber = await search('Wiązowna Gminna 22/1', signal());
+    expect(byNumber.map((h) => h.kind)).toEqual(['street']);
+    expect(byNumber.unavailable).toEqual(['wyszukiwarka działek (ULDK)']);
+    const byId = await search('141708_2.0021.22/1', signal());
+    expect(byId).toHaveLength(0);
+    expect(byId.unavailable).toEqual(['wyszukiwarka działek (ULDK)']);
+  });
 });
 
 describe('findParcels and stripSrid', () => {

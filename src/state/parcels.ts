@@ -24,6 +24,9 @@ interface ParcelStore {
 
 export const useParcelStore = create<ParcelStore>(() => ({ entries: {}, message: '' }));
 
+/** How long ULDK may take: one that hangs leaves the parcel as not answered, not loading for good. */
+const ULDK_TIMEOUT_MS = 20_000;
+
 const wkt = new WKT();
 const set = (id: string, entry: ParcelEntry) => useParcelStore.setState((s) => ({ entries: { ...s.entries, [id]: entry } }));
 const say = (message: string) => useParcelStore.setState({ message });
@@ -43,7 +46,7 @@ function load(ids: string[]): void {
     const known = useParcelStore.getState().entries[id];
     if (known && known.status !== 'error') continue;
     set(id, { status: 'loading' });
-    parcelLookup.byId(id, new AbortController().signal).then(
+    parcelLookup.byId(id, AbortSignal.timeout(ULDK_TIMEOUT_MS)).then(
       (parcel) => (parcel ? remember(parcel) : set(id, { status: 'missing' })),
       () => set(id, { status: 'error' }),
     );
@@ -70,7 +73,7 @@ export async function toggleParcelAt(point: [number, number]): Promise<void> {
   say(t('parcels.looking'));
   let parcel: Parcel | null;
   try {
-    parcel = await parcelLookup.at(point, new AbortController().signal);
+    parcel = await parcelLookup.at(point, AbortSignal.timeout(ULDK_TIMEOUT_MS));
   } catch {
     return say(t('parcels.error'));
   }

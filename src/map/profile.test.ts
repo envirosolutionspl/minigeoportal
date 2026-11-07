@@ -12,9 +12,9 @@ describe('profileSamples', () => {
     expect(samples[0].coordinate).toEqual([600000, 500000]);
     expect(samples[100].coordinate).toEqual([601000, 501000]);
     expect(samples[50].coordinate[0]).toBeCloseTo(601000, 0);
-    // The ground length, as the measurement counts it: about 2 km in PL-1992.
-    expect(samples[100].distance).toBeGreaterThan(1990);
-    expect(samples[100].distance).toBeLessThan(2010);
+    // The ground length, as the measurement counts it: the geodesics on GRS80 between the corners,
+    // taken to degrees with proj4 and measured with Vincenty's formula, 1000.576 m + 1000.575 m.
+    expect(samples[100].distance).toBeCloseTo(2001.151, 2);
     // The bend falls on an even sample here: one sample, marked.
     expect(samples[50]).toMatchObject({ coordinate: [601000, 500000], bend: true });
     expect(samples.filter((s) => s.bend)).toHaveLength(1);
@@ -37,12 +37,13 @@ describe('profileSamples', () => {
   });
 
   it('keeps samples a metre apart on short lines, and has none for a point', () => {
+    // 10 m of the grid here are 10.006 m on the ground: eleven stretches.
     expect(
       profileSamples([
         [600000, 500000],
         [600010, 500000],
       ]),
-    ).toHaveLength(11);
+    ).toHaveLength(12);
     expect(
       profileSamples([
         [600000, 500000],
@@ -61,6 +62,15 @@ describe('profileOf', () => {
     expect(profile.slope).toBeCloseTo(0.5, 6);
     // 5 up, 2 down and 1 up over 30 m.
     expect(profile.meanSlope).toBeCloseTo(8 / 30, 6);
+  });
+
+  it('takes the slope over ten metres at least, so heights to a decimetre a metre apart make no steep stretch', () => {
+    // An even slope of 1 %, sampled every metre, the heights rounded to a decimetre as the model gives them.
+    const distances = Array.from({ length: 51 }, (_, i) => i);
+    const heights = distances.map((d) => Math.round((100.03 + 0.01 * d) * 10) / 10);
+    expect(profileOf(at(...distances), heights)!.slope).toBeCloseTo(0.01, 6);
+    // A line shorter than that is one stretch.
+    expect(profileOf(at(0, 2, 4, 6), [100, 100.1, 100.1, 100.2])!.slope).toBeCloseTo(0.2 / 6, 6);
   });
 
   it('leaves out the points without a height, and needs two heights', () => {

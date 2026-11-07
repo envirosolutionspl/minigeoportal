@@ -91,7 +91,7 @@ Wysokości pochodzą z numerycznego modelu terenu GUGiK (NMT, siatka 1 m, usług
 - **Profil terenu** to osobne narzędzie: na komputerze przycisk pod pomiarem, na telefonie pozycja w „Więcej”. Rysuje się linię na mapie tak jak przy pomiarze odległości, a panel pokazuje:
   - wykres wysokości wzdłuż linii (do 101 punktów, nie gęściej niż co metr);
   - punkty załamania linii, zaznaczone przerywaną linią, z wysokością nad wykresem i odległością od początku pod nim;
-  - podsumowanie: zakres wysokości, największe nachylenie między sąsiednimi punktami i średnie nachylenie.
+  - podsumowanie: zakres wysokości, największe nachylenie (na odcinkach co najmniej 10 m, bo wysokości są podane z dokładnością do 10 cm) i średnie nachylenie.
 
   Nowa linia zastępuje poprzednią, a zamknięcie narzędzia usuwa ją z mapy.
 

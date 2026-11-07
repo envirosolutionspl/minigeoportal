@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import Feature from 'ol/Feature';
 import WKT from 'ol/format/WKT';
 import { Polygon } from 'ol/geom';
-import { perimeterOf, sideLabels, sides } from './sides';
+import { fromLonLat } from 'ol/proj';
+import { lengthOf, perimeterOf, sideLabels, sides } from './sides';
 import { scaleToResolution } from './projection';
 
 const wkt = new WKT();
@@ -15,6 +16,27 @@ describe('sides', () => {
     // 100 km east of the central meridian PL-1992 draws lengths at 0.99942 (0.9993 · (1 + y² / 2R²)).
     for (const { length } of found) expect(length).toBeCloseTo(100.058, 2);
     expect(perimeterOf(square)).toBeCloseTo(400.231, 2);
+  });
+
+  it('measures lines on the ellipsoid to a centimetre a kilometre, against the geodesic from proj4 and Vincenty’s formula', () => {
+    // The ends taken to degrees with proj4, the geodesic between them on GRS80 by Vincenty's inverse formula.
+    // A degree of the meridian at 20° E, from 51.5° to 52.5° N: 111 267.347 m (OpenLayers' sphere: 111 195.1 m).
+    expect(lengthOf([fromLonLat([20, 51.5], 'EPSG:2180'), fromLonLat([20, 52.5], 'EPSG:2180')])).toBeCloseTo(111267.347, 0);
+    // 50 km aslant: 50 026.091 m, within half a metre.
+    expect(
+      lengthOf([
+        [600000, 500000],
+        [640000, 530000],
+      ]),
+    ).toBeCloseTo(50026.091, 0);
+    // A kilometre east, then north, 200 km east of the central meridian: 1000.206 m and 1000.204 m (the sphere: 997.1 m east).
+    expect(
+      lengthOf([
+        [700000, 300000],
+        [701000, 300000],
+        [701000, 301000],
+      ]),
+    ).toBeCloseTo(1000.206 + 1000.204, 2);
   });
 
   it('takes every polygon of a multipolygon and the holes, and leaves out outlines of too many corners', () => {

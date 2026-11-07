@@ -11,8 +11,8 @@ const RAD = Math.PI / 180;
 
 /**
  * The length of a short line (a side of a parcel) on the ellipsoid GRS80, from the radii of
- * curvature at its middle: to the millimetre over a kilometre, in any projection of the map. A
- * sphere, as OpenLayers measures, is off by up to 0.15 %, 15 cm on a side of 100 m.
+ * curvature at its middle: to the millimetre over a kilometre, in any projection of the map. The
+ * sphere OpenLayers measures on falls short in Poland by up to 0.33 %, 33 cm on a side of 100 m.
  */
 export function sideLength(a: Coordinate, b: Coordinate): number {
   const [lon1, lat1] = toLonLat(a, PROJECTION);
@@ -54,9 +54,11 @@ export function sides(geometry: Geometry): { side: LineString; length: number }[
   return all.flatMap((ring) => ring.slice(1).map((end, i) => ({ side: new LineString([ring[i], end]), length: sideLength(ring[i], end) })));
 }
 
+/** The length in metres of a line through the points, side by side on the ellipsoid. */
+export const lengthOf = (points: Coordinate[]) => points.slice(1).reduce((sum, end, i) => sum + sideLength(points[i], end), 0);
+
 /** The perimeter of a polygon in metres: every ring, however many corners. */
-export const perimeterOf = (geometry: Geometry) =>
-  rings(geometry).reduce((sum, ring) => sum + ring.slice(1).reduce((s, end, i) => s + sideLength(ring[i], end), 0), 0);
+export const perimeterOf = (geometry: Geometry) => rings(geometry).reduce((sum, ring) => sum + lengthOf(ring), 0);
 
 /**
  * The lengths of the sides of a parcel or building outline, as styles to draw over it once the

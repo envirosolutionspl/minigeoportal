@@ -75,12 +75,9 @@ describe('ProfilePanel', () => {
     });
     const { container } = render(<ProfilePanel />);
     await screen.findByText(/Nachylenie największe/);
-    // Its height above the chart stays; under it only the start and the length.
+    // Its height above the chart stays; under it only the start and the length (1000.6 m on the ground).
     expect(screen.getByText('177,0 m')).toBeTruthy();
-    expect([...container.querySelectorAll('figure div.relative.flex > span')].map((s) => s.textContent)).toEqual([
-      '0 m',
-      expect.stringMatching(/ m$/),
-    ]);
+    expect([...container.querySelectorAll('figure div.relative.flex > span')].map((s) => s.textContent)).toEqual(['0 m', '1,00 km']);
   });
 
   it('says when the heights cannot be had', async () => {

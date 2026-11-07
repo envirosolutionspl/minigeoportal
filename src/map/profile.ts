@@ -1,6 +1,5 @@
 import { LineString } from 'ol/geom';
-import { getLength } from 'ol/sphere';
-import { PROJECTION } from './projection';
+import { lengthOf } from './sides';
 
 /**
  * The profile of the terrain along a drawn line: heights at evenly spaced points and at the points
@@ -9,6 +8,12 @@ import { PROJECTION } from './projection';
 
 /** Most stretches of a profile: 101 heights draw a smooth line and are one light request. */
 const MAX_STEPS = 100;
+
+/**
+ * The shortest stretch a slope is measured over, in metres: ten cells of the model's 1 m grid. It
+ * gives heights to a decimetre, which between samples a metre apart reads as a slope of 10 %.
+ */
+const SLOPE_RUN = 10;
 
 export interface ProfileSample {
   coordinate: [number, number];
@@ -24,7 +29,7 @@ export interface ProfileSample {
  */
 export function profileSamples(line: [number, number][]): ProfileSample[] {
   const geometry = new LineString(line);
-  const length = getLength(geometry, { projection: PROJECTION });
+  const length = lengthOf(line);
   if (!(length > 0)) return [];
   const steps = Math.min(MAX_STEPS, Math.ceil(length));
   // Where each bend lies along the line, as a share of it in the map's plane (as getCoordinateAt counts).
@@ -53,7 +58,7 @@ export interface Profile {
   length: number;
   min: number;
   max: number;
-  /** Steepest stretch between neighbouring samples, as a fraction (0.09 is 9 %). */
+  /** Steepest stretch of at least SLOPE_RUN metres, as a fraction (0.09 is 9 %). */
   slope: number;
   /** The mean slope along the line: every metre up or down over the metres walked, as a fraction. */
   meanSlope: number;
@@ -70,15 +75,18 @@ export function profileOf(samples: ProfileSample[], heights: (number | null)[]):
     return height === null || height === undefined ? [] : [{ distance: s.distance, height }];
   });
   if (points.length < 2) return undefined;
-  let slope = 0;
   let climb = 0;
-  for (let i = 1; i < points.length; i++) {
-    const rise = Math.abs(points[i].height - points[i - 1].height);
-    const run = points[i].distance - points[i - 1].distance;
-    climb += rise;
-    if (run > 0) slope = Math.max(slope, rise / run);
+  for (let i = 1; i < points.length; i++) climb += Math.abs(points[i].height - points[i - 1].height);
+  const first = points[0];
+  const last = points[points.length - 1];
+  const walked = last.distance - first.distance;
+  // A line shorter than a slope stretch is one stretch.
+  let slope = walked > 0 && walked < SLOPE_RUN ? Math.abs(last.height - first.height) / walked : 0;
+  for (let i = 0, j = 0; i < points.length; i++) {
+    while (j < points.length && points[j].distance - points[i].distance < SLOPE_RUN) j++;
+    if (j === points.length) break;
+    slope = Math.max(slope, Math.abs(points[j].height - points[i].height) / (points[j].distance - points[i].distance));
   }
-  const walked = points[points.length - 1].distance - points[0].distance;
   const all = points.map((p) => p.height);
   return {
     points,

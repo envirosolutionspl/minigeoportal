@@ -5,13 +5,12 @@ import VectorSource from 'ol/source/Vector';
 import Overlay from 'ol/Overlay';
 import type Feature from 'ol/Feature';
 import { LineString, Polygon, type Geometry } from 'ol/geom';
-import { getLength } from 'ol/sphere';
 import { areaOf } from './area';
+import { lengthOf, perimeterOf } from './sides';
 import { unByKey } from 'ol/Observable';
 import type { EventsKey } from 'ol/events';
 import { Circle, Fill, Stroke, Style } from 'ol/style';
 import { formatArea, formatLength } from './format';
-import { PROJECTION } from './projection';
 import { MEASURE, translucent } from './style';
 import { t } from '@/i18n';
 import { useMapStore } from '@/state/store';
@@ -25,16 +24,13 @@ const STYLE = new Style({
 });
 
 /**
- * Measurement on the sphere (OpenLayers' sphere), so results do not depend on the scale distortion of
- * the map's projection; areas on the sphere that fits the ellipsoid there (area.ts), as parcels have them.
+ * Measurement on the ellipsoid, as parcels have it, so results do not depend on the scale distortion
+ * of the map's projection: lengths side by side (sides.ts), areas on the sphere that fits it there (area.ts).
  */
 export function measure(geometry: Geometry): string | undefined {
-  if (geometry instanceof Polygon) {
-    const area = areaOf(geometry);
-    const perimeter = getLength(new LineString(geometry.getLinearRing(0)!.getCoordinates()), { projection: PROJECTION });
-    return `${formatArea(area)}, ${t('measure.perimeter', { length: formatLength(perimeter) })}`;
-  }
-  if (geometry instanceof LineString) return formatLength(getLength(geometry, { projection: PROJECTION }));
+  if (geometry instanceof Polygon)
+    return `${formatArea(areaOf(geometry))}, ${t('measure.perimeter', { length: formatLength(perimeterOf(geometry)) })}`;
+  if (geometry instanceof LineString) return formatLength(lengthOf(geometry.getCoordinates()));
   return undefined;
 }
 

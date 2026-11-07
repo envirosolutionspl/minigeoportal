@@ -91,7 +91,7 @@ Heights come from the elevation model of GUGiK (NMT, a 1 m grid, the service `se
 - **Terrain profile** is a tool of its own: a button under the measurement on a computer, an entry of "More" on a phone. You draw a line on the map as for a distance measurement, and its panel shows:
   - a chart of the height along the line (up to 101 points, no closer than a metre);
   - the points where the line bends, marked with a dashed line, with their height above the chart and their distance from the start under it;
-  - a summary: the range of heights, the steepest slope between neighbouring points and the mean slope.
+  - a summary: the range of heights, the steepest slope (over stretches of 10 m at least, as heights come to 10 cm) and the mean slope.
 
   A new line replaces the last one, and closing the tool takes it off the map.
 

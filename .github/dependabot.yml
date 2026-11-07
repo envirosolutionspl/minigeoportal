@@ -1,0 +1,20 @@
+# Weekly update pull requests for the npm packages and the actions of the workflows (pinned to
+# commits, so only Dependabot moves them). Minor and patch updates come as one pull request per
+# ecosystem; majors come one by one. Security updates come at once, outside this schedule.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]

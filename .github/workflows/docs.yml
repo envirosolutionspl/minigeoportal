@@ -5,9 +5,9 @@ name: Docs
 on:
   push:
     branches: [main]
-    paths: ['README.md', 'docs/**', 'examples/**', '.env.example', 'compose*.yaml', 'deploy/**']
+    paths: ['README.md', 'SECURITY.md', 'CONTRIBUTING.md', 'docs/**', 'examples/**', '.env.example', 'compose*.yaml', 'deploy/**']
   pull_request:
-    paths: ['README.md', 'docs/**', 'examples/**', '.env.example', 'compose*.yaml', 'deploy/**']
+    paths: ['README.md', 'SECURITY.md', 'CONTRIBUTING.md', 'docs/**', 'examples/**', '.env.example', 'compose*.yaml', 'deploy/**']
 
 concurrency:
   group: docs-${{ github.ref }}
@@ -19,11 +19,13 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Known high or critical holes in what the server runs fail the check; build tools stay out.
+      - run: npm audit --omit=dev --audit-level=high
       - run: npm run check
       - run: npm run config:check examples/osm

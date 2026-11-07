@@ -2,6 +2,13 @@
   "name": "minigeoportal",
   "private": true,
   "version": "0.3.0",
+  "description": "A simple, fast web map for public map services: parcels, local plans and the orthophoto from the Polish Geoportal",
+  "homepage": "https://minigeoportal.pl",
+  "bugs": "https://github.com/envirosolutionspl/minigeoportal/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/envirosolutionspl/minigeoportal.git"
+  },
   "type": "module",
   "license": "MIT",
   "scripts": {

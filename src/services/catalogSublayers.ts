@@ -1,5 +1,5 @@
-import type { SubLayer } from '../../shared/config';
-import type { CatalogEntry, CatalogMeta } from './catalogTypes';
+import type { SubLayer } from '../../shared/config.ts';
+import type { CatalogEntry, CatalogMeta } from './catalogTypes.ts';
 
 /**
  * Sublayers of a catalog layer: those the geoportal configuration names that the service still

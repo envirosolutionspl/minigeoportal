@@ -46,7 +46,7 @@
     "@types/nodemailer": "^8.0.2",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
-    "@vitejs/plugin-react": "^5.0.4",
+    "@vitejs/plugin-react": "^6.2.1",
     "axe-core": "^4.14.0",
     "concurrently": "^10.0.6",
     "eslint": "9.39.5",

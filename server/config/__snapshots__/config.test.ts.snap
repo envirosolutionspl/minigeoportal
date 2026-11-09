@@ -163,7 +163,7 @@ exports[`default configuration > stays what the app was built with (any change s
         "id": "prosta",
         "sources": [
           {
-            "service": "g2mobile",
+            "service": "bdotlite",
           },
         ],
         "thumb": "/thumbs/prosta.jpg",
@@ -268,11 +268,11 @@ exports[`default configuration > stays what the app was built with (any change s
       {
         "firstLevel": 0,
         "format": "image/png",
-        "id": "g2mobile",
+        "id": "bdotlite",
         "kind": "wmts",
-        "layer": "G2_MOBILE_500",
-        "levels": 16,
-        "url": "https://mapy.geoportal.gov.pl/wss/service/WMTS/guest/wmts/G2_MOBILE_500",
+        "layer": "BDOT10k",
+        "levels": 15,
+        "url": "https://mapy.geoportal.gov.pl/wss/service/WMTS/sg/BDOTLite",
       },
       {
         "firstLevel": 2,

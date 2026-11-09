@@ -94,13 +94,14 @@ tileServices:
     format: image/jpeg
     firstLevel: 2
     levels: 13
-  - id: g2mobile
+  # The simplified topographic map of GUGiK, successor of G2_MOBILE_500 (since 9.11.2026).
+  - id: bdotlite
     kind: wmts
-    url: https://mapy.geoportal.gov.pl/wss/service/WMTS/guest/wmts/G2_MOBILE_500
-    layer: G2_MOBILE_500
+    url: https://mapy.geoportal.gov.pl/wss/service/WMTS/sg/BDOTLite
+    layer: BDOT10k
     format: image/png
     firstLevel: 0
-    levels: 16
+    levels: 15
   - id: topo
     kind: wmts
     url: https://mapy.geoportal.gov.pl/wss/service/WMTS/guest/wmts/TOPO
@@ -142,7 +143,7 @@ baseMaps:
     description: { pl: 'Uproszczona mapa, szybka na telefonie', en: 'A simplified map, fast on phones' }
     thumb: /thumbs/prosta.jpg
     sources:
-      - service: g2mobile
+      - service: bdotlite
   - id: skany
     title: { pl: 'Skany', en: 'Scans' }
     description: { pl: 'Skany map topograficznych', en: 'Scans of topographic maps' }

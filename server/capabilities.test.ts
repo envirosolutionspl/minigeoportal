@@ -169,6 +169,13 @@ describe('catalog services', () => {
     <TileMatrixSet><ows:Identifier>EPSG:2180v1</ows:Identifier><ows:SupportedCRS>urn:ogc:def:crs:EPSG::2180</ows:SupportedCRS>${matrix('EPSG:2180v1')}</TileMatrixSet>
   </Contents></Capabilities>`;
 
+  it('waits a minute for a slow service, as some GUGiK services take half of one to answer', async () => {
+    stub(() => new Response(GWC));
+    const timeout = vi.spyOn(AbortSignal, 'timeout');
+    await wmtsCapabilities('https://iung.example/gwc/service/wmts', PL1992, 'Susza:gleby');
+    expect(timeout).toHaveBeenCalledWith(60_000);
+  });
+
   it('takes the named WMTS layer with its EPSG:2180 grid, an image format and the default style', async () => {
     stub(() => new Response(GWC));
     const meta = await wmtsCapabilities('https://iung.example/gwc/service/wmts', PL1992, 'Susza:gleby');

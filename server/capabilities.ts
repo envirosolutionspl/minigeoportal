@@ -43,7 +43,8 @@ const num = (v: unknown): number | undefined => {
   return Number.isFinite(n) ? n : undefined;
 };
 
-const TIMEOUT_MS = 30000;
+// Some GUGiK services take close to half a minute to describe themselves (TOPO_SERIA: 28 s).
+const TIMEOUT_MS = 60_000;
 const MAX_BYTES = 5_000_000;
 
 /** Text of an XML body in the encoding its declaration names (some servers answer in ISO-8859-2). */

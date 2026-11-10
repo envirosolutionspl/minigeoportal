@@ -65,17 +65,13 @@ describe('mailerFromEnv', () => {
   });
 
   it('mails ADMIN_EMAIL instead of app.yaml admin, so a public configuration need not name the person', async () => {
-    const sendMail = vi.fn(async () => ({}));
+    const sendMail = vi.fn(async (_mail: { to: string }) => ({}));
     vi.spyOn(nodemailer, 'createTransport').mockReturnValue({ sendMail } as never);
     const env = { SMTP_HOST: 'smtp.example.com', SMTP_USER: 'u@example.com' };
     await mailerFromEnv(defaults, 'office@example.com', env)!.alert('s', 't');
     await mailerFromEnv(defaults, 'office@example.com', { ...env, ADMIN_EMAIL: 'coo@example.com' })!.alert('s', 't');
     await mailerFromEnv(defaults, undefined, { ...env, ADMIN_EMAIL: 'coo@example.com' })!.alert('s', 't');
-    expect(sendMail.mock.calls.map(([mail]) => (mail as { to: string }).to)).toEqual([
-      'office@example.com',
-      'coo@example.com',
-      'coo@example.com',
-    ]);
+    expect(sendMail.mock.calls.map(([mail]) => mail.to)).toEqual(['office@example.com', 'coo@example.com', 'coo@example.com']);
   });
 });
 

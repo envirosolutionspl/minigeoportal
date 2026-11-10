@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import nodemailer from 'nodemailer';
 import { createApp } from './app.ts';
 import { RequestError } from './http.ts';
 import { formatReport, mailerFromEnv, parseReport, type Mailer } from './report.ts';
@@ -61,6 +62,20 @@ describe('mailerFromEnv', () => {
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('REPORT_FROM'));
     expect(mailerFromEnv(defaults, 'a@example.com', { SMTP_HOST: 'smtp.example.com', SMTP_USER: 'u@example.com' })).toBeDefined();
     expect(mailerFromEnv(defaults, 'a@example.com', { SMTP_HOST: 'smtp.example.com', REPORT_FROM: 'App <a@b.pl>' })).toBeDefined();
+  });
+
+  it('mails ADMIN_EMAIL instead of app.yaml admin, so a public configuration need not name the person', async () => {
+    const sendMail = vi.fn(async () => ({}));
+    vi.spyOn(nodemailer, 'createTransport').mockReturnValue({ sendMail } as never);
+    const env = { SMTP_HOST: 'smtp.example.com', SMTP_USER: 'u@example.com' };
+    await mailerFromEnv(defaults, 'office@example.com', env)!.alert('s', 't');
+    await mailerFromEnv(defaults, 'office@example.com', { ...env, ADMIN_EMAIL: 'coo@example.com' })!.alert('s', 't');
+    await mailerFromEnv(defaults, undefined, { ...env, ADMIN_EMAIL: 'coo@example.com' })!.alert('s', 't');
+    expect(sendMail.mock.calls.map(([mail]) => (mail as { to: string }).to)).toEqual([
+      'office@example.com',
+      'coo@example.com',
+      'coo@example.com',
+    ]);
   });
 });
 

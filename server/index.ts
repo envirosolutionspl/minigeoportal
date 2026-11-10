@@ -17,9 +17,9 @@ import type { CapabilitiesCache } from '../src/services/meta.ts';
 /** A configuration with problems stops the server here, with every problem listed. */
 const site = createSite(loadConfig(config.configDir));
 
-// Bug reports and critical errors go to the administrator (app.yaml admin) by e-mail.
+// Bug reports and critical errors go to the administrator (ADMIN_EMAIL or app.yaml admin) by e-mail.
 const mailer = mailerFromEnv(site.mail, site.config.app.admin);
-if (!mailer) console.log('Bug reports and alert mails off: set SMTP_HOST and admin in app.yaml to turn them on.');
+if (!mailer) console.log('Bug reports and alert mails off: set SMTP_HOST and ADMIN_EMAIL (or admin in app.yaml) to turn them on.');
 alertsTo(mailer, site.mail);
 alertOnCrash();
 

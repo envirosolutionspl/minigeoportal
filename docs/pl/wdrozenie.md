@@ -173,7 +173,7 @@ Błąd krytyczny to coś, czego serwer nie naprawi sam:
 - skorowidz ortofotomapy albo map topograficznych odpowiedział, ale serwer nie znalazł w odpowiedzi nic dla środka Warszawy, gdzie zawsze coś było. Zwykle znaczy to, że GUGiK zmienił wygląd odpowiedzi (moduł gugik);
 - błąd, którego nic w serwerze nie przechwyciło. Proces wtedy się zatrzymuje, a Docker lub menedżer usług uruchamia go ponownie.
 
-Błąd krytyczny trafia do logu jako wiersz zaczynający się od `CRITICAL`. Przy ustawionym serwerze poczty idzie też e-mailem na adres `admin` z `app.yaml` (ten sam co zgłoszenia), w języku `report.locale`. Ten sam błąd idzie mailem najwyżej raz na dobę, a wszystkich najwyżej dziesięć na dobę.
+Błąd krytyczny trafia do logu jako wiersz zaczynający się od `CRITICAL`. Przy ustawionym serwerze poczty idzie też e-mailem do administratora (`ADMIN_EMAIL` albo `admin` z `app.yaml`, ten sam adres co zgłoszenia), w języku `report.locale`. Ten sam błąd idzie mailem najwyżej raz na dobę, a wszystkich najwyżej dziesięć na dobę.
 
 Warstwy katalogu geoportalu, które nie odpowiadają, nie są krytyczne: jest ich kilkaset i część zawsze nie działa.
 
@@ -197,7 +197,8 @@ Ustawia się je w środowisku albo w pliku `.env` w katalogu aplikacji (wzór z 
 | `SHARED_DATA`                           |                                             | `1`, gdy kilka instancji dzieli `DATA_DIR`. Dane zapisuje wtedy tylko `npm run update`, a instancje je czytają. Bez tego serwer sam odświeża dane. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | `587`, STARTTLS                             | Serwer poczty dla maili do administratora (zgłoszenia i błędy krytyczne). Port 465 oznacza TLS od początku; `SMTP_SECURE` tylko to zmienia.        |
 | `SMTP_USER`, `SMTP_PASS`                |                                             | Logowanie do serwera poczty. Tylko w `.env` lub w środowisku, nigdy w konfiguracji.                                                                |
-| `REPORT_FROM`                           | `SMTP_USER`                                 | Nadawca maili. Bez `SMTP_HOST`, `admin` w `app.yaml` i nadawcy formularz zgłoszeń i maile o błędach są wyłączone.                                  |
+| `REPORT_FROM`                           | `SMTP_USER`                                 | Nadawca maili. Bez `SMTP_HOST`, adresu administratora i nadawcy formularz zgłoszeń i maile o błędach są wyłączone.                                 |
+| `ADMIN_EMAIL`                           | `admin` z `app.yaml`                        | Adres administratora (zgłoszenia i błędy krytyczne) zamiast `admin`, gdy konfiguracja jest publiczna, a adres ma zostać prywatny.                  |
 | `API_PORT`                              | `8787`                                      | Tylko przy pracy nad aplikacją: gdzie serwer Vite znajduje API.                                                                                    |
 
 ## Ścieżki i pliki

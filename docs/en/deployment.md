@@ -173,7 +173,7 @@ A critical error is something the server cannot fix by itself:
 - the orthophoto or topographic map index answered, but the server found nothing in the answer for the middle of Warsaw, where there always was something. This usually means GUGiK changed the shape of its answers (gugik module);
 - an error nothing in the server caught. The process then stops, and Docker or the service manager starts it again.
 
-A critical error goes to the log as a line starting with `CRITICAL`. With the mail server set up, it also goes by e-mail to `admin` from `app.yaml` (the same address as the bug reports), in the language of `report.locale`. The same error is mailed at most once a day, and no more than ten errors a day in all.
+A critical error goes to the log as a line starting with `CRITICAL`. With the mail server set up, it also goes by e-mail to the administrator (`ADMIN_EMAIL` or `admin` from `app.yaml`, the same address as the bug reports), in the language of `report.locale`. The same error is mailed at most once a day, and no more than ten errors a day in all.
 
 Layers of the geoportal catalog that do not answer are not critical: there are hundreds of them and some are always down.
 
@@ -197,7 +197,8 @@ Set them in the environment or in a `.env` file in the app directory (template w
 | `SHARED_DATA`                           |                                                | `1` when several instances share `DATA_DIR`. Only `npm run update` writes the data then, and the instances read it. Without it the server refreshes the data itself. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | `587`, STARTTLS                                | The mail server for the mails to the administrator (bug reports and critical errors). Port 465 means TLS from the start; `SMTP_SECURE` only overrides that.          |
 | `SMTP_USER`, `SMTP_PASS`                |                                                | Login to the mail server. Only in `.env` or the environment, never in the configuration.                                                                             |
-| `REPORT_FROM`                           | `SMTP_USER`                                    | Sender of the mails. Without `SMTP_HOST`, `admin` in `app.yaml` and a sender, the report form and the alert mails are off.                                           |
+| `REPORT_FROM`                           | `SMTP_USER`                                    | Sender of the mails. Without `SMTP_HOST`, an administrator address and a sender, the report form and the alert mails are off.                                        |
+| `ADMIN_EMAIL`                           | `admin` from `app.yaml`                        | Address of the administrator (bug reports and critical errors) instead of `admin`, when the configuration is public and the address should stay private.             |
 | `API_PORT`                              | `8787`                                         | Development only: where the Vite server finds the API.                                                                                                               |
 
 ## Paths and files

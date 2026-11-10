@@ -89,9 +89,13 @@ export function formatReport(report: Report, meta: { userAgent?: string }, form:
   return { subject: say('subject', { app: form.app.name, category }), text: lines.join('\n') };
 }
 
-/** SMTP mailer to the administrator `to`, or undefined without a mail server or the address. */
-export function mailerFromEnv(form: ReportForm, to: string | undefined, env: NodeJS.ProcessEnv = process.env): Mailer | undefined {
-  const { SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS, REPORT_FROM } = env;
+/**
+ * SMTP mailer to the administrator: ADMIN_EMAIL, else `admin` (app.yaml admin), so a deployment
+ * can keep the address out of its configuration. Undefined without a mail server or an address.
+ */
+export function mailerFromEnv(form: ReportForm, admin: string | undefined, env: NodeJS.ProcessEnv = process.env): Mailer | undefined {
+  const { SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS, REPORT_FROM, ADMIN_EMAIL } = env;
+  const to = ADMIN_EMAIL || admin;
   if (!SMTP_HOST || !to) return undefined;
   const from = REPORT_FROM ?? SMTP_USER;
   if (!from) {

@@ -26,7 +26,7 @@ The service, languages, search and modules.
 - `description`: description of the page for search engines (_text_).
 - `domain`: the address people know the service by, e.g. `minigeoportal.pl`. Printed on maps.
 - `contact`: e-mail address of the service.
-- `admin`: e-mail address of the administrator (optional). Bug reports and critical errors of the server go there (see [Deployment](deployment.md#critical-errors)). Never shown in the app. Without it, reports and error mails are off.
+- `admin`: e-mail address of the administrator (optional). Bug reports and critical errors of the server go there (see [Deployment](deployment.md#critical-errors)). Never shown in the app. The environment variable `ADMIN_EMAIL` replaces it, so a public configuration need not give the address. Without either, reports and error mails are off.
 - `author`: the author in the corner of the map: `name`, `url` and optionally `logo`, an image shown instead of the name (`.svg`, `.png`, `.webp` or `.jpg` inside the configuration directory, e.g. `brand/logo.svg`). See [Deployment](deployment.md#brand).
 - `icon`: the sign of the app (optional): in the bar, the welcome window, the browser tab, on a phone's home screen and in link previews. An image inside the configuration directory, like `author.logo`. A square PNG of at least 512×512 works everywhere; an SVG does not show in link previews. Without it, the built-in sign in the colours of the skin.
 - `locales`: languages, e.g. `{ default: en, available: [pl, en] }`.

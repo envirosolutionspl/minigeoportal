@@ -26,7 +26,7 @@ Serwis, języki, wyszukiwarka i moduły.
 - `description`: opis strony dla wyszukiwarek (_tekst_).
 - `domain`: adres, pod którym ludzie znają serwis, np. `minigeoportal.pl`. Drukowany na mapach.
 - `contact`: adres e-mail serwisu.
-- `admin`: adres e-mail administratora (opcjonalnie). Trafiają tam zgłoszenia błędów i błędy krytyczne serwera (zob. [Wdrożenie](wdrozenie.md#błędy-krytyczne)). Aplikacja go nie pokazuje. Bez niego zgłoszenia i maile o błędach są wyłączone.
+- `admin`: adres e-mail administratora (opcjonalnie). Trafiają tam zgłoszenia błędów i błędy krytyczne serwera (zob. [Wdrożenie](wdrozenie.md#błędy-krytyczne)). Aplikacja go nie pokazuje. Zmienna środowiskowa `ADMIN_EMAIL` go zastępuje, więc publiczna konfiguracja nie musi podawać adresu. Bez żadnego z nich zgłoszenia i maile o błędach są wyłączone.
 - `author`: autor w rogu mapy: `name`, `url` i opcjonalnie `logo`, obraz zamiast nazwy (`.svg`, `.png`, `.webp` lub `.jpg` w katalogu konfiguracji, np. `brand/logo.svg`). Zob. [Wdrożenie](wdrozenie.md#marka).
 - `icon`: znak aplikacji (opcjonalnie): na pasku, w oknie powitalnym, na karcie przeglądarki, na ekranie telefonu i w podglądach linków. Obraz w katalogu konfiguracji, jak `author.logo`. Kwadratowy PNG co najmniej 512×512 działa wszędzie; SVG nie pokaże się w podglądach linków. Bez niego wbudowany znak w kolorach skórki.
 - `locales`: języki, np. `{ default: en, available: [pl, en] }`.

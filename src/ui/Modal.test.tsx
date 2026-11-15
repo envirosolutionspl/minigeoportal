@@ -31,6 +31,15 @@ describe('Modal', () => {
     expect(dialog.open).toBe(false);
   });
 
+  it('is shown again when the browser closes it while its owner keeps it open', () => {
+    const { rerender } = render(<Window open onClose={() => {}} />);
+    const dialog = screen.getByRole('dialog', { name: 'Okno' }) as HTMLDialogElement;
+    // Closed by the browser, not by the owner, who still wants it.
+    dialog.close();
+    rerender(<Window open onClose={() => {}} />);
+    expect(dialog.open).toBe(true);
+  });
+
   it('hands the focus back when its owner stops rendering it while it is open', () => {
     const Owner = ({ shown }: { shown: boolean }) => (
       <>

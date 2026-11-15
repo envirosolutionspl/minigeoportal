@@ -29,6 +29,12 @@ export function useModalDialog(open: boolean, onClose: () => void, onOpen?: () =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  // A browser may close the dialog on its own (Escape twice in a row) while its owner keeps it open: shown again.
+  useEffect(() => {
+    const d = ref.current;
+    if (d && open && !d.open) d.showModal();
+  });
+
   useEffect(() => {
     const d = ref.current;
     return () => {

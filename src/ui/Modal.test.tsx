@@ -31,6 +31,38 @@ describe('Modal', () => {
     expect(dialog.open).toBe(false);
   });
 
+  it('hands the focus back when its owner stops rendering it while it is open', () => {
+    const Owner = ({ shown }: { shown: boolean }) => (
+      <>
+        <button type="button">Otwórz</button>
+        {shown && <Window open onClose={() => {}} />}
+      </>
+    );
+    const { rerender } = render(<Owner shown={false} />);
+    screen.getByRole('button', { name: 'Otwórz' }).focus();
+    rerender(<Owner shown />);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Drugi' }));
+    rerender(<Owner shown={false} />);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Otwórz' }));
+  });
+
+  it('hands the focus back to a part of a drawing it was opened from', () => {
+    const Owner = ({ shown }: { shown: boolean }) => (
+      <>
+        <svg>
+          <g role="button" tabIndex={0} aria-label="Wierzchołek" />
+        </svg>
+        {shown && <Window open onClose={() => {}} />}
+      </>
+    );
+    const { rerender } = render(<Owner shown={false} />);
+    screen.getByRole('button', { name: 'Wierzchołek' }).focus();
+    rerender(<Owner shown />);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Drugi' }));
+    rerender(<Owner shown={false} />);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Wierzchołek' }));
+  });
+
   it('closes on a click on the backdrop, which is the dialog element itself, not on one inside it', () => {
     const onClose = vi.fn();
     render(<Window open onClose={onClose} />);

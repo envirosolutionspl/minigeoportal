@@ -1,4 +1,4 @@
-import { lazy } from 'react';
+import { lazyPart } from '@/ui/Loaded';
 import { SquareDashed } from 'lucide-react';
 import { config } from '@/config/runtime';
 import { t } from '@/i18n';
@@ -19,7 +19,7 @@ export const parcelTool = config.search.parcel
       label: t('search.parcel'),
       short: t('search.parcelShort'),
       icon: SquareDashed,
-      Panel: lazy(() => import('./ParcelSearch').then((m) => ({ default: m.ParcelSearch }))),
+      Panel: lazyPart(() => import('./ParcelSearch').then((m) => ({ default: m.ParcelSearch }))),
     }
   : undefined;
 
@@ -37,9 +37,9 @@ if (info && 'requestIdleCallback' in window) window.requestIdleCallback(() => vo
  * (elevation) and the parcel report link (parcelReport).
  */
 export const infoHeader = [
-  ...(info && gugik?.address ? [lazy(() => info().then((m) => ({ default: m.Address })))] : []),
-  ...(info && gugik?.elevation ? [lazy(() => info().then((m) => ({ default: m.Elevation })))] : []),
-  ...(info && gugik?.parcelReport ? [lazy(() => info().then((m) => ({ default: m.ParcelReportLink })))] : []),
+  ...(info && gugik?.address ? [lazyPart(() => info().then((m) => ({ default: m.Address })))] : []),
+  ...(info && gugik?.elevation ? [lazyPart(() => info().then((m) => ({ default: m.Elevation })))] : []),
+  ...(info && gugik?.parcelReport ? [lazyPart(() => info().then((m) => ({ default: m.ParcelReportLink })))] : []),
 ];
 
 /** Parcels by id and at a point from ULDK, for the parcel selection, with the parcel search (search.parcel). */
@@ -56,7 +56,7 @@ export const heightsAt = gugik?.elevation
   : undefined;
 
 /** The date of the aerial photo above the footer of the place panel (ortho). */
-export const infoFooter = info && gugik?.ortho ? [lazy(() => info().then((m) => ({ default: m.OrthoPhoto })))] : [];
+export const infoFooter = info && gugik?.ortho ? [lazyPart(() => info().then((m) => ({ default: m.OrthoPhoto })))] : [];
 
 /** The layers of the time view the module knows the dates of: the archival photos (ortho.history), the old maps (topo.history). */
 const photos = gugik && gugik.ortho ? gugik.ortho.history : undefined;

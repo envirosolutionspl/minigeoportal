@@ -108,7 +108,7 @@ Panel miejsca podaje adres najbliższy klikniętemu punktowi, z kodem pocztowym,
 
 Wyszukiwarka GUGiK (`search.provider: gugik`) i wyszukiwarka działek (`search.parcel`) też wymagają modułu. Bez niego serwer nie ma jego tras, a strona nie łączy się z żadnym serwerem GUGiK.
 
-Moduł ma własne katalogi: `src/modules/gugik/` (część w przeglądarce, z napisami) i `server/modules/gugik/` (trasy, pamięć podręczna, reguły konfiguracji). Reszta aplikacji sięga do niego tylko przez dwa rejestry: `src/modules/index.ts` i `server/modules/index.ts`. Części modułu w przeglądarce (wyszukiwarka, wyszukiwanie działki, części panelu miejsca) to osobne pliki, pobierane tylko przy włączonym module. Wdrożenie bez modułu nigdy nie wczytuje jego kodu.
+Moduł ma własne katalogi: `src/modules/gugik/` (część w przeglądarce, z napisami) i `server/modules/gugik/` (trasy, pamięć podręczna, reguły konfiguracji). Reszta aplikacji sięga do niego tylko przez dwa rejestry: `src/modules/index.ts` i `server/modules/index.ts`. Części modułu w przeglądarce (wyszukiwarka, wyszukiwanie działki, części panelu miejsca) to osobne pliki, pobierane tylko przy włączonym module. Wdrożenie bez modułu nigdy nie wczytuje jego kodu. Część, której nie udało się pobrać albo która zawiodła podczas wyświetlania, zostawia w swoim miejscu komunikat z przyciskiem ponowienia; mapa i reszta aplikacji działają dalej.
 
 ### Napisy modułu
 

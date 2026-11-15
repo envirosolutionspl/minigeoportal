@@ -1,6 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { LayerCatalog } from './LayerCatalog';
+import { config } from '@/config/runtime';
 import { useMapStore } from '@/state/store';
 import { useStatusStore } from '@/services/status';
 import { stubFetch, withCapabilities } from '@/test/helpers';
@@ -214,6 +215,31 @@ describe('LayerCatalog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Wyczyść wyszukiwanie' }));
     expect(search.value).toBe('');
     expect(screen.getByText('Najpopularniejsze')).toBeTruthy();
+  });
+
+  it('shows no popular heading when the deployment names no popular layers', () => {
+    const starters = config.layers.overlays.filter((o) => o.starter);
+    starters.forEach((o) => (o.starter = false));
+    try {
+      render(<LayerCatalog />);
+      expect(screen.queryByText('Najpopularniejsze')).toBeNull();
+      expect(screen.getByText('Wszystkie warstwy')).toBeTruthy();
+    } finally {
+      starters.forEach((o) => (o.starter = true));
+    }
+  });
+
+  it('offers no filter for a topic without layers once the geoportal list is in', async () => {
+    render(<LayerCatalog />);
+    const chips = () => screen.getAllByRole('button', { pressed: false }).map((b) => b.textContent);
+    // Until then any topic may get layers from it.
+    expect(chips()).toContain('Geodezja');
+    await section(/Zabytki i turystyka/);
+    // Neither our layers nor the geoportal list above have any of these.
+    expect(chips()).not.toContain('Geodezja');
+    expect(chips()).not.toContain('Zagrożenia');
+    expect(chips()).toContain('Zabytki i turystyka');
+    expect(chips()).toContain('Ceny');
   });
 
   it('filters by topic chip', () => {

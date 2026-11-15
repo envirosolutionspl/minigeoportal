@@ -12,6 +12,8 @@ app:
   skipLinks: Szybkie przejścia
   skipToMap: Przejdź do mapy
   skipToSearch: Przejdź do wyszukiwarki
+  partFailed: Nie udało się wyświetlić tej części aplikacji. Spróbuj ponownie. Jeśli to nie pomoże, odśwież stronę – dane niezapisane w otwartych oknach przepadną.
+  retry: Spróbuj ponownie
 
 brand:
   madeBy: Stworzone przez

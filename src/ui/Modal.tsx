@@ -22,7 +22,7 @@ export function Modal({
   blur?: boolean;
   children: React.ReactNode;
 }) {
-  const { ref, onBackdropClick } = useModalDialog(open, onClose, onOpen);
+  const { ref, onBackdropClick, onBackdropPointerDown } = useModalDialog(open, onClose, onOpen);
   return (
     // The backdrop is the dialog itself; Escape closes it natively (see useModalDialog).
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
@@ -30,6 +30,7 @@ export function Modal({
       ref={ref}
       onClose={onClose}
       onClick={onBackdropClick}
+      onPointerDown={onBackdropPointerDown}
       aria-labelledby={labelledBy}
       className={`m-auto rounded-3xl bg-[var(--surface)] p-0 text-[var(--text)] shadow-2xl outline-none backdrop:bg-[#253326]/50 ${
         blur ? 'backdrop:backdrop-blur-[2px]' : ''

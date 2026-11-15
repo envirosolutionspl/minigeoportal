@@ -31,12 +31,66 @@ describe('Modal', () => {
     expect(dialog.open).toBe(false);
   });
 
+  it('is shown again when the browser closes it while its owner keeps it open', () => {
+    const { rerender } = render(<Window open onClose={() => {}} />);
+    const dialog = screen.getByRole('dialog', { name: 'Okno' }) as HTMLDialogElement;
+    // Closed by the browser, not by the owner, who still wants it.
+    dialog.close();
+    rerender(<Window open onClose={() => {}} />);
+    expect(dialog.open).toBe(true);
+  });
+
+  it('hands the focus back when its owner stops rendering it while it is open', () => {
+    const Owner = ({ shown }: { shown: boolean }) => (
+      <>
+        <button type="button">Otwórz</button>
+        {shown && <Window open onClose={() => {}} />}
+      </>
+    );
+    const { rerender } = render(<Owner shown={false} />);
+    screen.getByRole('button', { name: 'Otwórz' }).focus();
+    rerender(<Owner shown />);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Drugi' }));
+    rerender(<Owner shown={false} />);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Otwórz' }));
+  });
+
+  it('hands the focus back to a part of a drawing it was opened from', () => {
+    const Owner = ({ shown }: { shown: boolean }) => (
+      <>
+        <svg>
+          <g role="button" tabIndex={0} aria-label="Wierzchołek" />
+        </svg>
+        {shown && <Window open onClose={() => {}} />}
+      </>
+    );
+    const { rerender } = render(<Owner shown={false} />);
+    screen.getByRole('button', { name: 'Wierzchołek' }).focus();
+    rerender(<Owner shown />);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Drugi' }));
+    rerender(<Owner shown={false} />);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Wierzchołek' }));
+  });
+
   it('closes on a click on the backdrop, which is the dialog element itself, not on one inside it', () => {
     const onClose = vi.fn();
     render(<Window open onClose={onClose} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Pierwszy' }));
+    const first = screen.getByRole('button', { name: 'Pierwszy' });
+    fireEvent.pointerDown(first);
+    fireEvent.click(first);
     expect(onClose).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('dialog', { name: 'Okno' }));
+    const dialog = screen.getByRole('dialog', { name: 'Okno' });
+    fireEvent.pointerDown(dialog);
+    fireEvent.click(dialog);
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('stays open after a drag that starts inside it and ends on the backdrop (selecting the text of a field)', () => {
+    const onClose = vi.fn();
+    render(<Window open onClose={onClose} />);
+    // The browser sends the click of such a drag to the closest element under both ends: the dialog itself.
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Pierwszy' }));
+    fireEvent.click(screen.getByRole('dialog', { name: 'Okno' }));
+    expect(onClose).not.toHaveBeenCalled();
   });
 });

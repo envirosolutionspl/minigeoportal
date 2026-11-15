@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { Loaded } from './Loaded';
 import { Bug, ExternalLink, Layers, LoaderCircle, MapPin, ZoomIn, ZoomOut } from 'lucide-react';
 import { formatCoordinate, scaleText } from '@/map/format';
 import { config, selectedSublayers } from '@/config/runtime';
@@ -173,8 +173,8 @@ function RecordView({ record }: { record: InfoRecord }) {
 /** Parts of the place panel the modules add (src/modules), each loading on its own. */
 function Parts({ parts, coordinate }: { parts: InfoPart[]; coordinate: [number, number] }) {
   return parts.map((Part, i) => (
-    <Suspense key={i} fallback={null}>
+    <Loaded key={i}>
       <Part coordinate={coordinate} />
-    </Suspense>
+    </Loaded>
   ));
 }

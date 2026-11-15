@@ -126,6 +126,12 @@ export function LayerCatalog() {
 
   const filtering = q.length > 0 || topic !== null || onlyActive;
   const starters = results.filter((r) => r.s.starter);
+  /** The topics that have layers: a filter for a topic with none would only empty the list. Until the geoportal list is in, every topic may get some. */
+  const pending = Boolean(config.modules.gugik?.catalog) && (catalogState === 'idle' || catalogState === 'loading');
+  const filled = useMemo(
+    () => new Set([...config.layers.overlays.map((s) => s.topic), ...entries.filter((e) => !e.curated).map((e) => e.topic)]),
+    [entries],
+  );
 
   return (
     <section className="flex h-full flex-col" aria-label={t('layers.panel')}>
@@ -179,7 +185,7 @@ export function LayerCatalog() {
             {onlyActive && <Check className="h-3.5 w-3.5" aria-hidden="true" />}
             {t('layers.onlyActive', { count: active.length })}
           </button>
-          {TOPICS.map(({ id, title }) => (
+          {TOPICS.filter(({ id }) => pending || filled.has(id) || topic === id).map(({ id, title }) => (
             <button
               key={id}
               type="button"
@@ -210,11 +216,14 @@ export function LayerCatalog() {
           </Group>
         ) : (
           <>
-            <Group title={t('layers.popular')}>
-              {starters.map(({ s, hits }) => (
-                <OverlayItem key={s.id} s={s} hits={hits} />
-              ))}
-            </Group>
+            {/* A deployment may name no popular layers: then every layer is in its topic, with no empty heading. */}
+            {starters.length > 0 && (
+              <Group title={t('layers.popular')}>
+                {starters.map(({ s, hits }) => (
+                  <OverlayItem key={s.id} s={s} hits={hits} />
+                ))}
+              </Group>
+            )}
             <Group title={t('layers.all')}>
               {TOPICS.map(({ id }) => (
                 <TopicSection

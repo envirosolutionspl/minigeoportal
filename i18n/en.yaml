@@ -11,6 +11,8 @@ app:
   skipLinks: Skip links
   skipToMap: Skip to the map
   skipToSearch: Skip to the search
+  partFailed: This part of the app could not be shown. Try again. If that does not help, reload the page – data not saved in open windows will be lost.
+  retry: Try again
 
 brand:
   madeBy: Made by

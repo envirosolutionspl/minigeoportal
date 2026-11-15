@@ -108,7 +108,7 @@ The place panel gives the address nearest to the clicked point, with its postcod
 
 The GUGiK search (`search.provider: gugik`) and the parcel search (`search.parcel`) need the module too. Without it, the server has none of its routes and the page connects to no GUGiK host.
 
-The module lives in its own directories: `src/modules/gugik/` (the browser side, with its texts) and `server/modules/gugik/` (routes, caches, rules of the configuration). The rest of the app reaches it only through two registries: `src/modules/index.ts` and `server/modules/index.ts`. The module's parts in the browser (the search, the parcel search, the parts of the place panel) are separate files, downloaded only when the module is on. A deployment without it never loads its code.
+The module lives in its own directories: `src/modules/gugik/` (the browser side, with its texts) and `server/modules/gugik/` (routes, caches, rules of the configuration). The rest of the app reaches it only through two registries: `src/modules/index.ts` and `server/modules/index.ts`. The module's parts in the browser (the search, the parcel search, the parts of the place panel) are separate files, downloaded only when the module is on. A deployment without it never loads its code. A part that cannot be downloaded or fails while shown leaves a note with a retry button in its place; the map and the rest of the app go on.
 
 ### Texts of the module
 

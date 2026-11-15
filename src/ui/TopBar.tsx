@@ -1,4 +1,5 @@
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Loaded } from './Loaded';
 import {
   Building2,
   Crosshair,
@@ -341,9 +342,9 @@ export function TopBar() {
           )}
         </div>
         {searchTool && toolOpen && (
-          <Suspense fallback={null}>
+          <Loaded>
             <searchTool.Panel onClose={() => setToolOpen(false)} />
-          </Suspense>
+          </Loaded>
         )}
         <ul
           id="search-results"

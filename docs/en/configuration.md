@@ -93,7 +93,7 @@ Coordinate system, scales, first view and base maps.
 
 Layers over the base map.
 
-- `topics`: topics of the layer list: `id` and `title` (_text_).
+- `topics`: topics of the layer list: `id` and `title` (_text_). A topic with no layers gets no filter above the list.
 - `drawOrder`: layer ids, the lowest drawn first (optional; the order of `overlays` by default).
 - `overlays`: the layers, each with the fields:
   - `id`: id of the layer, used in links.

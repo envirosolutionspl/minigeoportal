@@ -229,6 +229,19 @@ describe('LayerCatalog', () => {
     }
   });
 
+  it('offers no filter for a topic without layers once the geoportal list is in', async () => {
+    render(<LayerCatalog />);
+    const chips = () => screen.getAllByRole('button', { pressed: false }).map((b) => b.textContent);
+    // Until then any topic may get layers from it.
+    expect(chips()).toContain('Geodezja');
+    await section(/Zabytki i turystyka/);
+    // Neither our layers nor the geoportal list above have any of these.
+    expect(chips()).not.toContain('Geodezja');
+    expect(chips()).not.toContain('Zagrożenia');
+    expect(chips()).toContain('Zabytki i turystyka');
+    expect(chips()).toContain('Ceny');
+  });
+
   it('filters by topic chip', () => {
     render(<LayerCatalog />);
     fireEvent.click(screen.getByRole('button', { name: 'Ceny' }));

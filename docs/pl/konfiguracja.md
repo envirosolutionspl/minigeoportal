@@ -93,7 +93,7 @@ Układ współrzędnych, skale, widok startowy i podkłady.
 
 Warstwy nad podkładem.
 
-- `topics`: tematy listy warstw: `id` i `title` (_tekst_).
+- `topics`: tematy listy warstw: `id` i `title` (_tekst_). Temat bez warstw nie ma filtra nad listą.
 - `drawOrder`: identyfikatory warstw, najniższa rysowana pierwsza (opcjonalnie; domyślnie kolejność `overlays`).
 - `overlays`: warstwy, każda z polami:
   - `id`: identyfikator, używany w linkach.

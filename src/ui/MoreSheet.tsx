@@ -19,7 +19,7 @@ export interface MoreItem {
  * the layer list: over the whole screen of a phone held upright, at the right side held sideways.
  */
 export function MoreSheet({ open, onClose, items }: { open: boolean; onClose: () => void; items: MoreItem[] }) {
-  const { ref, onBackdropClick } = useModalDialog(open, onClose);
+  const { ref, onBackdropClick, onBackdropPointerDown } = useModalDialog(open, onClose);
   const [display, setDisplay] = useState(false);
   const titleId = useId();
   const row = 'flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left hover:bg-[var(--hover)]';
@@ -32,6 +32,7 @@ export function MoreSheet({ open, onClose, items }: { open: boolean; onClose: ()
       ref={ref}
       onClose={onClose}
       onClick={onBackdropClick}
+      onPointerDown={onBackdropPointerDown}
       aria-labelledby={titleId}
       className="more-sheet pointer-events-auto m-0 h-dvh max-h-none w-full max-w-none bg-[var(--surface)] p-0 pt-[env(safe-area-inset-top)] pb-[var(--safe-bottom)] text-[var(--text)] shadow-2xl outline-none backdrop:bg-[#253326]/30 sm:ml-auto sm:w-96"
     >

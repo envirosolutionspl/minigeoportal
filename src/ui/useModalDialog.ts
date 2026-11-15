@@ -1,8 +1,10 @@
-import { useEffect, useRef, type MouseEvent } from 'react';
+import { useEffect, useRef, type MouseEvent, type PointerEvent } from 'react';
 
 /**
  * A modal <dialog> driven by an open flag: shown with showModal() and closed with the flag, and
- * closed by a click on its backdrop (the dialog element itself, outside its content). Escape
+ * closed by a click on its backdrop (the dialog element itself, outside its content): pressed and
+ * let go there both, so a drag that starts in a field (selecting its text) and ends outside the
+ * window does not close it. Escape
  * closes a modal dialog natively, so the backdrop needs no key handler of its own. The element
  * marked `data-autofocus` takes the focus as the dialog opens: React's autoFocus runs while the
  * dialog is still closed, so the browser would start on the first link instead.
@@ -23,9 +25,17 @@ export function useModalDialog(open: boolean, onClose: () => void, onOpen?: () =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  // A click goes to the closest element under both the press and the release: a drag from a field
+  // out of the window arrives as a click on the dialog itself, so where the press was is kept.
+  const pressed = useRef(false);
+  const onBackdropPointerDown = (e: PointerEvent<HTMLDialogElement>) => {
+    pressed.current = e.target === ref.current;
+  };
   const onBackdropClick = (e: MouseEvent<HTMLDialogElement>) => {
-    if (e.target === ref.current) onClose();
+    const onBackdrop = pressed.current && e.target === ref.current;
+    pressed.current = false;
+    if (onBackdrop) onClose();
   };
 
-  return { ref, onBackdropClick };
+  return { ref, onBackdropClick, onBackdropPointerDown };
 }

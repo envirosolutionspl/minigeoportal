@@ -34,9 +34,22 @@ describe('Modal', () => {
   it('closes on a click on the backdrop, which is the dialog element itself, not on one inside it', () => {
     const onClose = vi.fn();
     render(<Window open onClose={onClose} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Pierwszy' }));
+    const first = screen.getByRole('button', { name: 'Pierwszy' });
+    fireEvent.pointerDown(first);
+    fireEvent.click(first);
     expect(onClose).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('dialog', { name: 'Okno' }));
+    const dialog = screen.getByRole('dialog', { name: 'Okno' });
+    fireEvent.pointerDown(dialog);
+    fireEvent.click(dialog);
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('stays open after a drag that starts inside it and ends on the backdrop (selecting the text of a field)', () => {
+    const onClose = vi.fn();
+    render(<Window open onClose={onClose} />);
+    // The browser sends the click of such a drag to the closest element under both ends: the dialog itself.
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Pierwszy' }));
+    fireEvent.click(screen.getByRole('dialog', { name: 'Okno' }));
+    expect(onClose).not.toHaveBeenCalled();
   });
 });

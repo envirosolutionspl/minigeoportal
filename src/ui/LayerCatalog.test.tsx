@@ -1,6 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { LayerCatalog } from './LayerCatalog';
+import { config } from '@/config/runtime';
 import { useMapStore } from '@/state/store';
 import { useStatusStore } from '@/services/status';
 import { stubFetch, withCapabilities } from '@/test/helpers';
@@ -214,6 +215,18 @@ describe('LayerCatalog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Wyczyść wyszukiwanie' }));
     expect(search.value).toBe('');
     expect(screen.getByText('Najpopularniejsze')).toBeTruthy();
+  });
+
+  it('shows no popular heading when the deployment names no popular layers', () => {
+    const starters = config.layers.overlays.filter((o) => o.starter);
+    starters.forEach((o) => (o.starter = false));
+    try {
+      render(<LayerCatalog />);
+      expect(screen.queryByText('Najpopularniejsze')).toBeNull();
+      expect(screen.getByText('Wszystkie warstwy')).toBeTruthy();
+    } finally {
+      starters.forEach((o) => (o.starter = true));
+    }
   });
 
   it('filters by topic chip', () => {

@@ -210,11 +210,14 @@ export function LayerCatalog() {
           </Group>
         ) : (
           <>
-            <Group title={t('layers.popular')}>
-              {starters.map(({ s, hits }) => (
-                <OverlayItem key={s.id} s={s} hits={hits} />
-              ))}
-            </Group>
+            {/* A deployment may name no popular layers: then every layer is in its topic, with no empty heading. */}
+            {starters.length > 0 && (
+              <Group title={t('layers.popular')}>
+                {starters.map(({ s, hits }) => (
+                  <OverlayItem key={s.id} s={s} hits={hits} />
+                ))}
+              </Group>
+            )}
             <Group title={t('layers.all')}>
               {TOPICS.map(({ id }) => (
                 <TopicSection

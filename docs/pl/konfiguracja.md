@@ -102,7 +102,7 @@ Warstwy nad podkładem.
   - `title`, `description`: nazwa i jednowierszowy opis na liście warstw (_tekst_).
   - `topic`: identyfikator tematu.
   - `keywords`: dodatkowe słowa dla wyszukiwarki warstw: lista albo lista dla każdego języka (`{ pl: [...], en: [...] }`).
-  - `starter`: `true` umieszcza warstwę w pierwszej grupie listy.
+  - `starter`: `true` umieszcza warstwę w pierwszej grupie listy; bez takich warstw lista nie ma tej grupy.
   - `catalogId`: identyfikator tej samej warstwy w katalogu geoportal.gov.pl (moduł gugik). Katalog pokazuje wtedy w jej miejscu tę warstwę, a ona przejmuje kolejność rysowania z katalogu.
   - `opacity`: krycie od 0 do 1 (domyślnie 1).
   - `attribution`: źródło danych tej warstwy (_tekst_, z linkami Markdown). Bez niego źródło mapy.

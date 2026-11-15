@@ -102,7 +102,7 @@ Layers over the base map.
   - `title`, `description`: name and one-line description in the layer list (_text_).
   - `topic`: id of its topic.
   - `keywords`: more words for the layer search: a list, or a list per language (`{ pl: [...], en: [...] }`).
-  - `starter`: `true` lists the layer in the first group of the list.
+  - `starter`: `true` lists the layer in the first group of the list; with no such layer, the list has no such group.
   - `catalogId`: id of the same layer in the geoportal.gov.pl catalog (gugik module). The catalog then shows this layer in its place, and the layer takes the catalog's drawing order.
   - `opacity`: opacity from 0 to 1 (1 by default).
   - `attribution`: source credit of this layer (_text_, with Markdown links). The map's credit otherwise.

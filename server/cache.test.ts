@@ -42,7 +42,8 @@ describe('startingCache', () => {
     const built = vi.fn();
     const start = await cache.startingCache(defaults, false, built);
     expect(start.services).toEqual({});
-    await vi.waitFor(() => expect(built).toHaveBeenCalled());
+    // A service answering 503 is asked once more a second later.
+    await vi.waitFor(() => expect(built).toHaveBeenCalled(), { timeout: 3000 });
     expect(built.mock.lastCall![0].generatedAt).not.toBe('');
     expect(JSON.parse(await readFile(cache.CACHE_FILE, 'utf8')).generatedAt).toBe(built.mock.lastCall![0].generatedAt);
   });

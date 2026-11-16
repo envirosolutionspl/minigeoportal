@@ -58,8 +58,21 @@ function decodeXml(bytes: Uint8Array): string {
   }
 }
 
-async function fetchXml(url: string): Promise<Node> {
+// Some GUGiK addresses lead to several ArcGIS instances, and a busy one answers 503 to every few requests
+// (TOPO_SERIA, 2026-11-16): one more try a moment later, before the service counts as not answering.
+const RETRY = new Set([502, 503, 504]);
+const RETRY_AFTER_MS = 1000;
+
+async function fetchService(url: string): Promise<Response> {
   const res = await fetchPublic(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+  if (!RETRY.has(res.status)) return res;
+  await res.body?.cancel();
+  await new Promise((r) => setTimeout(r, RETRY_AFTER_MS));
+  return fetchPublic(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+}
+
+async function fetchXml(url: string): Promise<Node> {
+  const res = await fetchService(url);
   if (!res.ok) {
     await res.body?.cancel();
     throw new Error(`HTTP ${res.status}`);
@@ -195,7 +208,7 @@ const wkid = (sr?: { wkid?: number; latestWkid?: number }) => sr?.latestWkid ?? 
  * "HTTP 499", the code the catalog reads as "token required" for every kind of service.
  */
 export async function arcgisCapabilities(url: string, crs: MapCrs): Promise<RestMeta> {
-  const res = await fetchPublic(serviceUrl(url.replace(/\/+$/, ''), { f: 'json' }), { signal: AbortSignal.timeout(TIMEOUT_MS) });
+  const res = await fetchService(serviceUrl(url.replace(/\/+$/, ''), { f: 'json' }));
   const body = new TextDecoder().decode(await readLimited(res, MAX_BYTES));
   if (!res.ok) throw new Error(res.status === 401 && /token/i.test(body) ? 'HTTP 499' : `HTTP ${res.status}`);
   const info = JSON.parse(body) as ArcgisInfo;

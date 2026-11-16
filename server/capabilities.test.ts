@@ -105,6 +105,20 @@ describe('buildCache', () => {
     expect(fresh.services.kieg).toMatchObject({ kind: 'error', error: 'HTTP 503' });
   });
 
+  it('asks a service that answers 503 once more before it counts as not answering', async () => {
+    let tries = 0;
+    stub((url) =>
+      url.includes('KrajowaIntegracjaEwidencjiGruntow') && tries++ === 0
+        ? new Response('busy', { status: 503 })
+        : new Response(url.includes('WMTS') ? WMTS : WMS),
+    );
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const cache = await buildCache(defaults);
+    expect(tries).toBe(2);
+    expect(cache.services.kieg).toMatchObject({ kind: 'wms', title: 'Test WMS' });
+    expect(error).not.toHaveBeenCalledWith(expect.stringMatching(/^CRITICAL/));
+  });
+
   it('reports all the services that do not answer as one critical error, so an outage upstream sends one mail', async () => {
     stub(() => new Response('nope', { status: 503 }));
     vi.spyOn(console, 'warn').mockImplementation(() => {});

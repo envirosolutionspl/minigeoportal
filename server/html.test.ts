@@ -177,7 +177,7 @@ describe('analytics', () => {
     expect(renderPage(TEMPLATE, defaults)).not.toContain('data-website-id');
     const page = renderPage(TEMPLATE, defaults, '', umami);
     expect(page).toContain(
-      `<script defer src="/ux/u.js" data-website-id="${umami.umami.websiteId}" data-domains="${defaults.app.domain}" data-exclude-search="true"></script>`,
+      `<script defer src="/ux/u.js" data-website-id="${umami.umami.websiteId}" data-domains="${defaults.app.domain}" data-exclude-search="true" data-performance="true" data-errors="true"></script>`,
     );
     expect(page.indexOf('data-website-id')).toBeLessThan(page.indexOf('</head>'));
   });

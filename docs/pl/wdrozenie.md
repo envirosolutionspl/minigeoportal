@@ -121,6 +121,7 @@ Umami nie musi działać obok aplikacji. Są dwie drogi:
    ```
 
 - Strona liczy tylko na domenie z `app.yaml` (nie na kopiach) i bez części adresu po `?`, w której jest widok mapy.
+- Umami dostaje też szybkość strony u odwiedzających (Core Web Vitals: LCP, CLS, INP) i błędy skryptów; skrypt Umami wycina z ich treści adresy i e-maile.
 - Poza odsłonami aplikacja wysyła zdarzenia: `search` (rodzaj wyniku), `layer` (identyfikator włączonej warstwy), `tool` (otwarte narzędzie), `info` (kliknięcie w mapę), `parcel`, `export` (format), `print`, `parcel-report`. Nigdy tego, co ktoś wpisał, ani numerów działek.
 - Ruch zespołu nie musi się liczyć: adresy biura czy VPN wpisz na serwerze do `.env` jako `UMAMI_IGNORE_IP=203.0.113.7,198.51.100.0/24` i odtwórz Umami (`docker compose up -d umami`).
 - Kopię bazy robi `docker compose exec umami-db pg_dump -U umami umami > umami.sql`.

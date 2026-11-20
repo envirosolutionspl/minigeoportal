@@ -121,6 +121,7 @@ Umami need not run next to the app. There are two ways:
    ```
 
 - The page counts only on the domain of `app.yaml` (not on copies) and without the part of the address after `?`, which holds the map's view.
+- Umami also gets the speed of the page as visitors see it (Core Web Vitals: LCP, CLS, INP) and the scripts' errors; Umami's script cuts addresses and e-mails out of them.
 - Besides views the app sends events: `search` (the kind of hit), `layer` (the id of a layer switched on), `tool` (a tool opened), `info` (a click on the map), `parcel`, `export` (the format), `print`, `parcel-report`. Never what someone typed, nor parcel numbers.
 - The team's own visits need not count: put the office or VPN addresses into `.env` on the server as `UMAMI_IGNORE_IP=203.0.113.7,198.51.100.0/24` and recreate Umami (`docker compose up -d umami`).
 - A copy of the database: `docker compose exec umami-db pg_dump -U umami umami > umami.sql`.

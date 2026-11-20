@@ -49,13 +49,14 @@ export function analyticsOrigins(analytics: Analytics): string[] {
 /**
  * The tracker of Umami: it counts views without cookies and sends them next to its own address
  * (/ux/u.js sends to /ux/api/send); only on the site's domain, not on copies run elsewhere, and
- * without the query string, which holds the map's view.
+ * without the query string, which holds the map's view; with the speed of the page as people
+ * see it (Core Web Vitals) and the scripts' errors, addresses and e-mails cut out by the tracker.
  */
 function tracker(analytics: Analytics, domain: string): string {
   if (!analytics) return '';
   const { script, websiteId } = analytics.umami;
   const e = escapeHtml;
-  return `    <script defer src="${e(script)}" data-website-id="${e(websiteId)}" data-domains="${e(domain)}" data-exclude-search="true"></script>\n`;
+  return `    <script defer src="${e(script)}" data-website-id="${e(websiteId)}" data-domains="${e(domain)}" data-exclude-search="true" data-performance="true" data-errors="true"></script>\n`;
 }
 
 /**

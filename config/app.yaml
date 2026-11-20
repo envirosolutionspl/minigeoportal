@@ -57,6 +57,13 @@ links:
   fallbackMap: https://mapy.geoportal.gov.pl/imapnext/imap/index.html?moduleId=modulGK
   fallbackName: geoportal.gov.pl
 
+# Statistics of visits by Umami, without cookies (compose.analytics.yaml; see docs/pl/wdrozenie.md).
+# Counts only on the domain above. Leave out to count nothing.
+analytics:
+  umami:
+    script: /ux/u.js
+    websiteId: 4415eca7-3b4d-4aa9-bd78-9431d65018fc
+
 report:
   # Language of the report mails to the administrator (default: locales.default).
   locale: pl

@@ -85,6 +85,19 @@ docker compose up -d
 
 Opcjonalnie strona liczy odwiedziny w [Umami](https://umami.is): bez cookies i bez zapisywania adresów IP, więc nie potrzebuje banera zgody. Skrypt ma kilka KB i ładuje się z `defer`; gdy Umami nie działa albo blokuje go przeglądarka, mapa działa jak zwykle.
 
+Umami nie musi działać obok aplikacji. Są dwie drogi:
+
+- **Umami, które już masz** (na innym serwerze albo [Umami Cloud](https://cloud.umami.is)): dodaj w nim stronę z domeną z `app.yaml` i wpisz do `app.yaml` pełny adres jego skryptu oraz identyfikator strony. Nic więcej nie trzeba: bez `compose.analytics.yaml` i bez zmian w proxy, a serwer aplikacji sam dopisuje host Umami do Content-Security-Policy.
+
+  ```yaml
+  analytics:
+    umami:
+      script: https://stats.example.org/script.js
+      websiteId: 3f2a6c1e-8b7d-4c5e-9a1f-0e2d3c4b5a69
+  ```
+
+- **Własne Umami obok aplikacji** (`compose.analytics.yaml`): kroki poniżej. Skrypt i adres, na który wysyła, są wtedy pod domeną aplikacji, więc blokery reklam rzadziej je odcinają.
+
 1. Dopisz nakładkę i dwa sekrety do `.env` (Umami i jego baza PostgreSQL słuchają tylko na `127.0.0.1:3000`):
 
    ```bash
@@ -109,7 +122,6 @@ Opcjonalnie strona liczy odwiedziny w [Umami](https://umami.is): bez cookies i b
 
 - Strona liczy tylko na domenie z `app.yaml` (nie na kopiach) i bez części adresu po `?`, w której jest widok mapy.
 - Poza odsłonami aplikacja wysyła zdarzenia: `search` (rodzaj wyniku), `layer` (identyfikator włączonej warstwy), `tool` (otwarte narzędzie), `info` (kliknięcie w mapę), `parcel`, `export` (format), `print`, `parcel-report`. Nigdy tego, co ktoś wpisał, ani numerów działek.
-- Umami może działać na innym serwerze: wtedy `script` to pełny adres https, a serwer dopisuje jego host do Content-Security-Policy sam.
 - Kopię bazy robi `docker compose exec umami-db pg_dump -U umami umami > umami.sql`.
 
 ## Jeden serwer bez Dockera

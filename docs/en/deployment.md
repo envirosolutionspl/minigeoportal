@@ -85,6 +85,19 @@ docker compose up -d
 
 Optionally the page counts visits in [Umami](https://umami.is): no cookies and no IP addresses kept, so it needs no consent banner. The script has a few KB and loads with `defer`; when Umami is down or a browser blocks it, the map works as usual.
 
+Umami need not run next to the app. There are two ways:
+
+- **An Umami you already have** (on another server, or [Umami Cloud](https://cloud.umami.is)): add a site with the domain of `app.yaml` there, and put the full address of its script and the site's id into `app.yaml`. Nothing else: no `compose.analytics.yaml`, no change to the proxy; the app's server adds Umami's host to the Content-Security-Policy itself.
+
+  ```yaml
+  analytics:
+    umami:
+      script: https://stats.example.org/script.js
+      websiteId: 3f2a6c1e-8b7d-4c5e-9a1f-0e2d3c4b5a69
+  ```
+
+- **An Umami of its own next to the app** (`compose.analytics.yaml`): the steps below. The script and the address it sends to then live under the app's domain, so ad blockers cut them off less often.
+
 1. Add the overlay and two secrets to `.env` (Umami and its PostgreSQL database listen only on `127.0.0.1:3000`):
 
    ```bash
@@ -109,7 +122,6 @@ Optionally the page counts visits in [Umami](https://umami.is): no cookies and n
 
 - The page counts only on the domain of `app.yaml` (not on copies) and without the part of the address after `?`, which holds the map's view.
 - Besides views the app sends events: `search` (the kind of hit), `layer` (the id of a layer switched on), `tool` (a tool opened), `info` (a click on the map), `parcel`, `export` (the format), `print`, `parcel-report`. Never what someone typed, nor parcel numbers.
-- Umami may run on another server: `script` is then a full https address, and the server adds its host to the Content-Security-Policy itself.
 - A copy of the database: `docker compose exec umami-db pg_dump -U umami umami > umami.sql`.
 
 ## One server without Docker

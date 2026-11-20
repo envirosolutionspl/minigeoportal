@@ -8,7 +8,9 @@
 
 services:
   umami:
-    image: docker.umami.is/umami-software/umami:latest
+    # A fixed version, raised by hand after reading its release notes
+    # (https://github.com/umami-software/umami/releases), then: docker compose pull umami && docker compose up -d umami
+    image: docker.umami.is/umami-software/umami:3.5.0
     restart: unless-stopped
     depends_on:
       umami-db:

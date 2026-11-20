@@ -124,6 +124,7 @@ Umami need not run next to the app. There are two ways:
 - Umami also gets the speed of the page as visitors see it (Core Web Vitals: LCP, CLS, INP) and the scripts' errors; Umami's script cuts addresses and e-mails out of them.
 - Besides views the app sends events: `search` (the kind of hit), `layer` (the id of a layer switched on), `tool` (a tool opened), `info` (a click on the map), `parcel`, `export` (the format), `print`, `parcel-report`. Never what someone typed, nor parcel numbers.
 - The team's own visits need not count: put the office or VPN addresses into `.env` on the server as `UMAMI_IGNORE_IP=203.0.113.7,198.51.100.0/24` and recreate Umami (`docker compose up -d umami`).
+- The version of Umami is pinned in `compose.analytics.yaml`. Put a newer one there after reading its notes (`https://github.com/umami-software/umami/releases`) and run `docker compose pull umami && docker compose up -d umami`.
 - A copy of the database: `docker compose exec umami-db pg_dump -U umami umami > umami.sql`.
 
 ## One server without Docker

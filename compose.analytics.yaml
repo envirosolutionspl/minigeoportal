@@ -17,6 +17,8 @@ services:
       DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD:?set UMAMI_DB_PASSWORD in .env}@umami-db:5432/umami
       APP_SECRET: ${UMAMI_APP_SECRET:?set UMAMI_APP_SECRET in .env}
       DISABLE_TELEMETRY: '1'
+      # Visits from these addresses are not counted (the team's own), comma-separated, CIDR too.
+      IGNORE_IP: ${UMAMI_IGNORE_IP:-}
     ports:
       - '127.0.0.1:3000:3000'
 

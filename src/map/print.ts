@@ -6,6 +6,7 @@ import { getPointResolution } from 'ol/proj';
 import { PROJECTION, resolutionToScale } from './projection';
 import { duration } from './motion';
 import { useMapStore } from '@/state/store';
+import { track } from '@/analytics';
 
 /**
  * Printing with the browser's own print engine (and its "Save as PDF"): the map is moved for a
@@ -228,6 +229,7 @@ export function attachPrint(map: Map): () => void {
       // print() returns, phones only when their print preview closes, after the page was captured.
       window.addEventListener('afterprint', restore, { once: true });
       fallback = window.setTimeout(restore, AFTERPRINT_FALLBACK_MS);
+      track('print');
       window.print();
     };
 

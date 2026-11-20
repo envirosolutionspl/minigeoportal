@@ -1,0 +1,39 @@
+# Statistics of visits: Umami (no cookies) and its PostgreSQL database, reachable only from the
+# server itself on 127.0.0.1:3000. Use it with the other files, e.g. in .env:
+#   COMPOSE_FILE=compose.yaml:compose.proxy.yaml:compose.analytics.yaml
+#   UMAMI_DB_PASSWORD=<long random text>
+#   UMAMI_APP_SECRET=<long random text>
+# The proxy passes the tracker and the address it sends to (deploy/nginx/minigeoportal.conf);
+# the panel has its own port there. The site's id from the panel goes to app.yaml analytics.
+
+services:
+  umami:
+    image: docker.umami.is/umami-software/umami:latest
+    restart: unless-stopped
+    depends_on:
+      umami-db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD:?set UMAMI_DB_PASSWORD in .env}@umami-db:5432/umami
+      APP_SECRET: ${UMAMI_APP_SECRET:?set UMAMI_APP_SECRET in .env}
+      DISABLE_TELEMETRY: '1'
+    ports:
+      - '127.0.0.1:3000:3000'
+
+  umami-db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD:?set UMAMI_DB_PASSWORD in .env}
+    volumes:
+      - umami-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U umami -d umami']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  umami-db:

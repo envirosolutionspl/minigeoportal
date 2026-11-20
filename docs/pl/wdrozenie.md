@@ -81,6 +81,37 @@ docker compose up -d
 - W `/etc/nginx/nginx.conf` podnieś limity: `worker_rlimit_nofile 65536;` i `worker_connections 4096;`. Domyślne 1024 otwarte pliki na proces wystarczają na ok. 500 połączeń przez proxy.
 - Certyfikat: `certbot --nginx -d mapa.example.org -d www.mapa.example.org --redirect`.
 
+## Statystyki odwiedzin (Umami)
+
+Opcjonalnie strona liczy odwiedziny w [Umami](https://umami.is): bez cookies i bez zapisywania adresów IP, więc nie potrzebuje banera zgody. Skrypt ma kilka KB i ładuje się z `defer`; gdy Umami nie działa albo blokuje go przeglądarka, mapa działa jak zwykle.
+
+1. Dopisz nakładkę i dwa sekrety do `.env` (Umami i jego baza PostgreSQL słuchają tylko na `127.0.0.1:3000`):
+
+   ```bash
+   printf 'COMPOSE_FILE=compose.yaml:compose.proxy.yaml:compose.analytics.yaml
+   UMAMI_DB_PASSWORD=%s
+   UMAMI_APP_SECRET=%s
+   ' "$(openssl rand -hex 24)" "$(openssl rand -hex 32)" >> .env
+   docker compose up -d
+   ```
+
+2. W nginx dodaj z `deploy/nginx/minigeoportal.conf` lokalizacje `/ux/u.js` i `/ux/api/send` (na zewnątrz trafia tylko skrypt i adres, na który wysyła) oraz blok panelu na porcie `8443` z liniami certyfikatu. Otwórz port w zaporze.
+3. Opcjonalnie wpuszczaj do panelu tylko wybrane adresy: zapisz je na serwerze w `/etc/nginx/minigeoportal-admins.conf` (`allow 203.0.113.7;` w osobnych liniach i na końcu `deny all;`) i odkomentuj w bloku panelu `include` tego pliku. Zapora może ograniczać port `8443` do tych samych adresów.
+4. Zaloguj się do panelu (`https://mapa.example.org:8443/`, pierwsze konto `admin` / `umami`), od razu zmień hasło i dodaj stronę z domeną z `app.yaml`.
+5. Wpisz jej identyfikator do `app.yaml` i odtwórz aplikację (`docker compose up -d --force-recreate app`):
+
+   ```yaml
+   analytics:
+     umami:
+       script: /ux/u.js
+       websiteId: 3f2a6c1e-8b7d-4c5e-9a1f-0e2d3c4b5a69
+   ```
+
+- Strona liczy tylko na domenie z `app.yaml` (nie na kopiach) i bez części adresu po `?`, w której jest widok mapy.
+- Poza odsłonami aplikacja wysyła zdarzenia: `search` (rodzaj wyniku), `layer` (identyfikator włączonej warstwy), `tool` (otwarte narzędzie), `info` (kliknięcie w mapę), `parcel`, `export` (format), `print`, `parcel-report`. Nigdy tego, co ktoś wpisał, ani numerów działek.
+- Umami może działać na innym serwerze: wtedy `script` to pełny adres https, a serwer dopisuje jego host do Content-Security-Policy sam.
+- Kopię bazy robi `docker compose exec umami-db pg_dump -U umami umami > umami.sql`.
+
 ## Jeden serwer bez Dockera
 
 ```bash

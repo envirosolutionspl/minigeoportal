@@ -64,7 +64,9 @@ const app = createApp({
 if (production) {
   // The page carries the configuration in the visitor's language.
   const template = await readFile('./dist/index.html', 'utf8');
-  const pages = new Map(site.config.app.locales.available.map((l) => [l, renderPage(template, site.client(l), site.config.skin)]));
+  const pages = new Map(
+    site.config.app.locales.available.map((l) => [l, renderPage(template, site.client(l), site.config.skin, site.config.app.analytics)]),
+  );
   serveBuilt(app, (c: Context) => {
     const to = routePage(site, c);
     if ('redirect' in to) {

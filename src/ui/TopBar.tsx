@@ -40,6 +40,7 @@ import { DisplayMenu } from './DisplayMenu';
 import { useNotice } from './Notice';
 import { MoreSheet, type MoreItem } from './MoreSheet';
 import { NewTab } from './NewTab';
+import { track } from '@/analytics';
 
 /** Scale per hit kind, unless the hit names its own; points zoom to it, outlines at most to it. */
 const SCALE: Record<HitKind, number> = {
@@ -176,6 +177,7 @@ export function TopBar() {
 
   const pick = async (hit: SearchHit) => {
     const mine = ++picked.current;
+    track('search', { kind: hit.kind });
     const text = hit.detail && (hit.kind === 'address' || hit.kind === 'street') ? `${hit.label}, ${hit.detail}` : hit.label;
     // The chosen name goes into the box as text only: it is not a new search, and none still running may reopen the list.
     cancel();

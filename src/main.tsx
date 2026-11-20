@@ -12,6 +12,7 @@ await start(document.getElementById('root')!, async () => {
   const capabilities = loadCapabilities();
   initConfig(await bootConfig());
   void import('./search').then((m) => m.loadSearchProvider());
+  void import('./analytics').then((m) => m.watchStores());
   const { default: App } = await import('./App');
   await capabilities;
   return (

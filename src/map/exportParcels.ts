@@ -6,6 +6,7 @@ import type { Geometry } from 'ol/geom';
 import type { Parcel } from '@/modules';
 import { t } from '@/i18n';
 import { PROJECTION } from './projection';
+import { track } from '@/analytics';
 
 /** A parcel of the selection as it is exported: its data, outline and area from the geometry. */
 export interface ExportedParcel {
@@ -90,6 +91,7 @@ const TYPES: Record<ExportFormat, string> = {
 
 /** Saves the export as a file named after the day, e.g. dzialki-2026-10-28.csv. */
 export function downloadParcels(parcels: ExportedParcel[], format: ExportFormat): void {
+  track('export', { format });
   const url = URL.createObjectURL(new Blob([exportParcels(parcels, format)], { type: TYPES[format] }));
   const link = document.createElement('a');
   link.href = url;

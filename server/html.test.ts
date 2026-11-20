@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import { Hono } from 'hono';
-import { connectSources, createSite, pickLocale, renderPage, routePage, scriptJson } from './html.ts';
+import { analyticsOrigins, connectSources, createSite, pickLocale, renderPage, routePage, scriptJson } from './html.ts';
 import { GUGIK_SEARCH_HOSTS } from './modules/gugik/searchHosts.ts';
 import { defaults, site } from './testSite.ts';
 
@@ -167,5 +167,26 @@ describe('connections', () => {
     const source = readFileSync('src/modules/gugik/geocoder.ts', 'utf8');
     const hosts = new Set([...source.matchAll(/https:\/\/[a-z0-9.-]+/g)].map((m) => m[0]));
     for (const host of hosts) expect(GUGIK_SEARCH_HOSTS).toContain(host);
+  });
+});
+
+describe('analytics', () => {
+  const umami = { umami: { script: '/ux/u.js', websiteId: '3f2a6c1e-8b7d-4c5e-9a1f-0e2d3c4b5a69' } };
+
+  it('loads the tracker only when configured, on the site domain and without the view in the query string', () => {
+    expect(renderPage(TEMPLATE, defaults)).not.toContain('data-website-id');
+    const page = renderPage(TEMPLATE, defaults, '', umami);
+    expect(page).toContain(
+      `<script defer src="/ux/u.js" data-website-id="${umami.umami.websiteId}" data-domains="${defaults.app.domain}" data-exclude-search="true"></script>`,
+    );
+    expect(page.indexOf('data-website-id')).toBeLessThan(page.indexOf('</head>'));
+  });
+
+  it('allows the host of the statistics only when it is another site', () => {
+    expect(analyticsOrigins(undefined)).toEqual([]);
+    expect(analyticsOrigins(umami)).toEqual([]);
+    expect(analyticsOrigins({ umami: { ...umami.umami, script: 'https://stats.example.org/script.js' } })).toEqual([
+      'https://stats.example.org',
+    ]);
   });
 });

@@ -42,6 +42,8 @@ Serwis, języki, wyszukiwarka i moduły.
 - `links`: gdzie odesłać, gdy warstwy nie da się tu pokazać (oba opcjonalne).
   - `fallbackMap`: adres innej mapy.
   - `fallbackName`: jej nazwa w linkach (_tekst_). Bez niej nazwą jest host adresu.
+- `analytics`: statystyki odwiedzin Umami, bez cookies (opcjonalnie; bez tej sekcji strona niczego nie liczy). Zob. [Wdrożenie](wdrozenie.md#statystyki-odwiedzin-umami).
+  - `umami`: `script`, adres skryptu Umami: ścieżka na tej stronie, którą przekazuje proxy (np. `/ux/u.js`), albo adres https innego serwera; `websiteId`, identyfikator strony z panelu Umami.
 - `report`: formularz zgłoszeń błędów. Zgłoszenia idą e-mailem na adres `admin`, gdy serwer poczty jest ustawiony (zob. [Wdrożenie](wdrozenie.md)).
   - `categories`: kategorie zgłoszeń, każda z `id` i `label` (_tekst_).
   - `locale`: język maili do administratora (domyślnie `locales.default`).

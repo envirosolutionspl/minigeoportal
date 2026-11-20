@@ -42,6 +42,8 @@ The service, languages, search and modules.
 - `links`: where to send people when a layer cannot be shown here (both optional).
   - `fallbackMap`: the address of another map.
   - `fallbackName`: its name in links (_text_). Without it, the host of the address.
+- `analytics`: visit statistics by Umami, without cookies (optional; without this section the page counts nothing). See [Deployment](deployment.md#visit-statistics-umami).
+  - `umami`: `script`, the address of Umami's script: a path on this site the proxy passes on (e.g. `/ux/u.js`), or an https address of another server; `websiteId`, the site's id from Umami's panel.
 - `report`: the bug report form. Reports go by e-mail to `admin` when the mail server is set up (see [Deployment](deployment.md)).
   - `categories`: report categories, each with an `id` and a `label` (_text_).
   - `locale`: the language of the mails to the administrator (default: `locales.default`).

@@ -81,6 +81,37 @@ docker compose up -d
 - In `/etc/nginx/nginx.conf` raise the limits: `worker_rlimit_nofile 65536;` and `worker_connections 4096;`. The default 1024 open files per worker last for about 500 proxied connections.
 - Certificate: `certbot --nginx -d map.example.org -d www.map.example.org --redirect`.
 
+## Visit statistics (Umami)
+
+Optionally the page counts visits in [Umami](https://umami.is): no cookies and no IP addresses kept, so it needs no consent banner. The script has a few KB and loads with `defer`; when Umami is down or a browser blocks it, the map works as usual.
+
+1. Add the overlay and two secrets to `.env` (Umami and its PostgreSQL database listen only on `127.0.0.1:3000`):
+
+   ```bash
+   printf 'COMPOSE_FILE=compose.yaml:compose.proxy.yaml:compose.analytics.yaml
+   UMAMI_DB_PASSWORD=%s
+   UMAMI_APP_SECRET=%s
+   ' "$(openssl rand -hex 24)" "$(openssl rand -hex 32)" >> .env
+   docker compose up -d
+   ```
+
+2. In nginx add the locations `/ux/u.js` and `/ux/api/send` from `deploy/nginx/minigeoportal.conf` (only the script and the address it sends to are public) and the panel's block on port `8443` with the certificate lines. Open the port in the firewall.
+3. Optionally let only some addresses into the panel: keep them on the server in `/etc/nginx/minigeoportal-admins.conf` (`allow 203.0.113.7;` on lines of their own and a last `deny all;`) and uncomment the `include` of that file in the panel's block. The firewall can limit port `8443` to the same addresses.
+4. Sign in to the panel (`https://map.example.org:8443/`, first account `admin` / `umami`), change the password at once and add the site with the domain of `app.yaml`.
+5. Put its id into `app.yaml` and recreate the app (`docker compose up -d --force-recreate app`):
+
+   ```yaml
+   analytics:
+     umami:
+       script: /ux/u.js
+       websiteId: 3f2a6c1e-8b7d-4c5e-9a1f-0e2d3c4b5a69
+   ```
+
+- The page counts only on the domain of `app.yaml` (not on copies) and without the part of the address after `?`, which holds the map's view.
+- Besides views the app sends events: `search` (the kind of hit), `layer` (the id of a layer switched on), `tool` (a tool opened), `info` (a click on the map), `parcel`, `export` (the format), `print`, `parcel-report`. Never what someone typed, nor parcel numbers.
+- Umami may run on another server: `script` is then a full https address, and the server adds its host to the Content-Security-Policy itself.
+- A copy of the database: `docker compose exec umami-db pg_dump -U umami umami > umami.sql`.
+
 ## One server without Docker
 
 ```bash

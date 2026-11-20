@@ -33,9 +33,29 @@ export const scriptJson = (value: unknown) =>
     .replace(/\u2028/g, '\\u2028')
     .replace(/\u2029/g, '\\u2029');
 
+type Analytics = AppConfig['app']['analytics'];
+
 /** Where the page may fetch from (CSP connect-src): itself, and the services the modules' search queries directly. */
 export function connectSources(client: ClientConfig): string[] {
   return ["'self'", ...modules.connectSources(client)];
+}
+
+/** The host of the statistics (app.yaml analytics), when it is not this site: the page loads its script and sends to it. */
+export function analyticsOrigins(analytics: Analytics): string[] {
+  const script = analytics?.umami.script;
+  return script?.startsWith('https:') ? [new URL(script).origin] : [];
+}
+
+/**
+ * The tracker of Umami: it counts views without cookies and sends them next to its own address
+ * (/ux/u.js sends to /ux/api/send); only on the site's domain, not on copies run elsewhere, and
+ * without the query string, which holds the map's view.
+ */
+function tracker(analytics: Analytics, domain: string): string {
+  if (!analytics) return '';
+  const { script, websiteId } = analytics.umami;
+  const e = escapeHtml;
+  return `    <script defer src="${e(script)}" data-website-id="${e(websiteId)}" data-domains="${e(domain)}" data-exclude-search="true"></script>\n`;
 }
 
 /**
@@ -100,7 +120,7 @@ function icons(template: string, icon?: string): string {
  * index.html for one language: its lang, title and description, icons, links for search engines
  * and sharing, the skin's colours and the configuration inside.
  */
-export function renderPage(template: string, client: ClientConfig, skin = ''): string {
+export function renderPage(template: string, client: ClientConfig, skin = '', analytics?: Analytics): string {
   // The stylesheet comes from the configuration; it cannot end its own element early.
   // In CSS "<\/" reads as "</", so the stylesheet keeps its meaning.
   const style = skin ? `    <style id="skin">${skin.replace(/<\//g, '<\\/')}</style>\n` : '';
@@ -113,7 +133,7 @@ export function renderPage(template: string, client: ClientConfig, skin = ''): s
       .replace(
         '</head>',
         () =>
-          `${sharing(client)}${style}${preconnects(client)}    <script type="application/json" id="boot">${scriptJson(client)}</script>\n  </head>`,
+          `${sharing(client)}${style}${preconnects(client)}${tracker(analytics, client.app.domain)}    <script type="application/json" id="boot">${scriptJson(client)}</script>\n  </head>`,
       )
   );
 }

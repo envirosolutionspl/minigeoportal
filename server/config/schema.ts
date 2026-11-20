@@ -100,6 +100,19 @@ export const appSchema = z.strictObject({
     })
     .optional(),
   links: z.strictObject({ fallbackMap: url.optional(), fallbackName: text.optional() }).default({}),
+  /**
+   * Statistics of visits by Umami (no cookies): `script` is the address of its tracker, a path on
+   * this site (a proxy passes it on) or an https address, `websiteId` the site's id in Umami.
+   * Off without it.
+   */
+  analytics: z
+    .strictObject({
+      umami: z.strictObject({
+        script: z.union([z.string().regex(/^\/[\w./-]*\.js$/, 'a path such as /ux/u.js'), httpsUrl]),
+        websiteId: z.uuid(),
+      }),
+    })
+    .optional(),
   report: z.strictObject({
     categories: z.array(z.strictObject({ id, label: text })).min(1),
     /** Language of the report mails; the default language when not given. */

@@ -11,7 +11,7 @@ import { parseReport, type Mailer } from './report.ts';
 import * as modules from './modules/index.ts';
 import { nominatimSearch } from './modules/nominatim.ts';
 import { errorMessage } from './config.ts';
-import { connectSources, type Site } from './html.ts';
+import { analyticsOrigins, connectSources, type Site } from './html.ts';
 import { attachGuides } from './guides.ts';
 
 /**
@@ -63,11 +63,11 @@ export function createApp({ site, cache, mailer, origin, moduleData = {}, limits
       strictTransportSecurity: 'max-age=15552000',
       contentSecurityPolicy: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
+        scriptSrc: ["'self'", ...analyticsOrigins(site.config.app.analytics)],
         styleSrc: ["'self'", "'unsafe-inline'"],
         fontSrc: ["'self'"],
         imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
-        connectSrc: connectSources(site.defaults),
+        connectSrc: [...connectSources(site.defaults), ...analyticsOrigins(site.config.app.analytics)],
         frameAncestors: ["'none'"],
         baseUri: ["'self'"],
         formAction: ["'self'"],

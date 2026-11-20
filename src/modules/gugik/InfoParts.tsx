@@ -10,6 +10,7 @@ import { parcelReportUrl } from './parcelReport';
 import { orthoAt, pixelText, type OrthoEdition } from './ortho';
 import { heightsAt } from './elevation';
 import { addressAt } from './address';
+import { track } from '@/analytics';
 
 /** The layer of the time view that shows the archive of these photos (app.yaml: ortho.history), if it is one. */
 const HISTORY = config.modules.gugik?.ortho ? config.modules.gugik.ortho.history : undefined;
@@ -31,6 +32,7 @@ export function ParcelReportLink({ coordinate }: { coordinate: [number, number] 
       href={parcelReportUrl(coordinate)}
       target="_blank"
       rel="noopener"
+      onClick={() => track('parcel-report')}
       className="mt-1.5 inline-flex min-h-6 items-center gap-1.5 text-sm font-medium text-[var(--accent)] underline-offset-2 hover:underline"
     >
       <FileText className="h-4 w-4" aria-hidden="true" />
